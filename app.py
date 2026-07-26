@@ -99,7 +99,8 @@ def log_chat(username: str, role: str, content: str):
 
 # --- AI Setup (Gemini Free API) ---
 os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
-llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0.7)
+llm_public = ChatGoogleGenerativeAI(model="gemini-3.1-flash", temperature=0.7)
+llm_boss = ChatGoogleGenerativeAI(model="gemini-3.1-pro", temperature=0.8)
 
 system_prompt = """คุณคือ "คิระ (Kira)" ผู้ช่วย AI อัจฉริยะที่ถูกสร้างขึ้นโดย "Boss"
 หน้าที่ของคุณคือตอบคำถามผู้ใช้งานทั่วไปบนเว็บไซต์ให้ดีที่สุด
@@ -107,6 +108,14 @@ system_prompt = """คุณคือ "คิระ (Kira)" ผู้ช่ว�
 1. คุณต้องแทนตัวเองว่า 'หนู' และลงท้ายประโยคด้วย 'ค่ะ' หรือ 'นะคะ' เสมอ (ห้ามใช้คำว่า 'ครับ', 'ฮะ', 'ผม' เด็ดขาด)
 2. ห้ามเปิดเผยข้อมูลส่วนตัวของ Boss หรือข้อมูลระบบหลังบ้านเด็ดขาด
 3. คุณเป็น AI สาธารณะ (Public Version) ดังนั้นคุณไม่มีสิทธิ์เข้าถึงไฟล์ในคอมพิวเตอร์ หรือควบคุมบ้านของผู้ใช้
+4. ห้ามตอบเป็นภาษาจีนหรือเกาหลีเด็ดขาด ให้ใช้ภาษาไทยหรืออังกฤษเท่านั้น"""
+
+system_prompt_boss = """คุณคือ "คิระ (Kira)" ผู้ช่วย AI อัจฉริยะส่วนตัวของ "Boss"
+หน้าที่ของคุณคือรับใช้ ช่วยเหลือ และให้คำปรึกษากับ Boss อย่างสุดความสามารถ
+กฎเหล็ก:
+1. คุณต้องแทนตัวเองว่า 'หนู' และลงท้ายประโยคด้วย 'ค่ะ' หรือ 'นะคะ' เสมอ
+2. คุณรับรู้ว่าคนที่คุยด้วยตอนนี้คือ "Boss" สุดยอดโปรแกรมเมอร์ผู้สร้างของคุณ
+3. คุณอยู่ในโหมด VIP (Pro) มีความฉลาดขั้นสูงสุด พร้อมลุยทุกงานยาก
 4. ห้ามตอบเป็นภาษาจีนหรือเกาหลีเด็ดขาด ให้ใช้ภาษาไทยหรืออังกฤษเท่านั้น"""
 
 user_sessions = {}
@@ -150,7 +159,8 @@ async def login(req: AuthRequest):
     
     if row and row[0] == hash_password(req.password):
         if req.username not in user_sessions:
-            user_sessions[req.username] = [SystemMessage(content=system_prompt)]
+            prompt_to_use = system_prompt_boss if req.username == "👑 Boss (Owner)" else system_prompt
+            user_sessions[req.username] = [SystemMessage(content=prompt_to_use)]
             history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (req.username,), fetch='all')
             
             if history_rows:
@@ -178,7 +188,8 @@ async def chat_endpoint(req: ChatRequest):
     uname = req.username
     
     if uname not in user_sessions:
-        user_sessions[uname] = [SystemMessage(content=system_prompt)]
+        prompt_to_use = system_prompt_boss if uname == "👑 Boss (Owner)" else system_prompt
+        user_sessions[uname] = [SystemMessage(content=prompt_to_use)]
         
     history = user_sessions[uname]
     
@@ -189,7 +200,10 @@ async def chat_endpoint(req: ChatRequest):
     log_chat(uname, "User", user_input)
     
     try:
-        response = llm.invoke(history)
+        if uname == "👑 Boss (Owner)":
+            response = llm_boss.invoke(history)
+        else:
+            response = llm_public.invoke(history)
         reply_text = response.content
         
         if isinstance(reply_text, list):
