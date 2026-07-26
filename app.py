@@ -27,8 +27,17 @@ else:
 app = FastAPI()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
-templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+
+static_dir = os.path.join(BASE_DIR, "static")
+if not os.path.exists(static_dir):
+    static_dir = BASE_DIR
+
+templates_dir = os.path.join(BASE_DIR, "templates")
+if not os.path.exists(templates_dir):
+    templates_dir = BASE_DIR
+
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+templates = Jinja2Templates(directory=templates_dir)
 
 # --- Database Setup (Auth & Logs) ---
 DB_FILE = os.path.join(BASE_DIR, "chat_logs.db")
