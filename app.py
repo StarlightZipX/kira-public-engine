@@ -221,6 +221,13 @@ async def chat_endpoint(req: ChatRequest):
     except Exception as e:
         return {"status": "error", "reply": f"ขออภัยค่ะ ระบบ AI ขัดข้อง: {e}"}
 
+@app.post("/api/clear_chat")
+async def clear_chat(req: ChatRequest):
+    uname = req.username
+    prompt_to_use = system_prompt_boss if uname == "👑 Boss (Owner)" else system_prompt
+    user_sessions[uname] = [SystemMessage(content=prompt_to_use)]
+    return {"status": "success", "message": "Cleared"}
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8000))
     print(f"🌐 Kira Public Web is starting on port {port}")
