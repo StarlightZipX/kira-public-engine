@@ -4,3 +4,4 @@ langchain-google-genai
 langchain
 pydantic
 psycopg2-binary
+jinja2
