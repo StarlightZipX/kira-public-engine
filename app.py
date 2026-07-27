@@ -14,7 +14,7 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 # บังคับใช้ UTF-8
 sys.stdout.reconfigure(encoding='utf-8')
 
-# API Key ที่ได้มาจากผู้ใช้
+# API Key
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 USE_POSTGRES = DATABASE_URL is not None
@@ -98,10 +98,8 @@ def log_chat(username: str, role: str, content: str):
               (username, timestamp, role, content))
 
 import requests
-import time as _time
 
 # --- AI Setup (Gemini Free API) ---
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE")
 os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 
 def _ping_model(api_key, model_name):
@@ -267,7 +265,7 @@ async def login(req: AuthRequest):
     
     if row and row[0] == hash_password(req.password):
         if req.username not in user_sessions:
-            prompt_to_use = system_prompt_boss if req.username == "👑 Boss (Owner)" else system_prompt
+            prompt_to_use = system_prompt_boss if is_boss(req.username) else system_prompt
             user_sessions[req.username] = [SystemMessage(content=prompt_to_use)]
             history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (req.username,), fetch='all')
             
@@ -307,7 +305,8 @@ async def chat_endpoint(req: ChatRequest):
     history = user_sessions[uname]
     
     if len(history) > BASE_HISTORY_LEN + MAX_DYNAMIC_HISTORY:
-        history = history[:BASE_HISTORY_LEN] + history[-MAX_DYNAMIC_HISTORY:]
+        user_sessions[uname] = history[:BASE_HISTORY_LEN] + history[-MAX_DYNAMIC_HISTORY:]
+        history = user_sessions[uname]
         
     history.append(HumanMessage(content=user_input))
     log_chat(uname, "User", user_input)
@@ -327,18 +326,26 @@ async def chat_endpoint(req: ChatRequest):
                         full_response += content
                         yield content
             except Exception as e_primary:
-                print(f"[Warning] Primary LLM stream failed: {e_primary}. Switching to Backup LLM...")
-                async for chunk in llm_1_0.astream(history):
-                    content = chunk.content
-                    if content:
-                        full_response += content
-                        yield content
+                err_p = str(e_primary)
+                if "429" in err_p or "quota" in err_p.lower():
+                    raise e_primary
+                print(f"[Warning] Primary LLM failed: {e_primary}. Switching to Backup...")
+                if PRO_MODEL != FLASH_MODEL:
+                    async for chunk in llm_1_0.astream(history):
+                        content = chunk.content
+                        if content:
+                            full_response += content
+                            yield content
+                else:
+                    raise e_primary
         except Exception as e:
             err_str = str(e)
-            if "429" in err_str or "quota" in err_str.lower():
-                error_msg = "\\n\\n⚠️ **ขออภัยค่ะ!** ตอนนี้มีผู้ใช้งานเต็มโควตา หรือหนูทำงานหนักเกินไป รบกวนบอส/คุณผู้ใช้ รอสักพัก (ประมาณ 1 นาที) แล้วลองถามใหม่อีกครั้งนะคะ 🙏"
+            if "429" in err_str or "quota" in err_str.lower() or "resource" in err_str.lower():
+                error_msg = "\n\n⚠️ **ขออภัยค่ะ!** ตอนนี้มีผู้ใช้งานเต็มโควตา หรือหนูทำงานหนักเกินไป รบกวนบอส/คุณผู้ใช้ รอสักพัก (ประมาณ 1 นาที) แล้วลองถามใหม่อีกครั้งนะคะ 🙏"
+            elif "404" in err_str or "not_found" in err_str.lower():
+                error_msg = "\n\n⚠️ **ขออภัยค่ะ!** ระบบสมอง AI กำลังปรับปรุง กรุณารีเฟรชหน้าเว็บแล้วลองใหม่อีกครั้งนะคะ 🔄"
             else:
-                error_msg = f"\\n[Error] ขออภัยค่ะ ระบบ AI ขัดข้อง: {e}"
+                error_msg = f"\n\n⚠️ **ขออภัยค่ะ** ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้งนะคะ 🙏"
             full_response += error_msg
             yield error_msg
         finally:
@@ -350,7 +357,7 @@ async def chat_endpoint(req: ChatRequest):
 @app.post("/api/clear_chat")
 async def clear_chat(req: ChatRequest):
     uname = req.username
-    prompt_to_use = system_prompt_boss if uname == "👑 Boss (Owner)" else system_prompt
+    prompt_to_use = system_prompt_boss if is_boss(uname) else system_prompt
     user_sessions[uname] = [SystemMessage(content=prompt_to_use)]
     return {"status": "success", "message": "Cleared"}
 
