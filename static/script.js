@@ -327,7 +327,7 @@ if (attachBtn) {
 const btnInfo = document.getElementById('btn-info');
 if (btnInfo) {
     btnInfo.addEventListener('click', () => {
-        alert("Kira AI - Public Cloud Engine\nเวอร์ชัน: 1.0 (ระบบทดสอบ)\nผู้สร้าง: บอส");
+        alert("Kira AI - Public Cloud Engine\nเวอร์ชัน: 1.0 (ระบบทดสอบ)\nผู้สร้าง: Kira Studio");
     });
 }
 
