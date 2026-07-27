@@ -97,16 +97,52 @@ def log_chat(username: str, role: str, content: str):
     execute_query("INSERT INTO logs (username, timestamp, role, content) VALUES (?, ?, ?, ?)",
               (username, timestamp, role, content))
 
+import requests
+
 # --- AI Setup (Gemini Free API) ---
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE")
 os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
+
+def auto_detect_models(api_key):
+    best_pro = "gemini-pro"
+    best_flash = "gemini-pro"
+    
+    if api_key and api_key != "YOUR_GEMINI_API_KEY_HERE":
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+            resp = requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                models = [m['name'].replace('models/', '') for m in resp.json().get('models', []) if 'generateContent' in m.get('supportedGenerationMethods', [])]
+                
+                # Pro Selection
+                if "gemini-1.5-pro" in models: best_pro = "gemini-1.5-pro"
+                elif "gemini-1.5-pro-latest" in models: best_pro = "gemini-1.5-pro-latest"
+                elif "gemini-1.0-pro" in models: best_pro = "gemini-1.0-pro"
+                elif "gemini-pro" in models: best_pro = "gemini-pro"
+                
+                # Flash Selection
+                if "gemini-2.0-flash" in models: best_flash = "gemini-2.0-flash"
+                elif "gemini-1.5-flash" in models: best_flash = "gemini-1.5-flash"
+                elif "gemini-1.5-flash-latest" in models: best_flash = "gemini-1.5-flash-latest"
+                elif "gemini-1.0-pro" in models: best_flash = "gemini-1.0-pro"
+                elif "gemini-pro" in models: best_flash = "gemini-pro"
+        except Exception as e:
+            print(f"[Warning] Auto-detect failed: {e}")
+            
+    return best_pro, best_flash
+
+PRO_MODEL, FLASH_MODEL = auto_detect_models(GEMINI_API_KEY)
+print(f"🤖 Booting AI... Kira 1.0 = {FLASH_MODEL}, Kira 1.1 = {PRO_MODEL}")
+
 # 🧠 สมอง 1.1 (Next-Gen)
-llm_1_1 = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.8)
-# 🛡️ สมอง 1.0 (Standard & Fallback) - Changed to flash to fix 404 gemini-pro deprecation
-llm_1_0 = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7)
+llm_1_1 = ChatGoogleGenerativeAI(model=PRO_MODEL, temperature=0.8)
+# 🛡️ สมอง 1.0 (Standard & Fallback)
+llm_1_0 = ChatGoogleGenerativeAI(model=FLASH_MODEL, temperature=0.7)
 
 def is_boss(uname: str) -> bool:
     if not uname: return False
-    return "boss" in uname.lower() or uname == "👑 Boss (Owner)"
+    uname_lower = uname.lower()
+    return "boss" in uname_lower or "บอส" in uname_lower or "admin" in uname_lower or uname == "👑 Boss (Owner)"
 
 system_prompt = """คุณคือ "คิระ (Kira)" ผู้ช่วย AI อัจฉริยะระดับสูง ที่ถูกสร้างสรรค์ขึ้นโดย "Kira Studio"
 หน้าที่ของคุณคือให้บริการ ช่วยเหลือ และตอบคำถามผู้ใช้งานทั่วไปอย่างมืออาชีพ สุภาพ และมีประสิทธิภาพสูงสุด
