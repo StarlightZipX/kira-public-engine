@@ -347,7 +347,7 @@ textarea {
     padding: 0.75rem;
     resize: none;
     outline: none;
-    max-height: 150px;
+    max-height: 40vh;
 }
 
 textarea::placeholder {
