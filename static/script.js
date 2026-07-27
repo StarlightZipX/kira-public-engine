@@ -225,7 +225,7 @@ function addMessage(text, isUser) {
     if (isUser) {
         content.textContent = text;
     } else {
-        content.innerHTML = marked.parse(text);
+        content.innerHTML = text ? marked.parse(text) : '<span class="typing-cursor"></span>';
     }
 
     msgDiv.appendChild(avatar);
@@ -233,6 +233,7 @@ function addMessage(text, isUser) {
     chatBox.appendChild(msgDiv);
     
     chatBox.scrollTop = chatBox.scrollHeight;
+    return content;
 }
 
 function showTypingIndicator() {
@@ -282,14 +283,27 @@ async function sendMessage() {
             body: JSON.stringify({ message: text, username: currentUser })
         });
 
-        const data = await response.json();
         hideTypingIndicator();
         
-        if (data.status === 'success') {
-            addMessage(data.reply, false);
-        } else {
-            addMessage('Error: ' + data.reply, false);
+        if (!response.ok) {
+            addMessage('ระบบขัดข้อง: เซิร์ฟเวอร์ตอบกลับผิดพลาด', false);
+            return;
         }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        const contentDiv = addMessage('', false);
+        let fullText = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            fullText += decoder.decode(value, { stream: true });
+            contentDiv.innerHTML = marked.parse(fullText);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
     } catch (error) {
         hideTypingIndicator();
         addMessage('ระบบขัดข้อง: ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', false);

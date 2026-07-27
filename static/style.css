@@ -574,3 +574,19 @@ textarea::placeholder {
 ::-webkit-scrollbar-thumb:hover {
     background: #6b7280; 
 }
+
+/* Streaming Cursor */
+.typing-cursor {
+    display: inline-block;
+    width: 6px;
+    height: 16px;
+    background-color: var(--text-primary);
+    vertical-align: middle;
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
