@@ -120,28 +120,9 @@ def _ping_model(api_key, model_name):
 
 def auto_detect_models(api_key):
     """สแกนและทดสอบยิงจริง เพื่อเลือกเฉพาะโมเดลที่ใช้ได้ชัวร์ 100%"""
-    # ลำดับความสำคัญ: เอาตัวที่ Free Tier ใช้ได้ดีก่อน
-    pro_candidates = [
-        "gemini-1.5-pro",
-        "gemini-1.5-pro-latest",
-        "gemini-2.5-pro-preview-05-06",
-        "gemini-1.0-pro",
-        "gemini-pro",
-    ]
-    flash_candidates = [
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-latest",
-        "gemini-2.0-flash-lite",
-        "gemini-2.0-flash",
-        "gemini-1.0-pro",
-        "gemini-pro",
-    ]
-    
-    best_pro = "gemini-pro"
-    best_flash = "gemini-pro"
     
     if not api_key or api_key == "YOUR_GEMINI_API_KEY_HERE":
-        return best_pro, best_flash
+        return "gemini-1.5-flash", "gemini-1.5-flash"
     
     # ดึงรายชื่อโมเดลที่ API Key นี้เห็นได้
     available = []
@@ -152,21 +133,20 @@ def auto_detect_models(api_key):
             available = [m['name'].replace('models/', '') for m in resp.json().get('models', [])
                          if 'generateContent' in m.get('supportedGenerationMethods', [])]
             print(f"📋 โมเดลที่ API Key เข้าถึงได้: {len(available)} ตัว")
+            print(f"📋 รายชื่อ: {available}")
     except Exception as e:
         print(f"[Warning] ดึงรายชื่อโมเดลไม่ได้: {e}")
     
-    # เลือก Pro: ลูปตาม priority แล้ว ping ยิงจริง
-    print("🔍 กำลังค้นหาสมอง Pro ที่ใช้ได้จริง...")
-    for candidate in pro_candidates:
-        if candidate in available:
-            print(f"  ทดสอบ {candidate}...")
-            if _ping_model(api_key, candidate):
-                best_pro = candidate
-                print(f"  ✅ เลือก Pro → {candidate}")
-                break
+    # === ขั้นตอนที่ 1: หา Flash ก่อน (ตัวพื้นฐานที่ต้องมี) ===
+    flash_candidates = [
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-2.0-flash-lite",
+        "gemini-2.0-flash",
+    ]
     
-    # เลือก Flash: ลูปตาม priority แล้ว ping ยิงจริง
-    print("🔍 กำลังค้นหาสมอง Flash ที่ใช้ได้จริง...")
+    best_flash = None
+    print("🔍 [ขั้นตอน 1] กำลังค้นหาสมอง Flash...")
     for candidate in flash_candidates:
         if candidate in available:
             print(f"  ทดสอบ {candidate}...")
@@ -175,10 +155,49 @@ def auto_detect_models(api_key):
                 print(f"  ✅ เลือก Flash → {candidate}")
                 break
     
+    # ถ้า Flash ไม่เจอ ลองยิงตรงๆ ทุกตัวแม้ไม่อยู่ใน list
+    if not best_flash:
+        print("  ⚠️ ไม่เจอ Flash ใน list... ยิงตรงทุกตัว!")
+        for candidate in flash_candidates:
+            if _ping_model(api_key, candidate):
+                best_flash = candidate
+                print(f"  ✅ เลือก Flash (force) → {candidate}")
+                break
+    
+    # ถ้ายังไม่เจอจริงๆ ใช้ gemini-1.5-flash เป็นทางเลือกสุดท้าย
+    if not best_flash:
+        best_flash = "gemini-1.5-flash"
+        print(f"  ⚠️ ใช้ fallback → {best_flash}")
+    
+    # === ขั้นตอนที่ 2: หา Pro (ถ้าไม่เจอ ใช้ Flash ตัวเดิมแทน) ===
+    pro_candidates = [
+        "gemini-1.5-pro",
+        "gemini-1.5-pro-latest",
+        "gemini-2.5-pro-preview-05-06",
+    ]
+    
+    best_pro = None
+    print("🔍 [ขั้นตอน 2] กำลังค้นหาสมอง Pro...")
+    for candidate in pro_candidates:
+        if candidate in available:
+            print(f"  ทดสอบ {candidate}...")
+            if _ping_model(api_key, candidate):
+                best_pro = candidate
+                print(f"  ✅ เลือก Pro → {candidate}")
+                break
+    
+    # ถ้าไม่มี Pro ตัวไหนใช้ได้เลย → ใช้ Flash ตัวเดียวกัน (ดีกว่าพัง 404)
+    if not best_pro:
+        best_pro = best_flash
+        print(f"  ⚠️ ไม่มี Pro ที่ใช้ได้ → ใช้ Flash แทน: {best_pro}")
+    
     return best_pro, best_flash
 
 PRO_MODEL, FLASH_MODEL = auto_detect_models(GEMINI_API_KEY)
-print(f"🤖 Booting AI... Kira 1.0 = {FLASH_MODEL}, Kira 1.1 = {PRO_MODEL}")
+print(f"🤖 ========================================")
+print(f"🤖 Kira 1.0 (Standard) = {FLASH_MODEL}")
+print(f"🤖 Kira 1.1 (Next-Gen) = {PRO_MODEL}")
+print(f"🤖 ========================================")
 
 # 🧠 สมอง 1.1 (Next-Gen)
 llm_1_1 = ChatGoogleGenerativeAI(model=PRO_MODEL, temperature=0.8)
