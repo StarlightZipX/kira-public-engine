@@ -341,6 +341,8 @@ async function sendMessage() {
     userInput.value = '';
     userInput.style.height = 'auto';
     sendBtn.disabled = true;
+    userInput.disabled = true;
+    isGenerating = true;
     showTypingIndicator();
 
     try {
@@ -375,6 +377,11 @@ async function sendMessage() {
     } catch (error) {
         hideTypingIndicator();
         addMessage('ระบบขัดข้อง: ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', false);
+    } finally {
+        isGenerating = false;
+        userInput.disabled = false;
+        userInput.focus();
+        sendBtn.disabled = userInput.value.trim() === '';
     }
 }
 
@@ -483,21 +490,27 @@ if (btnInfo) {
     });
 }
 
+let isGenerating = false;
+
 userInput.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
-    sendBtn.disabled = this.value.trim() === '';
+    if (!isGenerating) {
+        sendBtn.disabled = this.value.trim() === '';
+    }
 });
 
 toggleSidebarBtn.addEventListener('click', () => sidebar.classList.add('open'));
 closeSidebarBtn.addEventListener('click', () => sidebar.classList.remove('open'));
 
-userInput.addEventListener('keydown', function(e) {
+userInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        sendMessage();
+        if (!isGenerating) sendMessage();
     }
 });
 
-sendBtn.addEventListener('click', sendMessage);
+sendBtn.addEventListener('click', () => {
+    if (!isGenerating) sendMessage();
+});
 sendBtn.disabled = true;
