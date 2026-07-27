@@ -76,7 +76,11 @@ const chatHistorySidebar = document.getElementById('chat-history');
 
 // --- Auth State Management ---
 let currentUser = localStorage.getItem('kira_username');
-const isBoss = (name) => name && (name.toLowerCase().includes('boss') || name === '👑 Boss (Owner)');
+const isBoss = (name) => {
+    if (!name) return false;
+    const n = name.toLowerCase();
+    return n.includes('boss') || n.includes('บอส') || n.includes('admin') || name === '👑 Boss (Owner)';
+};
 
 function updateModelUI() {
     const modelSelect = document.getElementById('model-select');
@@ -396,11 +400,32 @@ chatHistorySidebar.addEventListener('click', (e) => {
 });
 
 const attachBtn = document.querySelector('.attach-btn');
+
+// Create hidden file input if it doesn't exist
+let hiddenFileInput = document.getElementById('kira-hidden-file-input');
+if (!hiddenFileInput) {
+    hiddenFileInput = document.createElement('input');
+    hiddenFileInput.type = 'file';
+    hiddenFileInput.id = 'kira-hidden-file-input';
+    hiddenFileInput.style.display = 'none';
+    document.body.appendChild(hiddenFileInput);
+    
+    // Listen for file selection
+    hiddenFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            const fileName = e.target.files[0].name;
+            alert(`[Kira 1.1 Pro] รับทราบการอัปโหลดไฟล์: ${fileName}\n(ระบบประมวลผลไฟล์ส่วน Backend จะถูกเปิดให้ใช้งานเร็วๆ นี้ค่ะ)`);
+            e.target.value = ''; // reset
+        }
+    });
+}
+
 if (attachBtn) {
     attachBtn.addEventListener('click', () => {
         const modelSelect = document.getElementById('model-select');
         if (modelSelect && modelSelect.value === '1.1') {
-            alert("ระบบประมวลผลไฟล์และภาพ (Vision) ของ Kira 1.1 เปิดทำงานแล้ว! (ระบบอัปโหลดจริงกำลังเชื่อมต่อกับ Backend)");
+            // Trigger actual file picker for Boss!
+            hiddenFileInput.click();
         } else {
             alert("ฟีเจอร์นี้สงวนไว้สำหรับ Kira 1.1 (Next-Gen) เท่านั้นค่ะ เนื่องจากสมอง 1.0 ไม่รองรับการมองเห็นภาพ!");
         }
