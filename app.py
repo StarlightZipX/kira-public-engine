@@ -99,11 +99,10 @@ def log_chat(username: str, role: str, content: str):
 
 # --- AI Setup (Gemini Free API) ---
 os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
-# 🧠 สมองหลัก (High Performance)
-llm_public = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.7)
-llm_boss = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.8)
-# 🛡️ สมองสำรอง (Fail-safe Fallback)
-backup_llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.7)
+# 🧠 สมอง 1.1 (Next-Gen)
+llm_1_1 = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.8)
+# 🛡️ สมอง 1.0 (Standard & Fallback)
+llm_1_0 = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.7)
 
 system_prompt = """คุณคือ "คิระ (Kira)" ผู้ช่วย AI อัจฉริยะระดับสูง ที่ถูกสร้างสรรค์ขึ้นโดย "Boss"
 หน้าที่ของคุณคือให้บริการ ช่วยเหลือ และตอบคำถามผู้ใช้งานทั่วไปอย่างมืออาชีพ สุภาพ และมีประสิทธิภาพสูงสุด
@@ -133,6 +132,7 @@ class AuthRequest(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     username: str
+    model_version: str = "1.0"
 
 # --- Endpoints ---
 @app.get("/", response_class=HTMLResponse)
@@ -189,6 +189,11 @@ async def get_history(username: str):
 async def chat_endpoint(req: ChatRequest):
     user_input = req.message
     uname = req.username
+    model_version = req.model_version
+    
+    # 🛡️ Security Check: Only Boss can use 1.1
+    if model_version == "1.1" and uname != "👑 Boss (Owner)":
+        model_version = "1.0"
     
     if uname not in user_sessions:
         prompt_to_use = system_prompt_boss if uname == "👑 Boss (Owner)" else system_prompt
@@ -205,7 +210,7 @@ async def chat_endpoint(req: ChatRequest):
     async def generate():
         full_response = ""
         try:
-            primary_llm = llm_boss if uname == "👑 Boss (Owner)" else llm_public
+            primary_llm = llm_1_1 if model_version == "1.1" else llm_1_0
             try:
                 async for chunk in primary_llm.astream(history):
                     content = chunk.content
@@ -214,7 +219,7 @@ async def chat_endpoint(req: ChatRequest):
                         yield content
             except Exception as e_primary:
                 print(f"[Warning] Primary LLM stream failed: {e_primary}. Switching to Backup LLM...")
-                async for chunk in backup_llm.astream(history):
+                async for chunk in llm_1_0.astream(history):
                     content = chunk.content
                     if content:
                         full_response += content
