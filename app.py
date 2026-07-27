@@ -269,7 +269,11 @@ async def chat_endpoint(req: ChatRequest):
                         full_response += content
                         yield content
         except Exception as e:
-            error_msg = f"\\n[Error] ขออภัยค่ะ ระบบ AI ขัดข้อง: {e}"
+            err_str = str(e)
+            if "429" in err_str or "quota" in err_str.lower():
+                error_msg = "\\n\\n⚠️ **ขออภัยค่ะ!** ตอนนี้มีผู้ใช้งานเต็มโควตา หรือหนูทำงานหนักเกินไป รบกวนบอส/คุณผู้ใช้ รอสักพัก (ประมาณ 1 นาที) แล้วลองถามใหม่อีกครั้งนะคะ 🙏"
+            else:
+                error_msg = f"\\n[Error] ขออภัยค่ะ ระบบ AI ขัดข้อง: {e}"
             full_response += error_msg
             yield error_msg
         finally:
