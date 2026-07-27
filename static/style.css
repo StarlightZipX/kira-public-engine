@@ -11,6 +11,17 @@
     --input-bg: #374151;
 }
 
+body.light-mode {
+    --bg-color: #f9fafb;
+    --sidebar-bg: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --user-msg-bg: #3b82f6;
+    --ai-msg-bg: #ffffff;
+    --border-color: #e5e7eb;
+    --input-bg: #ffffff;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -172,8 +183,8 @@ body {
     align-items: center;
     padding: 0 1.5rem;
     border-bottom: 1px solid var(--border-color);
-    background: rgba(17, 24, 39, 0.8);
-    backdrop-filter: blur(10px);
+    background: var(--bg-color);
+    opacity: 0.95;
     z-index: 10;
 }
 
