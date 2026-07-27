@@ -277,12 +277,53 @@ body {
 .content p:last-child {
     margin-bottom: 0;
 }
-.content pre {
-    background-color: #1e1e1e !important;
+/* Code Block Styles */
+.code-block-wrapper {
+    background-color: #1e1e1e;
     border-radius: 8px;
-    padding: 1rem;
     margin: 1rem 0;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: #2d2d2d;
+    border-bottom: 1px solid #404040;
+}
+
+.code-lang {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.copy-btn {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: color 0.2s;
+    font-family: inherit;
+}
+
+.copy-btn:hover {
+    color: white;
+}
+
+.content pre {
+    padding: 1rem;
+    margin: 0;
     overflow-x: auto;
+    background-color: transparent !important;
 }
 .content code {
     font-family: monospace;

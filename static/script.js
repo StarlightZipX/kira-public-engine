@@ -1,12 +1,42 @@
-// Configure marked.js to use highlight.js
+const renderer = new marked.Renderer();
+renderer.code = function(code, language) {
+    const lang = (language || '').match(/\S*/)[0];
+    const highlightedCode = lang && hljs.getLanguage(lang) 
+        ? hljs.highlight(code, { language: lang }).value 
+        : hljs.highlightAuto(code).value;
+        
+    return `<div class="code-block-wrapper">
+        <div class="code-header">
+            <span class="code-lang">${lang || 'code'}</span>
+            <button class="copy-btn" onclick="copyCode(this)">
+                <i class="fa-regular fa-copy"></i> Copy
+            </button>
+        </div>
+        <pre><code class="hljs ${lang}">${highlightedCode}</code></pre>
+    </div>`;
+};
+
+// Configure marked.js to use highlight.js and custom renderer
 marked.setOptions({
-    highlight: function(code, lang) {
-        if (lang && hljs.getLanguage(lang)) {
-            return hljs.highlight(code, { language: lang }).value;
-        }
-        return hljs.highlightAuto(code).value;
-    }
+    renderer: renderer
 });
+
+// Global function for copying code
+window.copyCode = function(button) {
+    const wrapper = button.closest('.code-block-wrapper');
+    const code = wrapper.querySelector('code').innerText;
+    navigator.clipboard.writeText(code).then(() => {
+        const originalHtml = button.innerHTML;
+        button.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        button.style.color = '#10b981';
+        setTimeout(() => {
+            button.innerHTML = originalHtml;
+            button.style.color = '';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
+};
 
 // --- UI Elements ---
 const authModal = document.getElementById('auth-modal');
