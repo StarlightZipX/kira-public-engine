@@ -638,6 +638,25 @@ textarea::placeholder {
     animation: blink 1s step-end infinite;
 }
 
+/* Model Select Dropdown */
+.model-select {
+    background-color: var(--sidebar-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-right: 10px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.model-select:focus {
+    border-color: var(--accent-color);
+}
+
 @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }

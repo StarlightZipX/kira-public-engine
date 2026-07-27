@@ -307,10 +307,11 @@ async function sendMessage() {
     showTypingIndicator();
 
     try {
+        const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "1.0";
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text, username: currentUser })
+            body: JSON.stringify({ message: text, username: currentUser, model_version: modelVersion })
         });
 
         hideTypingIndicator();
@@ -384,6 +385,29 @@ if (btnTheme) {
         } else {
             localStorage.setItem('kira_theme', 'dark');
             btnTheme.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        }
+    });
+}
+
+const modelSelect = document.getElementById('model-select');
+if (modelSelect) {
+    // Restore previous selection if it's Boss
+    const savedModel = localStorage.getItem('kira_model');
+    if (savedModel && (savedModel === '1.0' || currentUser === '👑 Boss (Owner)')) {
+        modelSelect.value = savedModel;
+    }
+
+    modelSelect.addEventListener('change', (e) => {
+        if (e.target.value === '1.1') {
+            if (currentUser !== '👑 Boss (Owner)') {
+                alert("Kira 1.1 กำลังอยู่ในช่วงการฝึกฝนแบบปิด (Private Beta) และจะเปิดให้ทุกคนร่วมทดสอบเร็วๆ นี้ค่ะ! ฝากติดตามด้วยนะคะ ✨");
+                e.target.value = '1.0'; // Revert back
+                localStorage.setItem('kira_model', '1.0');
+            } else {
+                localStorage.setItem('kira_model', '1.1');
+            }
+        } else {
+            localStorage.setItem('kira_model', '1.0');
         }
     });
 }
