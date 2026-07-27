@@ -226,15 +226,12 @@ async function loadHistory() {
             data.history.forEach(msg => {
                 addMessage(msg.content, msg.role === 'User');
             });
-            data.history.forEach(msg => {
-                if (msg.role === 'User') {
-                    const snippet = msg.content.substring(0, 20) + (msg.content.length > 20 ? '...' : '');
-                    const div = document.createElement('div');
-                    div.className = 'history-item';
-                    div.innerHTML = `<i class="fa-regular fa-message"></i> ${snippet}`;
-                    chatHistorySidebar.appendChild(div);
-                }
-            });
+            
+            // Show a single 'Current Chat' item instead of every message
+            const div = document.createElement('div');
+            div.className = 'history-item active';
+            div.innerHTML = `<i class="fa-regular fa-message"></i> แชทปัจจุบัน (ห้องแชทหลัก)`;
+            chatHistorySidebar.appendChild(div);
         }
     } catch (err) {
         console.error("Load history error:", err);
@@ -294,12 +291,15 @@ async function sendMessage() {
     if (!text || !currentUser) return;
 
     addMessage(text, true);
-    
-    const snippet = text.substring(0, 20) + (text.length > 20 ? '...' : '');
-    const div = document.createElement('div');
-    div.className = 'history-item';
-    div.innerHTML = `<i class="fa-regular fa-message"></i> ${snippet}`;
-    chatHistorySidebar.appendChild(div);
+
+    // Ensure sidebar has the active chat item if not already there
+    if (!chatHistorySidebar.querySelector('.history-item.active')) {
+        chatHistorySidebar.innerHTML = '<p class="history-title">ประวัติการแชท</p>';
+        const div = document.createElement('div');
+        div.className = 'history-item active';
+        div.innerHTML = `<i class="fa-regular fa-message"></i> แชทปัจจุบัน (ห้องแชทหลัก)`;
+        chatHistorySidebar.appendChild(div);
+    }
 
     userInput.value = '';
     userInput.style.height = 'auto';
@@ -391,15 +391,18 @@ if (btnTheme) {
 
 const modelSelect = document.getElementById('model-select');
 if (modelSelect) {
+    // Helper to check if current user is Boss
+    const isBoss = (name) => name && (name.toLowerCase().includes('boss') || name === '👑 Boss (Owner)');
+    
     // Restore previous selection if it's Boss
     const savedModel = localStorage.getItem('kira_model');
-    if (savedModel && (savedModel === '1.0' || currentUser === '👑 Boss (Owner)')) {
+    if (savedModel && (savedModel === '1.0' || isBoss(currentUser))) {
         modelSelect.value = savedModel;
     }
 
     modelSelect.addEventListener('change', (e) => {
         if (e.target.value === '1.1') {
-            if (currentUser !== '👑 Boss (Owner)') {
+            if (!isBoss(currentUser)) {
                 alert("Kira 1.1 กำลังอยู่ในช่วงการฝึกฝนแบบปิด (Private Beta) และจะเปิดให้ทุกคนร่วมทดสอบเร็วๆ นี้ค่ะ! ฝากติดตามด้วยนะคะ ✨");
                 e.target.value = '1.0'; // Revert back
                 localStorage.setItem('kira_model', '1.0');
