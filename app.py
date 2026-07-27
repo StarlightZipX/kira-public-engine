@@ -101,8 +101,12 @@ def log_chat(username: str, role: str, content: str):
 os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 # 🧠 สมอง 1.1 (Next-Gen)
 llm_1_1 = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.8)
-# 🛡️ สมอง 1.0 (Standard & Fallback)
-llm_1_0 = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.7)
+# 🛡️ สมอง 1.0 (Standard & Fallback) - Changed to flash to fix 404 gemini-pro deprecation
+llm_1_0 = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.7)
+
+def is_boss(uname: str) -> bool:
+    if not uname: return False
+    return "boss" in uname.lower() or uname == "👑 Boss (Owner)"
 
 system_prompt = """คุณคือ "คิระ (Kira)" ผู้ช่วย AI อัจฉริยะระดับสูง ที่ถูกสร้างสรรค์ขึ้นโดย "Kira Studio"
 หน้าที่ของคุณคือให้บริการ ช่วยเหลือ และตอบคำถามผู้ใช้งานทั่วไปอย่างมืออาชีพ สุภาพ และมีประสิทธิภาพสูงสุด
@@ -192,11 +196,11 @@ async def chat_endpoint(req: ChatRequest):
     model_version = req.model_version
     
     # 🛡️ Security Check: Only Boss can use 1.1
-    if model_version == "1.1" and uname != "👑 Boss (Owner)":
+    if model_version == "1.1" and not is_boss(uname):
         model_version = "1.0"
     
     if uname not in user_sessions:
-        prompt_to_use = system_prompt_boss if uname == "👑 Boss (Owner)" else system_prompt
+        prompt_to_use = system_prompt_boss if is_boss(uname) else system_prompt
         user_sessions[uname] = [SystemMessage(content=prompt_to_use)]
         
     history = user_sessions[uname]
