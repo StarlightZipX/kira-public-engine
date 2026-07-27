@@ -99,8 +99,8 @@ def log_chat(username: str, role: str, content: str):
 
 # --- AI Setup (Gemini Free API) ---
 os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
-llm_public = ChatGoogleGenerativeAI(model="gemini-3.1-flash", temperature=0.7)
-llm_boss = ChatGoogleGenerativeAI(model="gemini-3.1-pro", temperature=0.8)
+llm_public = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7)
+llm_boss = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.8)
 
 system_prompt = """คุณคือ "คิระ (Kira)" ผู้ช่วย AI อัจฉริยะที่ถูกสร้างขึ้นโดย "Boss"
 หน้าที่ของคุณคือตอบคำถามผู้ใช้งานทั่วไปบนเว็บไซต์ให้ดีที่สุด
