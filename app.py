@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -202,35 +202,32 @@ async def chat_endpoint(req: ChatRequest):
     history.append(HumanMessage(content=user_input))
     log_chat(uname, "User", user_input)
     
-    try:
-        if uname == "👑 Boss (Owner)":
-            primary_llm = llm_boss
-        else:
-            primary_llm = llm_public
-            
-        # 🛡️ Robust Fallback Logic (Zero-Error Architecture)
+    async def generate():
+        full_response = ""
         try:
-            response = primary_llm.invoke(history)
-        except Exception as e_primary:
-            print(f"[Warning] Primary LLM failed: {e_primary}. Switching to Backup LLM...")
-            response = backup_llm.invoke(history)
+            primary_llm = llm_boss if uname == "👑 Boss (Owner)" else llm_public
+            try:
+                async for chunk in primary_llm.astream(history):
+                    content = chunk.content
+                    if content:
+                        full_response += content
+                        yield content
+            except Exception as e_primary:
+                print(f"[Warning] Primary LLM stream failed: {e_primary}. Switching to Backup LLM...")
+                async for chunk in backup_llm.astream(history):
+                    content = chunk.content
+                    if content:
+                        full_response += content
+                        yield content
+        except Exception as e:
+            error_msg = f"\\n[Error] ขออภัยค่ะ ระบบ AI ขัดข้อง: {e}"
+            full_response += error_msg
+            yield error_msg
+        finally:
+            history.append(AIMessage(content=full_response))
+            log_chat(uname, "Kira", full_response)
             
-        reply_text = response.content
-        
-        if isinstance(reply_text, list):
-            if len(reply_text) > 0 and isinstance(reply_text[0], dict) and "text" in reply_text[0]:
-                reply_text = reply_text[0]["text"]
-            else:
-                reply_text = str(reply_text)
-        elif not isinstance(reply_text, str):
-            reply_text = str(reply_text)
-            
-        history.append(AIMessage(content=reply_text))
-        log_chat(uname, "Kira", reply_text)
-        
-        return {"status": "success", "reply": reply_text}
-    except Exception as e:
-        return {"status": "error", "reply": f"ขออภัยค่ะ ระบบ AI ขัดข้อง: {e}"}
+    return StreamingResponse(generate(), media_type="text/plain")
 
 @app.post("/api/clear_chat")
 async def clear_chat(req: ChatRequest):
