@@ -661,3 +661,39 @@ textarea::placeholder {
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
 }
+
+/* --- Kira 1.1 Pro Enhancements --- */
+
+/* Glow effect when 1.1 is active */
+body.glow-1-1 .app-container {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.4), 0 0 60px rgba(79, 70, 229, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    transition: box-shadow 0.5s ease, border 0.5s ease;
+}
+
+body.glow-1-1 .chat-header {
+    border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+body.glow-1-1 .chat-input-wrapper {
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+/* Attach button styles */
+.attach-btn {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+}
+
+.attach-btn.unlocked {
+    opacity: 1;
+    cursor: pointer;
+    color: var(--primary-color);
+}
+
+.attach-btn.unlocked:hover {
+    color: #a78bfa;
+    text-shadow: 0 0 8px rgba(167, 139, 250, 0.6);
+}

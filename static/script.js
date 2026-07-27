@@ -76,6 +76,36 @@ const chatHistorySidebar = document.getElementById('chat-history');
 
 // --- Auth State Management ---
 let currentUser = localStorage.getItem('kira_username');
+const isBoss = (name) => name && (name.toLowerCase().includes('boss') || name === '👑 Boss (Owner)');
+
+function updateModelUI() {
+    const modelSelect = document.getElementById('model-select');
+    const attachBtn = document.querySelector('.attach-btn');
+    if (!modelSelect) return;
+
+    const opt11 = modelSelect.querySelector('option[value="1.1"]');
+    if (opt11) {
+        if (isBoss(currentUser)) {
+            opt11.textContent = "Kira 1.1 👑 (Pro)";
+        } else {
+            opt11.textContent = "Kira 1.1 🔒";
+        }
+    }
+
+    if (modelSelect.value === '1.1') {
+        document.body.classList.add('glow-1-1');
+        if (attachBtn) {
+            attachBtn.classList.add('unlocked');
+            attachBtn.title = "แนบไฟล์ (Kira 1.1 Pro)";
+        }
+    } else {
+        document.body.classList.remove('glow-1-1');
+        if (attachBtn) {
+            attachBtn.classList.remove('unlocked');
+            attachBtn.title = "แนบไฟล์ (ยังไม่รองรับใน 1.0)";
+        }
+    }
+}
 
 function checkAuth() {
     // 👑 VIP Auto-Login for Owner (Localhost only)
@@ -102,6 +132,7 @@ function checkAuth() {
 
 // Check auth on load
 checkAuth();
+updateModelUI();
 
 // --- Auth UI Toggles ---
 goToRegister.addEventListener('click', (e) => {
@@ -144,6 +175,7 @@ btnLogin.addEventListener('click', async () => {
             loginPasswordInput.value = '';
             loginError.textContent = '';
             checkAuth();
+            updateModelUI();
         } else {
             loginError.style.color = '#ef4444';
             loginError.textContent = data.message;
@@ -209,6 +241,7 @@ btnLogout.addEventListener('click', () => {
     chatBox.innerHTML = '';
     chatHistorySidebar.innerHTML = '<p class="history-title">ยังไม่มีประวัติการแชท</p>';
     checkAuth();
+    updateModelUI();
 });
 
 // --- Chat Logic ---
@@ -365,7 +398,12 @@ chatHistorySidebar.addEventListener('click', (e) => {
 const attachBtn = document.querySelector('.attach-btn');
 if (attachBtn) {
     attachBtn.addEventListener('click', () => {
-        alert("ฟีเจอร์อัปโหลดและแนบไฟล์กำลังอยู่ในช่วงพัฒนาค่ะ เร็วๆ นี้แน่นอน!");
+        const modelSelect = document.getElementById('model-select');
+        if (modelSelect && modelSelect.value === '1.1') {
+            alert("ระบบประมวลผลไฟล์และภาพ (Vision) ของ Kira 1.1 เปิดทำงานแล้ว! (ระบบอัปโหลดจริงกำลังเชื่อมต่อกับ Backend)");
+        } else {
+            alert("ฟีเจอร์นี้สงวนไว้สำหรับ Kira 1.1 (Next-Gen) เท่านั้นค่ะ เนื่องจากสมอง 1.0 ไม่รองรับการมองเห็นภาพ!");
+        }
     });
 }
 
@@ -391,9 +429,6 @@ if (btnTheme) {
 
 const modelSelect = document.getElementById('model-select');
 if (modelSelect) {
-    // Helper to check if current user is Boss
-    const isBoss = (name) => name && (name.toLowerCase().includes('boss') || name === '👑 Boss (Owner)');
-    
     // Restore previous selection if it's Boss
     const savedModel = localStorage.getItem('kira_model');
     if (savedModel && (savedModel === '1.0' || isBoss(currentUser))) {
@@ -412,6 +447,7 @@ if (modelSelect) {
         } else {
             localStorage.setItem('kira_model', '1.0');
         }
+        updateModelUI();
     });
 }
 
