@@ -100,9 +100,9 @@ def log_chat(username: str, role: str, content: str):
 # --- AI Setup (Gemini Free API) ---
 os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 # 🧠 สมอง 1.1 (Next-Gen)
-llm_1_1 = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.8)
+llm_1_1 = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.8)
 # 🛡️ สมอง 1.0 (Standard & Fallback) - Changed to flash to fix 404 gemini-pro deprecation
-llm_1_0 = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.7)
+llm_1_0 = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7)
 
 def is_boss(uname: str) -> bool:
     if not uname: return False
@@ -213,6 +213,10 @@ async def chat_endpoint(req: ChatRequest):
     
     async def generate():
         full_response = ""
+        badge = "✨ **[Kira 1.1 👑]**\n\n" if model_version == "1.1" else "🤖 **[Kira 1.0]**\n\n"
+        full_response += badge
+        yield badge
+        
         try:
             primary_llm = llm_1_1 if model_version == "1.1" else llm_1_0
             try:
