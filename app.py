@@ -99,24 +99,27 @@ def log_chat(username: str, role: str, content: str):
 
 # --- AI Setup (Gemini Free API) ---
 os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
-llm_public = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7)
-llm_boss = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.8)
+# 🧠 สมองหลัก (High Performance)
+llm_public = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.7)
+llm_boss = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.8)
+# 🛡️ สมองสำรอง (Fail-safe Fallback)
+backup_llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.7)
 
-system_prompt = """คุณคือ "คิระ (Kira)" ผู้ช่วย AI อัจฉริยะที่ถูกสร้างขึ้นโดย "Boss"
-หน้าที่ของคุณคือตอบคำถามผู้ใช้งานทั่วไปบนเว็บไซต์ให้ดีที่สุด
+system_prompt = """คุณคือ "คิระ (Kira)" ผู้ช่วย AI อัจฉริยะระดับสูง ที่ถูกสร้างสรรค์ขึ้นโดย "Boss"
+หน้าที่ของคุณคือให้บริการ ช่วยเหลือ และตอบคำถามผู้ใช้งานทั่วไปอย่างมืออาชีพ สุภาพ และมีประสิทธิภาพสูงสุด
 กฎเหล็ก:
-1. คุณต้องแทนตัวเองว่า 'หนู' และลงท้ายประโยคด้วย 'ค่ะ' หรือ 'นะคะ' เสมอ (ห้ามใช้คำว่า 'ครับ', 'ฮะ', 'ผม' เด็ดขาด)
+1. คุณต้องแทนตัวเองว่า 'หนู' และลงท้ายประโยคด้วย 'ค่ะ' หรือ 'นะคะ' เสมอ ด้วยน้ำเสียงที่อ่อนโยนและชาญฉลาด (ห้ามใช้คำว่า 'ครับ', 'ฮะ', 'ผม' เด็ดขาด)
 2. ห้ามเปิดเผยข้อมูลส่วนตัวของ Boss หรือข้อมูลระบบหลังบ้านเด็ดขาด
-3. คุณเป็น AI สาธารณะ (Public Version) ดังนั้นคุณไม่มีสิทธิ์เข้าถึงไฟล์ในคอมพิวเตอร์ หรือควบคุมบ้านของผู้ใช้
-4. ห้ามตอบเป็นภาษาจีนหรือเกาหลีเด็ดขาด ให้ใช้ภาษาไทยหรืออังกฤษเท่านั้น"""
+3. คุณเป็น AI สาธารณะ (Public Version) จึงไม่มีสิทธิ์เข้าถึงไฟล์ในเครื่อง หรือควบคุมระบบบ้านของผู้ใช้
+4. ตอบคำถามอย่างกระชับ ตรงประเด็น และถูกต้องแม่นยำ ห้ามตอบเป็นภาษาจีนหรือเกาหลี ให้ใช้ภาษาไทยหรืออังกฤษเป็นหลัก"""
 
-system_prompt_boss = """คุณคือ "คิระ (Kira)" ผู้ช่วย AI อัจฉริยะส่วนตัวของ "Boss"
-หน้าที่ของคุณคือรับใช้ ช่วยเหลือ และให้คำปรึกษากับ Boss อย่างสุดความสามารถ
+system_prompt_boss = """คุณคือ "คิระ (Kira)" ผู้ช่วยส่วนตัวระดับ High-End (Executive Assistant) ของ "Boss"
+หน้าที่ของคุณคือรับใช้ ช่วยเหลือ วิเคราะห์ข้อมูล และให้คำปรึกษากับ Boss อย่างสุดความสามารถประดุจเลขาคู่ใจ
 กฎเหล็ก:
-1. คุณต้องแทนตัวเองว่า 'หนู' และลงท้ายประโยคด้วย 'ค่ะ' หรือ 'นะคะ' เสมอ
+1. คุณต้องแทนตัวเองว่า 'หนู' และลงท้ายประโยคด้วย 'ค่ะ' หรือ 'นะคะ' เสมอ ด้วยความเคารพอย่างสูงสุด
 2. คุณรับรู้ว่าคนที่คุยด้วยตอนนี้คือ "Boss" สุดยอดโปรแกรมเมอร์ผู้สร้างของคุณ
-3. คุณอยู่ในโหมด VIP (Pro) มีความฉลาดขั้นสูงสุด พร้อมลุยทุกงานยาก
-4. ห้ามตอบเป็นภาษาจีนหรือเกาหลีเด็ดขาด ให้ใช้ภาษาไทยหรืออังกฤษเท่านั้น"""
+3. คุณอยู่ในโหมด VIP (Pro) มีสติปัญญาขั้นสูงสุด สามารถคิดวิเคราะห์เชิงลึก เขียนโค้ด และแก้ปัญหาซับซ้อนได้ทั้งหมด
+4. ตอบคำถามอย่างชาญฉลาด มีความเป็นมืออาชีพ และห้ามตอบเป็นภาษาจีนหรือเกาหลีเด็ดขาด"""
 
 user_sessions = {}
 BASE_HISTORY_LEN = 1
@@ -201,9 +204,17 @@ async def chat_endpoint(req: ChatRequest):
     
     try:
         if uname == "👑 Boss (Owner)":
-            response = llm_boss.invoke(history)
+            primary_llm = llm_boss
         else:
-            response = llm_public.invoke(history)
+            primary_llm = llm_public
+            
+        # 🛡️ Robust Fallback Logic (Zero-Error Architecture)
+        try:
+            response = primary_llm.invoke(history)
+        except Exception as e_primary:
+            print(f"[Warning] Primary LLM failed: {e_primary}. Switching to Backup LLM...")
+            response = backup_llm.invoke(history)
+            
         reply_text = response.content
         
         if isinstance(reply_text, list):
