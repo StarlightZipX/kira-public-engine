@@ -98,37 +98,83 @@ def log_chat(username: str, role: str, content: str):
               (username, timestamp, role, content))
 
 import requests
+import time as _time
 
 # --- AI Setup (Gemini Free API) ---
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE")
 os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 
+def _ping_model(api_key, model_name):
+    """ทดสอบยิงจริงว่าโมเดลนี้ตอบได้หรือไม่ (ใช้คำถามสั้นที่สุด)"""
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+        payload = {"contents": [{"parts": [{"text": "Hi"}]}]}
+        resp = requests.post(url, json=payload, timeout=10)
+        if resp.status_code == 200:
+            return True
+        print(f"  [Ping] {model_name} → HTTP {resp.status_code}")
+        return False
+    except Exception as e:
+        print(f"  [Ping] {model_name} → Exception: {e}")
+        return False
+
 def auto_detect_models(api_key):
+    """สแกนและทดสอบยิงจริง เพื่อเลือกเฉพาะโมเดลที่ใช้ได้ชัวร์ 100%"""
+    # ลำดับความสำคัญ: เอาตัวที่ Free Tier ใช้ได้ดีก่อน
+    pro_candidates = [
+        "gemini-1.5-pro",
+        "gemini-1.5-pro-latest",
+        "gemini-2.5-pro-preview-05-06",
+        "gemini-1.0-pro",
+        "gemini-pro",
+    ]
+    flash_candidates = [
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-2.0-flash-lite",
+        "gemini-2.0-flash",
+        "gemini-1.0-pro",
+        "gemini-pro",
+    ]
+    
     best_pro = "gemini-pro"
     best_flash = "gemini-pro"
     
-    if api_key and api_key != "YOUR_GEMINI_API_KEY_HERE":
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
-            resp = requests.get(url, timeout=5)
-            if resp.status_code == 200:
-                models = [m['name'].replace('models/', '') for m in resp.json().get('models', []) if 'generateContent' in m.get('supportedGenerationMethods', [])]
-                
-                # Pro Selection
-                if "gemini-1.5-pro" in models: best_pro = "gemini-1.5-pro"
-                elif "gemini-1.5-pro-latest" in models: best_pro = "gemini-1.5-pro-latest"
-                elif "gemini-1.0-pro" in models: best_pro = "gemini-1.0-pro"
-                elif "gemini-pro" in models: best_pro = "gemini-pro"
-                
-                # Flash Selection
-                if "gemini-2.0-flash" in models: best_flash = "gemini-2.0-flash"
-                elif "gemini-1.5-flash" in models: best_flash = "gemini-1.5-flash"
-                elif "gemini-1.5-flash-latest" in models: best_flash = "gemini-1.5-flash-latest"
-                elif "gemini-1.0-pro" in models: best_flash = "gemini-1.0-pro"
-                elif "gemini-pro" in models: best_flash = "gemini-pro"
-        except Exception as e:
-            print(f"[Warning] Auto-detect failed: {e}")
-            
+    if not api_key or api_key == "YOUR_GEMINI_API_KEY_HERE":
+        return best_pro, best_flash
+    
+    # ดึงรายชื่อโมเดลที่ API Key นี้เห็นได้
+    available = []
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+        resp = requests.get(url, timeout=5)
+        if resp.status_code == 200:
+            available = [m['name'].replace('models/', '') for m in resp.json().get('models', [])
+                         if 'generateContent' in m.get('supportedGenerationMethods', [])]
+            print(f"📋 โมเดลที่ API Key เข้าถึงได้: {len(available)} ตัว")
+    except Exception as e:
+        print(f"[Warning] ดึงรายชื่อโมเดลไม่ได้: {e}")
+    
+    # เลือก Pro: ลูปตาม priority แล้ว ping ยิงจริง
+    print("🔍 กำลังค้นหาสมอง Pro ที่ใช้ได้จริง...")
+    for candidate in pro_candidates:
+        if candidate in available:
+            print(f"  ทดสอบ {candidate}...")
+            if _ping_model(api_key, candidate):
+                best_pro = candidate
+                print(f"  ✅ เลือก Pro → {candidate}")
+                break
+    
+    # เลือก Flash: ลูปตาม priority แล้ว ping ยิงจริง
+    print("🔍 กำลังค้นหาสมอง Flash ที่ใช้ได้จริง...")
+    for candidate in flash_candidates:
+        if candidate in available:
+            print(f"  ทดสอบ {candidate}...")
+            if _ping_model(api_key, candidate):
+                best_flash = candidate
+                print(f"  ✅ เลือก Flash → {candidate}")
+                break
+    
     return best_pro, best_flash
 
 PRO_MODEL, FLASH_MODEL = auto_detect_models(GEMINI_API_KEY)
