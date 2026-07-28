@@ -373,6 +373,10 @@ async def chat_endpoint(req: ChatRequest):
                 error_msg = "\n\n⚠️ **ขออภัยค่ะ!** ระบบสมอง AI กำลังปรับปรุง กรุณารีเฟรชหน้าเว็บแล้วลองใหม่อีกครั้งนะคะ 🔄"
             else:
                 error_msg = f"\n\n⚠️ **ขออภัยค่ะ** ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้งนะคะ 🙏"
+                
+            if is_boss(uname):
+                error_msg += f"\n\n🛠️ **[Boss Diagnostic]**\n```\n{err_str}\n```"
+                
             full_response += error_msg
             yield error_msg
         finally:
