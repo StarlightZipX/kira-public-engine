@@ -3,7 +3,7 @@ import hashlib
 import sys
 import time
 import asyncio
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -103,7 +103,8 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
 def log_chat(username: str, role: str, content: str):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    tz = timezone(timedelta(hours=7))
+    timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
     execute_query("INSERT INTO logs (username, timestamp, role, content) VALUES (?, ?, ?, ?)",
               (username, timestamp, role, content))
 
