@@ -110,7 +110,7 @@ def log_chat(username: str, role: str, content: str):
 # ========== โมเดลที่ปลอดภัยของ Groq ==========
 ALL_MODEL_CANDIDATES = [
     "llama-3.3-70b-versatile",
-    "llama3-8b-8192",
+    "llama-3.1-8b-instant",
     "mixtral-8x7b-32768",
     "gemma2-9b-it"
 ]
@@ -159,7 +159,7 @@ async def _try_all_keys_and_models(history, preferred_model):
     return False, [], last_error
 
 # ========== เลือกโมเดลหลักตอนบูท ==========
-PREFERRED_FLASH = "llama3-8b-8192"
+PREFERRED_FLASH = "llama-3.1-8b-instant"
 PREFERRED_PRO = "llama-3.3-70b-versatile"
 
 print("🔍 กำลังสแกนหาสมองที่ใช้ได้จาก Groq...")
@@ -219,7 +219,7 @@ for key_idx, api_key in enumerate(API_KEYS):
         continue
     break
 
-if PREFERRED_PRO == "llama3-8b-8192":
+if PREFERRED_PRO == "llama-3.1-8b-instant":
     PREFERRED_PRO = PREFERRED_FLASH
 
 print(f"🤖 ========================================")
