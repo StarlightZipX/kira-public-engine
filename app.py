@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 import requests
 
@@ -18,16 +18,16 @@ import requests
 sys.stdout.reconfigure(encoding='utf-8')
 
 # ========== API Keys (รองรับหลายคีย์ คั่นด้วยคอมม่า) ==========
-_raw_keys = os.environ.get("GEMINI_API_KEYS", os.environ.get("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE"))
-API_KEYS = [k.strip() for k in _raw_keys.split(",") if k.strip() and k.strip() != "YOUR_GEMINI_API_KEY_HERE"]
+_raw_keys = os.environ.get("GROQ_API_KEYS", os.environ.get("GROQ_API_KEY", "YOUR_GROQ_API_KEY_HERE"))
+API_KEYS = [k.strip() for k in _raw_keys.split(",") if k.strip() and k.strip() != "YOUR_GROQ_API_KEY_HERE"]
 
 if not API_KEYS:
-    print("⚠️ ไม่มี API Key ที่ใช้ได้! กรุณาตั้ง GEMINI_API_KEYS ใน Environment Variables")
-    API_KEYS = ["YOUR_GEMINI_API_KEY_HERE"]
+    print("⚠️ ไม่มี API Key ที่ใช้ได้! กรุณาตั้ง GROQ_API_KEYS ใน Environment Variables")
+    API_KEYS = ["YOUR_GROQ_API_KEY_HERE"]
 
 print(f"🔑 จำนวน API Keys ที่ใช้ได้: {len(API_KEYS)} ดอก")
 
-os.environ["GOOGLE_API_KEY"] = API_KEYS[0]
+os.environ["GROQ_API_KEY"] = API_KEYS[0]
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 USE_POSTGRES = DATABASE_URL is not None
@@ -107,21 +107,18 @@ def log_chat(username: str, role: str, content: str):
     execute_query("INSERT INTO logs (username, timestamp, role, content) VALUES (?, ?, ?, ?)",
               (username, timestamp, role, content))
 
-# ========== โมเดลที่ปลอดภัย ==========
+# ========== โมเดลที่ปลอดภัยของ Groq ==========
 ALL_MODEL_CANDIDATES = [
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-latest",
-    "gemini-1.5-pro",
-    "gemini-1.5-pro-latest",
-    "gemini-1.0-pro",
-    "gemini-1.0-pro-latest",
+    "llama-3.3-70b-versatile",
+    "llama3-8b-8192",
+    "mixtral-8x7b-32768",
+    "gemma2-9b-it"
 ]
 
 # ========== Multi-Key LLM ==========
 def _create_llm(model_name, api_key=None):
     key = api_key or API_KEYS[0]
-    return ChatGoogleGenerativeAI(model=model_name, temperature=0.7, google_api_key=key)
+    return ChatGroq(model=model_name, temperature=0.7, groq_api_key=key)
 
 async def _try_all_keys_and_models(history, preferred_model):
     """ลองยิงทุก Key + ทุก Model จนกว่าจะสำเร็จ"""
@@ -150,14 +147,11 @@ async def _try_all_keys_and_models(history, preferred_model):
                 last_error = str(e)
                 err_lower = last_error.lower()
                 
-                if "limit: 0" in last_error or "limit:0" in last_error:
-                    print(f"[Skip] Key#{key_idx+1} {model_name}: limit=0")
-                    continue
                 if "404" in last_error or "not_found" in err_lower:
-                    print(f"[Skip] Key#{key_idx+1} {model_name}: 404")
+                    print(f"[Skip] Key#{key_idx+1} {model_name}: 404 Model Not Found")
                     continue
-                if "429" in last_error or "quota" in err_lower or "resource" in err_lower:
-                    print(f"[Skip] Key#{key_idx+1} {model_name}: 429")
+                if "429" in last_error or "quota" in err_lower or "resource" in err_lower or "rate_limit" in err_lower:
+                    print(f"[Skip] Key#{key_idx+1} {model_name}: 429 Rate Limit Exceeded")
                     continue
                 print(f"[Skip] Key#{key_idx+1} {model_name}: {last_error[:80]}")
                 continue
@@ -165,20 +159,29 @@ async def _try_all_keys_and_models(history, preferred_model):
     return False, [], last_error
 
 # ========== เลือกโมเดลหลักตอนบูท ==========
-PREFERRED_FLASH = "gemini-2.0-flash"
-PREFERRED_PRO = "gemini-2.0-flash"
+PREFERRED_FLASH = "llama3-8b-8192"
+PREFERRED_PRO = "llama-3.3-70b-versatile"
 
-print("🔍 กำลังสแกนหาสมองที่ใช้ได้...")
+print("🔍 กำลังสแกนหาสมองที่ใช้ได้จาก Groq...")
 for key_idx, api_key in enumerate(API_KEYS):
     for model in ALL_MODEL_CANDIDATES:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-            resp = requests.post(url, json={"contents": [{"parts": [{"text": "Hi"}]}]}, timeout=15)
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": model,
+                "messages": [{"role": "user", "content": "Hi"}],
+                "max_tokens": 10
+            }
+            resp = requests.post(url, headers=headers, json=payload, timeout=15)
             if resp.status_code == 200:
                 PREFERRED_FLASH = model
                 print(f"  ✅ Key#{key_idx+1} {model} → ใช้ได้!")
                 break
-            elif resp.status_code == 429 and "limit: 0" not in resp.text:
+            elif resp.status_code == 429:
                 PREFERRED_FLASH = model
                 print(f"  ⚠️ Key#{key_idx+1} {model} → 429 ชั่วคราว")
                 break
@@ -191,14 +194,23 @@ for key_idx, api_key in enumerate(API_KEYS):
     break
 
 for key_idx, api_key in enumerate(API_KEYS):
-    for model in ["gemini-1.5-pro", "gemini-1.5-pro-latest"]:
+    for model in ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile"]:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-            resp = requests.post(url, json={"contents": [{"parts": [{"text": "Hi"}]}]}, timeout=15)
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": model,
+                "messages": [{"role": "user", "content": "Hi"}],
+                "max_tokens": 10
+            }
+            resp = requests.post(url, headers=headers, json=payload, timeout=15)
             if resp.status_code == 200:
                 PREFERRED_PRO = model
                 break
-            elif resp.status_code == 429 and "limit: 0" not in resp.text:
+            elif resp.status_code == 429:
                 PREFERRED_PRO = model
                 break
         except:
@@ -207,7 +219,7 @@ for key_idx, api_key in enumerate(API_KEYS):
         continue
     break
 
-if PREFERRED_PRO == "gemini-2.0-flash":
+if PREFERRED_PRO == "llama3-8b-8192":
     PREFERRED_PRO = PREFERRED_FLASH
 
 print(f"🤖 ========================================")
@@ -417,8 +429,8 @@ async def chat_endpoint(req: ChatRequest):
 
         if not success:
             if is_boss_user:
-                error_msg = "\n\n⚠️ **บอสคะ!** หนูลองสมองทุกตัว ทุก Key แล้ว แต่โควตา API หมดทุกดอกเลยค่ะ 😢\n\n"
-                error_msg += "💡 **วิธีแก้ด่วน:** บอสสร้าง API Key ใหม่จากโปรเจกต์ Google Cloud อีกอัน แล้วเพิ่มใน Render ตัวแปร `GEMINI_API_KEYS` (คั่นด้วยคอมม่า) ค่ะ\n"
+                error_msg = "\n\n⚠️ **บอสคะ!** หนูลองสมองของ Groq ทุกตัวและทุก Key แล้ว แต่โควตา API เต็มหมดเลยค่ะ 😢\n\n"
+                error_msg += "💡 **วิธีแก้ด่วน:** ให้บอสเพิ่ม API Key ของ Groq ลงในตัวแปร `GROQ_API_KEYS` บน Render เพิ่มอีกนะคะ\n"
                 error_msg += f"\n🛠️ **[Boss Diagnostic]**\n```\nKeys ทั้งหมด: {len(API_KEYS)} ดอก\n{last_error}\n```"
             else:
                 error_msg = "\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้!** ตอนนี้ระบบมีผู้ใช้งานเยอะมาก รบกวนรอสักพัก (ประมาณ 1 นาที) แล้วลองถามใหม่อีกครั้งนะคะ 🙏"
