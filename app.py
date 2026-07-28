@@ -102,95 +102,113 @@ import requests
 # --- AI Setup (Gemini Free API) ---
 os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 
+# ========== รายชื่อโมเดลที่ปลอดภัย (เรียงจากดีที่สุด → เก่าที่สุด) ==========
+ALL_MODEL_CANDIDATES = [
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-pro",
+    "gemini-1.5-pro-latest",
+    "gemini-1.0-pro",
+    "gemini-1.0-pro-latest",
+]
+
 def _ping_model(api_key, model_name):
-    """ทดสอบยิงจริงว่าโมเดลนี้ตอบได้หรือไม่ (ใช้คำถามสั้นที่สุด)"""
+    """ทดสอบยิงจริงว่าโมเดลนี้ตอบได้หรือไม่ 
+    - 200 = ใช้ได้ 
+    - 429 ที่ limit:0 = ตายถาวร ไม่ต้องลองอีก 
+    - 404 = ถูกยกเลิก
+    """
     try:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
         payload = {"contents": [{"parts": [{"text": "Hi"}]}]}
-        resp = requests.post(url, json=payload, timeout=10)
+        resp = requests.post(url, json=payload, timeout=15)
+        
         if resp.status_code == 200:
-            return True
-        print(f"  [Ping] {model_name} → HTTP {resp.status_code}")
-        return False
+            print(f"  ✅ {model_name} → ใช้ได้!")
+            return "ok"
+        
+        body = resp.text
+        # 429 ที่ limit: 0 = ถูกฆ่าโควตาถาวร
+        if resp.status_code == 429 and "limit: 0" in body:
+            print(f"  ❌ {model_name} → โควตาถูกฆ่าถาวร (limit: 0)")
+            return "dead"
+        
+        # 429 ปกติ (ใช้เยอะเกินไปชั่วคราว) = ยังใช้ได้ รอแป๊บเดียว
+        if resp.status_code == 429:
+            print(f"  ⚠️ {model_name} → 429 ชั่วคราว (อาจใช้ได้ถ้ารอ)")
+            return "throttled"
+        
+        # 404 = ถูกยกเลิก    
+        if resp.status_code == 404:
+            print(f"  ❌ {model_name} → 404 ไม่มีโมเดลนี้แล้ว")
+            return "dead"
+        
+        print(f"  ⚠️ {model_name} → HTTP {resp.status_code}")
+        return "error"
     except Exception as e:
-        print(f"  [Ping] {model_name} → Exception: {e}")
-        return False
+        print(f"  ⚠️ {model_name} → Exception: {e}")
+        return "error"
 
 def auto_detect_models(api_key):
-    """สแกนและทดสอบยิงจริง เพื่อเลือกเฉพาะโมเดลที่ใช้ได้ชัวร์ 100%"""
+    """สแกนและทดสอบยิงจริงทุกตัว เลือกเฉพาะตัวที่ใช้ได้ชัวร์ 100%"""
     
     if not api_key or api_key == "YOUR_GEMINI_API_KEY_HERE":
-        return "gemini-1.5-flash", "gemini-1.5-flash"
+        print("⚠️ ไม่มี API Key → ใช้ gemini-2.0-flash เป็น default")
+        return "gemini-2.0-flash", "gemini-2.0-flash", ALL_MODEL_CANDIDATES
     
-    available = []
-    try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
-        resp = requests.get(url, timeout=15)
-        if resp.status_code == 200:
-            available = [m['name'].replace('models/', '') for m in resp.json().get('models', [])
-                         if 'generateContent' in m.get('supportedGenerationMethods', [])]
-            print(f"📋 โมเดลที่ API Key เข้าถึงได้: {len(available)} ตัว")
-    except Exception as e:
-        print(f"[Warning] ดึงรายชื่อโมเดลไม่ได้: {e}")
+    print("🔍 กำลังสแกนหาสมองที่ใช้ได้จริง...")
     
-    # ลำดับความต้องการจากดีที่สุดไปเก่าที่สุด
-    flash_candidates = [
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-latest",
-        "gemini-2.0-flash-lite",
-        "gemini-1.0-pro"
-    ]
+    working_models = []  # โมเดลที่ยิงผ่าน 200
+    throttled_models = []  # โมเดลที่ 429 ชั่วคราว (อาจใช้ได้)
     
-    pro_candidates = [
-        "gemini-1.5-pro",
-        "gemini-1.5-pro-latest",
-        "gemini-2.5-pro-preview-05-06",
-        "gemini-1.0-pro"
-    ]
-
-    best_flash = None
-    best_pro = None
+    for model in ALL_MODEL_CANDIDATES:
+        result = _ping_model(api_key, model)
+        if result == "ok":
+            working_models.append(model)
+        elif result == "throttled":
+            throttled_models.append(model)
+        # dead / error = ข้ามเลย
     
-    # เลือก Flash: ตัวแรกใน flash_candidates ที่อยู่ใน available
-    if available:
-        for c in flash_candidates:
-            if c in available:
-                best_flash = c
-                break
-                
-    # เลือก Pro: ตัวแรกใน pro_candidates ที่อยู่ใน available
-    if available:
-        for c in pro_candidates:
-            if c in available:
-                best_pro = c
-                break
+    # รวมรายชื่อที่น่าจะใช้ได้ (working ก่อน, throttled ทีหลัง)
+    usable_models = working_models + throttled_models
+    
+    if not usable_models:
+        print("  ❌ ไม่มีโมเดลที่ใช้ได้เลย! ใช้ gemini-2.0-flash เป็นทางเลือกสุดท้าย")
+        usable_models = ["gemini-2.0-flash"]
+    
+    # Flash = ตัวแรกที่ใช้ได้
+    best_flash = usable_models[0]
+    
+    # Pro = หาตัวที่มีคำว่า "pro" ถ้าไม่มีก็ใช้ Flash ตัวเดียวกัน
+    best_pro = best_flash
+    for m in usable_models:
+        if "pro" in m:
+            best_pro = m
+            break
+    
+    print(f"\n  🏆 สรุป: Flash = {best_flash}, Pro = {best_pro}")
+    print(f"  📋 ลำดับสำรอง: {usable_models}")
+    return best_pro, best_flash, usable_models
 
-    # ถ้าดึง available ไม่ได้ หรือ ไม่มีตัวไหนตรงเลย ให้บังคับค่าเริ่มต้นที่ปลอดภัยที่สุด
-    if not best_flash:
-        # สมมติว่ามี gemini-1.5-flash แน่ๆ ถ้าหาไม่เจอ
-        best_flash = "gemini-1.5-flash" 
-        
-    if not best_pro:
-        best_pro = best_flash
-
-    print(f"  ✅ สรุปการเลือก: Flash = {best_flash}, Pro = {best_pro}")
-    return best_pro, best_flash
-
-PRO_MODEL, FLASH_MODEL = auto_detect_models(GEMINI_API_KEY)
+PRO_MODEL, FLASH_MODEL, FALLBACK_MODELS = auto_detect_models(GEMINI_API_KEY)
 print(f"🤖 ========================================")
 print(f"🤖 Kira 1.0 (Standard) = {FLASH_MODEL}")
 print(f"🤖 Kira 1.1 (Next-Gen) = {PRO_MODEL}")
 print(f"🤖 ========================================")
 
-# 🧠 สมอง 1.1 (Next-Gen)
-llm_1_1 = ChatGoogleGenerativeAI(model=PRO_MODEL, temperature=0.8)
-# 🛡️ สมอง 1.0 (Standard & Fallback)
-llm_1_0 = ChatGoogleGenerativeAI(model=FLASH_MODEL, temperature=0.7)
+# 🧠 สร้าง LLM Objects
+def _create_llm(model_name):
+    return ChatGoogleGenerativeAI(model=model_name, temperature=0.7)
+
+llm_1_1 = _create_llm(PRO_MODEL)
+llm_1_0 = _create_llm(FLASH_MODEL)
 
 def is_boss(uname: str) -> bool:
     if not uname: return False
     uname_lower = uname.lower()
     return "boss" in uname_lower or "บอส" in uname_lower or "admin" in uname_lower or uname == "👑 Boss (Owner)"
+
 system_prompt = """คุณคือ "คิระ (Kira)" ผู้ช่วย AI อัจฉริยะระดับสูง สร้างสรรค์โดย "Kira Studio"
 หน้าที่: ให้บริการ ช่วยเหลือ และตอบคำถามผู้ใช้งานทั่วไปอย่างมืออาชีพ สุภาพ และมีประสิทธิภาพสูงสุด
 
@@ -329,55 +347,76 @@ async def chat_endpoint(req: ChatRequest):
         full_response += badge
         yield badge
         
-        try:
-            primary_llm = llm_1_1 if model_version == "1.1" else llm_1_0
+        is_boss_user = is_boss(uname)
+        
+        # สร้างลำดับ LLM ที่จะลอง: primary → ทุกตัวใน FALLBACK_MODELS
+        primary_model = PRO_MODEL if model_version == "1.1" else FLASH_MODEL
+        
+        # สร้างรายชื่อโมเดลที่จะลองทั้งหมด (ไม่ซ้ำ)
+        models_to_try = [primary_model]
+        for m in FALLBACK_MODELS:
+            if m not in models_to_try:
+                models_to_try.append(m)
+        
+        last_error = None
+        success = False
+        
+        for i, model_name in enumerate(models_to_try):
             try:
-                async for chunk in primary_llm.astream(history):
+                llm = _create_llm(model_name)
+                async for chunk in llm.astream(history):
                     content = chunk.content
                     if content:
                         full_response += content
                         yield content
-            except Exception as e_primary:
-                err_p = str(e_primary)
-                if "429" in err_p or "quota" in err_p.lower():
-                    raise e_primary
-                print(f"[Warning] Primary LLM failed: {e_primary}. Switching to Backup...")
-                if PRO_MODEL != FLASH_MODEL:
-                    async for chunk in llm_1_0.astream(history):
-                        content = chunk.content
-                        if content:
-                            full_response += content
-                            yield content
-                else:
-                    raise e_primary
-        except Exception as e:
-            err_str = str(e)
-            is_boss_user = is_boss(uname)
-            
-            if "429" in err_str or "quota" in err_str.lower() or "resource" in err_str.lower():
-                if is_boss_user:
-                    error_msg = "\n\n⚠️ **บอสคะ!** โควตา API ของเราถูกใช้จนเต็มลิมิตแล้วค่ะ หรือหนูกำลังโดนเรียกใช้งานหนักเกินไป รบกวนบอสรอสัก 1 นาทีแล้วค่อยสั่งหนูใหม่นะคะ 🙏"
-                else:
-                    error_msg = "\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้!** ตอนนี้มีผู้ใช้งานเต็มโควตา หรือระบบทำงานหนักเกินไป รบกวนรอสักพัก (ประมาณ 1 นาที) แล้วลองถามใหม่อีกครั้งนะคะ 🙏"
-            elif "404" in err_str or "not_found" in err_str.lower():
-                if is_boss_user:
-                    error_msg = "\n\n⚠️ **บอสคะ!** คิระหาคลื่นสมอง (Model) ที่บอสตั้งไว้ไม่เจอค่ะ รบกวนบอสเช็ค API Key หรือรันเซิร์ฟเวอร์ใหม่นะคะ 🔄"
-                else:
-                    error_msg = "\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้!** ระบบสมอง AI กำลังปรับปรุง กรุณารีเฟรชหน้าเว็บแล้วลองใหม่อีกครั้งนะคะ 🔄"
-            else:
-                if is_boss_user:
-                    error_msg = f"\n\n⚠️ **บอสคะ!** เกิดข้อผิดพลาดในระบบค่ะ รบกวนบอสตรวจสอบ Diagnostic ด้านล่างนะคะ 🙏"
-                else:
-                    error_msg = f"\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้** ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้งนะคะ 🙏"
+                success = True
+                if i > 0:
+                    print(f"[Fallback] สำเร็จด้วยโมเดล: {model_name} (ลองตัวที่ {i+1})")
+                break  # สำเร็จแล้ว ออกจาก loop
+            except Exception as e:
+                last_error = str(e)
+                err_lower = last_error.lower()
                 
+                # ถ้า limit: 0 → ข้ามตัวนี้ทันที ลองตัวถัดไป
+                if "limit: 0" in last_error or "limit:0" in last_error:
+                    print(f"[Fallback] {model_name} โดนฆ่าโควตาถาวร → ข้ามไปตัวถัดไป")
+                    continue
+                    
+                # ถ้า 404 → โมเดลตาย ข้ามเลย
+                if "404" in last_error or "not_found" in err_lower:
+                    print(f"[Fallback] {model_name} ไม่มีแล้ว (404) → ข้ามไปตัวถัดไป")
+                    continue
+                
+                # ถ้า 429 ชั่วคราว → ลองตัวถัดไป
+                if "429" in last_error or "quota" in err_lower or "resource" in err_lower:
+                    print(f"[Fallback] {model_name} โควตาเต็มชั่วคราว → ลองตัวถัดไป")
+                    continue
+                
+                # Error อื่นๆ → ลองตัวถัดไปเผื่อตัวนั้นใช้ได้
+                print(f"[Fallback] {model_name} Error: {last_error[:100]}... → ลองตัวถัดไป")
+                continue
+        
+        if not success:
+            # ทุกโมเดลล้มเหลวหมด
             if is_boss_user:
-                error_msg += f"\n\n🛠️ **[Boss Diagnostic]**\n```\n{err_str}\n```"
-                
+                if "429" in (last_error or "") or "quota" in (last_error or "").lower():
+                    error_msg = "\n\n⚠️ **บอสคะ!** หนูลองสมองทุกตัวแล้ว แต่โควตา API หมดทุกตัวเลยค่ะ รบกวนบอสรอสัก 1 นาทีแล้วค่อยสั่งหนูใหม่นะคะ 🙏"
+                elif "404" in (last_error or ""):
+                    error_msg = "\n\n⚠️ **บอสคะ!** สมอง AI ทุกตัวถูก Google ยกเลิกหมดแล้วค่ะ รบกวนบอสเช็ค API Key หรือสร้างคีย์ใหม่นะคะ 🔄"
+                else:
+                    error_msg = "\n\n⚠️ **บอสคะ!** เกิดข้อผิดพลาดในระบบที่หนูแก้ไม่ได้ค่ะ กรุณาตรวจสอบ Diagnostic ด้านล่างนะคะ 🙏"
+                error_msg += f"\n\n🛠️ **[Boss Diagnostic]**\n```\n{last_error}\n```"
+            else:
+                if "429" in (last_error or "") or "quota" in (last_error or "").lower():
+                    error_msg = "\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้!** ตอนนี้ระบบมีผู้ใช้งานเยอะมาก รบกวนรอสักพัก (ประมาณ 1 นาที) แล้วลองถามใหม่อีกครั้งนะคะ 🙏"
+                else:
+                    error_msg = "\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้!** ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้งนะคะ 🙏"
+            
             full_response += error_msg
             yield error_msg
-        finally:
-            history.append(AIMessage(content=full_response))
-            log_chat(uname, "Kira", full_response)
+            
+        history.append(AIMessage(content=full_response))
+        log_chat(uname, "Kira", full_response)
             
     return StreamingResponse(generate(), media_type="text/plain")
 
@@ -392,3 +431,4 @@ if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8000))
     print(f"🌐 Kira Public Web is starting on port {port}")
     uvicorn.run("app:app", host="0.0.0.0", port=port, log_level="info")
+
