@@ -122,11 +122,10 @@ def auto_detect_models(api_key):
     if not api_key or api_key == "YOUR_GEMINI_API_KEY_HERE":
         return "gemini-1.5-flash", "gemini-1.5-flash"
     
-    # ดึงรายชื่อโมเดลที่ API Key นี้เห็นได้
     available = []
     try:
         url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
-        resp = requests.get(url, timeout=5)
+        resp = requests.get(url, timeout=15)
         if resp.status_code == 200:
             available = [m['name'].replace('models/', '') for m in resp.json().get('models', [])
                          if 'generateContent' in m.get('supportedGenerationMethods', [])]
@@ -135,60 +134,73 @@ def auto_detect_models(api_key):
     except Exception as e:
         print(f"[Warning] ดึงรายชื่อโมเดลไม่ได้: {e}")
     
-    # === ขั้นตอนที่ 1: หา Flash ก่อน (ตัวพื้นฐานที่ต้องมี) ===
     flash_candidates = [
         "gemini-1.5-flash",
         "gemini-1.5-flash-latest",
+        "gemini-1.5-flash-002",
+        "gemini-1.5-flash-001",
         "gemini-2.0-flash-lite",
-        "gemini-2.0-flash",
+        "gemini-1.0-pro",
+        "gemini-1.0-pro-latest"
     ]
     
-    best_flash = None
-    print("🔍 [ขั้นตอน 1] กำลังค้นหาสมอง Flash...")
-    for candidate in flash_candidates:
-        if candidate in available:
-            print(f"  ทดสอบ {candidate}...")
-            if _ping_model(api_key, candidate):
-                best_flash = candidate
-                print(f"  ✅ เลือก Flash → {candidate}")
-                break
-    
-    # ถ้า Flash ไม่เจอ ลองยิงตรงๆ ทุกตัวแม้ไม่อยู่ใน list
-    if not best_flash:
-        print("  ⚠️ ไม่เจอ Flash ใน list... ยิงตรงทุกตัว!")
-        for candidate in flash_candidates:
-            if _ping_model(api_key, candidate):
-                best_flash = candidate
-                print(f"  ✅ เลือก Flash (force) → {candidate}")
-                break
-    
-    # ถ้ายังไม่เจอจริงๆ ใช้ gemini-1.5-flash เป็นทางเลือกสุดท้าย
-    if not best_flash:
-        best_flash = "gemini-1.5-flash"
-        print(f"  ⚠️ ใช้ fallback → {best_flash}")
-    
-    # === ขั้นตอนที่ 2: หา Pro (ถ้าไม่เจอ ใช้ Flash ตัวเดิมแทน) ===
     pro_candidates = [
         "gemini-1.5-pro",
         "gemini-1.5-pro-latest",
+        "gemini-1.5-pro-002",
         "gemini-2.5-pro-preview-05-06",
+        "gemini-1.0-pro"
     ]
-    
+
+    best_flash = None
     best_pro = None
-    print("🔍 [ขั้นตอน 2] กำลังค้นหาสมอง Pro...")
-    for candidate in pro_candidates:
-        if candidate in available:
-            print(f"  ทดสอบ {candidate}...")
-            if _ping_model(api_key, candidate):
-                best_pro = candidate
-                print(f"  ✅ เลือก Pro → {candidate}")
-                break
     
-    # ถ้าไม่มี Pro ตัวไหนใช้ได้เลย → ใช้ Flash ตัวเดียวกัน (ดีกว่าพัง 404)
+    # 1. หา Flash จาก available list (ถ้ามี)
+    if available:
+        for c in flash_candidates:
+            if c in available:
+                if _ping_model(api_key, c):
+                    best_flash = c
+                    print(f"  ✅ เลือก Flash → {c}")
+                    break
+        # ถ้าไม่มีใน flash_candidates แต่มีใน available ให้เอาตัวแรก
+        if not best_flash:
+            best_flash = available[0]
+            print(f"  ⚠️ เลือก Flash (จาก available ตัวแรก) → {best_flash}")
+            
+    # 2. ถ้าดึง available ไม่ได้เลย ลอง ping ตรงๆ
+    if not best_flash:
+        for c in flash_candidates:
+            if _ping_model(api_key, c):
+                best_flash = c
+                print(f"  ✅ เลือก Flash (ยิงตรง) → {c}")
+                break
+                
+    # 3. Fallback สุดท้ายถ้าหลุดมาถึงตรงนี้
+    if not best_flash:
+        best_flash = "gemini-1.0-pro" # Safe universal fallback
+        print(f"  ⚠️ ใช้ Fallback ขั้นสูงสุด → {best_flash}")
+
+    # หา Pro
+    if available:
+        for c in pro_candidates:
+            if c in available:
+                if _ping_model(api_key, c):
+                    best_pro = c
+                    print(f"  ✅ เลือก Pro → {c}")
+                    break
+                    
+    if not best_pro:
+        for c in pro_candidates:
+            if _ping_model(api_key, c):
+                best_pro = c
+                print(f"  ✅ เลือก Pro (ยิงตรง) → {c}")
+                break
+                
     if not best_pro:
         best_pro = best_flash
-        print(f"  ⚠️ ไม่มี Pro ที่ใช้ได้ → ใช้ Flash แทน: {best_pro}")
-    
+        print(f"  ⚠️ ไม่มี Pro ที่ใช้ได้ ใช้ Flash แทน → {best_pro}")
+
     return best_pro, best_flash
 
 PRO_MODEL, FLASH_MODEL = auto_detect_models(GEMINI_API_KEY)
