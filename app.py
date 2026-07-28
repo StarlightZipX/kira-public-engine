@@ -130,24 +130,20 @@ def auto_detect_models(api_key):
             available = [m['name'].replace('models/', '') for m in resp.json().get('models', [])
                          if 'generateContent' in m.get('supportedGenerationMethods', [])]
             print(f"📋 โมเดลที่ API Key เข้าถึงได้: {len(available)} ตัว")
-            print(f"📋 รายชื่อ: {available}")
     except Exception as e:
         print(f"[Warning] ดึงรายชื่อโมเดลไม่ได้: {e}")
     
+    # ลำดับความต้องการจากดีที่สุดไปเก่าที่สุด
     flash_candidates = [
         "gemini-1.5-flash",
         "gemini-1.5-flash-latest",
-        "gemini-1.5-flash-002",
-        "gemini-1.5-flash-001",
         "gemini-2.0-flash-lite",
-        "gemini-1.0-pro",
-        "gemini-1.0-pro-latest"
+        "gemini-1.0-pro"
     ]
     
     pro_candidates = [
         "gemini-1.5-pro",
         "gemini-1.5-pro-latest",
-        "gemini-1.5-pro-002",
         "gemini-2.5-pro-preview-05-06",
         "gemini-1.0-pro"
     ]
@@ -155,52 +151,29 @@ def auto_detect_models(api_key):
     best_flash = None
     best_pro = None
     
-    # 1. หา Flash จาก available list (ถ้ามี)
+    # เลือก Flash: ตัวแรกใน flash_candidates ที่อยู่ใน available
     if available:
         for c in flash_candidates:
             if c in available:
-                if _ping_model(api_key, c):
-                    best_flash = c
-                    print(f"  ✅ เลือก Flash → {c}")
-                    break
-        # ถ้าไม่มีใน flash_candidates แต่มีใน available ให้เอาตัวแรก
-        if not best_flash:
-            best_flash = available[0]
-            print(f"  ⚠️ เลือก Flash (จาก available ตัวแรก) → {best_flash}")
-            
-    # 2. ถ้าดึง available ไม่ได้เลย ลอง ping ตรงๆ
-    if not best_flash:
-        for c in flash_candidates:
-            if _ping_model(api_key, c):
                 best_flash = c
-                print(f"  ✅ เลือก Flash (ยิงตรง) → {c}")
                 break
                 
-    # 3. Fallback สุดท้ายถ้าหลุดมาถึงตรงนี้
-    if not best_flash:
-        best_flash = "gemini-1.0-pro" # Safe universal fallback
-        print(f"  ⚠️ ใช้ Fallback ขั้นสูงสุด → {best_flash}")
-
-    # หา Pro
+    # เลือก Pro: ตัวแรกใน pro_candidates ที่อยู่ใน available
     if available:
         for c in pro_candidates:
             if c in available:
-                if _ping_model(api_key, c):
-                    best_pro = c
-                    print(f"  ✅ เลือก Pro → {c}")
-                    break
-                    
-    if not best_pro:
-        for c in pro_candidates:
-            if _ping_model(api_key, c):
                 best_pro = c
-                print(f"  ✅ เลือก Pro (ยิงตรง) → {c}")
                 break
-                
+
+    # ถ้าดึง available ไม่ได้ หรือ ไม่มีตัวไหนตรงเลย ให้บังคับค่าเริ่มต้นที่ปลอดภัยที่สุด
+    if not best_flash:
+        # สมมติว่ามี gemini-1.5-flash แน่ๆ ถ้าหาไม่เจอ
+        best_flash = "gemini-1.5-flash" 
+        
     if not best_pro:
         best_pro = best_flash
-        print(f"  ⚠️ ไม่มี Pro ที่ใช้ได้ ใช้ Flash แทน → {best_pro}")
 
+    print(f"  ✅ สรุปการเลือก: Flash = {best_flash}, Pro = {best_pro}")
     return best_pro, best_flash
 
 PRO_MODEL, FLASH_MODEL = auto_detect_models(GEMINI_API_KEY)
