@@ -382,12 +382,24 @@ async function sendMessage() {
         const likeBtn = document.createElement('button');
         likeBtn.innerHTML = '<i class="fa-solid fa-thumbs-up"></i>';
         likeBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
-        likeBtn.onclick = () => { submitFeedback('like', fullText); likeBtn.style.color = '#34d399'; likeBtn.style.borderColor = '#34d399'; };
+        likeBtn.onclick = () => { 
+            submitFeedback('like', fullText); 
+            likeBtn.style.color = '#34d399'; 
+            likeBtn.style.borderColor = '#34d399'; 
+            dislikeBtn.style.color = '#94a3b8'; 
+            dislikeBtn.style.borderColor = '#334155'; 
+        };
 
         const dislikeBtn = document.createElement('button');
         dislikeBtn.innerHTML = '<i class="fa-solid fa-thumbs-down"></i>';
         dislikeBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
-        dislikeBtn.onclick = () => { submitFeedback('dislike', fullText); dislikeBtn.style.color = '#ef4444'; dislikeBtn.style.borderColor = '#ef4444'; };
+        dislikeBtn.onclick = () => { 
+            submitFeedback('dislike', fullText); 
+            dislikeBtn.style.color = '#ef4444'; 
+            dislikeBtn.style.borderColor = '#ef4444'; 
+            likeBtn.style.color = '#94a3b8'; 
+            likeBtn.style.borderColor = '#334155'; 
+        };
 
         const reviewBtn = document.createElement('button');
         reviewBtn.innerHTML = '<i class="fa-solid fa-comment-dots"></i> รีวิวติชม';
