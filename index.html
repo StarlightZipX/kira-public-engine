@@ -49,6 +49,21 @@
         </div>
     </div>
 
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="auth-modal" style="display: none;">
+        <div class="auth-box">
+            <h2><i class="fa-solid fa-comment-dots"></i> ส่งความคิดเห็นให้ Kira</h2>
+            <p class="auth-subtitle">คำติชมของคุณจะช่วยให้ Kira ฉลาดขึ้นในอนาคต!</p>
+            <input type="hidden" id="feedback-rating" value="">
+            <input type="hidden" id="feedback-bot-msg" value="">
+            <textarea id="feedback-text" placeholder="พิมพ์คำแนะนำ หรือสิ่งที่คุณอยากให้ Kira ปรับปรุง..." rows="4" style="width: 100%; margin: 10px 0; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;"></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button id="btn-submit-feedback" class="auth-btn primary" style="flex: 1;">ส่งรีวิว (Submit)</button>
+                <button id="btn-cancel-feedback" class="auth-btn" style="flex: 1; background: #334155;">ยกเลิก (Cancel)</button>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container" id="app-container" style="display: none;">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
