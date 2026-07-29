@@ -377,7 +377,7 @@ async function sendMessage() {
         // Append Feedback UI
         const feedbackUI = document.createElement('div');
         feedbackUI.className = 'feedback-ui';
-        feedbackUI.style.cssText = 'margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end;';
+        feedbackUI.style.cssText = 'margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; gap: 8px; justify-content: flex-start;';
         
         const likeBtn = document.createElement('button');
         likeBtn.innerHTML = '<i class="fa-solid fa-thumbs-up"></i>';
@@ -397,7 +397,7 @@ async function sendMessage() {
         feedbackUI.appendChild(likeBtn);
         feedbackUI.appendChild(dislikeBtn);
         feedbackUI.appendChild(reviewBtn);
-        contentDiv.parentElement.appendChild(feedbackUI);
+        contentDiv.appendChild(feedbackUI);
         chatBox.scrollTop = chatBox.scrollHeight;
         
     } catch (error) {
