@@ -374,6 +374,32 @@ async function sendMessage() {
             chatBox.scrollTop = chatBox.scrollHeight;
         }
         
+        // Append Feedback UI
+        const feedbackUI = document.createElement('div');
+        feedbackUI.className = 'feedback-ui';
+        feedbackUI.style.cssText = 'margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end;';
+        
+        const likeBtn = document.createElement('button');
+        likeBtn.innerHTML = '<i class="fa-solid fa-thumbs-up"></i>';
+        likeBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
+        likeBtn.onclick = () => { submitFeedback('like', fullText); likeBtn.style.color = '#34d399'; likeBtn.style.borderColor = '#34d399'; };
+
+        const dislikeBtn = document.createElement('button');
+        dislikeBtn.innerHTML = '<i class="fa-solid fa-thumbs-down"></i>';
+        dislikeBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
+        dislikeBtn.onclick = () => { submitFeedback('dislike', fullText); dislikeBtn.style.color = '#ef4444'; dislikeBtn.style.borderColor = '#ef4444'; };
+
+        const reviewBtn = document.createElement('button');
+        reviewBtn.innerHTML = '<i class="fa-solid fa-comment-dots"></i> รีวิวติชม';
+        reviewBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
+        reviewBtn.onclick = () => openReviewModal(fullText);
+
+        feedbackUI.appendChild(likeBtn);
+        feedbackUI.appendChild(dislikeBtn);
+        feedbackUI.appendChild(reviewBtn);
+        contentDiv.parentElement.appendChild(feedbackUI);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
     } catch (error) {
         hideTypingIndicator();
         addMessage('ระบบขัดข้อง: ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', false);
@@ -514,3 +540,46 @@ sendBtn.addEventListener('click', () => {
     if (!isGenerating) sendMessage();
 });
 sendBtn.disabled = true;
+
+// --- Feedback Logic ---
+async function submitFeedback(rating, botText, review = "") {
+    try {
+        await fetch('/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: currentUser,
+                rating: rating,
+                review: review,
+                bot_response: botText
+            })
+        });
+    } catch(e) { console.error("Feedback error", e); }
+}
+
+function openReviewModal(botText) {
+    document.getElementById('feedback-modal').style.display = 'flex';
+    document.getElementById('feedback-rating').value = 'review';
+    document.getElementById('feedback-bot-msg').value = botText;
+    document.getElementById('feedback-text').value = '';
+    document.getElementById('feedback-text').focus();
+}
+
+const btnCancelFeedback = document.getElementById('btn-cancel-feedback');
+if (btnCancelFeedback) {
+    btnCancelFeedback.addEventListener('click', () => {
+        document.getElementById('feedback-modal').style.display = 'none';
+    });
+}
+
+const btnSubmitFeedback = document.getElementById('btn-submit-feedback');
+if (btnSubmitFeedback) {
+    btnSubmitFeedback.addEventListener('click', () => {
+        const text = document.getElementById('feedback-text').value;
+        const botMsg = document.getElementById('feedback-bot-msg').value;
+        const rating = document.getElementById('feedback-rating').value;
+        submitFeedback(rating, botMsg, text);
+        document.getElementById('feedback-modal').style.display = 'none';
+        alert("Kira ได้รับรีวิวของคุณแล้ว ขอบคุณมากค่ะ! ✨");
+    });
+}
