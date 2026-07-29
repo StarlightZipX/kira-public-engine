@@ -5,13 +5,14 @@ import time
 import asyncio
 from datetime import datetime, date, timezone, timedelta
 import uvicorn
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain_community.tools import DuckDuckGoSearchRun
 import requests
 
 # บังคับใช้ UTF-8
@@ -505,6 +506,30 @@ async def delete_dictionary(term: str):
     execute_query("DELETE FROM factory_dictionary WHERE term=?", (term,))
     return {"status": "success"}
 
+def _decide_and_search(query: str, version: str) -> str:
+    try:
+        search_prompt = [
+            {"role": "system", "content": "You are a web search router. If the user's message needs real-time info, news, weather, or facts not in your training data, output exactly: SEARCH_QUERY: <best_search_terms_in_thai_or_english>. If NO search is needed, output EXACTLY: NO_SEARCH."},
+            {"role": "user", "content": query}
+        ]
+        classifier = _create_llm("llama-3.1-8b-instant", API_KEYS[0])
+        result = classifier.invoke(search_prompt).content.strip()
+        
+        if "NO_SEARCH" not in result and "SEARCH_QUERY:" in result:
+            search_term = result.split("SEARCH_QUERY:")[-1].strip()
+            print(f"🔍 [Web Search Triggered]: {search_term}")
+            
+            search_tool = DuckDuckGoSearchRun()
+            raw_results = search_tool.invoke(search_term)
+            
+            if version == "1.0":
+                return f"\n\n[Web Search Results (Limited)]:\n{raw_results[:400]}\n(Instruction: Use this context briefly to answer. Do not analyze deeply.)"
+            else:
+                return f"\n\n[Web Search Results (Detailed)]:\n{raw_results[:2000]}\n(Instruction: Analyze this real-time data deeply to give the Boss a comprehensive answer.)"
+    except Exception as e:
+        print("Search error:", e)
+    return ""
+
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest):
     user_input = req.message
@@ -544,6 +569,13 @@ async def chat_endpoint(req: ChatRequest):
         full_response += badge
         yield badge
 
+        search_ctx = _decide_and_search(user_input, model_version)
+        temp_history = history.copy()
+        if search_ctx:
+            yield "*(🌐 กำลังค้นหาข้อมูลจากอินเทอร์เน็ต...)*\n\n"
+            full_response += "*(🌐 กำลังค้นหาข้อมูลจากอินเทอร์เน็ต...)*\n\n"
+            temp_history.insert(-1, SystemMessage(content=search_ctx))
+
         preferred_model = PREFERRED_PRO if model_version == "1.1" else PREFERRED_FLASH
 
         # Boss ลอง 2 รอบ (รอบ 2 รอ 60 วิ), ผู้ใช้ลอง 1 รอบ
@@ -558,7 +590,7 @@ async def chat_endpoint(req: ChatRequest):
                 yield wait_msg
                 await asyncio.sleep(60)
 
-            s, chunks, err = await _try_all_keys_and_models(history, preferred_model)
+            s, chunks, err = await _try_all_keys_and_models(temp_history, preferred_model)
 
             if s:
                 for c in chunks:
