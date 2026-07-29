@@ -568,15 +568,28 @@ async def chat_endpoint(req: ChatRequest):
         badge = "✨ **[Kira 1.1 👑]**\n\n" if model_version == "1.1" else "🤖 **[Kira 1.0]**\n\n"
         full_response += badge
         yield badge
+        
+        # บังคับให้ FastAPI ส่งข้อมูลชุดแรกไปที่หน้าเว็บทันที
+        await asyncio.sleep(0.1)
 
-        search_ctx = _decide_and_search(user_input, model_version)
+        search_ctx = await asyncio.to_thread(_decide_and_search, user_input, model_version)
         temp_history = history.copy()
         if search_ctx:
             yield "*(🌐 กำลังค้นหาข้อมูลจากอินเทอร์เน็ต...)*\n\n"
             full_response += "*(🌐 กำลังค้นหาข้อมูลจากอินเทอร์เน็ต...)*\n\n"
             temp_history.insert(-1, SystemMessage(content=search_ctx))
+            await asyncio.sleep(0.1)
 
         preferred_model = PREFERRED_PRO if model_version == "1.1" else PREFERRED_FLASH
+        
+        # Clean history for LLM (prevent double badge generation)
+        clean_history = []
+        for msg in temp_history:
+            if isinstance(msg, AIMessage):
+                clean_content = msg.content.replace("✨ **[Kira 1.1 👑]**\n\n", "").replace("🤖 **[Kira 1.0]**\n\n", "").replace("*(🌐 กำลังค้นหาข้อมูลจากอินเทอร์เน็ต...)*\n\n", "")
+                clean_history.append(AIMessage(content=clean_content))
+            else:
+                clean_history.append(msg)
 
         # Boss ลอง 2 รอบ (รอบ 2 รอ 60 วิ), ผู้ใช้ลอง 1 รอบ
         max_rounds = 2 if is_boss_user else 1
@@ -590,7 +603,7 @@ async def chat_endpoint(req: ChatRequest):
                 yield wait_msg
                 await asyncio.sleep(60)
 
-            s, chunks, err = await _try_all_keys_and_models(temp_history, preferred_model)
+            s, chunks, err = await _try_all_keys_and_models(clean_history, preferred_model)
 
             if s:
                 for c in chunks:
