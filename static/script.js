@@ -456,10 +456,42 @@ if (!hiddenFileInput) {
     document.body.appendChild(hiddenFileInput);
     
     // Listen for file selection
-    hiddenFileInput.addEventListener('change', (e) => {
+    hiddenFileInput.addEventListener('change', async (e) => {
         if (e.target.files.length > 0) {
-            const fileName = e.target.files[0].name;
-            alert(`[Kira 1.1 Pro] รับทราบการอัปโหลดไฟล์: ${fileName}\n(ระบบประมวลผลไฟล์ส่วน Backend จะถูกเปิดให้ใช้งานเร็วๆ นี้ค่ะ)`);
+            const file = e.target.files[0];
+            const fileName = file.name;
+            const username = localStorage.getItem('username');
+            
+            if (!username) {
+                alert("กรุณาล็อกอินก่อนอัปโหลดไฟล์ค่ะ");
+                return;
+            }
+            
+            // Show uploading message in chat
+            addMessageToChat("System", `กำลังอัปโหลดไฟล์: ${fileName}... ⏳`);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('username', username);
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    addMessageToChat("System", `✅ อัปโหลดไฟล์ ${fileName} สำเร็จแล้ว! บอสสามารถถามคำถามเกี่ยวกับไฟล์นี้ได้เลยค่ะ`);
+                } else {
+                    addMessageToChat("System", `❌ อัปโหลดไฟล์ล้มเหลว: ${data.message}`);
+                }
+            } catch (error) {
+                console.error("Upload error:", error);
+                addMessageToChat("System", `❌ เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์`);
+            }
+            
             e.target.value = ''; // reset
         }
     });
