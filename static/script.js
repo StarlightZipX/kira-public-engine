@@ -281,7 +281,7 @@ function addMessage(text, isUser) {
 
     const avatar = document.createElement('div');
     avatar.className = 'avatar';
-    avatar.innerHTML = isUser ? '' : '<img src="/static/images/kira_logo.jpg" alt="Kira">';
+    avatar.innerHTML = isUser ? '' : '<img src="/static/images/kira_avatar.jpg" alt="Kira">';
 
     const content = document.createElement('div');
     content.className = 'content';
@@ -305,7 +305,7 @@ function showTypingIndicator() {
     indicator.className = 'message ai typing';
     indicator.id = 'typing-indicator';
     indicator.innerHTML = `
-        <div class="avatar"><img src="/static/images/kira_logo.jpg" alt="Kira"></div>
+        <div class="avatar"><img src="/static/images/kira_avatar.jpg" alt="Kira"></div>
         <div class="content typing-indicator">
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
