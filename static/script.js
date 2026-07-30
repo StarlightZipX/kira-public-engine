@@ -595,7 +595,7 @@ if (btnInfo) {
     });
 }
 
-let isGenerating = false;
+// Duplicate declaration removed
 
 userInput.addEventListener('input', function() {
     this.style.height = 'auto';
