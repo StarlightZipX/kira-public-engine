@@ -447,6 +447,23 @@ async def register(req: AuthRequest):
 
 @app.post("/api/login")
 async def login(req: AuthRequest):
+    # Boss Override (กรณี Database ใหม่บนคลาวด์)
+    if req.username == "👑 Boss (Owner)" or req.username.lower() == "boss":
+        if req.password == "kira1234" or req.password == "12345678":
+            req.username = "👑 Boss (Owner)"
+            if req.username not in user_sessions:
+                prompt_to_use = _get_full_system_prompt(req.username)
+                user_sessions[req.username] = [SystemMessage(content=prompt_to_use)]
+                # Load history if any
+                history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (req.username,), fetch='all')
+                if history_rows:
+                    for role, content in history_rows:
+                        if role == "User":
+                            user_sessions[req.username].append(HumanMessage(content=content))
+                        elif role == "Kira":
+                            user_sessions[req.username].append(AIMessage(content=content))
+            return {"status": "success", "username": req.username}
+
     row = execute_query("SELECT password_hash FROM users WHERE username=?", (req.username,), fetch='one')
     if row and row[0] == hash_password(req.password):
         if req.username not in user_sessions:
