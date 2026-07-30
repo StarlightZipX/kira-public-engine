@@ -706,3 +706,12 @@ body.glow-1-1 .chat-input-wrapper {
 /* Mic Pulsing Animation */
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 .pulsing { animation: pulse 1s infinite; }
+
+/* Markdown List Styles */
+.content ul, .content ol {
+    margin-left: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+.content li {
+    margin-bottom: 0.25rem;
+}
