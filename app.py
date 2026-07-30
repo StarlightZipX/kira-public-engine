@@ -110,6 +110,11 @@ def init_db():
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
                       term TEXT UNIQUE,
                       meaning TEXT)''')
+        execute_query('''CREATE TABLE IF NOT EXISTS user_memories
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      username TEXT,
+                      fact TEXT,
+                      timestamp TEXT)''')
         
         # Insert default prompts if not exists
         check_p1 = execute_query("SELECT id FROM system_settings WHERE key_name='prompt_1.0'", fetch='one')
@@ -425,9 +430,7 @@ async def login(req: AuthRequest):
     row = execute_query("SELECT password_hash FROM users WHERE username=?", (req.username,), fetch='one')
     if row and row[0] == hash_password(req.password):
         if req.username not in user_sessions:
-            base_prompt = get_system_prompt(is_boss(req.username))
-            dict_context = get_dictionary_context()
-            prompt_to_use = base_prompt + "\n" + dict_context
+            prompt_to_use = _get_full_system_prompt(req.username)
             user_sessions[req.username] = [SystemMessage(content=prompt_to_use)]
             history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (req.username,), fetch='all')
             if history_rows:
@@ -463,6 +466,42 @@ def get_dictionary_context() -> str:
     for term, meaning in rows:
         context += f"- {term} = {meaning}\n"
     return context
+
+def _get_full_system_prompt(username: str) -> str:
+    is_boss_user = is_boss(username)
+    base_prompt = get_system_prompt(is_boss_user)
+    dict_context = get_dictionary_context()
+    
+    memory_ctx = ""
+    if is_boss_user:
+        try:
+            memories = execute_query("SELECT fact FROM user_memories WHERE username=? ORDER BY id DESC LIMIT 15", (username,), fetch='all')
+            if memories:
+                memory_ctx = "\n\n[Long-term Memory / ข้อมูลสำคัญของบอสที่ต้องจำ]:\n" + "\n".join([f"- {m[0]}" for m in memories])
+        except Exception:
+            pass
+            
+    return base_prompt + "\n" + dict_context + memory_ctx
+
+async def _extract_and_save_memory(username: str, user_input: str, version: str):
+    if version != "1.1" or not is_boss(username):
+        return
+    try:
+        prompt = [
+            {"role": "system", "content": "You are a memory extractor. Analyze the user's message and extract ONLY permanent facts about the user (e.g., name, job, preferences, project details). If there are NO permanent facts, output EXACTLY: NO_FACT. If there are facts, summarize them concisely in Thai language (e.g., 'ผู้ใช้ชอบดื่มกาแฟ')."},
+            {"role": "user", "content": user_input}
+        ]
+        classifier = _create_llm("llama-3.1-8b-instant", API_KEYS[0])
+        result = classifier.invoke(prompt).content.strip()
+        
+        if "NO_FACT" not in result and result:
+            tz = timezone(timedelta(hours=7))
+            timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+            execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)", 
+                          (username, result, timestamp))
+            print(f"🧠 [Memory Saved for {username}]: {result}")
+    except Exception as e:
+        print("Memory extraction error:", e)
 
 @app.post("/api/feedback")
 async def save_feedback(req: FeedbackRequest):
@@ -557,9 +596,7 @@ async def chat_endpoint(req: ChatRequest):
         )
 
     if uname not in user_sessions:
-        base_prompt = get_system_prompt(is_boss_user)
-        dict_context = get_dictionary_context()
-        prompt_to_use = base_prompt + "\n" + dict_context
+        prompt_to_use = _get_full_system_prompt(uname)
         user_sessions[uname] = [SystemMessage(content=prompt_to_use)]
         
         # กู้คืนความจำจาก Database หาก User เพิ่ง Refresh หน้าเว็บ
@@ -579,6 +616,10 @@ async def chat_endpoint(req: ChatRequest):
 
     history.append(HumanMessage(content=user_input))
     log_chat(uname, "User", user_input)
+    
+    # Trigger Memory Extraction in background for 1.1
+    if model_version == "1.1":
+        asyncio.create_task(_extract_and_save_memory(uname, user_input, model_version))
 
     async def generate():
         full_response = ""
@@ -658,9 +699,7 @@ async def chat_endpoint(req: ChatRequest):
 async def clear_chat(req: ChatRequest):
     uname = req.username
     execute_query("DELETE FROM logs WHERE username=?", (uname,))
-    base_prompt = get_system_prompt(is_boss(uname))
-    dict_context = get_dictionary_context()
-    prompt_to_use = base_prompt + "\n" + dict_context
+    prompt_to_use = _get_full_system_prompt(uname)
     user_sessions[uname] = [SystemMessage(content=prompt_to_use)]
     return {"status": "success", "message": "Cleared"}
 
