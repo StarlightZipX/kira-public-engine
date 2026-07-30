@@ -110,10 +110,15 @@
                 <!-- Messages will be injected here -->
             </div>
 
-            <div class="input-area">
+            <div class="input-area" style="position: relative;">
+                <div id="image-preview-container" style="display: none; position: absolute; bottom: 100%; left: 10px; padding: 10px; background: #1e293b; border-radius: 8px; border: 1px solid #334155; margin-bottom: 10px;">
+                    <img id="image-preview" src="" style="max-height: 80px; border-radius: 4px;">
+                    <button id="remove-img-btn" style="position: absolute; top: 0; right: 0; transform: translate(50%, -50%); background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
                 <div class="input-wrapper">
                     <button class="attach-btn" id="mic-btn" title="พูดด้วยเสียง (Web Speech API)"><i class="fa-solid fa-microphone"></i></button>
-                    <button class="attach-btn" title="แนบไฟล์ (เร็วๆ นี้)"><i class="fa-solid fa-paperclip"></i></button>
+                    <button class="attach-btn" id="img-upload-btn" title="แนบรูปภาพ (เฉพาะบอส)"><i class="fa-solid fa-image"></i></button>
+                    <input type="file" id="img-input" accept="image/*" style="display: none;">
                     <textarea id="user-input" placeholder="พิมพ์ข้อความหา Kira..." rows="1"></textarea>
                     <button class="send-btn" id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>

@@ -91,7 +91,14 @@ def init_db():
         execute_query('''CREATE TABLE IF NOT EXISTS users
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
                       username TEXT UNIQUE,
-                      password_hash TEXT)''')
+                      password_hash TEXT,
+                      points INTEGER DEFAULT 0)''')
+        
+        # สำหรับ Database เก่าที่ไม่มีคอลัมน์ points
+        try:
+            execute_query("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0")
+        except:
+            pass
         execute_query('''CREATE TABLE IF NOT EXISTS logs
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
                       username TEXT,
@@ -156,9 +163,14 @@ def _create_llm(model_name, api_key=None):
 async def _try_all_keys_and_models(history, preferred_model):
     """ลองยิงทุก Key + ทุก Model จนกว่าจะสำเร็จ"""
     models_to_try = [preferred_model]
-    for m in ALL_MODEL_CANDIDATES:
-        if m not in models_to_try:
-            models_to_try.append(m)
+    
+    if "vision" in preferred_model:
+        if "llama-3.2-90b-vision-preview" not in models_to_try:
+            models_to_try.append("llama-3.2-90b-vision-preview")
+    else:
+        for m in ALL_MODEL_CANDIDATES:
+            if m not in models_to_try:
+                models_to_try.append(m)
     
     last_error = ""
     
@@ -359,6 +371,7 @@ class ChatRequest(BaseModel):
     message: str
     username: str
     model_version: str = "1.0"
+    image_base64: Optional[str] = None
 
 class FeedbackRequest(BaseModel):
     username: str
@@ -449,6 +462,13 @@ async def login(req: AuthRequest):
         return {"status": "success", "username": req.username}
     else:
         return {"status": "error", "message": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้องค่ะ"}
+
+@app.get("/api/user/profile/{username}")
+async def get_user_profile(username: str):
+    row = execute_query("SELECT points FROM users WHERE username=?", (username,), fetch='one')
+    if row:
+        return {"status": "success", "points": row[0]}
+    return {"status": "error", "message": "User not found"}
 
 @app.get("/api/history/{username}")
 async def get_history(username: str):
@@ -561,6 +581,7 @@ async def save_feedback(req: FeedbackRequest):
     timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
     execute_query("INSERT INTO feedbacks (username, timestamp, rating, review, bot_response) VALUES (?, ?, ?, ?, ?)",
                   (req.username, timestamp, req.rating, req.review, req.bot_response))
+    execute_query("UPDATE users SET points = points + 5 WHERE username=?", (req.username,))
     return {"status": "success", "message": "Feedback saved"}
 
 @app.get("/api/admin/settings")
@@ -643,6 +664,23 @@ def _execute_python_code(code: str) -> str:
     except Exception as e:
         return f"Error executing code: {str(e)}"
 
+def _scrape_url(url: str) -> str:
+    try:
+        from bs4 import BeautifulSoup
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            for script in soup(["script", "style", "nav", "footer", "header"]):
+                script.extract()
+            text = soup.get_text(separator=' ', strip=True)
+            # Limit length to avoid max tokens
+            return text[:8000]
+        return ""
+    except Exception as e:
+        print("Scrape error:", e)
+        return ""
+
 @app.post("/api/tts")
 async def generate_tts(req: TTSRequest):
     elevenlabs_api_key = execute_query("SELECT value FROM system_settings WHERE key_name='elevenlabs_api_key'", fetch='one')
@@ -714,7 +752,14 @@ async def chat_endpoint(req: ChatRequest):
         user_sessions[uname] = history[:BASE_HISTORY_LEN] + history[-MAX_DYNAMIC_HISTORY:]
         history = user_sessions[uname]
 
-    history.append(HumanMessage(content=user_input))
+    if req.image_base64:
+        msg_content = [
+            {"type": "text", "text": user_input},
+            {"type": "image_url", "image_url": {"url": req.image_base64}}
+        ]
+        history.append(HumanMessage(content=msg_content))
+    else:
+        history.append(HumanMessage(content=user_input))
     log_chat(uname, "User", user_input)
     
     # Trigger Memory Extraction in background for 1.1
@@ -732,6 +777,12 @@ async def chat_endpoint(req: ChatRequest):
 
         search_term = await asyncio.to_thread(_decide_search, user_input)
         temp_history = history.copy()
+
+        # Slash Commands Injection
+        if user_input.startswith("/แปลภาษา"):
+            temp_history.insert(-1, SystemMessage(content="[คำสั่งพิเศษจากบอส]: ให้ทำหน้าที่เป็นนักแปลภาษา แปลข้อความที่ตามหลังคำสั่งเป็นภาษาไทย (หรืออังกฤษถ้าต้นฉบับเป็นไทย) อย่างสละสลวยที่สุด ห้ามอธิบายเพิ่มเติม ห้ามตอบอย่างอื่นนอกจากคำแปล"))
+        elif user_input.startswith("/สรุป"):
+            temp_history.insert(-1, SystemMessage(content="[คำสั่งพิเศษจากบอส]: ให้สรุปใจความสำคัญของข้อความที่ตามหลังคำสั่งให้สั้น กระชับ และเข้าใจง่ายที่สุดในรูปแบบ Bullet points"))
         
         if search_term:
             # Yield loading text immediately once we know we need to search
@@ -744,13 +795,27 @@ async def chat_endpoint(req: ChatRequest):
             if search_ctx:
                 temp_history.insert(-1, SystemMessage(content=search_ctx))
 
+        import re
+        urls = re.findall(r'(https?://[^\s]+)', user_input)
+        if urls:
+            url_to_scrape = urls[0]
+            yield f"*(🌐 กำลังอ่านเนื้อหาจากเว็บไซต์ {url_to_scrape}...)*\n\n"
+            full_response += f"*(🌐 กำลังอ่านเนื้อหาจากเว็บไซต์ {url_to_scrape}...)*\n\n"
+            await asyncio.sleep(0.1)
+            
+            scraped_text = await asyncio.to_thread(_scrape_url, url_to_scrape)
+            if scraped_text:
+                temp_history.insert(-1, SystemMessage(content=f"\n[เนื้อหาจากเว็บไซต์ {url_to_scrape}]:\n{scraped_text}\n(Instruction: ใช้ข้อมูลนี้ตอบคำถามให้ครบถ้วน)"))
+
         preferred_model = PREFERRED_PRO if model_version == "1.1" else PREFERRED_FLASH
         
-        # Clean history for LLM (prevent double badge generation)
         clean_history = []
         for msg in temp_history:
             if isinstance(msg, AIMessage):
-                clean_content = msg.content.replace("✨ **[Kira 1.1 👑]**\n\n", "").replace("🤖 **[Kira 1.0]**\n\n", "").replace("*(🌐 กำลังค้นหาข้อมูลจากอินเทอร์เน็ต...)*\n\n", "")
+                clean_content = msg.content
+                clean_content = re.sub(r'✨ \*\*\[Kira 1.1 👑\]\*\*\n\n', '', clean_content)
+                clean_content = re.sub(r'🤖 \*\*\[Kira 1.0\]\*\*\n\n', '', clean_content)
+                clean_content = re.sub(r'\*\(\🌐 กำลัง.*?\.\.\.\)\*\n\n', '', clean_content)
                 clean_history.append(AIMessage(content=clean_content))
             else:
                 clean_history.append(msg)
@@ -773,6 +838,10 @@ async def chat_endpoint(req: ChatRequest):
                     yield wait_msg
                     await asyncio.sleep(60)
 
+                # Force Vision model if image is present
+                if req.image_base64:
+                    preferred_model = "llama-3.2-11b-vision-preview"
+
                 s, chunks, err = await _try_all_keys_and_models(clean_history, preferred_model)
 
                 if s:
@@ -785,6 +854,7 @@ async def chat_endpoint(req: ChatRequest):
                         yield c
                     success = True
                     use_user_quota(uname)
+                    execute_query("UPDATE users SET points = points + 1 WHERE username=?", (uname,))
                     break
                 else:
                     last_error = err
