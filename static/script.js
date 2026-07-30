@@ -76,6 +76,12 @@ const chatHistorySidebar = document.getElementById('chat-history');
 
 // --- Auth State Management ---
 let currentUser = localStorage.getItem('kira_username');
+let isGenerating = false;
+let currentImageBase64 = null;
+
+// Audio context and current playing audio
+let currentAudio = null;
+
 const isBoss = (name) => {
     if (!name) return false;
     const n = name.toLowerCase();
@@ -126,11 +132,25 @@ function checkAuth() {
         profileName.textContent = currentUser;
         profilePic.src = `https://ui-avatars.com/api/?name=${currentUser}&background=0D8ABC&color=fff`;
         loadHistory();
+        loadUserProfile();
     } else {
         authModal.style.display = 'flex';
         appContainer.style.display = 'none';
         loginView.style.display = 'block';
         registerView.style.display = 'none';
+    }
+}
+
+async function loadUserProfile() {
+    try {
+        const response = await fetch(`/api/user/profile/${currentUser}`);
+        const data = await response.json();
+        if (data.status === 'success') {
+            const level = Math.floor(data.points / 100) + 1;
+            profileName.innerHTML = `${currentUser} <span style="font-size: 0.8rem; color: #fbbf24; margin-left: 5px;" title="แต้ม: ${data.points}"><i class="fa-solid fa-star"></i> Lv.${level}</span>`;
+        }
+    } catch (e) {
+        console.error("Profile fetch error:", e);
     }
 }
 
@@ -345,12 +365,20 @@ async function sendMessage() {
     isGenerating = true;
     showTypingIndicator();
 
+    const imgBase64ToSend = currentImageBase64;
+    // Clear image immediately from UI after sending
+    currentImageBase64 = null;
+    const imgPreviewContainer = document.getElementById('image-preview-container');
+    const imgInput = document.getElementById('img-input');
+    if (imgPreviewContainer) imgPreviewContainer.style.display = 'none';
+    if (imgInput) imgInput.value = '';
+
     try {
         const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "1.0";
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text, username: currentUser, model_version: modelVersion })
+            body: JSON.stringify({ message: text, username: currentUser, model_version: modelVersion, image_base64: imgBase64ToSend })
         });
 
         hideTypingIndicator();
@@ -417,6 +445,7 @@ async function sendMessage() {
         }
 
         chatBox.scrollTop = chatBox.scrollHeight;
+        loadUserProfile(); // Refresh points after message
         
     } catch (error) {
         hideTypingIndicator();
@@ -684,6 +713,48 @@ async function playTTS(text) {
     } catch (e) {
         console.error("TTS Fetch Error:", e);
     }
+}
+
+// --- Image Upload (Vision) ---
+const imgUploadBtn = document.getElementById('img-upload-btn');
+const imgInput = document.getElementById('img-input');
+const imgPreviewContainer = document.getElementById('image-preview-container');
+const imgPreview = document.getElementById('image-preview');
+const removeImgBtn = document.getElementById('remove-img-btn');
+
+if (imgUploadBtn && imgInput) {
+    imgUploadBtn.addEventListener('click', () => {
+        const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "1.0";
+        if (modelVersion !== "1.1") {
+            alert("ฟีเจอร์แนบรูปภาพ (Vision) สงวนสิทธิ์เฉพาะระดับ Boss (Kira 1.1) เท่านั้นครับ");
+            return;
+        }
+        imgInput.click();
+    });
+
+    imgInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert("ขนาดรูปภาพต้องไม่เกิน 5MB ครับ");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentImageBase64 = event.target.result;
+                imgPreview.src = currentImageBase64;
+                imgPreviewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    removeImgBtn.addEventListener('click', () => {
+        currentImageBase64 = null;
+        imgPreview.src = "";
+        imgPreviewContainer.style.display = 'none';
+        imgInput.value = '';
+    });
 }
 
 // --- Speech Recognition (STT) ---
