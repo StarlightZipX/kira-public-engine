@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kira - Public AI Assistant</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Highlight.js for Code -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/style.css?v=4">
+</head>
+<body>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal">
+        <div class="auth-box" id="auth-box">
+            
+            <!-- Login Form -->
+            <div id="login-view">
+                <h2><i class="fa-solid fa-brain"></i> เข้าสู่ระบบ Kira AI</h2>
+                <p class="auth-subtitle">ร่วมเป็นส่วนหนึ่งในการทดสอบและฝึกฝน Kira AI ให้ฉลาดขึ้น! ✨ (ใช้งานฟรี)</p>
+                <div id="login-error" class="auth-error"></div>
+                <input type="text" id="login-username" placeholder="ชื่อผู้ใช้งาน (Username)" autocomplete="off">
+                <input type="password" id="login-password" placeholder="รหัสผ่าน (Password)">
+                <button id="btn-login" class="auth-btn primary">เข้าสู่ระบบ (Login)</button>
+                <div class="auth-switch">
+                    ไม่มีบัญชีใช่ไหม? <a href="#" id="go-to-register">สมัครสมาชิกใหม่</a>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-view" style="display: none;">
+                <h2><i class="fa-solid fa-user-plus"></i> สมัครสมาชิก</h2>
+                <p class="auth-subtitle">สร้างบัญชีเพื่อเริ่มต้นพูดคุยและช่วยพัฒนา Kira AI ไปด้วยกัน 🚀</p>
+                <div id="register-error" class="auth-error"></div>
+                <input type="text" id="reg-username" placeholder="ตั้งชื่อผู้ใช้งาน (Username)" autocomplete="off">
+                <input type="password" id="reg-password" placeholder="ตั้งรหัสผ่าน (Password)">
+                <input type="password" id="reg-confirm" placeholder="ยืนยันรหัสผ่านอีกครั้ง">
+                <button id="btn-register" class="auth-btn primary" style="background: #10b981;">ยืนยันการลงทะเบียน</button>
+                <div class="auth-switch">
+                    มีบัญชีอยู่แล้ว? <a href="#" id="go-to-login">กลับไปเข้าสู่ระบบ</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="auth-modal" style="display: none;">
+        <div class="auth-box">
+            <h2><i class="fa-solid fa-comment-dots"></i> ส่งความคิดเห็นให้ Kira</h2>
+            <p class="auth-subtitle">คำติชมของคุณจะช่วยให้ Kira ฉลาดขึ้นในอนาคต!</p>
+            <input type="hidden" id="feedback-rating" value="">
+            <input type="hidden" id="feedback-bot-msg" value="">
+            <textarea id="feedback-text" placeholder="พิมพ์คำแนะนำ หรือสิ่งที่คุณอยากให้ Kira ปรับปรุง..." rows="4" style="width: 100%; margin: 10px 0; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;"></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button id="btn-submit-feedback" class="auth-btn primary" style="flex: 1;">ส่งรีวิว (Submit)</button>
+                <button id="btn-cancel-feedback" class="auth-btn" style="flex: 1; background: #334155;">ยกเลิก (Cancel)</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="app-container" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 class="flex items-center gap-2"><img src="/static/images/kira_logo.jpg?v=5" alt="Kira Logo" class="w-8 h-8 rounded-lg object-cover shadow-[0_0_10px_rgba(56,189,248,0.3)]"> Kira AI</h2>
+                <button id="close-sidebar" class="mobile-only"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <button class="new-chat-btn">
+                <i class="fa-solid fa-plus"></i> แชทใหม่
+            </button>
+            
+            <div class="chat-history" id="chat-history">
+                <p class="history-title">ยังไม่มีประวัติการแชท</p>
+                <!-- History items will be injected here -->
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <img id="profile-pic" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
+                    <span id="profile-name">User</span>
+                </div>
+                <button class="settings-btn" id="btn-logout" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <button id="toggle-sidebar" class="menu-btn"><i class="fa-solid fa-bars"></i></button>
+                <h3>Kira - Public Cloud Engine</h3>
+                <div class="header-actions">
+                    <select id="model-select" class="model-select">
+                        <option value="1.0">Kira 1.0</option>
+                        <option value="1.1">Kira 1.1 🔒</option>
+                    </select>
+                    <button title="เปิด/ปิดเสียงพูด (Voice Mode)" id="btn-voice" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-volume-xmark"></i></button>
+                    <button title="สลับโหมดกลางวัน/กลางคืน" id="btn-theme"><i class="fa-solid fa-moon"></i></button>
+                    <button title="เกี่ยวกับระบบ" id="btn-info"><i class="fa-solid fa-circle-info"></i></button>
+                </div>
+            </header>
+
+            <div class="messages-container" id="chat-box">
+                <!-- Messages will be injected here -->
+            </div>
+
+            <div class="input-area" style="position: relative;">
+                <div id="image-preview-container" style="display: none; position: absolute; bottom: 100%; left: 10px; padding: 10px; background: #1e293b; border-radius: 8px; border: 1px solid #334155; margin-bottom: 10px;">
+                    <img id="image-preview" src="" style="max-height: 80px; border-radius: 4px;">
+                    <button id="remove-img-btn" style="position: absolute; top: 0; right: 0; transform: translate(50%, -50%); background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="input-wrapper">
+                    <button class="attach-btn" id="mic-btn" title="พูดด้วยเสียง (Web Speech API)"><i class="fa-solid fa-microphone"></i></button>
+                    <button class="attach-btn" id="img-upload-btn" title="แนบรูปภาพ (เฉพาะบอส)"><i class="fa-solid fa-image"></i></button>
+                    <input type="file" id="img-input" accept="image/*" style="display: none;">
+                    <textarea id="user-input" placeholder="พิมพ์ข้อความหา Kira..." rows="1"></textarea>
+                    <button class="send-btn" id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+                <p class="disclaimer">Kira อาจให้ข้อมูลที่ไม่ถูกต้องได้ กรุณาตรวจสอบก่อนนำไปใช้งาน</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
