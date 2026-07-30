@@ -281,7 +281,7 @@ function addMessage(text, isUser) {
 
     const avatar = document.createElement('div');
     avatar.className = 'avatar';
-    avatar.innerHTML = isUser ? '' : '<i class="fa-solid fa-robot"></i>';
+    avatar.innerHTML = isUser ? '' : '<img src="/static/images/kira_logo.jpg" alt="Kira">';
 
     const content = document.createElement('div');
     content.className = 'content';
@@ -305,7 +305,7 @@ function showTypingIndicator() {
     indicator.className = 'message ai typing';
     indicator.id = 'typing-indicator';
     indicator.innerHTML = `
-        <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+        <div class="avatar"><img src="/static/images/kira_logo.jpg" alt="Kira"></div>
         <div class="content typing-indicator">
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
@@ -410,6 +410,12 @@ async function sendMessage() {
         feedbackUI.appendChild(dislikeBtn);
         feedbackUI.appendChild(reviewBtn);
         contentDiv.appendChild(feedbackUI);
+        
+        // Play Voice Cloning (TTS) if enabled
+        if (typeof playTTS === 'function') {
+            playTTS(fullText);
+        }
+
         chatBox.scrollTop = chatBox.scrollHeight;
         
     } catch (error) {
@@ -626,4 +632,108 @@ if (btnSubmitFeedback) {
         document.getElementById('feedback-modal').style.display = 'none';
         alert("Kira ได้รับรีวิวของคุณแล้ว ขอบคุณมากค่ะ! ✨");
     });
+}
+
+// --- Voice Features (STT & TTS) ---
+const btnVoice = document.getElementById('btn-voice');
+let voiceModeEnabled = false;
+
+if (btnVoice) {
+    btnVoice.addEventListener('click', () => {
+        voiceModeEnabled = !voiceModeEnabled;
+        if (voiceModeEnabled) {
+            btnVoice.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            btnVoice.style.color = '#4ade80'; // Green
+            alert("เปิดระบบโคลนเสียง (Voice Mode) แล้วค่ะ! คิระจะพูดตอบกลับด้วยเสียงมนุษย์ (เฉพาะโมเดล Kira 1.1)");
+        } else {
+            btnVoice.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+            btnVoice.style.color = '';
+        }
+    });
+}
+
+async function playTTS(text) {
+    // Only play if Voice Mode is on, and Model is 1.1 (Voice feature is for Boss)
+    const currentModel = localStorage.getItem('kira_model') || '1.0';
+    if (!voiceModeEnabled || currentModel !== '1.1') return;
+    
+    // Remove emojis for cleaner speech
+    const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+    
+    try {
+        const res = await fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: cleanText })
+        });
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.play();
+        } else {
+            const err = await res.json();
+            console.error("TTS Error:", err.message);
+            if (err.message.includes("API Key")) {
+                alert("กรุณาตั้งค่า ElevenLabs API Key และ Voice ID ในหน้า Admin ก่อนใช้งานระบบเสียงค่ะ");
+                voiceModeEnabled = false;
+                btnVoice.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                btnVoice.style.color = '';
+            }
+        }
+    } catch (e) {
+        console.error("TTS Fetch Error:", e);
+    }
+}
+
+// --- Speech Recognition (STT) ---
+const micBtn = document.getElementById('mic-btn');
+let recognition;
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'th-TH';
+    recognition.interimResults = true;
+    
+    let isRecording = false;
+    if (micBtn) {
+        micBtn.addEventListener('click', () => {
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+                micBtn.style.color = '#ef4444'; // Red
+                micBtn.classList.add('pulsing');
+            }
+            isRecording = !isRecording;
+        });
+
+        recognition.onresult = (event) => {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                }
+            }
+            if (finalTranscript) {
+                userInput.value = (userInput.value + ' ' + finalTranscript).trim();
+                userInput.dispatchEvent(new Event('input'));
+            }
+        };
+
+        recognition.onend = () => {
+            isRecording = false;
+            micBtn.style.color = '';
+            micBtn.classList.remove('pulsing');
+        };
+        
+        recognition.onerror = (event) => {
+            console.error("Speech Recognition Error:", event.error);
+            isRecording = false;
+            micBtn.style.color = '';
+            micBtn.classList.remove('pulsing');
+        };
+    }
+} else {
+    if (micBtn) micBtn.style.display = 'none'; // Not supported
 }
