@@ -8,3 +8,6 @@ jinja2
 requests
 langchain-community
 duckduckgo-search
+PyPDF2
+python-docx
+python-multipart

@@ -5,7 +5,7 @@ import time
 import asyncio
 from datetime import datetime, date, timezone, timedelta
 import uvicorn
-from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -13,6 +13,9 @@ from pydantic import BaseModel
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_community.tools import DuckDuckGoSearchRun
+import io
+import PyPDF2
+import docx
 import requests
 
 # บังคับใช้ UTF-8
@@ -502,6 +505,51 @@ async def _extract_and_save_memory(username: str, user_input: str, version: str)
             print(f"🧠 [Memory Saved for {username}]: {result}")
     except Exception as e:
         print("Memory extraction error:", e)
+
+@app.post("/api/upload")
+async def upload_file(username: str = Form(...), file: UploadFile = File(...)):
+    if not is_boss(username):
+        return {"status": "error", "message": "ฟีเจอร์นี้สงวนไว้สำหรับ Kira 1.1 (Next-Gen) เท่านั้นค่ะ"}
+    
+    try:
+        content = await file.read()
+        filename = file.filename.lower()
+        extracted_text = ""
+        
+        if filename.endswith(".txt") or filename.endswith(".csv"):
+            extracted_text = content.decode("utf-8", errors="ignore")
+        elif filename.endswith(".pdf"):
+            pdf_reader = PyPDF2.PdfReader(io.BytesIO(content))
+            for page in pdf_reader.pages:
+                text = page.extract_text()
+                if text:
+                    extracted_text += text + "\n"
+        elif filename.endswith(".docx"):
+            doc = docx.Document(io.BytesIO(content))
+            extracted_text = "\n".join([p.text for p in doc.paragraphs])
+        else:
+            return {"status": "error", "message": "รองรับเฉพาะไฟล์ .txt, .csv, .pdf, .docx เท่านั้นค่ะ"}
+            
+        if not extracted_text.strip():
+            return {"status": "error", "message": "ไม่พบข้อความในไฟล์นี้ค่ะ"}
+            
+        # Limit text length to avoid token limit issues (e.g. max 15,000 characters)
+        max_length = 15000
+        if len(extracted_text) > max_length:
+            extracted_text = extracted_text[:max_length] + "\n... (ข้อความถูกตัดทอนเนื่องจากไฟล์ยาวเกินไป)"
+            
+        # Store in user session
+        if username not in user_sessions:
+            prompt_to_use = _get_full_system_prompt(username)
+            user_sessions[username] = [SystemMessage(content=prompt_to_use)]
+            
+        file_context = f"[ไฟล์ที่ผู้ใช้อัปโหลด: {file.filename}]\n{extracted_text}\n(Instruction: อ้างอิงข้อมูลจากไฟล์นี้หากผู้ใช้ถามถึง)"
+        user_sessions[username].append(SystemMessage(content=file_context))
+        
+        return {"status": "success", "message": f"อ่านไฟล์ {file.filename} เรียบร้อยแล้วค่ะ! บอสสามารถถามข้อมูลจากไฟล์นี้ได้เลย"}
+    except Exception as e:
+        print("Upload error:", e)
+        return {"status": "error", "message": "เกิดข้อผิดพลาดในการอ่านไฟล์"}
 
 @app.post("/api/feedback")
 async def save_feedback(req: FeedbackRequest):
