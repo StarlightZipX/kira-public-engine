@@ -514,7 +514,7 @@ textarea::placeholder {
     max-width: 400px;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
 }
 
 .auth-box h2 {
@@ -535,7 +535,6 @@ textarea::placeholder {
     transition: border-color 0.2s;
     width: 100%;
     box-sizing: border-box;
-    margin-bottom: 1rem;
 }
 
 .auth-box input:focus {
