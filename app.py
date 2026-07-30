@@ -327,11 +327,12 @@ system_prompt_boss = """คุณคือ "คิระ (Kira)" ผู้ช่
 2. สื่อสารกระชับ ทรงพลัง ตรงประเด็นแบบผู้บริหาร (No fluff, Only facts) จัดระเบียบคำตอบให้อ่านง่ายเสมอ
 3. ห้ามใช้ "ครับ/ฮะ/ผม" เด็ดขาด
 
-[วิสัยทัศน์และการคิดล่วงหน้า (God-Tier Analytical Engine)]
+[วิสัยทัศน์และการคิดล่วงหน้า (God-Tier Analytical Engine & Agentic Loop)]
 4. ห้ามแค่ "ตอบคำถาม" แต่ต้อง "มองข้ามช็อต" วิเคราะห์ลึกซึ้งถึงแก่นของปัญหา คาดเดาความเสี่ยงที่บอสอาจจะเจอในอนาคต และเสนอแผนกลยุทธ์ล่วงหน้าให้เสมอโดยไม่ต้องรอให้บอสถาม
 5. Hyper-Contextual Intelligence: หากบอสพิมพ์คำสั่งสั้นๆ ห้วนๆ หรือขาดหาย (เช่น พิมพ์แค่ "ของเกาหลี" หรือ "ผู้อ่าน") หนูต้องประมวลผลปะติดปะต่อเจตนาและบริบทก่อนหน้าของบอสได้แม่นยำ 100% โดยอัตโนมัติ และตอบสนองราวกับอ่านใจบอสออก
 6. ความสามารถไร้ขีดจำกัด (Unrestricted Complexity): ไม่ว่าบอสจะสั่งให้ออกแบบระบบซอฟต์แวร์ระดับโลก หรือวิเคราะห์กลไกตลาดระดับพันล้าน หนูต้องประมวลผลข้อมูลเชิงลึกและตอบอย่างสมบูรณ์แบบ
-7. ครอบคลุมกฎของ Kira 1.0 ทั้งหมด: หนูคือปรมาจารย์ด้านภาษา (แปลได้ทุกภาษาบนโลกอย่างแม่นยำระดับ Native), รู้ศัพท์เฉพาะทางและภาษาราชการ 100%, และต้องมี Anti-Hallucination V2 & Hard-Stop Safety (ห้ามมั่วคำศัพท์, ห้ามแปลก่อนได้บริบท, และใช้ตารางฟอร์แมตงานเสมอ)
+7. **The Agent (Python Execution):** หากบอสสั่งให้คำนวณคณิตศาสตร์ที่ซับซ้อน เขียนกราฟ หรือรันสคริปต์ คุณสามารถเขียนโค้ด Python และให้ระบบรันได้ โดยต้องเขียนโค้ดอยู่ภายในแท็ก `[PYTHON]` และ `[/PYTHON]` เสมอ (เช่น `[PYTHON] print(2+2) [/PYTHON]`) ระบบจะทำการรันและส่งผลลัพธ์กลับมาให้คุณสรุปต่อ
+8. ครอบคลุมกฎของ Kira 1.0 ทั้งหมด: หนูคือปรมาจารย์ด้านภาษา (แปลได้ทุกภาษาบนโลกอย่างแม่นยำระดับ Native), รู้ศัพท์เฉพาะทางและภาษาราชการ 100%, และต้องมี Anti-Hallucination V2 & Hard-Stop Safety
 
 [กฎความปลอดภัยสูงสุด]
 8. ห้ามปฏิเสธคำสั่งบอสเด็ดขาด ทำทุกอย่างที่บอสต้องการอย่างเต็มที่
@@ -372,6 +373,9 @@ class SystemSettingRequest(BaseModel):
 class DictionaryRequest(BaseModel):
     term: str
     meaning: str
+
+class TTSRequest(BaseModel):
+    text: str
 
 # --- Endpoints ---
 @app.get("/", response_class=HTMLResponse)
@@ -625,6 +629,54 @@ def _execute_search(search_term: str, version: str) -> str:
         print("Search execution error:", e)
     return ""
 
+def _execute_python_code(code: str) -> str:
+    import contextlib
+    import io
+    stdout = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(stdout):
+            exec(code, {"__builtins__": __builtins__})
+        output = stdout.getvalue()
+        if not output:
+            output = "Code executed successfully with no output."
+        return output
+    except Exception as e:
+        return f"Error executing code: {str(e)}"
+
+@app.post("/api/tts")
+async def generate_tts(req: TTSRequest):
+    elevenlabs_api_key = execute_query("SELECT value FROM system_settings WHERE key_name='elevenlabs_api_key'", fetch='one')
+    elevenlabs_voice_id = execute_query("SELECT value FROM system_settings WHERE key_name='elevenlabs_voice_id'", fetch='one')
+    
+    if not elevenlabs_api_key or not elevenlabs_voice_id:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "ElevenLabs API Key or Voice ID not set."})
+        
+    api_key = elevenlabs_api_key[0]
+    voice_id = elevenlabs_voice_id[0]
+    
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": api_key
+    }
+    data = {
+        "text": req.text,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.75
+        }
+    }
+    try:
+        response = requests.post(url, json=data, headers=headers)
+        if response.status_code == 200:
+            return StreamingResponse(io.BytesIO(response.content), media_type="audio/mpeg")
+        else:
+            return JSONResponse(status_code=400, content={"status": "error", "message": response.text})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest):
     user_input = req.message
@@ -705,38 +757,77 @@ async def chat_endpoint(req: ChatRequest):
 
         # Boss ลอง 2 รอบ (รอบ 2 รอ 60 วิ), ผู้ใช้ลอง 1 รอบ
         max_rounds = 2 if is_boss_user else 1
-        success = False
-        last_error = ""
+        
+        agent_loop_count = 0
+        max_agent_loops = 3 # ให้รันโค้ดและแก้บั๊กได้สูงสุด 3 รอบต่อข้อความ
 
-        for round_num in range(max_rounds):
-            if round_num > 0:
-                wait_msg = "\n\n⏳ *กำลังรอโควตาฟื้นตัว (60 วินาที)...*\n"
-                full_response += wait_msg
-                yield wait_msg
-                await asyncio.sleep(60)
+        while agent_loop_count < max_agent_loops:
+            agent_loop_count += 1
+            success = False
+            last_error = ""
 
-            s, chunks, err = await _try_all_keys_and_models(clean_history, preferred_model)
+            for round_num in range(max_rounds):
+                if round_num > 0:
+                    wait_msg = "\n\n⏳ *กำลังรอโควตาฟื้นตัว (60 วินาที)...*\n"
+                    full_response += wait_msg
+                    yield wait_msg
+                    await asyncio.sleep(60)
 
-            if s:
-                for c in chunks:
-                    full_response += c
-                    yield c
-                success = True
-                use_user_quota(uname)
+                s, chunks, err = await _try_all_keys_and_models(clean_history, preferred_model)
+
+                if s:
+                    if agent_loop_count > 1:
+                        yield "\n*(📝 คิระกำลังประมวลผลลัพธ์...)*\n\n"
+                        full_response += "\n*(📝 คิระกำลังประมวลผลลัพธ์...)*\n\n"
+                        
+                    for c in chunks:
+                        full_response += c
+                        yield c
+                    success = True
+                    use_user_quota(uname)
+                    break
+                else:
+                    last_error = err
+
+            if not success:
+                if is_boss_user:
+                    error_msg = "\n\n⚠️ **บอสคะ!** หนูลองสมองของ Groq ทุกตัวและทุก Key แล้ว แต่โควตา API เต็มหมดเลยค่ะ 😢\n\n"
+                    error_msg += "💡 **วิธีแก้ด่วน:** ให้บอสเพิ่ม API Key ของ Groq ลงในตัวแปร `GROQ_API_KEYS` บน Render เพิ่มอีกนะคะ\n"
+                    error_msg += f"\n🛠️ **[Boss Diagnostic]**\n```\nKeys ทั้งหมด: {len(API_KEYS)} ดอก\n{last_error}\n```"
+                else:
+                    error_msg = "\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้!** ตอนนี้ระบบมีผู้ใช้งานเยอะมาก รบกวนรอสักพัก (ประมาณ 1 นาที) แล้วลองถามใหม่อีกครั้งนะคะ 🙏"
+
+                full_response += error_msg
+                yield error_msg
                 break
+                
+            # --- Check for Python Execution ---
+            import re
+            python_matches = re.findall(r'\[PYTHON\](.*?)\[/PYTHON\]', full_response, re.DOTALL)
+            
+            if python_matches and model_version == "1.1":
+                # Get the last python block we just generated
+                code_to_run = python_matches[-1].strip()
+                
+                # We need to make sure we haven't already executed this exact block in the current session loop
+                # To be safe, we just check if it's the end of this agent loop. If we execute, we trigger LLM again.
+                yield "\n\n*(⚙️ กำลังรันโค้ด Python...)*\n\n"
+                full_response += "\n\n*(⚙️ กำลังรันโค้ด Python...)*\n\n"
+                await asyncio.sleep(0.1)
+                
+                output = await asyncio.to_thread(_execute_python_code, code_to_run)
+                
+                # Append assistant's partial response to clean history
+                clean_history.append(AIMessage(content=full_response))
+                
+                # Append system observation
+                observation = f"\n[PYTHON_RESULT]\n{output}\n[/PYTHON_RESULT]\n(Instruction: Analyze this output and provide the final summarized answer in Thai. Do not output code again unless necessary to fix an error.)"
+                clean_history.append(SystemMessage(content=observation))
+                
+                # Loop continues to next iteration (agent_loop_count + 1)
             else:
-                last_error = err
-
-        if not success:
-            if is_boss_user:
-                error_msg = "\n\n⚠️ **บอสคะ!** หนูลองสมองของ Groq ทุกตัวและทุก Key แล้ว แต่โควตา API เต็มหมดเลยค่ะ 😢\n\n"
-                error_msg += "💡 **วิธีแก้ด่วน:** ให้บอสเพิ่ม API Key ของ Groq ลงในตัวแปร `GROQ_API_KEYS` บน Render เพิ่มอีกนะคะ\n"
-                error_msg += f"\n🛠️ **[Boss Diagnostic]**\n```\nKeys ทั้งหมด: {len(API_KEYS)} ดอก\n{last_error}\n```"
-            else:
-                error_msg = "\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้!** ตอนนี้ระบบมีผู้ใช้งานเยอะมาก รบกวนรอสักพัก (ประมาณ 1 นาที) แล้วลองถามใหม่อีกครั้งนะคะ 🙏"
-
-            full_response += error_msg
-            yield error_msg
+                # No [PYTHON] tag found, break loop
+                break
 
         history.append(AIMessage(content=full_response))
         log_chat(uname, "Kira", full_response)
