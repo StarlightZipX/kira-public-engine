@@ -59,8 +59,9 @@
         <!-- Header Section -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 glow-text flex items-center gap-3">
-                    <span class="text-3xl">🛡️</span> Kira Executive Dashboard
+                <h1 class="text-3xl md:text-4xl font-bold flex items-center gap-3">
+                    <img src="/static/images/kira_logo.jpg" alt="Kira Logo" class="w-12 h-12 rounded-lg object-cover shadow-[0_0_15px_rgba(56,189,248,0.5)] border border-slate-700"> 
+                    Kira Executive Dashboard
                 </h1>
                 <p class="text-slate-400 mt-2 font-medium">Real-time Global Surveillance System</p>
             </div>
@@ -170,10 +171,22 @@
                 <textarea id="prompt_1_0" rows="8" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-slate-200 mb-4 font-mono text-sm"></textarea>
                 <button onclick="savePrompt('prompt_1.0', 'prompt_1_0')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg transition-colors shadow-lg">บันทึก Kira 1.0</button>
             </div>
-            <div class="glass-panel rounded-2xl p-6 border border-slate-700/50">
+            <div class="glass-panel rounded-2xl p-6 border border-slate-700/50 mb-6">
                 <h2 class="text-xl font-semibold text-white mb-4"><i class="fa-solid fa-bolt"></i> Live Prompt Editor (Kira 1.1 Boss)</h2>
                 <textarea id="prompt_1_1" rows="8" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-slate-200 mb-4 font-mono text-sm"></textarea>
                 <button onclick="savePrompt('prompt_1.1', 'prompt_1_1')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg transition-colors shadow-lg">บันทึก Kira 1.1</button>
+            </div>
+            <div class="glass-panel rounded-2xl p-6 border border-slate-700/50">
+                <h2 class="text-xl font-semibold text-white mb-4"><i class="fa-solid fa-microphone-lines"></i> ElevenLabs Settings (Voice Cloning)</h2>
+                <div class="mb-4">
+                    <label class="block text-sm text-slate-400 mb-1">ElevenLabs API Key</label>
+                    <input type="password" id="elevenlabs_api_key" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-slate-200" placeholder="sk_...">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm text-slate-400 mb-1">Voice ID (ได้จากการอัปโหลดเสียงลงเว็บ ElevenLabs)</label>
+                    <input type="text" id="elevenlabs_voice_id" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-slate-200" placeholder="e.g. pNInz6obbfdqIqc9lXAr">
+                </div>
+                <button onclick="savePrompt('elevenlabs_api_key', 'elevenlabs_api_key'); savePrompt('elevenlabs_voice_id', 'elevenlabs_voice_id')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg transition-colors shadow-lg">บันทึก API & Voice ID</button>
             </div>
         </div>
 
@@ -288,6 +301,8 @@
             if(data.settings) {
                 if(data.settings['prompt_1.0']) document.getElementById('prompt_1_0').value = data.settings['prompt_1.0'];
                 if(data.settings['prompt_1.1']) document.getElementById('prompt_1_1').value = data.settings['prompt_1.1'];
+                if(data.settings['elevenlabs_api_key']) document.getElementById('elevenlabs_api_key').value = data.settings['elevenlabs_api_key'];
+                if(data.settings['elevenlabs_voice_id']) document.getElementById('elevenlabs_voice_id').value = data.settings['elevenlabs_voice_id'];
             }
         }
 

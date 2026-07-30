@@ -68,7 +68,7 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h2><i class="fa-solid fa-brain"></i> Kira AI</h2>
+                <h2 class="flex items-center gap-2"><img src="/static/images/kira_logo.jpg" alt="Kira Logo" class="w-8 h-8 rounded-lg object-cover shadow-[0_0_10px_rgba(56,189,248,0.3)]"> Kira AI</h2>
                 <button id="close-sidebar" class="mobile-only"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
@@ -100,6 +100,7 @@
                         <option value="1.0">Kira 1.0</option>
                         <option value="1.1">Kira 1.1 🔒</option>
                     </select>
+                    <button title="เปิด/ปิดเสียงพูด (Voice Mode)" id="btn-voice" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-volume-xmark"></i></button>
                     <button title="สลับโหมดกลางวัน/กลางคืน" id="btn-theme"><i class="fa-solid fa-moon"></i></button>
                     <button title="เกี่ยวกับระบบ" id="btn-info"><i class="fa-solid fa-circle-info"></i></button>
                 </div>
@@ -111,6 +112,7 @@
 
             <div class="input-area">
                 <div class="input-wrapper">
+                    <button class="attach-btn" id="mic-btn" title="พูดด้วยเสียง (Web Speech API)"><i class="fa-solid fa-microphone"></i></button>
                     <button class="attach-btn" title="แนบไฟล์ (เร็วๆ นี้)"><i class="fa-solid fa-paperclip"></i></button>
                     <textarea id="user-input" placeholder="พิมพ์ข้อความหา Kira..." rows="1"></textarea>
                     <button class="send-btn" id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
