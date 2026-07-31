@@ -797,3 +797,45 @@ body.glow-1-1 .chat-input-wrapper {
 .content li {
     margin-bottom: 0.25rem;
 }
+
+
+/* Attachment Popup Menu */
+.attachment-popup {
+    position: absolute;
+    bottom: 50px; /* Above the input area */
+    left: 10px;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+.popup-item {
+    background: transparent;
+    border: none;
+    color: #cbd5e1;
+    padding: 8px 12px;
+    text-align: left;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.popup-item:hover {
+    background-color: #334155;
+    color: #fff;
+}
+
+.popup-item i {
+    width: 16px;
+    text-align: center;
+}
