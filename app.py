@@ -103,9 +103,17 @@ def init_db():
         execute_query('''CREATE TABLE IF NOT EXISTS logs
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
                       username TEXT,
+                      session_id TEXT,
                       timestamp TEXT,
                       role TEXT,
                       content TEXT)''')
+        
+        # สำหรับ Database เก่าที่ไม่มีคอลัมน์ session_id
+        try:
+            execute_query("ALTER TABLE logs ADD COLUMN session_id TEXT")
+        except:
+            pass
+
         execute_query('''CREATE TABLE IF NOT EXISTS feedbacks
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
                       username TEXT,
@@ -141,11 +149,11 @@ def init_db():
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
-def log_chat(username: str, role: str, content: str):
+def log_chat(username: str, role: str, content: str, session_id: str = None):
     tz = timezone(timedelta(hours=7))
     timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-    execute_query("INSERT INTO logs (username, timestamp, role, content) VALUES (?, ?, ?, ?)",
-              (username, timestamp, role, content))
+    execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
+                  (username, session_id, timestamp, role, content))
 
 
 # ========== โมเดลที่ปลอดภัยของ Groq ==========
@@ -373,6 +381,7 @@ class ChatRequest(BaseModel):
     username: str
     model_version: str = "1.0"
     image_base64: Optional[str] = None
+    session_id: Optional[str] = None
 
 class FeedbackRequest(BaseModel):
     username: str
@@ -488,9 +497,35 @@ async def get_user_profile(username: str):
         return {"status": "success", "points": row[0]}
     return {"status": "error", "message": "User not found"}
 
+@app.get("/api/history/sessions/{username}")
+async def get_sessions(username: str):
+    # Fetch distinct session_ids and their first message as title
+    query = """
+        SELECT session_id, MIN(timestamp) as start_time, 
+        (SELECT content FROM logs l2 WHERE l2.session_id = logs.session_id AND l2.username = logs.username AND role = 'User' ORDER BY id ASC LIMIT 1) as title
+        FROM logs 
+        WHERE username=? AND session_id IS NOT NULL
+        GROUP BY session_id 
+        ORDER BY start_time DESC LIMIT 20
+    """
+    rows = execute_query(query, (username,), fetch='all')
+    sessions = []
+    if rows:
+        sessions = [{"session_id": s, "start_time": t, "title": title[:30] + "..." if title and len(title) > 30 else (title or "New Chat")} for s, t, title in rows]
+    return {"status": "success", "sessions": sessions}
+
+@app.get("/api/history/{username}/{session_id}")
+async def get_session_history(username: str, session_id: str):
+    history_rows = execute_query("SELECT role, content FROM logs WHERE username=? AND session_id=? ORDER BY id ASC", (username, session_id), fetch='all')
+    formatted_history = []
+    if history_rows:
+        formatted_history = [{"role": r, "content": c} for r, c in history_rows]
+    return {"status": "success", "history": formatted_history}
+
 @app.get("/api/history/{username}")
-async def get_history(username: str):
-    history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (username,), fetch='all')
+async def get_history_fallback(username: str):
+    # Fallback for old chats without session_id
+    history_rows = execute_query("SELECT role, content FROM logs WHERE username=? AND session_id IS NULL ORDER BY id ASC LIMIT 50", (username,), fetch='all')
     formatted_history = []
     if history_rows:
         formatted_history = [{"role": r, "content": c} for r, c in history_rows]
@@ -738,6 +773,7 @@ async def chat_endpoint(req: ChatRequest):
     user_input = req.message
     uname = req.username
     model_version = req.model_version
+    session_id = req.session_id
 
     if model_version == "1.1" and not is_boss(uname):
         model_version = "1.0"
@@ -751,24 +787,30 @@ async def chat_endpoint(req: ChatRequest):
             media_type="text/plain"
         )
 
-    if uname not in user_sessions:
+    session_key = session_id if session_id else uname
+
+    if session_key not in user_sessions:
         prompt_to_use = _get_full_system_prompt(uname)
-        user_sessions[uname] = [SystemMessage(content=prompt_to_use)]
+        user_sessions[session_key] = [SystemMessage(content=prompt_to_use)]
         
-        # กู้คืนความจำจาก Database หาก User เพิ่ง Refresh หน้าเว็บ
-        history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (uname,), fetch='all')
+        # กู้คืนความจำจาก Database
+        if session_id:
+            history_rows = execute_query("SELECT role, content FROM logs WHERE username=? AND session_id=? ORDER BY id ASC", (uname, session_id), fetch='all')
+        else:
+            history_rows = execute_query("SELECT role, content FROM logs WHERE username=? AND session_id IS NULL ORDER BY id ASC LIMIT 50", (uname,), fetch='all')
+            
         if history_rows:
             for role, content in history_rows:
                 if role == "User":
-                    user_sessions[uname].append(HumanMessage(content=content))
+                    user_sessions[session_key].append(HumanMessage(content=content))
                 else:
-                    user_sessions[uname].append(AIMessage(content=content))
+                    user_sessions[session_key].append(AIMessage(content=content))
 
-    history = user_sessions[uname]
+    history = user_sessions[session_key]
 
     if len(history) > BASE_HISTORY_LEN + MAX_DYNAMIC_HISTORY:
-        user_sessions[uname] = history[:BASE_HISTORY_LEN] + history[-MAX_DYNAMIC_HISTORY:]
-        history = user_sessions[uname]
+        user_sessions[session_key] = history[:BASE_HISTORY_LEN] + history[-MAX_DYNAMIC_HISTORY:]
+        history = user_sessions[session_key]
 
     if req.image_base64:
         msg_content = [
@@ -778,7 +820,11 @@ async def chat_endpoint(req: ChatRequest):
         history.append(HumanMessage(content=msg_content))
     else:
         history.append(HumanMessage(content=user_input))
-    log_chat(uname, "User", user_input)
+    
+    tz = timezone(timedelta(hours=7))
+    timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
+                  (uname, session_id, timestamp, "User", user_input))
     
     # Trigger Memory Extraction in background for 1.1
     if model_version == "1.1":
@@ -786,7 +832,7 @@ async def chat_endpoint(req: ChatRequest):
 
     async def generate():
         full_response = ""
-        badge = "✨ **[Kira 1.1 👑]**\n\n" if model_version == "1.1" else "🤖 **[Kira 1.0]**\n\n"
+        badge = "✨ **[Kira 1.1 (PRO)]**\n\n" if model_version == "1.1" else "🤖 **[Kira 1.0]**\n\n"
         full_response += badge
         yield badge
         
@@ -831,7 +877,7 @@ async def chat_endpoint(req: ChatRequest):
         for msg in temp_history:
             if isinstance(msg, AIMessage):
                 clean_content = msg.content
-                clean_content = re.sub(r'✨ \*\*\[Kira 1.1 👑\]\*\*\n\n', '', clean_content)
+                clean_content = re.sub(r'✨ \*\*\[Kira 1.1 \(PRO\)\]\*\*\n\n', '', clean_content)
                 clean_content = re.sub(r'🤖 \*\*\[Kira 1.0\]\*\*\n\n', '', clean_content)
                 clean_content = re.sub(r'\*\(\🌐 กำลัง.*?\.\.\.\)\*\n\n', '', clean_content)
                 clean_history.append(AIMessage(content=clean_content))
@@ -918,7 +964,7 @@ async def chat_endpoint(req: ChatRequest):
                 break
 
         history.append(AIMessage(content=full_response))
-        log_chat(uname, "Kira", full_response)
+        log_chat(uname, "Kira", full_response, session_id)
 
     return StreamingResponse(generate(), media_type="text/plain")
 
