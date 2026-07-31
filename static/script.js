@@ -18,7 +18,9 @@ renderer.code = function(code, language) {
 
 // Configure marked.js to use highlight.js and custom renderer
 marked.setOptions({
-    renderer: renderer
+    renderer: renderer,
+    gfm: true,
+    breaks: true
 });
 
 // Global function for copying code

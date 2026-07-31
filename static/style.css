@@ -270,21 +270,26 @@ body {
 }
 
 .content {
-    background-color: var(--ai-msg-bg);
-    padding: 1rem 1.25rem;
-    border-radius: 12px;
-    line-height: 1.6;
-    font-size: 0.95rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    padding: 0.5rem 0;
+    line-height: 1.7;
+    font-size: 1rem;
+    width: 100%;
 }
 
 .message.user .content {
     background-color: var(--user-msg-bg);
-    border-bottom-right-radius: 2px;
+    border-radius: 1.2rem;
+    border-bottom-right-radius: 0.2rem;
+    padding: 0.75rem 1.25rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: inline-block;
+    max-width: fit-content;
 }
 
 .message.ai .content {
-    border-bottom-left-radius: 2px;
+    background-color: transparent;
+    box-shadow: none;
+    padding-right: 1rem;
 }
 
 /* Markdown Styles inside content */
@@ -294,54 +299,129 @@ body {
 .content p:last-child {
     margin-bottom: 0;
 }
-/* Code Block Styles */
-.code-block-wrapper {
-    background-color: #1e1e1e;
-    border-radius: 8px;
-    margin: 1rem 0;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-}
 
-.code-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: #2d2d2d;
-    border-bottom: 1px solid #404040;
+/* Super Markdown Rendering */
+.content h1, .content h2, .content h3, .content h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
+.content h1 { font-size: 1.5rem; }
+.content h2 { font-size: 1.3rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem; }
+.content h3 { font-size: 1.1rem; }
 
-.code-lang {
-    font-size: 0.75rem;
-    color: #9ca3af;
-    text-transform: uppercase;
+.content strong {
+    color: var(--text-primary);
     font-weight: 600;
 }
 
+.content blockquote {
+    border-left: 4px solid var(--accent-color);
+    padding-left: 1rem;
+    margin-left: 0;
+    margin-right: 0;
+    color: var(--text-secondary);
+    background-color: rgba(59, 130, 246, 0.05);
+    padding: 0.5rem 1rem;
+    border-radius: 0 8px 8px 0;
+}
+
+.content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.25rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px var(--border-color);
+}
+
+.content th, .content td {
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    text-align: left;
+}
+
+.content th {
+    background-color: rgba(255, 255, 255, 0.05);
+    font-weight: 600;
+}
+
+.content tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.content input[type="checkbox"] {
+    margin-right: 0.5rem;
+    accent-color: var(--accent-color);
+    transform: scale(1.1);
+}
+
+.content li {
+    margin-bottom: 0.5rem;
+}
+.content ul, .content ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Code Block Mac Style */
+.code-block-wrapper {
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0d1117;
+}
+.code-header {
+    background-color: #161b22;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.code-header::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff5f56;
+    box-shadow: 20px 0 0 #ffbd2e, 40px 0 0 #27c93f;
+    margin-right: 60px;
+}
+.code-lang {
+    color: #8b949e;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
 .copy-btn {
-    background: none;
-    border: none;
-    color: #9ca3af;
+    background: transparent;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
     font-size: 0.8rem;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    transition: color 0.2s;
-    font-family: inherit;
+    transition: all 0.2s;
 }
-
 .copy-btn:hover {
-    color: white;
+    background: #30363d;
 }
-
-.content pre {
+.code-block-wrapper pre {
     padding: 1rem;
     margin: 0;
     overflow-x: auto;
-    background-color: transparent !important;
 }
+.code-block-wrapper code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
 .content code {
     font-family: monospace;
     font-size: 0.9rem;
