@@ -839,3 +839,31 @@ body.glow-1-1 .chat-input-wrapper {
     width: 16px;
     text-align: center;
 }
+
+/* --- Print Styles for Chat Export --- */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .chat-area, .chat-area * {
+        visibility: visible;
+    }
+    .chat-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .sidebar, .chat-input-container, .header-actions, .menu-btn, #sub-model-container {
+        display: none !important;
+    }
+    .messages-container {
+        height: auto;
+        overflow: visible;
+    }
+    .message {
+        break-inside: avoid;
+    }
+}

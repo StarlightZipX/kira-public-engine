@@ -96,25 +96,38 @@ function updateModelUI() {
     if (!modelSelect) return;
 
     const opt11 = modelSelect.querySelector('option[value="1.1"]');
+    const opt12 = modelSelect.querySelector('option[value="1.2"]');
+    const subModelContainer = document.getElementById('sub-model-container');
+    
     if (opt11) {
         if (isBoss(currentUser)) {
-            opt11.textContent = "Kira 1.1 (PRO)";
+            opt11.textContent = "Kira 1.1 PRO";
+            if (opt12) opt12.textContent = "Kira 1.2 PRO";
         } else {
             opt11.textContent = "Kira 1.1 🔒";
+            if (opt12) opt12.textContent = "Kira 1.2 🔒";
         }
     }
 
-    if (modelSelect.value === '1.1') {
+    if (modelSelect.value === '1.1' || modelSelect.value === '1.2') {
         document.body.classList.add('glow-1-1');
         if (attachBtn) {
             attachBtn.classList.add('unlocked');
-            attachBtn.title = "แนบไฟล์ (Kira 1.1 Pro)";
+            attachBtn.title = "แนบไฟล์ (Kira PRO)";
+        }
+        if (subModelContainer && modelSelect.value === '1.2') {
+            subModelContainer.style.display = 'flex';
+        } else if (subModelContainer) {
+            subModelContainer.style.display = 'none';
         }
     } else {
         document.body.classList.remove('glow-1-1');
         if (attachBtn) {
             attachBtn.classList.remove('unlocked');
             attachBtn.title = "แนบไฟล์ (ยังไม่รองรับใน 1.0)";
+        }
+        if (subModelContainer) {
+            subModelContainer.style.display = 'none';
         }
     }
 }
@@ -334,7 +347,7 @@ async function loadSession(sessionId) {
         } else {
             data.history.forEach(msg => {
                 // Strip badge when rendering old history
-                let displayTxt = msg.content.replace(/^(✨ \*\*\[Kira 1\.1 \(PRO\)\]\*\*\n\n|🤖 \*\*\[Kira 1\.0\]\*\*\n\n|✨ \*\*\[Kira 1\.1 👑\]\*\*\n\n)/i, "");
+                let displayTxt = msg.content.replace(/^(✨ \*\*\[Kira 1\.1 PRO\]\*\*\n\n|🤖 \*\*\[Kira 1\.0\]\*\*\n\n|✨ \*\*\[Kira 1\.1 👑\]\*\*\n\n)/i, "");
                 addMessage(displayTxt, msg.role === 'User');
             });
         }
@@ -423,10 +436,13 @@ async function sendMessage() {
 
     try {
         const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "1.0";
+        const flavor = document.querySelector('input[name="sub-model-flavor"]:checked') ? document.querySelector('input[name="sub-model-flavor"]:checked').value : "fast";
+        const persona = document.getElementById('persona-select') ? document.getElementById('persona-select').value : "default";
+
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text, username: currentUser, model_version: modelVersion, image_base64: imgBase64ToSend, session_id: currentSessionId })
+            body: JSON.stringify({ message: text, username: currentUser, model_version: modelVersion, image_base64: imgBase64ToSend, session_id: currentSessionId, flavor: flavor, persona: persona })
         });
 
         hideTypingIndicator();
@@ -446,9 +462,14 @@ async function sendMessage() {
             if (done) break;
             
             fullText += decoder.decode(value, { stream: true });
-            let displayTxt = fullText.replace(/^(✨ \*\*\[Kira 1\.1 \(PRO\)\]\*\*\n\n|🤖 \*\*\[Kira 1\.0\]\*\*\n\n|✨ \*\*\[Kira 1\.1 👑\]\*\*\n\n)/i, "");
+            let displayTxt = fullText.replace(/^(✨ \*\*\[Kira 1\.1 PRO\]\*\*\n\n|🤖 \*\*\[Kira 1\.0\]\*\*\n\n|✨ \*\*\[Kira 1\.2 PRO\]\*\*\n\n)/i, "");
             contentDiv.innerHTML = marked.parse(displayTxt);
             chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        // Apply Advanced Markdown features (MathJax, Copy code)
+        if (typeof applyAdvancedMarkdown === 'function') {
+            applyAdvancedMarkdown(contentDiv);
         }
         
         // Append Feedback UI
@@ -619,13 +640,13 @@ if (modelSelect) {
     }
 
     modelSelect.addEventListener('change', (e) => {
-        if (e.target.value === '1.1') {
+        if (e.target.value === '1.1' || e.target.value === '1.2') {
             if (!isBoss(currentUser)) {
-                alert("Kira 1.1 กำลังอยู่ในช่วงการฝึกฝนแบบปิด (Private Beta) และจะเปิดให้ทุกคนร่วมทดสอบเร็วๆ นี้ค่ะ! ฝากติดตามด้วยนะคะ ✨");
+                alert("Kira เวอร์ชันนี้กำลังอยู่ในช่วงการฝึกฝนแบบปิด (Private Beta) และจะเปิดให้ทุกคนร่วมทดสอบเร็วๆ นี้ค่ะ! ฝากติดตามด้วยนะคะ ✨");
                 e.target.value = '1.0'; // Revert back
                 localStorage.setItem('kira_model', '1.0');
             } else {
-                localStorage.setItem('kira_model', '1.1');
+                localStorage.setItem('kira_model', e.target.value);
             }
         } else {
             localStorage.setItem('kira_model', '1.0');
@@ -665,6 +686,42 @@ sendBtn.addEventListener('click', () => {
     if (!isGenerating) sendMessage();
 });
 sendBtn.disabled = true;
+
+// --- Advanced Markdown (Copy Code & MathJax) ---
+function applyAdvancedMarkdown(container) {
+    // 1. MathJax
+    if (typeof MathJax !== 'undefined') {
+        MathJax.typesetPromise([container]).catch((err) => console.log(err.message));
+    }
+    
+    // 2. Copy Code Button
+    const codeBlocks = container.querySelectorAll('pre');
+    codeBlocks.forEach(pre => {
+        if (pre.querySelector('.copy-btn')) return; // Already added
+        pre.style.position = 'relative';
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+        btn.style.cssText = 'position: absolute; top: 5px; right: 5px; background: rgba(255,255,255,0.1); color: #cbd5e1; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; transition: 0.2s;';
+        
+        btn.addEventListener('click', () => {
+            const code = pre.querySelector('code');
+            if (code) {
+                navigator.clipboard.writeText(code.innerText);
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+                btn.style.background = 'rgba(74, 222, 128, 0.2)';
+                btn.style.color = '#4ade80';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+                    btn.style.background = 'rgba(255,255,255,0.1)';
+                    btn.style.color = '#cbd5e1';
+                }, 2000);
+            }
+        });
+        
+        pre.appendChild(btn);
+    });
+}
 
 // --- Feedback Logic ---
 async function submitFeedback(rating, botText, review = "") {
@@ -861,4 +918,14 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     }
 } else {
     if (micBtn) micBtn.style.display = 'none'; // Not supported
+}
+
+// --- Chat Export Feature ---
+const btnExport = document.getElementById('btn-export');
+if (btnExport) {
+    btnExport.addEventListener('click', () => {
+        if (confirm('ต้องการบันทึกบทสนทนานี้เป็น PDF ใช่หรือไม่? (ระบบจะเปิดหน้าต่าง Print ให้เลือก Save as PDF)')) {
+            window.print();
+        }
+    });
 }
