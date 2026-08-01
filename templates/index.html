@@ -93,21 +93,24 @@
                 <!-- History items will be injected here -->
             </div>
             
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <img id="profile-pic" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
-            <div class="sidebar-menu">
+            <div class="sidebar-menu" style="padding: 10px 15px; border-top: 1px solid rgba(255,255,255,0.05);">
                 <div class="persona-selector">
-                    <label for="persona-select"><i class="fa-solid fa-user-astronaut"></i> นิสัยของ Kira:</label>
-                    <select id="persona-select" class="model-select" style="width: 100%; margin-top: 5px;">
+                    <label for="persona-select" style="font-size: 0.85rem; color: #94a3b8;"><i class="fa-solid fa-user-astronaut"></i> นิสัยของ Kira:</label>
+                    <select id="persona-select" class="model-select" style="width: 100%; margin-top: 5px; background: rgba(0,0,0,0.2);">
                         <option value="default">ปกติ (สุภาพ/เป็นทางการ)</option>
                         <option value="friend">เพื่อนสนิท (เป็นกันเอง)</option>
                         <option value="manager">ผู้จัดการ (ดุดัน/เน้นผลงาน)</option>
                     </select>
                 </div>
             </div>
-            
-            <button id="logout-btn" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <img id="profile-pic" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
+                    <span id="profile-name">User</span>
+                </div>
+                <button class="settings-btn" id="btn-logout" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
         </aside>
 
         <!-- Main Chat Area -->
@@ -119,27 +122,27 @@
                     <button title="บันทึกและส่งออก (Export PDF)" id="btn-export" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-file-export"></i></button>
                     <select id="model-select" class="model-select">
                         <option value="1.0">Kira 1.0</option>
-                        <option value="1.1">Kira 1.1 🔒</option>
+                        <option value="1.1">Kira 1.1</option>
                         <option value="1.2">Kira 1.2 🔒</option>
                     </select>
-                    <button title="สลับโหมดกลางวัน/กลางคืน" id="btn-theme"><i class="fa-solid fa-moon"></i></button>
+                    <button title="สลับโหมดกลางวัน/กลางคืน" id="btn-theme" style="margin-right: 15px;"><i class="fa-solid fa-moon"></i></button>
                     <button title="เกี่ยวกับระบบ" id="btn-info"><i class="fa-solid fa-circle-info"></i></button>
                 </div>
             </header>
 
-            <div id="sub-model-container" style="display: none; background: #1e293b; padding: 8px 15px; border-bottom: 1px solid #334155; display: flex; gap: 10px; justify-content: center; align-items: center; font-size: 0.9rem;">
-                <span style="color: #cbd5e1; font-weight: 500;">โหมดการทำงาน:</span>
-                <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" name="sub-model-flavor" value="fast" checked>
-                    <span style="color: #4ade80;">⚡ Fast</span>
+            <div id="sub-model-container" style="max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease-in-out; background: #1e293b; border-bottom: 1px solid transparent; display: flex; gap: 10px; justify-content: center; align-items: center; font-size: 0.9rem;">
+                <span style="color: #cbd5e1; font-weight: 500; margin-left: 15px;">โหมดการทำงาน:</span>
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 6px; transition: background 0.2s;" class="flavor-label">
+                    <input type="radio" name="sub-model-flavor" value="fast" checked style="display: none;">
+                    <span style="color: #4ade80;"><i class="fa-solid fa-bolt"></i> Fast</span>
                 </label>
-                <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" name="sub-model-flavor" value="reasoning">
-                    <span style="color: #3b82f6;">🧠 Reasoning</span>
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 6px; transition: background 0.2s;" class="flavor-label">
+                    <input type="radio" name="sub-model-flavor" value="reasoning" style="display: none;">
+                    <span style="color: #3b82f6;"><i class="fa-solid fa-brain"></i> Reasoning</span>
                 </label>
-                <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" name="sub-model-flavor" value="creative">
-                    <span style="color: #f472b6;">🎨 Creative</span>
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 6px; transition: background 0.2s;" class="flavor-label">
+                    <input type="radio" name="sub-model-flavor" value="creative" style="display: none;">
+                    <span style="color: #f472b6;"><i class="fa-solid fa-palette"></i> Creative</span>
                 </label>
             </div>
 
