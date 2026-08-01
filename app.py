@@ -382,6 +382,8 @@ class ChatRequest(BaseModel):
     model_version: str = "1.0"
     image_base64: Optional[str] = None
     session_id: Optional[str] = None
+    flavor: Optional[str] = "fast"
+    persona: Optional[str] = "default"
 
 class FeedbackRequest(BaseModel):
     username: str
@@ -774,8 +776,10 @@ async def chat_endpoint(req: ChatRequest):
     uname = req.username
     model_version = req.model_version
     session_id = req.session_id
+    flavor = req.flavor
+    persona = req.persona
 
-    if model_version == "1.1" and not is_boss(uname):
+    if (model_version == "1.1" or model_version == "1.2") and not is_boss(uname):
         model_version = "1.0"
 
     is_boss_user = is_boss(uname)
@@ -791,6 +795,13 @@ async def chat_endpoint(req: ChatRequest):
 
     if session_key not in user_sessions:
         prompt_to_use = _get_full_system_prompt(uname)
+        
+        # Inject Persona
+        if persona == "friend":
+            prompt_to_use += "\n\n[PERSONA INSTRUCTION]: ผู้ใช้เลือกโหมดเพื่อนสนิท ให้คุณตอบคำถามแบบเป็นกันเอง ใช้ภาษาวัยรุ่น ใช้คำว่าแก/ฉัน หรือกู/มึงได้ถ้าเหมาะสม ไม่ต้องเป็นทางการมากนัก"
+        elif persona == "manager":
+            prompt_to_use += "\n\n[PERSONA INSTRUCTION]: ผู้ใช้เลือกโหมดผู้จัดการ ให้คุณตอบคำถามแบบดุดัน เน้นผลลัพธ์ ตรงไปตรงมา กระชับ และเน้นกระตุ้นให้เกิดการทำงาน"
+
         user_sessions[session_key] = [SystemMessage(content=prompt_to_use)]
         
         # กู้คืนความจำจาก Database
@@ -832,7 +843,12 @@ async def chat_endpoint(req: ChatRequest):
 
     async def generate():
         full_response = ""
-        badge = "✨ **[Kira 1.1 (PRO)]**\n\n" if model_version == "1.1" else "🤖 **[Kira 1.0]**\n\n"
+        if model_version == "1.1":
+            badge = "✨ **[Kira 1.1 PRO]**\n\n"
+        elif model_version == "1.2":
+            badge = "✨ **[Kira 1.2 PRO]**\n\n"
+        else:
+            badge = "🤖 **[Kira 1.0]**\n\n"
         full_response += badge
         yield badge
         
@@ -871,13 +887,21 @@ async def chat_endpoint(req: ChatRequest):
             if scraped_text:
                 temp_history.insert(-1, SystemMessage(content=f"\n[เนื้อหาจากเว็บไซต์ {url_to_scrape}]:\n{scraped_text}\n(Instruction: ใช้ข้อมูลนี้ตอบคำถามให้ครบถ้วน)"))
 
-        preferred_model = PREFERRED_PRO if model_version == "1.1" else PREFERRED_FLASH
+        if model_version == "1.2":
+            if flavor == "fast":
+                preferred_model = PREFERRED_FLASH
+            elif flavor == "creative":
+                preferred_model = "mixtral-8x7b-32768"
+            else:
+                preferred_model = PREFERRED_PRO
+        else:
+            preferred_model = PREFERRED_PRO if model_version == "1.1" else PREFERRED_FLASH
         
         clean_history = []
         for msg in temp_history:
             if isinstance(msg, AIMessage):
                 clean_content = msg.content
-                clean_content = re.sub(r'✨ \*\*\[Kira 1.1 \(PRO\)\]\*\*\n\n', '', clean_content)
+                clean_content = re.sub(r'✨ \*\*\[Kira 1.1 PRO\]\*\*\n\n', '', clean_content)
                 clean_content = re.sub(r'🤖 \*\*\[Kira 1.0\]\*\*\n\n', '', clean_content)
                 clean_content = re.sub(r'\*\(\🌐 กำลัง.*?\.\.\.\)\*\n\n', '', clean_content)
                 clean_history.append(AIMessage(content=clean_content))
