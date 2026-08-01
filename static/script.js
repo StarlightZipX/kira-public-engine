@@ -100,12 +100,13 @@ function updateModelUI() {
     const subModelContainer = document.getElementById('sub-model-container');
     
     if (opt11) {
+        opt11.textContent = "Kira 1.1";
+    }
+    if (opt12) {
         if (isBoss(currentUser)) {
-            opt11.textContent = "Kira 1.1 PRO";
-            if (opt12) opt12.textContent = "Kira 1.2 PRO";
+            opt12.textContent = "Kira 1.2 PRO";
         } else {
-            opt11.textContent = "Kira 1.1 🔒";
-            if (opt12) opt12.textContent = "Kira 1.2 🔒";
+            opt12.textContent = "Kira 1.2 🔒";
         }
     }
 
@@ -115,19 +116,26 @@ function updateModelUI() {
             attachBtn.classList.add('unlocked');
             attachBtn.title = "แนบไฟล์ (Kira PRO)";
         }
-        if (subModelContainer && modelSelect.value === '1.2') {
-            subModelContainer.style.display = 'flex';
-        } else if (subModelContainer) {
-            subModelContainer.style.display = 'none';
-        }
     } else {
         document.body.classList.remove('glow-1-1');
         if (attachBtn) {
             attachBtn.classList.remove('unlocked');
             attachBtn.title = "แนบไฟล์ (ยังไม่รองรับใน 1.0)";
         }
-        if (subModelContainer) {
-            subModelContainer.style.display = 'none';
+    }
+
+    // Toggle Sub-model UI with Animation
+    if (subModelContainer) {
+        if (modelSelect.value === '1.2') {
+            subModelContainer.style.maxHeight = '50px';
+            subModelContainer.style.opacity = '1';
+            subModelContainer.style.padding = '8px 15px';
+            subModelContainer.style.borderBottom = '1px solid #334155';
+        } else {
+            subModelContainer.style.maxHeight = '0';
+            subModelContainer.style.opacity = '0';
+            subModelContainer.style.padding = '0 15px';
+            subModelContainer.style.borderBottom = '1px solid transparent';
         }
     }
 }
@@ -161,8 +169,7 @@ async function loadUserProfile() {
         const response = await fetch(`/api/user/profile/${currentUser}`);
         const data = await response.json();
         if (data.status === 'success') {
-            const level = Math.floor(data.points / 100) + 1;
-            profileName.innerHTML = `${currentUser} <span style="font-size: 0.8rem; color: #fbbf24; margin-left: 5px;" title="แต้ม: ${data.points}"><i class="fa-solid fa-star"></i> Lv.${level}</span>`;
+            profileName.textContent = currentUser;
         }
     } catch (e) {
         console.error("Profile fetch error:", e);
@@ -347,7 +354,7 @@ async function loadSession(sessionId) {
         } else {
             data.history.forEach(msg => {
                 // Strip badge when rendering old history
-                let displayTxt = msg.content.replace(/^(✨ \*\*\[Kira 1\.1 PRO\]\*\*\n\n|🤖 \*\*\[Kira 1\.0\]\*\*\n\n|✨ \*\*\[Kira 1\.1 👑\]\*\*\n\n)/i, "");
+                let displayTxt = msg.content.replace(/^(✨ \*\*\[Kira 1\.1 PRO\]\*\*\n\n|🤖 \*\*\[Kira 1\.0\]\*\*\n\n|✨ \*\*\[Kira 1\.1 👑\]\*\*\n\n|✨ \*\*\[Kira 1\.2 PRO\]\*\*\n\n)/i, "");
                 addMessage(displayTxt, msg.role === 'User');
             });
         }
@@ -640,16 +647,16 @@ if (modelSelect) {
     }
 
     modelSelect.addEventListener('change', (e) => {
-        if (e.target.value === '1.1' || e.target.value === '1.2') {
+        if (e.target.value === '1.2') {
             if (!isBoss(currentUser)) {
-                alert("Kira เวอร์ชันนี้กำลังอยู่ในช่วงการฝึกฝนแบบปิด (Private Beta) และจะเปิดให้ทุกคนร่วมทดสอบเร็วๆ นี้ค่ะ! ฝากติดตามด้วยนะคะ ✨");
-                e.target.value = '1.0'; // Revert back
-                localStorage.setItem('kira_model', '1.0');
+                alert("Kira 1.2 กำลังอยู่ในช่วงการฝึกฝนแบบปิด (Private Beta) และจะเปิดให้ทุกคนร่วมทดสอบเร็วๆ นี้ค่ะ! ✨");
+                e.target.value = '1.1'; // Revert back to 1.1 instead of 1.0 since 1.1 is public now
+                localStorage.setItem('kira_model', '1.1');
             } else {
                 localStorage.setItem('kira_model', e.target.value);
             }
         } else {
-            localStorage.setItem('kira_model', '1.0');
+            localStorage.setItem('kira_model', e.target.value);
         }
         updateModelUI();
     });
