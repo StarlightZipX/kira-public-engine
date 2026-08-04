@@ -867,3 +867,37 @@ body.glow-1-1 .chat-input-wrapper {
         break-inside: avoid;
     }
 }
+
+/* --- Quick Prompts --- */
+.quick-prompts-container {
+    display: flex;
+    gap: 8px;
+    padding: 10px 15px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    background: transparent;
+}
+.quick-prompts-container::-webkit-scrollbar {
+    display: none;
+}
+.quick-prompt-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.quick-prompt-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #38bdf8;
+    color: #38bdf8;
+    transform: translateY(-2px);
+}

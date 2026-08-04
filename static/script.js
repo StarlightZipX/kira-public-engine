@@ -441,6 +441,29 @@ async function sendMessage() {
     if (imgPreviewContainer) imgPreviewContainer.style.display = 'none';
     if (imgInput) imgInput.value = '';
 
+    // --- Magic Image Generation Interception (Free AI Art) ---
+    if (text.toLowerCase().startsWith('/image') || text.startsWith('วาดรูป')) {
+        hideTypingIndicator();
+        isGenerating = false;
+        userInput.disabled = false;
+        userInput.focus();
+        
+        let promptText = text.replace(/^\/image/i, '').replace(/^วาดรูป/, '').trim();
+        if (!promptText) promptText = "a beautiful random artwork";
+        
+        // Use Pollinations AI (Free, no-key image generation)
+        const encodedPrompt = encodeURIComponent(promptText);
+        const seed = Math.floor(Math.random() * 100000);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
+        
+        const botMsg = `นี่คือรูปภาพที่คุณขอครับ:\n\n![${promptText}](${imageUrl})`;
+        const msgContainer = addMessage('', false);
+        msgContainer.innerHTML = marked.parse(botMsg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        return; // Don't send to backend LLM
+    }
+
     try {
         const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "1.0";
         const flavor = document.querySelector('input[name="sub-model-flavor"]:checked') ? document.querySelector('input[name="sub-model-flavor"]:checked').value : "fast";
@@ -681,6 +704,70 @@ userInput.addEventListener('input', function() {
 
 toggleSidebarBtn.addEventListener('click', () => sidebar.classList.add('open'));
 closeSidebarBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+
+// Add floating label behavior to input area
+userInput.addEventListener('focus', () => {
+    document.querySelector('.input-wrapper').style.borderColor = '#38bdf8';
+});
+userInput.addEventListener('blur', () => {
+    document.querySelector('.input-wrapper').style.borderColor = 'rgba(255, 255, 255, 0.2)';
+});
+
+// --- Quick Prompts ---
+document.querySelectorAll('.quick-prompt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        userInput.value = btn.getAttribute('data-prompt');
+        userInput.focus();
+        sendBtn.disabled = false;
+    });
+});
+
+// --- Speech-to-Text (Web Speech API) ---
+const micBtn = document.getElementById('mic-btn');
+if (micBtn) {
+    let recognition;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'th-TH';
+
+        recognition.onstart = function() {
+            micBtn.style.color = '#ef4444';
+            micBtn.classList.add('glow-1-1');
+            userInput.placeholder = "กำลังฟัง...";
+        };
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            userInput.value += transcript;
+            sendBtn.disabled = false;
+        };
+
+        recognition.onerror = function(event) {
+            console.error("Speech error:", event.error);
+        };
+
+        recognition.onend = function() {
+            micBtn.style.color = ''; 
+            micBtn.classList.remove('glow-1-1');
+            userInput.placeholder = "พิมพ์ข้อความหา Kira...";
+        };
+
+        micBtn.addEventListener('click', () => {
+            if (micBtn.style.color === 'rgb(239, 68, 68)' || micBtn.style.color === '#ef4444') {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+    } else {
+        micBtn.addEventListener('click', () => {
+            alert("เบราว์เซอร์ของคุณไม่รองรับระบบสั่งงานด้วยเสียง กรุณาใช้ Chrome หรือ Edge ครับ");
+        });
+    }
+}
 
 userInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
