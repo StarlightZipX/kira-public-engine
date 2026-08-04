@@ -100,13 +100,13 @@ function updateModelUI() {
     const subModelContainer = document.getElementById('sub-model-container');
     
     if (opt11) {
-        opt11.textContent = "Kira 1.1 PRO";
+        opt11.textContent = "Kira 1.1 [Pioneer]";
     }
     if (opt12) {
         if (isBoss(currentUser)) {
-            opt12.textContent = "Kira 1.2";
+            opt12.textContent = "Kira 1.2 [Apex]";
         } else {
-            opt12.textContent = "Kira 1.2 🔒";
+            opt12.textContent = "Kira 1.2 [Apex] 🔒";
         }
     }
 
