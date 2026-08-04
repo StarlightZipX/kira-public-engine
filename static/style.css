@@ -872,18 +872,26 @@ body.glow-1-1 .chat-input-wrapper {
 }
 
 /* --- Quick Prompts --- */
-.quick-prompts-container {
-    display: flex;
-    gap: 8px;
-    padding: 10px 15px;
-    overflow-x: auto;
+.quick-prompts-wrapper {
+    overflow: hidden;
     white-space: nowrap;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    background: transparent;
+    width: 100%;
+    position: relative;
+    padding: 5px 0 10px 0;
+    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
 }
-.quick-prompts-container::-webkit-scrollbar {
-    display: none;
+.quick-prompts-container {
+    display: inline-flex;
+    gap: 8px;
+    animation: scroll-left 45s linear infinite;
+}
+.quick-prompts-container:hover {
+    animation-play-state: paused;
+}
+@keyframes scroll-left {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(calc(-50% - 4px)); }
 }
 .quick-prompt-btn {
     background: rgba(255, 255, 255, 0.05);
