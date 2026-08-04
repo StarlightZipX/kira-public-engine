@@ -723,7 +723,7 @@ document.querySelectorAll('.quick-prompt-btn').forEach(btn => {
 });
 
 // --- Speech-to-Text (Web Speech API) ---
-const micBtn = document.getElementById('mic-btn');
+var micBtn = document.getElementById('mic-btn');
 if (micBtn) {
     let recognition;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -963,7 +963,7 @@ if (attachToggleBtn && attachmentMenu) {
 }
 
 // --- Speech Recognition (STT) ---
-const micBtn = document.getElementById('mic-btn');
+var micBtn = document.getElementById('mic-btn');
 let recognition;
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
