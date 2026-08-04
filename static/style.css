@@ -662,12 +662,15 @@ textarea::placeholder {
     margin-bottom: 0.5rem;
 }
 
+.auth-error:empty {
+    display: none;
+}
+
 .auth-subtitle {
     text-align: center;
     color: var(--text-secondary);
     font-size: 0.9rem;
     margin-top: -0.5rem;
-    margin-bottom: 1rem;
     line-height: 1.5;
 }
 
