@@ -691,12 +691,57 @@ def _decide_search(query: str) -> str:
         print("Search decision error:", e)
     return ""
 
+def _fetch_weather(user_input: str) -> str:
+    import urllib.parse
+    import re
+    
+    cities = {
+        "กรุงเทพ": "Bangkok", "เชียงใหม่": "Chiang Mai", "ภูเก็ต": "Phuket",
+        "พัทยา": "Pattaya", "ชลบุรี": "Chonburi", "ขอนแก่น": "Khon Kaen",
+        "โคราช": "Nakhon Ratchasima", "นครราชสีมา": "Nakhon Ratchasima",
+        "อุดรธานี": "Udon Thani", "อุดร": "Udon Thani", "หาดใหญ่": "Hat Yai",
+        "สงขลา": "Songkhla", "หัวหิน": "Hua Hin", "อยุธยา": "Ayutthaya",
+        "นนทบุรี": "Nonthaburi", "ปทุมธานี": "Pathum Thani", "สมุทรปราการ": "Samut Prakan"
+    }
+    
+    location_eng = "Bangkok" # default
+    location_thai = "กรุงเทพมหานคร"
+    
+    for th, en in cities.items():
+        if th in user_input:
+            location_eng = en
+            location_thai = th
+            break
+            
+    try:
+        url = f"https://wttr.in/{urllib.parse.quote(location_eng)}?format=j1"
+        res = requests.get(url, timeout=5)
+        if res.status_code == 200:
+            data = res.json()
+            curr = data['current_condition'][0]
+            temp = curr['temp_C']
+            desc = curr['weatherDesc'][0]['value']
+            
+            forecast = data.get('weather', [])
+            forecast_str = ""
+            for d in forecast:
+                date = d['date']
+                max_t = d['maxtempC']
+                min_t = d['mintempC']
+                uv = d.get('uvIndex', '')
+                forecast_str += f"- {date}: สูงสุด {max_t}°C, ต่ำสุด {min_t}°C, UV: {uv}\n"
+            
+            ctx = f"[Realtime Weather Data for {location_thai}]\nCurrent: {temp}°C, Condition: {desc}\nForecast (Today and next 2 days):\n{forecast_str}\n(Instruction: Use this realtime data to answer the user's weather question naturally. Never use old data. Specify the date or time clearly as requested.)"
+            return ctx
+    except Exception as e:
+        print("Weather fetch error:", e)
+    return ""
+
 def _execute_search(search_term: str, version: str) -> str:
     try:
         print(f"🔍 [Web Search Triggered]: {search_term}")
         search_tool = DuckDuckGoSearchRun()
         raw_results = search_tool.invoke(search_term)
-        
         if version == "1.0":
             return f"\n\n[Web Search Results (Limited)]:\n{raw_results[:400]}\n(Instruction: Use this context briefly to answer. Do not analyze deeply. IMPORTANT: Answer ONLY in Thai language (ภาษาไทย) without any Chinese characters.)"
         else:
@@ -863,6 +908,16 @@ async def chat_endpoint(req: ChatRequest):
             temp_history.insert(-1, SystemMessage(content="[คำสั่งพิเศษจากบอส]: ให้ทำหน้าที่เป็นนักแปลภาษา แปลข้อความที่ตามหลังคำสั่งเป็นภาษาไทย (หรืออังกฤษถ้าต้นฉบับเป็นไทย) อย่างสละสลวยที่สุด ห้ามอธิบายเพิ่มเติม ห้ามตอบอย่างอื่นนอกจากคำแปล"))
         elif user_input.startswith("/สรุป"):
             temp_history.insert(-1, SystemMessage(content="[คำสั่งพิเศษจากบอส]: ให้สรุปใจความสำคัญของข้อความที่ตามหลังคำสั่งให้สั้น กระชับ และเข้าใจง่ายที่สุดในรูปแบบ Bullet points"))
+            
+        # Weather Check
+        if any(w in user_input for w in ["สภาพอากาศ", "พยากรณ์อากาศ", "อุณหภูมิ", "ฝนจะตก", "ฝนตกไหม"]):
+            yield "*(☁️ กำลังเช็กสภาพอากาศให้ค่ะ...)*\n\n"
+            full_response += "*(☁️ กำลังเช็กสภาพอากาศให้ค่ะ...)*\n\n"
+            await asyncio.sleep(0.1)
+            
+            weather_ctx = await asyncio.to_thread(_fetch_weather, user_input)
+            if weather_ctx:
+                temp_history.insert(-1, SystemMessage(content=weather_ctx))
         
         if search_term:
             # Yield loading text immediately once we know we need to search
