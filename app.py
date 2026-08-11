@@ -563,7 +563,9 @@ def _get_full_system_prompt(username: str) -> str:
         except Exception:
             pass
             
-    return base_prompt + "\n" + dict_context + memory_ctx
+    image_instruction = "\n\n[ความสามารถพิเศษ]: คุณคือ AI ที่สามารถสร้างรูปภาพได้ หากผู้ใช้ขอให้วาดรูป ห้ามปฏิเสธเด็ดขาด ให้ตอบรับและแนะนำผู้ใช้ว่า: 'หนูสามารถวาดรูปให้ได้ค่ะ! พิมพ์คำสั่ง /image ตามด้วยสิ่งที่คุณอยากให้วาดได้เลยค่ะ เช่น /image แมวอวกาศ'\n"
+    
+    return base_prompt + image_instruction + dict_context + memory_ctx
 
 async def _extract_and_save_memory(username: str, user_input: str, version: str):
     if version != "1.1" or not is_boss(username):
