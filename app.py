@@ -13,7 +13,7 @@ from typing import Optional
 from pydantic import BaseModel
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-from langchain_community.tools import DuckDuckGoSearchRun
+
 import io
 import PyPDF2
 import docx
