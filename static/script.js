@@ -441,28 +441,8 @@ async function sendMessage() {
     if (imgPreviewContainer) imgPreviewContainer.style.display = 'none';
     if (imgInput) imgInput.value = '';
 
-    // --- Magic Image Generation Interception (Free AI Art) ---
-    if (text.toLowerCase().startsWith('/image') || text.startsWith('วาดรูป')) {
-        hideTypingIndicator();
-        isGenerating = false;
-        userInput.disabled = false;
-        userInput.focus();
-        
-        let promptText = text.replace(/^\/image/i, '').replace(/^วาดรูป/, '').trim();
-        if (!promptText) promptText = "a beautiful random artwork";
-        
-        // Use Pollinations AI (Free, no-key image generation)
-        const encodedPrompt = encodeURIComponent(promptText);
-        const seed = Math.floor(Math.random() * 100000);
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
-        
-        const botMsg = `นี่คือรูปภาพที่คุณขอครับ:\n\n![${promptText}](${imageUrl})`;
-        const msgContainer = addMessage('', false);
-        msgContainer.innerHTML = marked.parse(botMsg);
-        chatBox.scrollTop = chatBox.scrollHeight;
-        
-        return; // Don't send to backend LLM
-    }
+
+
 
     try {
         const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "1.0";
