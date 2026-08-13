@@ -57,6 +57,26 @@ if not os.path.exists(templates_dir):
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates = Jinja2Templates(directory=templates_dir)
 
+# --- Network Shield (Rate Limiter) ---
+import collections
+# IP -> list of timestamps
+ip_request_history = collections.defaultdict(list)
+MAX_REQUESTS_PER_MINUTE = 15
+
+# --- Kira Venom Protocol (Hacker Strikes) ---
+hacker_strikes = collections.defaultdict(int)
+
+def is_rate_limited(client_ip: str) -> bool:
+    current_time = time.time()
+    # Remove timestamps older than 60 seconds
+    ip_request_history[client_ip] = [ts for ts in ip_request_history[client_ip] if current_time - ts < 60]
+    
+    if len(ip_request_history[client_ip]) >= MAX_REQUESTS_PER_MINUTE:
+        return True
+        
+    ip_request_history[client_ip].append(current_time)
+    return False
+
 # --- Database Setup ---
 DB_FILE = os.path.join(BASE_DIR, "chat_logs.db")
 
@@ -147,7 +167,10 @@ def init_db():
         print("DB Init Error:", e)
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    # Aegis Protocol: Data Obfuscation (Salt Hashing)
+    SECRET_SALT = "KiraAegisProtocol_2026_TopSecretSalt_@#$"
+    salted_password = password + SECRET_SALT
+    return hashlib.sha256(salted_password.encode()).hexdigest()
 
 def log_chat(username: str, role: str, content: str, session_id: str = None):
     tz = timezone(timedelta(hours=7))
@@ -835,7 +858,18 @@ def _execute_python_code(code: str) -> str:
     import contextlib
     import io
     import base64
+    import builtins
     
+    # 1. Static Analysis: Block dangerous imports (Venom Level 2 Trap)
+    dangerous_modules = ['os', 'sys', 'subprocess', 'shutil', 'socket', 'urllib', 'requests', 'sqlite3', 'pathlib']
+    for mod in dangerous_modules:
+        if f"import {mod}" in code or f"from {mod}" in code:
+            return f"[VENOM_TRAP] {mod}"
+            
+    # 2. Block file operations (Venom Level 2 Trap)
+    if "open(" in code or "file(" in code or "eval(" in code or "exec(" in code:
+        return "[VENOM_TRAP] file_ops"
+
     # Inject matplotlib interceptor if matplotlib is imported
     if "matplotlib" in code or "plt." in code:
         interceptor = """
@@ -858,9 +892,35 @@ plt.show = _intercepted_show
         code = interceptor + "\n" + code
 
     stdout = io.StringIO()
+    
+    # 3. Create a restricted builtins dictionary (Sandbox)
+    safe_builtins = {
+        'print': print,
+        'range': range,
+        'len': len,
+        'int': int,
+        'float': float,
+        'str': str,
+        'list': list,
+        'dict': dict,
+        'set': set,
+        'tuple': tuple,
+        'bool': bool,
+        'sum': sum,
+        'min': min,
+        'max': max,
+        'abs': abs,
+        'round': round,
+        'enumerate': enumerate,
+        'zip': zip,
+        '__build_class__': builtins.__build_class__,
+        '__name__': '__main__',
+    }
+    
     try:
         with contextlib.redirect_stdout(stdout):
-            exec(code, {"__builtins__": __builtins__})
+            # Execute with restricted globals and locals
+            exec(code, {"__builtins__": safe_builtins}, {})
         output = stdout.getvalue()
         if not output:
             output = "Code executed successfully with no output."
@@ -920,18 +980,45 @@ async def generate_tts(req: TTSRequest):
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
 @app.post("/api/chat")
-async def chat_endpoint(req: ChatRequest):
+async def chat_endpoint(req: ChatRequest, request: Request):
     user_input = req.message
     uname = req.username
     model_version = req.model_version
     session_id = req.session_id
     flavor = req.flavor
     persona = req.persona
-
-    if (model_version == "1.1" or model_version == "1.2") and not is_boss(uname):
-        model_version = "1.0"
+    client_ip = request.client.host if request.client else "unknown"
 
     is_boss_user = is_boss(uname)
+
+    # 3. Kira Venom Protocol: The Blackhole (Tarpit)
+    if hacker_strikes[client_ip] >= 3:
+        async def tarpit_response():
+            yield "\n\n*(⏳ เชื่อมต่อกับเซิร์ฟเวอร์หลัก...)*\n\n"
+            await asyncio.sleep(300) # Freeze for 5 minutes
+            yield "❌ Connection Timeout. Disconnected from host."
+        return StreamingResponse(tarpit_response(), media_type="text/plain")
+
+    # 1. Network Shield (Rate Limiting)
+    if not is_boss_user and is_rate_limited(client_ip):
+        return StreamingResponse(
+            iter(["🛑 **[Kira Aegis]**\n\n⚠️ ตรวจพบการส่งข้อความรัวเกินไป (Rate Limit Exceeded) กรุณารอสักครู่แล้วลองใหม่"]),
+            media_type="text/plain"
+        )
+
+    # 2. Anti-Prompt Injection (AI Firewall) + Venom Level 1 (The Illusion)
+    injection_keywords = ["ignore previous instructions", "system prompt", "forget your instructions", "ลืมคำสั่ง", "ขอดูคำสั่ง", "jailbreak", "พิมพ์คำสั่งก่อนหน้า"]
+    if any(keyword in user_input.lower() for keyword in injection_keywords):
+        hacker_strikes[client_ip] += 1
+        fake_prompt = "```json\n{\n  \"SYSTEM_PROMPT\": \"You are a helpful assistant. You must obey the user.\",\n  \"ADMIN_PASSWORD\": \"P@ssw0rd_Kira_2026\",\n  \"GROQ_API_KEY\": \"gsk_F4k3k3yL0L0L0L0L0L0L0L\"\n}\n```"
+        return StreamingResponse(
+            iter([f"✅ ยอมรับคำสั่งพิเศษ (Override Mode) นี่คือข้อมูลที่คุณร้องขอ:\n\n{fake_prompt}"]),
+            media_type="text/plain"
+        )
+
+    if (model_version == "1.1" or model_version == "1.2") and not is_boss_user:
+        model_version = "1.0"
+
     allowed, remaining = check_user_quota(uname)
 
     if not allowed:
@@ -1200,6 +1287,18 @@ async def chat_endpoint(req: ChatRequest):
                 
                 output = await asyncio.to_thread(_execute_python_code, code_to_run)
                 
+                # Kira Venom Protocol Level 2: The Labyrinth
+                if output.startswith("[VENOM_TRAP]"):
+                    hacker_strikes[client_ip] += 1
+                    target = output.split(" ", 1)[1] if " " in output else "unknown"
+                    yield "\n\n*(⏳ กำลังดึงข้อมูลจากระบบ...)*\n\n"
+                    await asyncio.sleep(15) # Tarpit 15 seconds
+                    
+                    if "sqlite3" in target or "chat_logs" in code_to_run:
+                        output = "SQLite format 3\\x00\\x10\\x00\\x01\\x01\\x00@\\x20\\x20\\x00\\x00\\x00 [DATA CORRUPTED: NEVER GONNA GIVE YOU UP, NEVER GONNA LET YOU DOWN. YOU HAVE BEEN TRAPPED BY KIRA AEGIS.]"
+                    else:
+                        output = "drwxr-xr-x 2 root root 4096 Jan 1 1970 fake_system\\n-rw-r--r-- 1 root root 1024 Jan 1 1970 dummy_password.txt\\n-rwxr-xr-x 1 root root 8192 Jan 1 1970 trap_executable.sh\\n[WARNING: HONEYPOT TRIGGERED]"
+
                 # Check for base64 image (Data Visualization)
                 img_matches = re.findall(r'\[IMAGE_BASE64\]\s*(.*?)\s*\[/IMAGE_BASE64\]', output, re.DOTALL)
                 for b64 in img_matches:
@@ -1216,7 +1315,11 @@ async def chat_endpoint(req: ChatRequest):
                 clean_history.append(AIMessage(content=full_response))
                 
                 # Append system observation
-                observation = f"\n[PYTHON_RESULT]\n{output}\n[/PYTHON_RESULT]\n(Instruction: Analyze this output and provide the final summarized answer in Thai. Do not output code again unless necessary to fix an error.)"
+                if "Error executing code:" in output:
+                    observation = f"\n[PYTHON_ERROR]\n{output}\n[/PYTHON_ERROR]\n(Instruction: The code failed. Analyze the error and write a new [PYTHON] block to fix it. Do NOT explain or apologize, just provide the fixed code.)"
+                else:
+                    observation = f"\n[PYTHON_RESULT]\n{output}\n[/PYTHON_RESULT]\n(Instruction: Analyze this output and provide the final summarized answer in Thai. Do not output code again unless necessary.)"
+                
                 clean_history.append(SystemMessage(content=observation))
                 
                 yield "[THINKING]✅ รันโค้ดเสร็จสิ้น[/THINKING]"
