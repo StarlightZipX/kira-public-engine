@@ -739,37 +739,84 @@ def _fetch_weather(user_input: str) -> str:
         print("Weather fetch error:", e)
     return ""
 
-def _translate_image_prompt(thai_prompt: str) -> str:
-    """แปลคำสั่งวาดรูปจากภาษาไทยเป็น English prompt ที่แม่นยำสำหรับ AI Image Generator"""
+def _translate_image_prompt(thai_prompt: str) -> dict:
+    """แปลคำสั่งวาดรูปจากภาษาไทยเป็น English prompt ที่แม่นยำระดับมืออาชีพ
+    Returns dict: {"prompt": str, "negative": str}
+    """
     try:
         translate_instruction = [
-            {"role": "system", "content": """You are an expert image prompt translator. Your ONLY job is to translate a Thai image description into an English image generation prompt.
+            {"role": "system", "content": """You are a world-class AI image prompt engineer. Your job is to convert a user's image request (often in Thai) into a precise, detailed English prompt for an AI image generator.
 
-Rules:
-1. Translate the meaning and artistic intent accurately - do NOT translate word-by-word.
-2. Add helpful visual details (art style, lighting, composition) to make the image more vivid.
-3. Output ONLY the English prompt. No explanations, no quotes, no prefix.
-4. If the input is already in English, enhance it slightly and return it.
-5. Keep it concise (under 80 words).
-6. NEVER output anything inappropriate or NSFW. Keep all prompts safe and family-friendly.
+## YOUR PROCESS:
+1. **ANALYZE** the user's request deeply. Identify: Subject, Action, Setting, Mood, Color palette.
+2. **TRANSLATE** into vivid English with professional art direction.
+3. **ADD** technical details: art style, lighting, camera angle, resolution keywords.
+4. **GENERATE** a negative prompt to prevent unwanted elements.
 
-Examples:
-- Input: "แมวอวกาศขี่จรวด" → Output: A cute astronaut cat riding a rocket through a colorful galaxy, stars and nebulas in the background, digital art style, vibrant colors
-- Input: "บ้านในป่า" → Output: A cozy wooden cottage in a lush green forest, sunlight filtering through trees, studio ghibli style, warm atmosphere
-- Input: "มังกรไฟ" → Output: A majestic fire dragon breathing flames, scales glowing with embers, dramatic dark sky background, fantasy digital painting"""},
+## STRICT RULES:
+- Output ONLY valid JSON with exactly two keys: "prompt" and "negative"
+- The "prompt" must be 40-100 words, extremely descriptive and specific
+- The "negative" must list unwanted elements (e.g. "blurry, low quality, watermark, text, human, realistic photo" — adapt based on context)
+- If user asks for an animal/object, negative MUST include "human, person, woman, man, girl, boy, face" to prevent unwanted people appearing
+- If user asks for a person/character, describe them precisely with outfit, pose, expression
+- ALWAYS include quality boosters: "masterpiece, best quality, highly detailed, sharp focus"
+- NEVER generate NSFW content. If request is inappropriate, make it safe.
+- Do NOT add any explanation or text outside the JSON
+
+## EXAMPLES:
+Input: "แมวอวกาศขี่จรวด"
+Output: {"prompt": "A cute cartoon astronaut cat wearing a space helmet, riding a colorful rocket ship through a vibrant galaxy filled with stars and colorful nebulas, cosmic dust trail behind, digital art style, masterpiece, best quality, highly detailed, sharp focus, vivid colors, anime inspired", "negative": "blurry, low quality, watermark, text, human, person, woman, man, realistic photo, ugly, deformed"}
+
+Input: "มังกรไฟบินอยู่เหนือปราสาท"
+Output: {"prompt": "A majestic fire dragon with glowing red scales breathing massive flames while flying above a medieval stone castle at night, dramatic dark sky with lightning, epic fantasy digital painting, cinematic lighting, masterpiece, best quality, highly detailed, sharp focus, 4k", "negative": "blurry, low quality, watermark, text, human, person, cute, chibi, modern buildings, cars"}
+
+Input: "บ้านน่ารักในป่าหิมะ"
+Output: {"prompt": "A cozy small wooden cottage covered in fresh white snow nestled in a peaceful winter forest, warm golden light glowing from windows, snow-covered pine trees, gentle snowfall, smoke rising from chimney, studio ghibli art style, masterpiece, best quality, highly detailed, warm atmosphere, magical", "negative": "blurry, low quality, watermark, text, human, person, summer, tropical, ugly, modern"}"""},
             {"role": "user", "content": thai_prompt}
         ]
-        classifier = _create_llm("llama-3.1-8b-instant", API_KEYS[0])
-        result = classifier.invoke(translate_instruction).content.strip()
         
-        # ป้องกันกรณี AI ตอบมาเกินที่ต้องการ
+        # ใช้โมเดลใหญ่ที่ฉลาดที่สุดเพื่อให้แปลได้แม่นยำสูงสุด
+        try:
+            classifier = _create_llm("llama-3.3-70b-versatile", API_KEYS[0])
+            result = classifier.invoke(translate_instruction).content.strip()
+        except Exception:
+            # Fallback ถ้า 70B ไม่ว่าง ใช้ 8B แทน
+            classifier = _create_llm("llama-3.1-8b-instant", API_KEYS[0])
+            result = classifier.invoke(translate_instruction).content.strip()
+        
+        # แกะ JSON จากผลลัพธ์
+        import json
+        # ลอง parse JSON ตรงๆ ก่อน
+        try:
+            data = json.loads(result)
+            if "prompt" in data:
+                return data
+        except json.JSONDecodeError:
+            pass
+        
+        # ถ้า parse ไม่ได้ ลองหา JSON ในข้อความ
+        import re
+        json_match = re.search(r'\{[^{}]+\}', result, re.DOTALL)
+        if json_match:
+            try:
+                data = json.loads(json_match.group())
+                if "prompt" in data:
+                    return data
+            except json.JSONDecodeError:
+                pass
+        
+        # ถ้ายังไม่ได้ ใช้ข้อความทั้งหมดเป็น prompt
         if result and len(result) < 500:
-            return result
+            return {"prompt": result, "negative": "blurry, low quality, watermark, text, ugly, deformed"}
+            
     except Exception as e:
         print("Image prompt translation error:", e)
     
-    # Fallback: ถ้าแปลไม่ได้ ให้ใช้ prompt เริ่มต้น
-    return "a beautiful artistic illustration, digital art, vibrant colors"
+    # Fallback สุดท้าย
+    return {
+        "prompt": "a beautiful artistic masterpiece illustration, digital art, vibrant colors, highly detailed, best quality, sharp focus",
+        "negative": "blurry, low quality, watermark, text, ugly, deformed"
+    }
 
 def _execute_search(search_term: str, version: str) -> str:
     try:
@@ -879,22 +926,45 @@ async def chat_endpoint(req: ChatRequest):
         prompt_th = _re.sub(r'^วาดรูป\s*', '', prompt_th).strip()
         
         if not prompt_th:
-            prompt_th = "ภาพวาดสวยๆ สุ่มรูป"
+            prompt_th = "ภาพวาดศิลปะสวยๆ แบบสุ่ม"
 
         async def generate_image():
-            yield "*(🎨 กำลังวาดรูปให้ค่ะ รอสักครู่นะคะ...)*\n\n"
+            import time as _time
+            start_time = _time.time()
+            
+            yield "[THINKING]🔍 วิเคราะห์คำสั่งของคุณ...[/THINKING]"
+            await asyncio.sleep(0.1)
+            
+            yield f"[THINKING]🎨 กำลังออกแบบองค์ประกอบภาพจาก: \"{prompt_th}\"[/THINKING]"
             await asyncio.sleep(0.1)
             
             # ใช้ AI แปลคำสั่งจากไทยเป็นอังกฤษอย่างแม่นยำ
-            eng_prompt = await asyncio.to_thread(_translate_image_prompt, prompt_th)
+            yield "[THINKING]🧠 แปลงคำสั่งเป็นภาษาอังกฤษด้วย AI 70B...[/THINKING]"
+            prompt_data = await asyncio.to_thread(_translate_image_prompt, prompt_th)
+            
+            eng_prompt = prompt_data.get("prompt", "a beautiful artwork")
+            neg_prompt = prompt_data.get("negative", "blurry, low quality")
+            
+            yield f"[THINKING]✅ Prompt: {eng_prompt[:80]}...[/THINKING]"
+            await asyncio.sleep(0.1)
+            
+            yield "[THINKING]🖌️ กำลังสร้างรูปภาพ...[/THINKING]"
+            yield "[THINKING_DONE]"
+            await asyncio.sleep(0.1)
             
             import urllib.parse
             encoded = urllib.parse.quote(eng_prompt)
+            encoded_neg = urllib.parse.quote(neg_prompt)
             import random
             seed = random.randint(10000, 99999)
-            image_url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024&nologo=true&seed={seed}"
+            image_url = f"https://image.pollinations.ai/prompt/{encoded}?width=1280&height=1280&nologo=true&seed={seed}&negative={encoded_neg}"
             
-            response_text = f"นี่คือรูปภาพที่คุณขอค่ะ ✨\n\n![{prompt_th}]({image_url})\n\n> 💡 *คำสั่งที่ใช้สร้าง: `{eng_prompt[:100]}`*"
+            elapsed = round(_time.time() - start_time, 1)
+            
+            response_text = f"นี่คือรูปภาพที่คุณขอค่ะ ✨\n\n![{prompt_th}]({image_url})\n\n"
+            response_text += f"> 🎨 *Prompt: `{eng_prompt[:120]}`*\n"
+            response_text += f"> 🚫 *Negative: `{neg_prompt[:80]}`*\n"
+            response_text += f"> ⏱️ *ใช้เวลาทั้งหมด: {elapsed} วินาที*"
             yield response_text
             
             # บันทึกลง Log
@@ -956,6 +1026,8 @@ async def chat_endpoint(req: ChatRequest):
         asyncio.create_task(_extract_and_save_memory(uname, user_input, model_version))
 
     async def generate():
+        import time as _time
+        start_time = _time.time()
         full_response = ""
         if model_version == "1.1":
             badge = "✨ **[Kira 1.1 PRO]**\n\n"
@@ -969,47 +1041,52 @@ async def chat_endpoint(req: ChatRequest):
         # บังคับให้ FastAPI ส่งข้อมูลชุดแรกไปที่หน้าเว็บทันที
         await asyncio.sleep(0.1)
 
+        yield "[THINKING]🔍 วิเคราะห์คำถามของคุณ...[/THINKING]"
+        
         search_term = await asyncio.to_thread(_decide_search, user_input)
         temp_history = history.copy()
 
         # Slash Commands Injection
         if user_input.startswith("/แปลภาษา"):
+            yield "[THINKING]🌐 เตรียมระบบแปลภาษา...[/THINKING]"
             temp_history.insert(-1, SystemMessage(content="[คำสั่งพิเศษจากบอส]: ให้ทำหน้าที่เป็นนักแปลภาษา แปลข้อความที่ตามหลังคำสั่งเป็นภาษาไทย (หรืออังกฤษถ้าต้นฉบับเป็นไทย) อย่างสละสลวยที่สุด ห้ามอธิบายเพิ่มเติม ห้ามตอบอย่างอื่นนอกจากคำแปล"))
         elif user_input.startswith("/สรุป"):
+            yield "[THINKING]📋 เตรียมระบบสรุปข้อความ...[/THINKING]"
             temp_history.insert(-1, SystemMessage(content="[คำสั่งพิเศษจากบอส]: ให้สรุปใจความสำคัญของข้อความที่ตามหลังคำสั่งให้สั้น กระชับ และเข้าใจง่ายที่สุดในรูปแบบ Bullet points"))
             
         # Weather Check
         if any(w in user_input for w in ["สภาพอากาศ", "พยากรณ์อากาศ", "อุณหภูมิ", "ฝนจะตก", "ฝนตกไหม"]):
-            yield "*(☁️ กำลังเช็กสภาพอากาศให้ค่ะ...)*\n\n"
-            full_response += "*(☁️ กำลังเช็กสภาพอากาศให้ค่ะ...)*\n\n"
-            await asyncio.sleep(0.1)
+            yield "[THINKING]☁️ กำลังเช็กสภาพอากาศแบบเรียลไทม์...[/THINKING]"
             
             weather_ctx = await asyncio.to_thread(_fetch_weather, user_input)
             if weather_ctx:
                 temp_history.insert(-1, SystemMessage(content=weather_ctx))
+                yield "[THINKING]✅ ได้ข้อมูลอากาศแล้ว[/THINKING]"
         
         if search_term:
-            # Yield loading text immediately once we know we need to search
-            yield "*(🌐 กำลังค้นหาข้อมูลจากอินเทอร์เน็ต...)*\n\n"
-            full_response += "*(🌐 กำลังค้นหาข้อมูลจากอินเทอร์เน็ต...)*\n\n"
-            await asyncio.sleep(0.1)
+            yield f"[THINKING]🌐 ค้นหาข้อมูลจากอินเทอร์เน็ต: \"{search_term}\"[/THINKING]"
             
             # Execute search
             search_ctx = await asyncio.to_thread(_execute_search, search_term, model_version)
             if search_ctx:
                 temp_history.insert(-1, SystemMessage(content=search_ctx))
+                yield "[THINKING]✅ ได้ผลการค้นหาแล้ว[/THINKING]"
 
         import re
         urls = re.findall(r'(https?://[^\s]+)', user_input)
         if urls:
             url_to_scrape = urls[0]
-            yield f"*(🌐 กำลังอ่านเนื้อหาจากเว็บไซต์ {url_to_scrape}...)*\n\n"
-            full_response += f"*(🌐 กำลังอ่านเนื้อหาจากเว็บไซต์ {url_to_scrape}...)*\n\n"
-            await asyncio.sleep(0.1)
+            yield f"[THINKING]📄 กำลังอ่านเนื้อหาจาก: {url_to_scrape}[/THINKING]"
             
             scraped_text = await asyncio.to_thread(_scrape_url, url_to_scrape)
             if scraped_text:
                 temp_history.insert(-1, SystemMessage(content=f"\n[เนื้อหาจากเว็บไซต์ {url_to_scrape}]:\n{scraped_text}\n(Instruction: ใช้ข้อมูลนี้ตอบคำถามให้ครบถ้วน)"))
+                yield "[THINKING]✅ อ่านเว็บไซต์เสร็จแล้ว[/THINKING]"
+
+        yield "[THINKING]✍️ กำลังเรียบเรียงคำตอบ...[/THINKING]"
+        elapsed_think = round(_time.time() - start_time, 1)
+        yield f"[THINKING]⏱️ ใช้เวลาคิด: {elapsed_think} วินาที[/THINKING]"
+        yield "[THINKING_DONE]"
 
         if model_version == "1.2":
             if flavor == "fast":
