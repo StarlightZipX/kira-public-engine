@@ -944,3 +944,84 @@ body.glow-1-1 .chat-input-wrapper {
     color: #38bdf8;
     transform: translateY(-2px);
 }
+
+
+/* --- Thinking Animation --- */
+.thinking-box {
+    margin-bottom: 12px;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 0.9em;
+    color: #94a3b8;
+    transition: all 0.3s ease;
+}
+
+.thinking-box.collapsed .thinking-content {
+    display: none;
+}
+
+.thinking-header {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.4);
+    user-select: none;
+}
+
+.thinking-header:hover {
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.thinking-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.thinking-toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+.thinking-box:not(.collapsed) .thinking-toggle-icon {
+    transform: rotate(180deg);
+}
+
+.thinking-content {
+    padding: 12px;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.thinking-step {
+    margin-bottom: 4px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.thinking-step:last-child {
+    margin-bottom: 0;
+}
+
+.thinking-progress-bar {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+    background-size: 200% 100%;
+    animation: thinking-glow 1.5s infinite linear;
+}
+
+.thinking-box.done .thinking-progress-bar {
+    display: none;
+}
+
+@keyframes thinking-glow {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}

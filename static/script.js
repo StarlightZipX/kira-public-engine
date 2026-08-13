@@ -473,7 +473,45 @@ async function sendMessage() {
             
             fullText += decoder.decode(value, { stream: true });
             let displayTxt = fullText.replace(/^(✨ \*\*\[Kira 1\.1 PRO\]\*\*\n\n|🤖 \*\*\[Kira 1\.0\]\*\*\n\n|✨ \*\*\[Kira 1\.2 PRO\]\*\*\n\n)/i, "");
-            contentDiv.innerHTML = marked.parse(displayTxt);
+            
+            // --- Parse Thinking Tags ---
+            let htmlContent = "";
+            let finalMarkdown = displayTxt;
+            
+            if (displayTxt.includes("[THINKING]")) {
+                let isDone = displayTxt.includes("[THINKING_DONE]");
+                let steps = [];
+                let regex = /\[THINKING\](.*?)\[\/THINKING\]/g;
+                let match;
+                while ((match = regex.exec(displayTxt)) !== null) {
+                    steps.push(match[1]);
+                }
+                
+                // Remove all thinking tags from the markdown that will be parsed
+                finalMarkdown = displayTxt.replace(/\[THINKING\](.*?)\[\/THINKING\]/gs, "")
+                                          .replace(/\[THINKING_DONE\]/g, "")
+                                          .trim();
+                
+                let stepsHtml = steps.map(s => `<div class="thinking-step">${s}</div>`).join('');
+                let boxClass = isDone ? "thinking-box done collapsed" : "thinking-box";
+                let toggleIcon = isDone ? "▼" : "▲";
+                
+                htmlContent += `
+                <div class="${boxClass}">
+                    <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <div class="thinking-title">🧠 กระบวนการคิดของ Kira</div>
+                        <div class="thinking-toggle-icon">${toggleIcon}</div>
+                    </div>
+                    <div class="thinking-progress-bar"></div>
+                    <div class="thinking-content">
+                        ${stepsHtml}
+                    </div>
+                </div>
+                `;
+            }
+            
+            htmlContent += finalMarkdown ? marked.parse(finalMarkdown) : "";
+            contentDiv.innerHTML = htmlContent;
             chatBox.scrollTop = chatBox.scrollHeight;
         }
         
