@@ -1021,8 +1021,8 @@ async def chat_endpoint(req: ChatRequest):
     execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
                   (uname, session_id, timestamp, "User", user_input))
     
-    # Trigger Memory Extraction in background for 1.1
-    if model_version == "1.1":
+    # Trigger Memory Extraction in background for 1.1 and 1.2
+    if model_version in ["1.1", "1.2"]:
         asyncio.create_task(_extract_and_save_memory(uname, user_input, model_version))
 
     async def generate():
@@ -1164,7 +1164,7 @@ async def chat_endpoint(req: ChatRequest):
             import re
             python_matches = re.findall(r'\[PYTHON\](.*?)\[/PYTHON\]', full_response, re.DOTALL)
             
-            if python_matches and model_version == "1.1":
+            if python_matches and model_version in ["1.1", "1.2"]:
                 # Get the last python block we just generated
                 code_to_run = python_matches[-1].strip()
                 
