@@ -834,6 +834,29 @@ def _execute_search(search_term: str, version: str) -> str:
 def _execute_python_code(code: str) -> str:
     import contextlib
     import io
+    import base64
+    
+    # Inject matplotlib interceptor if matplotlib is imported
+    if "matplotlib" in code or "plt." in code:
+        interceptor = """
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import io
+import base64
+
+def _intercepted_show(*args, **kwargs):
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight')
+    buf.seek(0)
+    b64_str = base64.b64encode(buf.read()).decode('utf-8')
+    print(f"\\n[IMAGE_BASE64] {b64_str} [/IMAGE_BASE64]\\n")
+    plt.close()
+
+plt.show = _intercepted_show
+"""
+        code = interceptor + "\n" + code
+
     stdout = io.StringIO()
     try:
         with contextlib.redirect_stdout(stdout):
@@ -1021,8 +1044,8 @@ async def chat_endpoint(req: ChatRequest):
     execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
                   (uname, session_id, timestamp, "User", user_input))
     
-    # Trigger Memory Extraction in background for 1.1 and 1.2
-    if model_version in ["1.1", "1.2"]:
+    # Trigger Memory Extraction in background for 1.1, 1.2, 1.3
+    if model_version in ["1.1", "1.2", "1.3"]:
         asyncio.create_task(_extract_and_save_memory(uname, user_input, model_version))
 
     async def generate():
@@ -1033,6 +1056,8 @@ async def chat_endpoint(req: ChatRequest):
             badge = "✨ **[Kira 1.1 PRO]**\n\n"
         elif model_version == "1.2":
             badge = "✨ **[Kira 1.2 PRO]**\n\n"
+        elif model_version == "1.3":
+            badge = "👑 **[Kira 1.3 APEX]**\n\n"
         else:
             badge = "🤖 **[Kira 1.0]**\n\n"
         full_response += badge
@@ -1088,7 +1113,7 @@ async def chat_endpoint(req: ChatRequest):
         yield f"[THINKING]⏱️ ใช้เวลาคิด: {elapsed_think} วินาที[/THINKING]"
         yield "[THINKING_DONE]"
 
-        if model_version == "1.2":
+        if model_version in ["1.2", "1.3"]:
             if flavor == "fast":
                 preferred_model = PREFERRED_FLASH
             elif flavor == "creative":
@@ -1164,17 +1189,28 @@ async def chat_endpoint(req: ChatRequest):
             import re
             python_matches = re.findall(r'\[PYTHON\](.*?)\[/PYTHON\]', full_response, re.DOTALL)
             
-            if python_matches and model_version in ["1.1", "1.2"]:
+            if python_matches and model_version in ["1.1", "1.2", "1.3"]:
                 # Get the last python block we just generated
                 code_to_run = python_matches[-1].strip()
                 
                 # We need to make sure we haven't already executed this exact block in the current session loop
                 # To be safe, we just check if it's the end of this agent loop. If we execute, we trigger LLM again.
-                yield "\n\n*(⚙️ กำลังรันโค้ด Python...)*\n\n"
-                full_response += "\n\n*(⚙️ กำลังรันโค้ด Python...)*\n\n"
+                yield "[THINKING]⚙️ กำลังประมวลผลโค้ด Python...[/THINKING]"
                 await asyncio.sleep(0.1)
                 
                 output = await asyncio.to_thread(_execute_python_code, code_to_run)
+                
+                # Check for base64 image (Data Visualization)
+                img_matches = re.findall(r'\[IMAGE_BASE64\]\s*(.*?)\s*\[/IMAGE_BASE64\]', output, re.DOTALL)
+                for b64 in img_matches:
+                    # Yield image directly to user
+                    img_md = f"\n\n![Chart](data:image/png;base64,{b64})\n\n"
+                    yield img_md
+                    full_response += img_md
+                    # Clean output so LLM doesn't see base64
+                    output = output.replace(f"[IMAGE_BASE64] {b64} [/IMAGE_BASE64]", "[Plot Generated Successfully]")
+                    output = output.replace(f"[IMAGE_BASE64]\n{b64}\n[/IMAGE_BASE64]", "[Plot Generated Successfully]")
+                    output = output.replace(f"[IMAGE_BASE64]{b64}[/IMAGE_BASE64]", "[Plot Generated Successfully]")
                 
                 # Append assistant's partial response to clean history
                 clean_history.append(AIMessage(content=full_response))
@@ -1182,6 +1218,8 @@ async def chat_endpoint(req: ChatRequest):
                 # Append system observation
                 observation = f"\n[PYTHON_RESULT]\n{output}\n[/PYTHON_RESULT]\n(Instruction: Analyze this output and provide the final summarized answer in Thai. Do not output code again unless necessary to fix an error.)"
                 clean_history.append(SystemMessage(content=observation))
+                
+                yield "[THINKING]✅ รันโค้ดเสร็จสิ้น[/THINKING]"
                 
                 # Loop continues to next iteration (agent_loop_count + 1)
             else:
