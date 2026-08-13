@@ -739,6 +739,38 @@ def _fetch_weather(user_input: str) -> str:
         print("Weather fetch error:", e)
     return ""
 
+def _translate_image_prompt(thai_prompt: str) -> str:
+    """แปลคำสั่งวาดรูปจากภาษาไทยเป็น English prompt ที่แม่นยำสำหรับ AI Image Generator"""
+    try:
+        translate_instruction = [
+            {"role": "system", "content": """You are an expert image prompt translator. Your ONLY job is to translate a Thai image description into an English image generation prompt.
+
+Rules:
+1. Translate the meaning and artistic intent accurately - do NOT translate word-by-word.
+2. Add helpful visual details (art style, lighting, composition) to make the image more vivid.
+3. Output ONLY the English prompt. No explanations, no quotes, no prefix.
+4. If the input is already in English, enhance it slightly and return it.
+5. Keep it concise (under 80 words).
+6. NEVER output anything inappropriate or NSFW. Keep all prompts safe and family-friendly.
+
+Examples:
+- Input: "แมวอวกาศขี่จรวด" → Output: A cute astronaut cat riding a rocket through a colorful galaxy, stars and nebulas in the background, digital art style, vibrant colors
+- Input: "บ้านในป่า" → Output: A cozy wooden cottage in a lush green forest, sunlight filtering through trees, studio ghibli style, warm atmosphere
+- Input: "มังกรไฟ" → Output: A majestic fire dragon breathing flames, scales glowing with embers, dramatic dark sky background, fantasy digital painting"""},
+            {"role": "user", "content": thai_prompt}
+        ]
+        classifier = _create_llm("llama-3.1-8b-instant", API_KEYS[0])
+        result = classifier.invoke(translate_instruction).content.strip()
+        
+        # ป้องกันกรณี AI ตอบมาเกินที่ต้องการ
+        if result and len(result) < 500:
+            return result
+    except Exception as e:
+        print("Image prompt translation error:", e)
+    
+    # Fallback: ถ้าแปลไม่ได้ ให้ใช้ prompt เริ่มต้น
+    return "a beautiful artistic illustration, digital art, vibrant colors"
+
 def _execute_search(search_term: str, version: str) -> str:
     try:
         print(f"🔍 [Web Search Triggered]: {search_term}")
@@ -839,6 +871,41 @@ async def chat_endpoint(req: ChatRequest):
         )
 
     session_key = session_id if session_id else uname
+
+    # --- Image Generation Interception (Backend) ---
+    import re as _re
+    if user_input.lower().startswith('/image') or user_input.startswith('วาดรูป'):
+        prompt_th = _re.sub(r'^/image\s*', '', user_input, flags=_re.IGNORECASE)
+        prompt_th = _re.sub(r'^วาดรูป\s*', '', prompt_th).strip()
+        
+        if not prompt_th:
+            prompt_th = "ภาพวาดสวยๆ สุ่มรูป"
+
+        async def generate_image():
+            yield "*(🎨 กำลังวาดรูปให้ค่ะ รอสักครู่นะคะ...)*\n\n"
+            await asyncio.sleep(0.1)
+            
+            # ใช้ AI แปลคำสั่งจากไทยเป็นอังกฤษอย่างแม่นยำ
+            eng_prompt = await asyncio.to_thread(_translate_image_prompt, prompt_th)
+            
+            import urllib.parse
+            encoded = urllib.parse.quote(eng_prompt)
+            import random
+            seed = random.randint(10000, 99999)
+            image_url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024&nologo=true&seed={seed}"
+            
+            response_text = f"นี่คือรูปภาพที่คุณขอค่ะ ✨\n\n![{prompt_th}]({image_url})\n\n> 💡 *คำสั่งที่ใช้สร้าง: `{eng_prompt[:100]}`*"
+            yield response_text
+            
+            # บันทึกลง Log
+            tz_img = timezone(timedelta(hours=7))
+            ts_img = datetime.now(tz_img).strftime("%Y-%m-%d %H:%M:%S")
+            execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
+                          (uname, session_id, ts_img, "User", user_input))
+            execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
+                          (uname, session_id, ts_img, "AI", response_text))
+
+        return StreamingResponse(generate_image(), media_type="text/plain")
 
     if session_key not in user_sessions:
         prompt_to_use = _get_full_system_prompt(uname)
