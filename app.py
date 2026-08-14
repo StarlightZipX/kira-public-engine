@@ -57,6 +57,26 @@ if not os.path.exists(templates_dir):
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates = Jinja2Templates(directory=templates_dir)
 
+# --- RAG Setup (Kira 2.0) ---
+try:
+    import chromadb
+    chroma_client = chromadb.PersistentClient(path=os.path.join(BASE_DIR, "chroma_db"))
+    vector_collection = chroma_client.get_or_create_collection(name="kira_docs")
+    
+    from sentence_transformers import SentenceTransformer
+    print("⏳ Loading RAG Embedding Model...")
+    embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+    print("✅ ChromaDB & Embedding Model Loaded Successfully")
+except Exception as e:
+    print("⚠️ RAG Setup Error (Dependencies might be missing):", e)
+    vector_collection = None
+    embedding_model = None
+
+def get_embedding(text: str) -> list:
+    if not embedding_model:
+        return []
+    return embedding_model.encode(text).tolist()
+
 # --- Network Shield (Rate Limiter) ---
 import collections
 # IP -> list of timestamps
@@ -404,6 +424,8 @@ class ChatRequest(BaseModel):
     username: str
     model_version: str = "1.0"
     image_base64: Optional[str] = None
+    file_base64: Optional[str] = None
+    file_name: Optional[str] = None
     session_id: Optional[str] = None
     flavor: Optional[str] = "fast"
     persona: Optional[str] = "default"
@@ -611,9 +633,8 @@ async def _extract_and_save_memory(username: str, user_input: str, version: str)
         print("Memory extraction error:", e)
 
 @app.post("/api/upload")
-async def upload_file(username: str = Form(...), file: UploadFile = File(...)):
-    if not is_boss(username):
-        return {"status": "error", "message": "ฟีเจอร์นี้สงวนไว้สำหรับ Kira 1.1 (Next-Gen) เท่านั้นค่ะ"}
+async def upload_file(username: str = Form(...), session_id: Optional[str] = Form(None), file: UploadFile = File(...)):
+    # Removed is_boss check to allow all users in Kira 1.3 to upload documents
     
     try:
         content = await file.read()
@@ -637,20 +658,45 @@ async def upload_file(username: str = Form(...), file: UploadFile = File(...)):
         if not extracted_text.strip():
             return {"status": "error", "message": "ไม่พบข้อความในไฟล์นี้ค่ะ"}
             
-        # Limit text length to avoid token limit issues (e.g. max 15,000 characters)
-        max_length = 15000
-        if len(extracted_text) > max_length:
-            extracted_text = extracted_text[:max_length] + "\n... (ข้อความถูกตัดทอนเนื่องจากไฟล์ยาวเกินไป)"
-            
-        # Store in user session
-        if username not in user_sessions:
-            prompt_to_use = _get_full_system_prompt(username)
-            user_sessions[username] = [SystemMessage(content=prompt_to_use)]
-            
-        file_context = f"[ไฟล์ที่ผู้ใช้อัปโหลด: {file.filename}]\n{extracted_text}\n(Instruction: อ้างอิงข้อมูลจากไฟล์นี้หากผู้ใช้ถามถึง)"
-        user_sessions[username].append(SystemMessage(content=file_context))
+        session_key = f"{username}_{session_id}" if session_id else username
         
-        return {"status": "success", "message": f"อ่านไฟล์ {file.filename} เรียบร้อยแล้วค่ะ! บอสสามารถถามข้อมูลจากไฟล์นี้ได้เลย"}
+        if vector_collection is not None and embedding_model is not None:
+            # Kira 2.0 RAG Mode
+            from langchain_text_splitters import RecursiveCharacterTextSplitter
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+            chunks = text_splitter.split_text(extracted_text)
+            
+            import uuid
+            ids = [str(uuid.uuid4()) for _ in chunks]
+            metadatas = [{"session_key": session_key, "filename": file.filename} for _ in chunks]
+            
+            embeddings = [get_embedding(chunk) for chunk in chunks]
+            vector_collection.add(
+                ids=ids,
+                embeddings=embeddings,
+                metadatas=metadatas,
+                documents=chunks
+            )
+            
+            if session_key not in user_sessions:
+                prompt_to_use = _get_full_system_prompt(username)
+                user_sessions[session_key] = [SystemMessage(content=prompt_to_use)]
+                
+            user_sessions[session_key].append(SystemMessage(content=f"[ผู้ใช้อัปโหลดไฟล์ความจำระยะยาว: {file.filename}]"))
+        else:
+            # Fallback Mode
+            max_length = 15000
+            if len(extracted_text) > max_length:
+                extracted_text = extracted_text[:max_length] + "\n... (ข้อความถูกตัดทอนเนื่องจากไฟล์ยาวเกินไป)"
+                
+            if session_key not in user_sessions:
+                prompt_to_use = _get_full_system_prompt(username)
+                user_sessions[session_key] = [SystemMessage(content=prompt_to_use)]
+                
+            file_context = f"[ไฟล์ที่ผู้ใช้อัปโหลด: {file.filename}]\n{extracted_text}\n(Instruction: อ้างอิงข้อมูลจากไฟล์นี้หากผู้ใช้ถามถึง)"
+            user_sessions[session_key].append(SystemMessage(content=file_context))
+        
+        return {"status": "success", "message": f"อ่านไฟล์ {file.filename} เรียบร้อยแล้วค่ะ! คุณสามารถถามข้อมูลจากไฟล์นี้ได้เลย"}
     except Exception as e:
         print("Upload error:", e)
         return {"status": "error", "message": "เกิดข้อผิดพลาดในการอ่านไฟล์"}
@@ -843,16 +889,80 @@ Output: {"prompt": "A cozy small wooden cottage covered in fresh white snow nest
 
 def _execute_search(search_term: str, version: str) -> str:
     try:
-        print(f"🔍 [Web Search Triggered]: {search_term}")
-        search_tool = DuckDuckGoSearchRun()
+        print(f"🔍 [Deep Web Search Triggered]: {search_term}")
+        from langchain_community.tools import DuckDuckGoSearchResults
+        search_tool = DuckDuckGoSearchResults(num_results=3)
         raw_results = search_tool.invoke(search_term)
+        
+        # Extract links
+        import re
+        links = re.findall(r"link:\s*(https?://[^\s,\]]+)", raw_results)
+        
+        if not links:
+            # Fallback to normal search
+            from langchain_community.tools import DuckDuckGoSearchRun
+            search_tool_basic = DuckDuckGoSearchRun()
+            raw_results = search_tool_basic.invoke(search_term)
+            if version == "1.0":
+                return f"\n\n[Web Search Results (Limited)]:\n{raw_results[:400]}\n(Instruction: Use this context briefly to answer. Do not analyze deeply. IMPORTANT: Answer ONLY in Thai language (ภาษาไทย) without any Chinese characters.)"
+            else:
+                return f"\n\n[Web Search Results (Detailed)]:\n{raw_results[:2000]}\n(Instruction: Analyze this real-time data deeply to give the Boss a comprehensive answer. IMPORTANT: Answer ONLY in fluent Thai language (ภาษาไทย) without any Chinese or weird characters.)"
+            
+        print(f"🔗 Found links to scrape: {links}")
+        
+        # Multi-threaded scraping
+        import concurrent.futures
+        scraped_data = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            future_to_url = {executor.submit(_scrape_url, url): url for url in set(links[:3])}
+            for future in concurrent.futures.as_completed(future_to_url):
+                url = future_to_url[future]
+                try:
+                    data = future.result()
+                    if data:
+                        scraped_data.append(f"--- Source: {url} ---\n{data[:3000]}")
+                except Exception as e:
+                    print(f"Scrape error for {url}: {e}")
+                    
+        combined_text = "\n\n".join(scraped_data)
+        
         if version == "1.0":
-            return f"\n\n[Web Search Results (Limited)]:\n{raw_results[:400]}\n(Instruction: Use this context briefly to answer. Do not analyze deeply. IMPORTANT: Answer ONLY in Thai language (ภาษาไทย) without any Chinese characters.)"
+            return f"\n\n[Deep Web Search Results (3 Sources)]:\n{combined_text[:1000]}\n(Instruction: Use this context briefly to answer. Do not analyze deeply. IMPORTANT: Answer ONLY in Thai language (ภาษาไทย) without any Chinese characters.)"
         else:
-            return f"\n\n[Web Search Results (Detailed)]:\n{raw_results[:2000]}\n(Instruction: Analyze this real-time data deeply to give the Boss a comprehensive answer. IMPORTANT: Answer ONLY in fluent Thai language (ภาษาไทย) without any Chinese or weird characters.)"
+            return f"\n\n[Deep Web Search Results (Multiple Sources)]:\n{combined_text[:6000]}\n(Instruction: Analyze this multi-source data deeply to give the Boss a comprehensive answer. Combine facts from multiple sources if possible. IMPORTANT: Answer ONLY in fluent Thai language (ภาษาไทย) without any Chinese or weird characters.)"
+            
     except Exception as e:
         print("Search execution error:", e)
     return ""
+
+def _parse_document(base64_data: str, filename: str) -> str:
+    import base64
+    import io
+    import PyPDF2
+    import docx
+
+    try:
+        if "," in base64_data:
+            base64_data = base64_data.split(",")[1]
+            
+        file_bytes = base64.b64decode(base64_data)
+        text = ""
+        
+        if filename.lower().endswith(".pdf"):
+            pdf = PyPDF2.PdfReader(io.BytesIO(file_bytes))
+            for page in pdf.pages:
+                text += page.extract_text() + "\n"
+        elif filename.lower().endswith(".docx"):
+            doc = docx.Document(io.BytesIO(file_bytes))
+            for para in doc.paragraphs:
+                text += para.text + "\n"
+        else:
+            text = file_bytes.decode('utf-8', errors='ignore')
+            
+        return text.strip()
+    except Exception as e:
+        print(f"Error parsing document {filename}: {e}")
+        return f"[Error parsing document: {str(e)}]"
 
 def _execute_python_code(code: str) -> str:
     import contextlib
@@ -1117,6 +1227,38 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         user_sessions[session_key] = history[:BASE_HISTORY_LEN] + history[-MAX_DYNAMIC_HISTORY:]
         history = user_sessions[session_key]
 
+    # ------------------ RAG Retrieval (Kira 2.0) ------------------
+    rag_context = ""
+    if vector_collection is not None and embedding_model is not None:
+        try:
+            query_embedding = get_embedding(user_input)
+            results = vector_collection.query(
+                query_embeddings=[query_embedding],
+                n_results=4,
+                where={"session_key": session_key}
+            )
+            
+            if results and results['documents'] and results['documents'][0]:
+                retrieved_chunks = results['documents'][0]
+                metadatas = results['metadatas'][0]
+                
+                rag_context += "\n\n[ข้อมูลอ้างอิงจากคลังความจำเอกสาร / RAG Context]:\n"
+                for i, chunk in enumerate(retrieved_chunks):
+                    filename = metadatas[i].get("filename", "document")
+                    rag_context += f"--- จากไฟล์: {filename} ---\n{chunk}\n\n"
+                rag_context += "(Instruction: หากผู้ใช้ถามถึงข้อมูลในไฟล์ ให้อ้างอิงและตอบจากข้อมูลด้านบนนี้เป็นหลัก)\n"
+        except Exception as e:
+            print("RAG Query Error:", e)
+
+    if req.file_base64 and req.file_name:
+        parsed_doc_text = _parse_document(req.file_base64, req.file_name)
+        doc_context = f"\n\n[DOCUMENT ATTACHED: {req.file_name}]\n{parsed_doc_text[:15000]}\n[/DOCUMENT ATTACHED]\n(Instruction: Analyze the attached document to answer the user's request.)"
+        user_input += doc_context
+        
+    if rag_context:
+        user_input += rag_context
+    # --------------------------------------------------------------
+
     if req.image_base64:
         msg_content = [
             {"type": "text", "text": user_input},
@@ -1239,9 +1381,9 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                     yield wait_msg
                     await asyncio.sleep(60)
 
-                # Force Vision model if image is present
+                # Force Full Vision model if image is present
                 if req.image_base64:
-                    preferred_model = "llama-3.2-11b-vision-preview"
+                    preferred_model = "llama-3.2-90b-vision-preview"
 
                 s, chunks, err = await _try_all_keys_and_models(clean_history, preferred_model)
 
