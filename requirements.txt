@@ -13,3 +13,4 @@ duckduckgo-search
 chromadb
 sentence-transformers
 requests
+psycopg2-binary
