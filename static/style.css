@@ -184,9 +184,13 @@ body {
     align-items: center;
     padding: 0 1.5rem;
     border-bottom: 1px solid var(--border-color);
-    background: var(--bg-color);
-    opacity: 0.95;
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     z-index: 10;
+}
+body.light-mode .chat-header {
+    background: rgba(249, 250, 251, 0.7);
 }
 
 .menu-btn {
@@ -447,7 +451,9 @@ body {
 .input-wrapper {
     max-width: 800px;
     margin: 0 auto;
-    background-color: var(--input-bg);
+    background-color: rgba(55, 65, 81, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--border-color);
     border-radius: 16px;
     display: flex;
@@ -455,6 +461,9 @@ body {
     padding: 0.5rem 1rem;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
     transition: border-color 0.2s, box-shadow 0.2s;
+}
+body.light-mode .input-wrapper {
+    background-color: rgba(255, 255, 255, 0.7);
 }
 
 .input-wrapper:focus-within {

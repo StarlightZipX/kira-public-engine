@@ -954,6 +954,9 @@ if (attachToggleBtn && attachmentMenu) {
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("username", currentUser);
+                if (currentSessionId) {
+                    formData.append("session_id", currentSessionId);
+                }
                 
                 try {
                     addMessage(`กำลังอัปโหลดไฟล์ ${file.name}...`, true);
