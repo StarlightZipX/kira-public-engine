@@ -10,7 +10,5 @@ PyPDF2
 python-docx
 beautifulsoup4
 duckduckgo-search
-chromadb
-sentence-transformers
 requests
 psycopg2-binary

@@ -57,22 +57,33 @@ if not os.path.exists(templates_dir):
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates = Jinja2Templates(directory=templates_dir)
 
-# --- RAG Setup (Kira 2.0) ---
-try:
-    import chromadb
-    chroma_client = chromadb.PersistentClient(path=os.path.join(BASE_DIR, "chroma_db"))
-    vector_collection = chroma_client.get_or_create_collection(name="kira_docs")
-    
-    from sentence_transformers import SentenceTransformer
-    print("⏳ Loading RAG Embedding Model...")
-    embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-    print("✅ ChromaDB & Embedding Model Loaded Successfully")
-except Exception as e:
-    print("⚠️ RAG Setup Error (Dependencies might be missing):", e)
-    vector_collection = None
-    embedding_model = None
+# --- RAG Setup (Kira 2.0) — Lazy Loading เพื่อประหยัด RAM ---
+vector_collection = None
+embedding_model = None
+_rag_initialized = False
+
+def _init_rag():
+    """โหลด RAG เฉพาะตอนที่มีคนใช้งานจริงเท่านั้น (Lazy Loading)"""
+    global vector_collection, embedding_model, _rag_initialized
+    if _rag_initialized:
+        return
+    _rag_initialized = True
+    try:
+        import chromadb
+        chroma_client = chromadb.PersistentClient(path=os.path.join(BASE_DIR, "chroma_db"))
+        vector_collection = chroma_client.get_or_create_collection(name="kira_docs")
+        
+        from sentence_transformers import SentenceTransformer
+        print("⏳ Loading RAG Embedding Model (Lazy)...")
+        embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+        print("✅ ChromaDB & Embedding Model Loaded Successfully")
+    except Exception as e:
+        print("⚠️ RAG Setup Error (Dependencies might be missing):", e)
+        vector_collection = None
+        embedding_model = None
 
 def get_embedding(text: str) -> list:
+    _init_rag()
     if not embedding_model:
         return []
     return embedding_model.encode(text).tolist()
@@ -791,6 +802,7 @@ async def upload_file(username: str = Form(...), session_id: Optional[str] = For
             
         session_key = f"{username}_{session_id}" if session_id else username
         
+        _init_rag()
         if vector_collection is not None and embedding_model is not None:
             # Kira 2.0 RAG Mode
             from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -1360,6 +1372,8 @@ async def chat_endpoint(req: ChatRequest, request: Request):
 
     # ------------------ RAG Retrieval (Kira 2.0) ------------------
     rag_context = ""
+    if _rag_initialized or req.file_base64:
+        _init_rag()
     if vector_collection is not None and embedding_model is not None:
         try:
             query_embedding = get_embedding(user_input)
