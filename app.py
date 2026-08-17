@@ -229,8 +229,8 @@ def log_chat(username: str, role: str, content: str, session_id: str = None):
 
 # ========== โมเดลที่ปลอดภัยของ Groq & Multi-Provider ==========
 ALL_MODEL_CANDIDATES = [
-    "llama3-70b-8192",
-    "llama3-8b-8192",
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
     "mixtral-8x7b-32768",
     "gemma2-9b-it"
 ]
@@ -239,19 +239,19 @@ ALL_MODEL_CANDIDATES = [
 # เลือกสมองที่เหมาะสมที่สุดตามประเภทคำถาม รองรับทั้ง Qwen, DeepSeek, และ Groq
 BRAIN_PROFILES = {
     "logic": {
-        "model": "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else "llama3-70b-8192",
+        "model": "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else "llama-3.3-70b-versatile",
         "keywords": ["คำนวณ", "วิเคราะห์", "เปรียบเทียบ", "สถิติ", "ตรรกะ", "เหตุผล", "ข้อดี", "ข้อเสีย", 
                      "แผน", "กลยุทธ์", "strategy", "analyze", "calculate", "compare", "pros", "cons",
                      "วางแผน", "ออกแบบ", "สถาปัตยกรรม", "ระบบ", "โครงสร้าง", "ธุรกิจ", "การตลาด", "math", "คณิต"],
         "description": "สถาปัตยกรรมตรรกะระดับสูง (Advanced Analytical Logic)"
     },
     "reasoning": {
-        "model": "deepseek/deepseek-r1" if OPENROUTER_API_KEYS else "llama3-70b-8192",
+        "model": "deepseek/deepseek-r1" if OPENROUTER_API_KEYS else "llama-3.3-70b-versatile",
         "keywords": ["วิจัย", "ทำไม", "เพราะอะไร", "สรุปเชิงลึก", "ทฤษฎี", "ปรัชญา", "think", "reason", "proof", "พิสูจน์"],
         "description": "สถาปัตยกรรมคิดวิเคราะห์เชิงลึก (Cognitive Reasoning Engine)"
     },
     "code": {
-        "model": "qwen/qwen-2.5-coder-32b-instruct" if OPENROUTER_API_KEYS else "llama3-70b-8192",
+        "model": "qwen/qwen-2.5-coder-32b-instruct" if OPENROUTER_API_KEYS else "llama-3.3-70b-versatile",
         "keywords": ["โค้ด", "code", "python", "javascript", "html", "css", "เขียนโปรแกรม", "debug",
                      "แก้บั๊ก", "function", "api", "database", "sql", "เว็บ", "แอป", "app",
                      "programming", "developer", "github", "server", "deploy", "react", "typescript"],
@@ -271,7 +271,7 @@ BRAIN_PROFILES = {
         "description": "สถาปัตยกรรมภาษาศาสตร์สากล (Global Linguistic Engine)"
     },
     "chat": {
-        "model": "llama3-8b-8192",
+        "model": "llama-3.1-8b-instant",
         "keywords": [],  # Default fallback
         "description": "สถาปัตยกรรมประมวลผลความเร็วสูง (Instant Turbo Engine)"
     }
@@ -541,8 +541,8 @@ async def _try_all_keys_and_models(history, preferred_model):
     return False, [], last_error
 
 # ========== เลือกโมเดลหลักตอนบูท ==========
-PREFERRED_FLASH = "llama3-8b-8192"
-PREFERRED_PRO = "llama3-70b-8192"
+PREFERRED_FLASH = "llama-3.1-8b-instant"
+PREFERRED_PRO = "llama-3.3-70b-versatile"
 
 print("🔍 กำลังสแกนหาสมองที่ใช้ได้จาก Groq...")
 for key_idx, api_key in enumerate(API_KEYS):
@@ -576,7 +576,7 @@ for key_idx, api_key in enumerate(API_KEYS):
     break
 
 for key_idx, api_key in enumerate(API_KEYS):
-    for model in ["llama3-70b-8192", "llama3-70b-8192"]:
+    for model in ["llama-3.3-70b-versatile", "llama-3.3-70b-versatile"]:
         try:
             url = "https://api.groq.com/openai/v1/chat/completions"
             headers = {
@@ -601,7 +601,7 @@ for key_idx, api_key in enumerate(API_KEYS):
         continue
     break
 
-if PREFERRED_PRO == "llama3-8b-8192":
+if PREFERRED_PRO == "llama-3.1-8b-instant":
     PREFERRED_PRO = PREFERRED_FLASH
 
 print(f"🤖 ========================================")
@@ -946,7 +946,7 @@ OUTPUT RULES:
             {"role": "user", "content": f"คำถามของผู้ใช้: {user_question}\n\nคำตอบของ AI:\n{kira_response[:3000]}"}
         ]
         
-        reviewer = _create_llm("llama3-8b-8192", API_KEYS[0])
+        reviewer = _create_llm("llama-3.1-8b-instant", API_KEYS[0])
         result = reviewer.invoke(review_prompt).content.strip()
         
         if "PASS" in result:
@@ -992,7 +992,7 @@ Return ONLY the command line (ADD, UPDATE, DELETE, or NO_FACT). Nothing else."""
             {"role": "user", "content": user_input}
         ]
         
-        classifier = _create_llm("llama3-8b-8192", API_KEYS[0])
+        classifier = _create_llm("llama-3.1-8b-instant", API_KEYS[0])
         result = classifier.invoke(prompt).content.strip()
         
         if "NO_FACT" in result or not result:
@@ -1162,7 +1162,7 @@ If NO search is needed (e.g. creative writing, pure coding assistance, standard 
 NO_SEARCH"""},
             {"role": "user", "content": query}
         ]
-        classifier = _create_llm("llama3-8b-8192", API_KEYS[0])
+        classifier = _create_llm("llama-3.1-8b-instant", API_KEYS[0])
         result = classifier.invoke(search_prompt).content.strip()
         
         if "NO_SEARCH" not in result and "SEARCH_QUERY:" in result:
@@ -1255,11 +1255,11 @@ Output: {"prompt": "A cozy small wooden cottage covered in fresh white snow nest
         
         # ใช้โมเดลใหญ่ที่ฉลาดที่สุดเพื่อให้แปลได้แม่นยำสูงสุด
         try:
-            classifier = _create_llm("llama3-70b-8192", API_KEYS[0])
+            classifier = _create_llm("llama-3.3-70b-versatile", API_KEYS[0])
             result = classifier.invoke(translate_instruction).content.strip()
         except Exception:
             # Fallback ถ้า 70B ไม่ว่าง ใช้ 8B แทน
-            classifier = _create_llm("llama3-8b-8192", API_KEYS[0])
+            classifier = _create_llm("llama-3.1-8b-instant", API_KEYS[0])
             result = classifier.invoke(translate_instruction).content.strip()
         
         # แกะ JSON จากผลลัพธ์
