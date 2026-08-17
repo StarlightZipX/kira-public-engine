@@ -243,54 +243,54 @@ BRAIN_PROFILES = {
         "keywords": ["คำนวณ", "วิเคราะห์", "เปรียบเทียบ", "สถิติ", "ตรรกะ", "เหตุผล", "ข้อดี", "ข้อเสีย", 
                      "แผน", "กลยุทธ์", "strategy", "analyze", "calculate", "compare", "pros", "cons",
                      "วางแผน", "ออกแบบ", "สถาปัตยกรรม", "ระบบ", "โครงสร้าง", "ธุรกิจ", "การตลาด", "math", "คณิต"],
-        "description": "สมองตรรกะระดับสูง (Qwen / Deep Logic)"
+        "description": "สถาปัตยกรรมตรรกะระดับสูง (Advanced Analytical Logic)"
     },
     "reasoning": {
         "model": "deepseek/deepseek-r1" if OPENROUTER_API_KEYS else "llama3-70b-8192",
         "keywords": ["วิจัย", "ทำไม", "เพราะอะไร", "สรุปเชิงลึก", "ทฤษฎี", "ปรัชญา", "think", "reason", "proof", "พิสูจน์"],
-        "description": "สมองคิดวิเคราะห์เชิงลึก (DeepSeek Reasoning)"
+        "description": "สถาปัตยกรรมคิดวิเคราะห์เชิงลึก (Cognitive Reasoning Engine)"
     },
     "code": {
         "model": "qwen/qwen-2.5-coder-32b-instruct" if OPENROUTER_API_KEYS else "llama3-70b-8192",
         "keywords": ["โค้ด", "code", "python", "javascript", "html", "css", "เขียนโปรแกรม", "debug",
                      "แก้บั๊ก", "function", "api", "database", "sql", "เว็บ", "แอป", "app",
                      "programming", "developer", "github", "server", "deploy", "react", "typescript"],
-        "description": "สมองโปรแกรมเมอร์ (Qwen Coder / Super Coder)"
+        "description": "สถาปัตยกรรมวิศวกรรมซอฟต์แวร์ (Software Engineering Engine)"
     },
     "creative": {
         "model": "mixtral-8x7b-32768",
         "keywords": ["เขียน", "แต่ง", "นิยาย", "บทกวี", "เรื่องสั้น", "ไอเดีย", "ครีเอทีฟ", "จินตนาการ",
                      "write", "story", "creative", "poem", "idea", "brainstorm", "สร้างสรรค์",
                      "ชื่อ", "ตั้งชื่อ", "สโลแกน", "โฆษณา", "caption", "คอนเทนต์", "content"],
-        "description": "สมองสร้างสรรค์ (Creative Imagination)"
+        "description": "สถาปัตยกรรมสังเคราะห์ความคิดสร้างสรรค์ (Generative Studio Engine)"
     },
     "translate": {
         "model": "gemma2-9b-it",
         "keywords": ["แปล", "translate", "ภาษาอังกฤษ", "ภาษาจีน", "ภาษาเกาหลี", "ภาษาญี่ปุ่น",
                      "english", "chinese", "korean", "japanese", "translation", "/แปลภาษา"],
-        "description": "สมองนักแปลหลายภาษา (Multilingual Translation)"
+        "description": "สถาปัตยกรรมภาษาศาสตร์สากล (Global Linguistic Engine)"
     },
     "chat": {
         "model": "llama3-8b-8192",
         "keywords": [],  # Default fallback
-        "description": "สมองเร็วแบบสายฟ้า (Groq Ultra Fast)"
+        "description": "สถาปัตยกรรมประมวลผลความเร็วสูง (Instant Turbo Engine)"
     }
 }
 
 def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
-    """Multi-Brain Router: เลือกสมองที่เหมาะสมที่สุดตามคำถาม
+    """Multi-Brain Router: เลือกสถาปัตยกรรมที่เหมาะสมที่สุดตามคำถาม
     Returns: (model_name, brain_type, description)
     """
     input_lower = user_input.lower()
     
     # ถ้าผู้ใช้เลือก flavor มาตรงๆ ให้ใช้ตามนั้น
     if flavor == "fast":
-        return PREFERRED_FLASH, "chat", "⚡ โหมดเร็ว (Groq Ultra Fast)"
+        return PREFERRED_FLASH, "chat", "⚡ Instant Turbo (High-Speed Engine)"
     elif flavor == "reasoning":
         profile = BRAIN_PROFILES["reasoning"]
-        return profile["model"], "reasoning", "🧠 โหมดคิดวิเคราะห์เชิงลึก (Deep Reasoning)"
+        return profile["model"], "reasoning", "🧠 Cognitive Reasoning (Deep Logic & Analysis)"
     elif flavor == "creative":
-        return "mixtral-8x7b-32768", "creative", "🎨 โหมดสร้างสรรค์ (Creative)"
+        return "mixtral-8x7b-32768", "creative", "✨ Generative Studio (Content & Idea Synthesis)"
     
     # สำหรับ Kira 1.0 ใช้สมองเล็กเสมอ (ประหยัดโควตา)
     if model_version == "1.0":

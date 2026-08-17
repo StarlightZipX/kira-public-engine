@@ -131,19 +131,19 @@
                 </div>
             </header>
 
-            <div id="sub-model-container" style="max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease-in-out; background: #1e293b; border-bottom: 1px solid transparent; display: flex; gap: 10px; justify-content: center; align-items: center; font-size: 0.9rem;">
-                <span style="color: #cbd5e1; font-weight: 500; margin-left: 15px;">โหมดการทำงาน:</span>
-                <label style="cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 6px; transition: background 0.2s;" class="flavor-label">
+            <div id="sub-model-container" style="max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid transparent; display: flex; gap: 10px; justify-content: center; align-items: center; font-size: 0.85rem;">
+                <span style="color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; margin-left: 10px;"><i class="fa-solid fa-microchip"></i> สถาปัตยกรรมประมวลผล:</span>
+                <label class="flavor-label" data-flavor="fast" title="Instant Turbo: ตอบสนองความเร็วสูงพิเศษ (Low-Latency) สำหรับการสนทนาและงานทั่วไป">
                     <input type="radio" name="sub-model-flavor" value="fast" checked style="display: none;">
-                    <span style="color: #4ade80;"><i class="fa-solid fa-bolt"></i> Fast</span>
+                    <span style="color: #34d399;"><i class="fa-solid fa-bolt-lightning"></i> Instant Turbo</span>
                 </label>
-                <label style="cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 6px; transition: background 0.2s;" class="flavor-label">
+                <label class="flavor-label" data-flavor="reasoning" title="Cognitive Reasoning: ระบบคิดวิเคราะห์เชิงลึก (Chain-of-Thought) สำหรับโจทย์ซับซ้อน งานวิจัย และตรรกะ">
                     <input type="radio" name="sub-model-flavor" value="reasoning" style="display: none;">
-                    <span style="color: #3b82f6;"><i class="fa-solid fa-brain"></i> Reasoning</span>
+                    <span style="color: #60a5fa;"><i class="fa-solid fa-brain"></i> Cognitive Reasoning</span>
                 </label>
-                <label style="cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 6px; transition: background 0.2s;" class="flavor-label">
+                <label class="flavor-label" data-flavor="creative" title="Generative Studio: สังเคราะห์เนื้อหา งานเขียนสร้างสรรค์ และวางกลยุทธ์ไอเดีย">
                     <input type="radio" name="sub-model-flavor" value="creative" style="display: none;">
-                    <span style="color: #f472b6;"><i class="fa-solid fa-palette"></i> Creative</span>
+                    <span style="color: #f472b6;"><i class="fa-solid fa-wand-magic-sparkles"></i> Generative Studio</span>
                 </label>
             </div>
 
