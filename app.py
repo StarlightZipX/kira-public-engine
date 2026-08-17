@@ -4,6 +4,10 @@ import sys
 import time
 import asyncio
 from datetime import datetime, date, timezone, timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import uvicorn
 from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
