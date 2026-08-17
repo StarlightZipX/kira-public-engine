@@ -554,65 +554,41 @@ PREFERRED_FLASH = "llama3-8b-8192"
 PREFERRED_PRO = "llama3-70b-8192"
 
 print("🔍 กำลังสแกนหาสมองที่ใช้ได้จาก Groq...")
+groq_available_models = []
 for key_idx, api_key in enumerate(API_KEYS):
-    for model in ALL_MODEL_CANDIDATES:
-        try:
-            url = "https://api.groq.com/openai/v1/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "User-Agent": "Kira-Engine/2.1"
-            }
-            payload = {
-                "model": model,
-                "messages": [{"role": "user", "content": "Hi"}]
-            }
-            resp = requests.post(url, headers=headers, json=payload, timeout=15)
-            if resp.status_code == 200:
-                PREFERRED_FLASH = model
-                print(f"  ✅ Key#{key_idx+1} {model} → ใช้ได้!")
-                break
-            elif resp.status_code == 429:
-                PREFERRED_FLASH = model
-                print(f"  ⚠️ Key#{key_idx+1} {model} → 429 ชั่วคราว")
-                break
-            else:
-                err_snippet = resp.text[:90].replace('\n', ' ') if resp.text else ""
-                print(f"  ❌ Key#{key_idx+1} {model} → {resp.status_code} ({err_snippet})")
-        except Exception as e:
-            print(f"  ❌ Key#{key_idx+1} {model} → Exception: {str(e)[:80]}")
-    else:
-        continue
-    break
+    try:
+        url = "https://api.groq.com/openai/v1/models"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "User-Agent": "Kira-Engine/2.1"
+        }
+        resp = requests.get(url, headers=headers, timeout=15)
+        if resp.status_code == 200:
+            models_data = resp.json().get("data", [])
+            groq_available_models = [m["id"] for m in models_data]
+            print(f"  ✅ Key#{key_idx+1} ใช้งานได้! พบโมเดล {len(groq_available_models)} ตัว")
+            break
+        else:
+            err_snippet = resp.text[:90].replace('\n', ' ') if resp.text else ""
+            print(f"  ❌ Key#{key_idx+1} เช็คโมเดลไม่ได้ → {resp.status_code} ({err_snippet})")
+    except Exception as e:
+        print(f"  ❌ Key#{key_idx+1} → Exception: {str(e)[:80]}")
 
-for key_idx, api_key in enumerate(API_KEYS):
-    for model in ["llama-3.3-70b-versatile", "llama3-70b-8192"]:
-        try:
-            url = "https://api.groq.com/openai/v1/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "User-Agent": "Kira-Engine/2.1"
-            }
-            payload = {
-                "model": model,
-                "messages": [{"role": "user", "content": "Hi"}]
-            }
-            resp = requests.post(url, headers=headers, json=payload, timeout=15)
-            if resp.status_code == 200:
-                PREFERRED_PRO = model
-                break
-            elif resp.status_code == 429:
-                PREFERRED_PRO = model
-                break
-        except:
-            pass
-    else:
-        continue
-    break
+if groq_available_models:
+    # Update global candidates to only models we KNOW exist and are supported!
+    ALL_MODEL_CANDIDATES.clear()
+    ALL_MODEL_CANDIDATES.extend(groq_available_models)
+    
+    # Auto-assign Pro (70b/90b/QWQ)
+    pro_c = [m for m in groq_available_models if "70b" in m.lower() or "90b" in m.lower() or "qwq" in m.lower()]
+    PREFERRED_PRO = pro_c[0] if pro_c else groq_available_models[-1]
+    
+    # Auto-assign Flash (8b/7b/gemma/mixtral)
+    flash_c = [m for m in groq_available_models if "8b" in m.lower() or "7b" in m.lower() or "gemma" in m.lower() or "mixtral" in m.lower()]
+    PREFERRED_FLASH = flash_c[0] if flash_c else groq_available_models[0]
+else:
+    print("⚠️ ไม่พบโมเดลจาก Groq (อาจคีย์เสียหรือจำกัดสิทธิ์) จะพยายาม Fallback...")
 
-if PREFERRED_PRO == "llama3-8b-8192":
-    PREFERRED_PRO = PREFERRED_FLASH
 
 print(f"🤖 ========================================")
 print(f"🤖 Kira 1.0 (Standard) = {PREFERRED_FLASH}")
