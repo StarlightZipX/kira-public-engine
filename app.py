@@ -22,7 +22,7 @@ import requests
 # บังคับใช้ UTF-8
 sys.stdout.reconfigure(encoding='utf-8')
 
-# ========== API Keys (รองรับหลายคีย์ คั่นด้วยคอมม่า) ==========
+# ========== Multi-Provider API Keys (Groq, OpenRouter, Ollama) ==========
 _raw_keys = os.environ.get("GROQ_API_KEYS", os.environ.get("GROQ_API_KEY", "YOUR_GROQ_API_KEY_HERE"))
 API_KEYS = [k.strip() for k in _raw_keys.split(",") if k.strip() and k.strip() != "YOUR_GROQ_API_KEY_HERE"]
 
@@ -30,9 +30,22 @@ if not API_KEYS:
     print("⚠️ ไม่มี API Key ที่ใช้ได้! กรุณาตั้ง GROQ_API_KEYS ใน Environment Variables")
     API_KEYS = ["YOUR_GROQ_API_KEY_HERE"]
 
-print(f"🔑 จำนวน API Keys ที่ใช้ได้: {len(API_KEYS)} ดอก")
-
+print(f"🔑 จำนวน Groq API Keys ที่ใช้ได้: {len(API_KEYS)} ดอก")
 os.environ["GROQ_API_KEY"] = API_KEYS[0]
+
+# OpenRouter Deep-Brain Keys (Qwen & DeepSeek)
+_raw_or_keys = os.environ.get("OPENROUTER_API_KEYS", os.environ.get("OPENROUTER_API_KEY", ""))
+OPENROUTER_API_KEYS = [k.strip() for k in _raw_or_keys.split(",") if k.strip()]
+if OPENROUTER_API_KEYS:
+    print(f"🚀 OpenRouter Super-Brains Active: {len(OPENROUTER_API_KEYS)} keys (Qwen & DeepSeek Ready!)")
+else:
+    print("ℹ️ OpenRouter Keys: Standby (Using Groq Standard Engine)")
+
+# Local Ollama Provider (GPU Local Server)
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+ENABLE_OLLAMA = os.environ.get("ENABLE_OLLAMA", "false").lower() in ("true", "1", "yes")
+if ENABLE_OLLAMA:
+    print(f"🖥️ Local Ollama Server Active: {OLLAMA_BASE_URL}")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 USE_POSTGRES = DATABASE_URL is not None
@@ -210,7 +223,7 @@ def log_chat(username: str, role: str, content: str, session_id: str = None):
                   (username, session_id, timestamp, role, content))
 
 
-# ========== โมเดลที่ปลอดภัยของ Groq ==========
+# ========== โมเดลที่ปลอดภัยของ Groq & Multi-Provider ==========
 ALL_MODEL_CANDIDATES = [
     "llama3-70b-8192",
     "llama3-8b-8192",
@@ -218,40 +231,45 @@ ALL_MODEL_CANDIDATES = [
     "gemma2-9b-it"
 ]
 
-# ========== Multi-Brain Router (Kira 2.0) ==========
-# เลือกสมองที่เหมาะสมที่สุดตามประเภทคำถาม ทำให้คำตอบหลากหลายและแม่นยำขึ้น
+# ========== Multi-Brain Profiles (Kira 2.1) ==========
+# เลือกสมองที่เหมาะสมที่สุดตามประเภทคำถาม รองรับทั้ง Qwen, DeepSeek, และ Groq
 BRAIN_PROFILES = {
     "logic": {
-        "model": "llama3-70b-8192",
+        "model": "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else "llama3-70b-8192",
         "keywords": ["คำนวณ", "วิเคราะห์", "เปรียบเทียบ", "สถิติ", "ตรรกะ", "เหตุผล", "ข้อดี", "ข้อเสีย", 
                      "แผน", "กลยุทธ์", "strategy", "analyze", "calculate", "compare", "pros", "cons",
-                     "วางแผน", "ออกแบบ", "สถาปัตยกรรม", "ระบบ", "โครงสร้าง", "ธุรกิจ", "การตลาด"],
-        "description": "สมองตรรกะ (ดีที่สุดสำหรับวิเคราะห์เชิงลึก)"
+                     "วางแผน", "ออกแบบ", "สถาปัตยกรรม", "ระบบ", "โครงสร้าง", "ธุรกิจ", "การตลาด", "math", "คณิต"],
+        "description": "สมองตรรกะระดับสูง (Qwen / Deep Logic)"
+    },
+    "reasoning": {
+        "model": "deepseek/deepseek-r1" if OPENROUTER_API_KEYS else "llama3-70b-8192",
+        "keywords": ["วิจัย", "ทำไม", "เพราะอะไร", "สรุปเชิงลึก", "ทฤษฎี", "ปรัชญา", "think", "reason", "proof", "พิสูจน์"],
+        "description": "สมองคิดวิเคราะห์เชิงลึก (DeepSeek Reasoning)"
+    },
+    "code": {
+        "model": "qwen/qwen-2.5-coder-32b-instruct" if OPENROUTER_API_KEYS else "llama3-70b-8192",
+        "keywords": ["โค้ด", "code", "python", "javascript", "html", "css", "เขียนโปรแกรม", "debug",
+                     "แก้บั๊ก", "function", "api", "database", "sql", "เว็บ", "แอป", "app",
+                     "programming", "developer", "github", "server", "deploy", "react", "typescript"],
+        "description": "สมองโปรแกรมเมอร์ (Qwen Coder / Super Coder)"
     },
     "creative": {
         "model": "mixtral-8x7b-32768",
         "keywords": ["เขียน", "แต่ง", "นิยาย", "บทกวี", "เรื่องสั้น", "ไอเดีย", "ครีเอทีฟ", "จินตนาการ",
                      "write", "story", "creative", "poem", "idea", "brainstorm", "สร้างสรรค์",
                      "ชื่อ", "ตั้งชื่อ", "สโลแกน", "โฆษณา", "caption", "คอนเทนต์", "content"],
-        "description": "สมองสร้างสรรค์ (ดีที่สุดสำหรับงานเขียนและไอเดีย)"
-    },
-    "code": {
-        "model": "llama3-70b-8192",
-        "keywords": ["โค้ด", "code", "python", "javascript", "html", "css", "เขียนโปรแกรม", "debug",
-                     "แก้บั๊ก", "function", "api", "database", "sql", "เว็บ", "แอป", "app",
-                     "programming", "developer", "github", "server", "deploy"],
-        "description": "สมองโปรแกรมเมอร์ (ดีที่สุดสำหรับเขียนโค้ด)"
+        "description": "สมองสร้างสรรค์ (Creative Imagination)"
     },
     "translate": {
         "model": "gemma2-9b-it",
         "keywords": ["แปล", "translate", "ภาษาอังกฤษ", "ภาษาจีน", "ภาษาเกาหลี", "ภาษาญี่ปุ่น",
                      "english", "chinese", "korean", "japanese", "translation", "/แปลภาษา"],
-        "description": "สมองนักแปล (ดีที่สุดสำหรับงานแปลภาษา)"
+        "description": "สมองนักแปลหลายภาษา (Multilingual Translation)"
     },
     "chat": {
         "model": "llama3-8b-8192",
         "keywords": [],  # Default fallback
-        "description": "สมองเร็วแบบสายฟ้า (สำหรับบทสนทนาทั่วไป)"
+        "description": "สมองเร็วแบบสายฟ้า (Groq Ultra Fast)"
     }
 }
 
@@ -263,9 +281,12 @@ def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
     
     # ถ้าผู้ใช้เลือก flavor มาตรงๆ ให้ใช้ตามนั้น
     if flavor == "fast":
-        return PREFERRED_FLASH, "chat", "⚡ โหมดเร็ว"
+        return PREFERRED_FLASH, "chat", "⚡ โหมดเร็ว (Groq Ultra Fast)"
+    elif flavor == "reasoning":
+        profile = BRAIN_PROFILES["reasoning"]
+        return profile["model"], "reasoning", "🧠 โหมดคิดวิเคราะห์เชิงลึก (Deep Reasoning)"
     elif flavor == "creative":
-        return "mixtral-8x7b-32768", "creative", "🎨 โหมดสร้างสรรค์"
+        return "mixtral-8x7b-32768", "creative", "🎨 โหมดสร้างสรรค์ (Creative)"
     
     # สำหรับ Kira 1.0 ใช้สมองเล็กเสมอ (ประหยัดโควตา)
     if model_version == "1.0":
@@ -290,13 +311,155 @@ def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
     profile = BRAIN_PROFILES[best_match]
     return profile["model"], best_match, profile["description"]
 
-# ========== Multi-Key LLM ==========
+
+# ========== Unified Neural Gateway (Kira 2.1 Multi-Provider) ==========
+class SimpleChunk:
+    def __init__(self, content):
+        self.content = content
+
+class UnifiedLLM:
+    """Kira 2.1 Multi-Provider Neural Gateway
+    รองรับทั้ง Groq (High-Speed), OpenRouter (Qwen 2.5/3.8, DeepSeek-R1), และ Local Ollama
+    """
+    def __init__(self, model_name: str, api_key: str = None, provider: str = None, temperature: float = 0.7):
+        self.model = model_name
+        self.temperature = temperature
+        
+        # Auto-detect provider
+        if provider:
+            self.provider = provider
+        elif any(k in model_name.lower() for k in ["qwen", "deepseek", "openrouter"]):
+            self.provider = "openrouter"
+        elif any(k in model_name.lower() for k in ["ollama", "local/"]):
+            self.provider = "ollama"
+        else:
+            self.provider = "groq"
+
+        # Determine endpoint and auth
+        if self.provider == "openrouter":
+            self.base_url = "https://openrouter.ai/api/v1/chat/completions"
+            self.api_key = api_key or (OPENROUTER_API_KEYS[0] if OPENROUTER_API_KEYS else "")
+        elif self.provider == "ollama":
+            self.base_url = f"{OLLAMA_BASE_URL.rstrip('/')}/chat/completions"
+            self.api_key = "ollama"
+        else: # default groq
+            self.base_url = "https://api.groq.com/openai/v1/chat/completions"
+            self.api_key = api_key or (API_KEYS[0] if API_KEYS else "")
+
+    def _convert_messages(self, messages):
+        formatted = []
+        if isinstance(messages, str):
+            return [{"role": "user", "content": messages}]
+        for m in messages:
+            if hasattr(m, "content"):
+                role = "user"
+                t = getattr(m, "type", "")
+                cname = m.__class__.__name__
+                if t == "system" or cname == "SystemMessage":
+                    role = "system"
+                elif t == "ai" or cname == "AIMessage":
+                    role = "assistant"
+                formatted.append({"role": role, "content": m.content})
+            elif isinstance(m, dict):
+                formatted.append(m)
+        return formatted
+
+    def invoke(self, messages):
+        msgs = self._convert_messages(messages)
+        headers = {
+            "Authorization": f"Bearer {self.api_key}" if self.api_key else "",
+            "Content-Type": "application/json"
+        }
+        if self.provider == "openrouter":
+            headers["HTTP-Referer"] = "https://kira-ai.local"
+            headers["X-Title"] = "Kira AI System"
+
+        payload = {
+            "model": self.model,
+            "messages": msgs,
+            "temperature": self.temperature
+        }
+        resp = requests.post(self.base_url, headers=headers, json=payload, timeout=60)
+        if resp.status_code != 200:
+            raise Exception(f"{self.provider} error {resp.status_code}: {resp.text}")
+        data = resp.json()
+        choices = data.get("choices", [])
+        if not choices:
+            return SimpleChunk("")
+        msg_obj = choices[0].get("message", {})
+        content = msg_obj.get("content", "")
+        reasoning = msg_obj.get("reasoning_content", "")
+        if reasoning:
+            content = f"<think>\n{reasoning}\n</think>\n\n{content}"
+        return SimpleChunk(content)
+
+    async def astream(self, messages):
+        import asyncio
+        msgs = self._convert_messages(messages)
+        headers = {
+            "Authorization": f"Bearer {self.api_key}" if self.api_key else "",
+            "Content-Type": "application/json"
+        }
+        if self.provider == "openrouter":
+            headers["HTTP-Referer"] = "https://kira-ai.local"
+            headers["X-Title"] = "Kira AI System"
+
+        payload = {
+            "model": self.model,
+            "messages": msgs,
+            "temperature": self.temperature,
+            "stream": True
+        }
+
+        loop = asyncio.get_event_loop()
+        def _request_stream():
+            return requests.post(self.base_url, headers=headers, json=payload, stream=True, timeout=60)
+
+        resp = await loop.run_in_executor(None, _request_stream)
+        if resp.status_code != 200:
+            raise Exception(f"{self.provider} error {resp.status_code}: {resp.text}")
+
+        in_thinking = False
+        for line in resp.iter_lines():
+            if not line:
+                continue
+            line_str = line.decode("utf-8")
+            if line_str.startswith("data: "):
+                raw_json = line_str[6:].strip()
+                if raw_json == "[DONE]":
+                    if in_thinking:
+                        yield SimpleChunk("[/THINKING][THINKING_DONE]\n\n")
+                        in_thinking = False
+                    break
+                try:
+                    chunk_data = json.loads(raw_json)
+                    choices = chunk_data.get("choices", [])
+                    if choices:
+                        delta = choices[0].get("delta", {})
+                        reasoning = delta.get("reasoning_content", "")
+                        delta_content = delta.get("content", "")
+                        
+                        if reasoning:
+                            if not in_thinking:
+                                yield SimpleChunk("[THINKING]")
+                                in_thinking = True
+                            yield SimpleChunk(reasoning)
+                        elif delta_content:
+                            if in_thinking:
+                                yield SimpleChunk("[/THINKING][THINKING_DONE]\n\n")
+                                in_thinking = False
+                            yield SimpleChunk(delta_content)
+                except Exception:
+                    continue
+            await asyncio.sleep(0)
+
+
 def _create_llm(model_name, api_key=None):
-    key = api_key or API_KEYS[0]
-    return ChatGroq(model=model_name, temperature=0.7, groq_api_key=key)
+    return UnifiedLLM(model_name=model_name, api_key=api_key, temperature=0.7)
+
 
 async def _try_all_keys_and_models(history, preferred_model):
-    """ลองยิงทุก Key + ทุก Model จนกว่าจะสำเร็จ"""
+    """ลองยิงโมเดลที่ต้องการ ถ้าไม่สำเร็จจะ Fallback ไปยังโมเดลและคีย์อื่นๆ อัตโนมัติ"""
     models_to_try = [preferred_model]
     
     if "vision" in preferred_model:
@@ -309,10 +472,45 @@ async def _try_all_keys_and_models(history, preferred_model):
     
     last_error = ""
     
-    for key_idx, api_key in enumerate(API_KEYS):
-        for model_name in models_to_try:
+    # 1. ถ้าเป็น OpenRouter model ให้ลอง OpenRouter keys ก่อน
+    if any(k in preferred_model.lower() for k in ["qwen", "deepseek", "openrouter"]):
+        for or_key in OPENROUTER_API_KEYS:
             try:
-                llm = _create_llm(model_name, api_key)
+                llm = UnifiedLLM(preferred_model, api_key=or_key, provider="openrouter")
+                chunks = []
+                async for chunk in llm.astream(history):
+                    if chunk.content:
+                        chunks.append(chunk.content)
+                print(f"[OK] OpenRouter {preferred_model} สำเร็จ!")
+                return True, chunks, ""
+            except Exception as e:
+                last_error = str(e)
+                print(f"[Skip] OpenRouter {preferred_model}: {last_error[:80]}")
+                continue
+                
+    # 2. ถ้าเป็น Local Ollama ให้ลอง Ollama
+    if ENABLE_OLLAMA and any(k in preferred_model.lower() for k in ["ollama", "local/"]):
+        try:
+            llm = UnifiedLLM(preferred_model, provider="ollama")
+            chunks = []
+            async for chunk in llm.astream(history):
+                if chunk.content:
+                    chunks.append(chunk.content)
+            print(f"[OK] Ollama {preferred_model} สำเร็จ!")
+            return True, chunks, ""
+        except Exception as e:
+            last_error = str(e)
+            print(f"[Skip] Ollama {preferred_model}: {last_error[:80]}")
+
+    # 3. Fallback ไปยัง Groq Keys & Models ทั้งหมด
+    groq_models = [m for m in models_to_try if not any(k in m.lower() for k in ["qwen", "deepseek", "openrouter", "ollama", "local/"])]
+    if not groq_models:
+        groq_models = ALL_MODEL_CANDIDATES
+
+    for key_idx, api_key in enumerate(API_KEYS):
+        for model_name in groq_models:
+            try:
+                llm = UnifiedLLM(model_name, api_key=api_key, provider="groq")
                 chunks = []
                 async for chunk in llm.astream(history):
                     content = chunk.content
@@ -320,7 +518,7 @@ async def _try_all_keys_and_models(history, preferred_model):
                         chunks.append(content)
                 
                 if key_idx > 0 or model_name != preferred_model:
-                    print(f"[OK] Key#{key_idx+1} + {model_name} สำเร็จ!")
+                    print(f"[OK] Groq Key#{key_idx+1} + {model_name} สำเร็จ (Fallback)!")
                 return True, chunks, ""
                 
             except Exception as e:
@@ -328,12 +526,12 @@ async def _try_all_keys_and_models(history, preferred_model):
                 err_lower = last_error.lower()
                 
                 if "404" in last_error or "not_found" in err_lower:
-                    print(f"[Skip] Key#{key_idx+1} {model_name}: 404 Model Not Found")
+                    print(f"[Skip] Groq Key#{key_idx+1} {model_name}: 404 Model Not Found")
                     continue
                 if "429" in last_error or "quota" in err_lower or "resource" in err_lower or "rate_limit" in err_lower:
-                    print(f"[Skip] Key#{key_idx+1} {model_name}: 429 Rate Limit Exceeded")
+                    print(f"[Skip] Groq Key#{key_idx+1} {model_name}: 429 Rate Limit Exceeded")
                     continue
-                print(f"[Skip] Key#{key_idx+1} {model_name}: {last_error[:80]}")
+                print(f"[Skip] Groq Key#{key_idx+1} {model_name}: {last_error[:80]}")
                 continue
     
     return False, [], last_error
@@ -717,7 +915,9 @@ def _get_full_system_prompt(username: str) -> str:
         
     image_instruction = "\n\n[ความสามารถพิเศษ]: คุณคือ AI ที่สามารถสร้างรูปภาพได้ หากผู้ใช้ขอให้วาดรูป ห้ามปฏิเสธเด็ดขาด ให้ตอบรับและแนะนำผู้ใช้ว่า: 'หนูสามารถวาดรูปให้ได้ค่ะ! พิมพ์คำสั่ง /image ตามด้วยสิ่งที่คุณอยากให้วาดได้เลยค่ะ เช่น /image แมวอวกาศ'\n"
     
-    return base_prompt + image_instruction + dict_context + memory_ctx
+    reasoning_protocol = "\n\n[Kira 2.1 Deep Reasoning Protocol]:\nเมื่อได้รับคำถามที่ต้องใช้ตรรกะซับซ้อน, การคำนวณทางคณิตศาสตร์, การเขียนโปรแกรม/ดีบักโค้ด, หรือการวางแผนเชิงกลยุทธ์:\n- หากจำเป็น คุณสามารถเริ่มต้นด้วยการวิเคราะห์อย่างเป็นขั้นตอนในแท็ก <think>ขั้นตอนการคิดและการวางแผน...</think> ได้\n- เมื่อคิดและวางแผนเสร็จแล้ว ให้สรุปและส่งคำตอบที่สมบูรณ์ ชัดเจน สละสลวย และถูกต้อง 100% ให้กับผู้ใช้\n"
+    
+    return base_prompt + image_instruction + reasoning_protocol + dict_context + memory_ctx
 
 # ========== Self-Reflection Engine (Kira 2.0) ==========
 def _self_reflect(user_question: str, kira_response: str) -> str:

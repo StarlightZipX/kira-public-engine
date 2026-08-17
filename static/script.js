@@ -377,7 +377,46 @@ function addMessage(text, isUser) {
     if (isUser) {
         content.textContent = text;
     } else {
-        content.innerHTML = text ? marked.parse(text) : '<span class="typing-cursor"></span>';
+        if (!text) {
+            content.innerHTML = '<span class="typing-cursor"></span>';
+        } else {
+            let normalizedTxt = text.replace(/<think>/gi, "[THINKING]").replace(/<\/think>/gi, "[/THINKING][THINKING_DONE]");
+            let htmlContent = "";
+            let finalMarkdown = normalizedTxt;
+            
+            if (normalizedTxt.includes("[THINKING]")) {
+                let steps = [];
+                let regex = /\[THINKING\](.*?)(\[\/THINKING\]|$)/gs;
+                let match;
+                while ((match = regex.exec(normalizedTxt)) !== null) {
+                    if (match[1] && match[1].trim()) {
+                        steps.push(match[1].trim());
+                    }
+                }
+                
+                finalMarkdown = normalizedTxt.replace(/\[THINKING\](.*?)(\[\/THINKING\]|$)/gs, "")
+                                              .replace(/\[THINKING_DONE\]/g, "")
+                                              .trim();
+                
+                let stepsHtml = steps.map(s => `<div class="thinking-step" style="white-space: pre-wrap; font-size: 0.9em; line-height: 1.5; color: #94a3b8;">${marked.parse(s)}</div>`).join('');
+                
+                htmlContent += `
+                <div class="thinking-box done collapsed">
+                    <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <div class="thinking-title">🧠 กระบวนการคิดเชิงลึก (Deep Reasoning)</div>
+                        <div class="thinking-toggle-icon">▼</div>
+                    </div>
+                    <div class="thinking-progress-bar"></div>
+                    <div class="thinking-content">
+                        ${stepsHtml}
+                    </div>
+                </div>
+                `;
+            }
+            
+            htmlContent += finalMarkdown ? marked.parse(finalMarkdown) : "";
+            content.innerHTML = htmlContent;
+        }
     }
 
     msgDiv.appendChild(avatar);
@@ -474,32 +513,35 @@ async function sendMessage() {
             fullText += decoder.decode(value, { stream: true });
             let displayTxt = fullText.replace(/^(✨ \*\*\[Kira 1\.1 PRO\]\*\*\n\n|🤖 \*\*\[Kira 1\.0\]\*\*\n\n|✨ \*\*\[Kira 1\.2 PRO\]\*\*\n\n)/i, "");
             
-            // --- Parse Thinking Tags ---
+            // --- Parse Thinking Tags (<think> and [THINKING]) ---
+            let normalizedTxt = displayTxt.replace(/<think>/gi, "[THINKING]").replace(/<\/think>/gi, "[/THINKING][THINKING_DONE]");
             let htmlContent = "";
-            let finalMarkdown = displayTxt;
+            let finalMarkdown = normalizedTxt;
             
-            if (displayTxt.includes("[THINKING]")) {
-                let isDone = displayTxt.includes("[THINKING_DONE]");
+            if (normalizedTxt.includes("[THINKING]")) {
+                let isDone = normalizedTxt.includes("[THINKING_DONE]") || normalizedTxt.includes("[/THINKING]");
                 let steps = [];
-                let regex = /\[THINKING\](.*?)\[\/THINKING\]/g;
+                let regex = /\[THINKING\](.*?)(\[\/THINKING\]|$)/gs;
                 let match;
-                while ((match = regex.exec(displayTxt)) !== null) {
-                    steps.push(match[1]);
+                while ((match = regex.exec(normalizedTxt)) !== null) {
+                    if (match[1] && match[1].trim()) {
+                        steps.push(match[1].trim());
+                    }
                 }
                 
                 // Remove all thinking tags from the markdown that will be parsed
-                finalMarkdown = displayTxt.replace(/\[THINKING\](.*?)\[\/THINKING\]/gs, "")
-                                          .replace(/\[THINKING_DONE\]/g, "")
-                                          .trim();
+                finalMarkdown = normalizedTxt.replace(/\[THINKING\](.*?)(\[\/THINKING\]|$)/gs, "")
+                                              .replace(/\[THINKING_DONE\]/g, "")
+                                              .trim();
                 
-                let stepsHtml = steps.map(s => `<div class="thinking-step">${s}</div>`).join('');
+                let stepsHtml = steps.map(s => `<div class="thinking-step" style="white-space: pre-wrap; font-size: 0.9em; line-height: 1.5; color: #94a3b8;">${marked.parse(s)}</div>`).join('');
                 let boxClass = isDone ? "thinking-box done collapsed" : "thinking-box";
                 let toggleIcon = isDone ? "▼" : "▲";
                 
                 htmlContent += `
                 <div class="${boxClass}">
                     <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <div class="thinking-title">🧠 กระบวนการคิดของ Kira</div>
+                        <div class="thinking-title">🧠 กระบวนการคิดเชิงลึก (Deep Reasoning)</div>
                         <div class="thinking-toggle-icon">${toggleIcon}</div>
                     </div>
                     <div class="thinking-progress-bar"></div>
