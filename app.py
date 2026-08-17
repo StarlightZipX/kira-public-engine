@@ -27,8 +27,13 @@ import requests
 sys.stdout.reconfigure(encoding='utf-8')
 
 # ========== Multi-Provider API Keys (Groq, OpenRouter, Ollama) ==========
+def _clean_api_key(k: str) -> str:
+    if not k:
+        return ""
+    return k.strip().strip('"`\'[] \t\r\n')
+
 _raw_keys = os.environ.get("GROQ_API_KEYS", os.environ.get("GROQ_API_KEY", "YOUR_GROQ_API_KEY_HERE"))
-API_KEYS = [k.strip() for k in _raw_keys.split(",") if k.strip() and k.strip() != "YOUR_GROQ_API_KEY_HERE"]
+API_KEYS = [_clean_api_key(k) for k in _raw_keys.replace(";", ",").replace("\n", ",").split(",") if _clean_api_key(k) and _clean_api_key(k) != "YOUR_GROQ_API_KEY_HERE"]
 
 if not API_KEYS:
     print("⚠️ ไม่มี API Key ที่ใช้ได้! กรุณาตั้ง GROQ_API_KEYS ใน Environment Variables")
@@ -39,7 +44,7 @@ os.environ["GROQ_API_KEY"] = API_KEYS[0]
 
 # OpenRouter Deep-Brain Keys (Qwen & DeepSeek)
 _raw_or_keys = os.environ.get("OPENROUTER_API_KEYS", os.environ.get("OPENROUTER_API_KEY", ""))
-OPENROUTER_API_KEYS = [k.strip() for k in _raw_or_keys.split(",") if k.strip()]
+OPENROUTER_API_KEYS = [_clean_api_key(k) for k in _raw_or_keys.replace(";", ",").replace("\n", ",").split(",") if _clean_api_key(k)]
 if OPENROUTER_API_KEYS:
     print(f"🚀 OpenRouter Super-Brains Active: {len(OPENROUTER_API_KEYS)} keys (Qwen & DeepSeek Ready!)")
 else:
@@ -229,6 +234,8 @@ def log_chat(username: str, role: str, content: str, session_id: str = None):
 
 # ========== โมเดลที่ปลอดภัยของ Groq & Multi-Provider ==========
 ALL_MODEL_CANDIDATES = [
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
     "llama3-70b-8192",
     "llama3-8b-8192",
     "mixtral-8x7b-32768",
@@ -372,7 +379,8 @@ class UnifiedLLM:
         msgs = self._convert_messages(messages)
         headers = {
             "Authorization": f"Bearer {self.api_key}" if self.api_key else "",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": "Kira-Engine/2.1"
         }
         if self.provider == "openrouter":
             headers["HTTP-Referer"] = "https://kira-ai.local"
@@ -402,7 +410,8 @@ class UnifiedLLM:
         msgs = self._convert_messages(messages)
         headers = {
             "Authorization": f"Bearer {self.api_key}" if self.api_key else "",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": "Kira-Engine/2.1"
         }
         if self.provider == "openrouter":
             headers["HTTP-Referer"] = "https://kira-ai.local"
@@ -551,7 +560,8 @@ for key_idx, api_key in enumerate(API_KEYS):
             url = "https://api.groq.com/openai/v1/chat/completions"
             headers = {
                 "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "User-Agent": "Kira-Engine/2.1"
             }
             payload = {
                 "model": model,
@@ -567,20 +577,22 @@ for key_idx, api_key in enumerate(API_KEYS):
                 print(f"  ⚠️ Key#{key_idx+1} {model} → 429 ชั่วคราว")
                 break
             else:
-                print(f"  ❌ Key#{key_idx+1} {model} → {resp.status_code}")
-        except:
-            pass
+                err_snippet = resp.text[:90].replace('\n', ' ') if resp.text else ""
+                print(f"  ❌ Key#{key_idx+1} {model} → {resp.status_code} ({err_snippet})")
+        except Exception as e:
+            print(f"  ❌ Key#{key_idx+1} {model} → Exception: {str(e)[:80]}")
     else:
         continue
     break
 
 for key_idx, api_key in enumerate(API_KEYS):
-    for model in ["llama3-70b-8192", "llama3-70b-8192"]:
+    for model in ["llama-3.3-70b-versatile", "llama3-70b-8192"]:
         try:
             url = "https://api.groq.com/openai/v1/chat/completions"
             headers = {
                 "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "User-Agent": "Kira-Engine/2.1"
             }
             payload = {
                 "model": model,
