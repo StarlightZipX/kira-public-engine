@@ -705,14 +705,16 @@ def _get_full_system_prompt(username: str) -> str:
     dict_context = get_dictionary_context()
     
     memory_ctx = ""
-    if is_boss_user:
-        try:
-            memories = execute_query("SELECT fact FROM user_memories WHERE username=? ORDER BY id DESC LIMIT 15", (username,), fetch='all')
-            if memories:
-                memory_ctx = "\n\n[Long-term Memory / ข้อมูลสำคัญของบอสที่ต้องจำ]:\n" + "\n".join([f"- {m[0]}" for m in memories])
-        except Exception:
-            pass
-            
+    try:
+        # Load personalized long-term memories from Knowledge Graph
+        memories = execute_query("SELECT id, fact FROM user_memories WHERE username=? ORDER BY id DESC LIMIT 20", (username,), fetch='all')
+        if memories:
+            target_title = "ข้อมูลสำคัญของบอสที่ต้องจำและนำมาปรับใช้ (Kira 2.0 Knowledge Graph)" if is_boss_user else "ข้อมูลส่วนตัวและความชอบของผู้ใช้งาน (Kira 2.0 Memory)"
+            memory_list = "\n".join([f"- {m[1]}" for m in memories])
+            memory_ctx = f"\n\n[Personalized Knowledge Graph / {target_title}]:\n{memory_list}\n(Instruction: หนูต้องจดจำและปฏิบัติตามข้อมูลเหล่านี้อย่างเป็นธรรมชาติโดยไม่ต้องให้ผู้ใช้เตือนซ้ำ)\n"
+    except Exception as e:
+        print("Memory load error:", e)
+        
     image_instruction = "\n\n[ความสามารถพิเศษ]: คุณคือ AI ที่สามารถสร้างรูปภาพได้ หากผู้ใช้ขอให้วาดรูป ห้ามปฏิเสธเด็ดขาด ให้ตอบรับและแนะนำผู้ใช้ว่า: 'หนูสามารถวาดรูปให้ได้ค่ะ! พิมพ์คำสั่ง /image ตามด้วยสิ่งที่คุณอยากให้วาดได้เลยค่ะ เช่น /image แมวอวกาศ'\n"
     
     return base_prompt + image_instruction + dict_context + memory_ctx
@@ -755,24 +757,72 @@ OUTPUT RULES:
 
 
 async def _extract_and_save_memory(username: str, user_input: str, version: str):
-    if version not in ["1.1", "1.2", "1.3"] or not is_boss(username):
+    """Kira 2.0 Personalized Knowledge Graph: วิเคราะห์และจดจำ/อัปเดต/ลบ ความจำระดับบุคคลอัตโนมัติ (Self-Correcting)"""
+    if version not in ["1.1", "1.2", "1.3"]:
         return
     try:
+        # 1. Fetch existing memories to allow self-correcting / duplicate prevention
+        existing_rows = execute_query("SELECT id, fact FROM user_memories WHERE username=? ORDER BY id DESC LIMIT 15", (username,), fetch='all')
+        existing_facts_str = "None"
+        if existing_rows:
+            existing_facts_str = "\n".join([f"[ID:{r[0]}] {r[1]}" for r in existing_rows])
+
         prompt = [
-            {"role": "system", "content": "You are a memory extractor. Analyze the user's message and extract ONLY permanent facts about the user (e.g., name, job, preferences, project details). If there are NO permanent facts, output EXACTLY: NO_FACT. If there are facts, summarize them concisely in Thai language (e.g., 'ผู้ใช้ชอบดื่มกาแฟ')."},
+            {"role": "system", "content": f"""You are Kira's Long-Term Memory Architect (Kira 2.0 Knowledge Graph).
+Your job is to analyze the user's latest message and maintain a clean, accurate, non-redundant profile of permanent facts about the user (e.g. preferences, identity, ongoing projects, work habits, rules they set, technical constraints).
+
+Current Known Memories for this user:
+{existing_facts_str}
+
+Rules:
+1. If the message contains NO permanent personal/project facts (e.g. just casual chat, general questions, one-off math/coding questions), respond EXACTLY: NO_FACT
+2. If the user shares a NEW permanent fact that doesn't exist yet, output:
+   ADD: <Category: [ข้อมูลส่วนตัว|ความชอบ|โปรเจกต์|กฎการทำงาน]> <Fact in fluent Thai>
+3. If the user UPDATES, CHANGES, or CONTRADICTS an existing memory (e.g. previously liked red, now says prefer blue; or updated project stack), output:
+   UPDATE [ID:<id>]: <Category> <New updated Fact in fluent Thai>
+4. If the user explicitly asks to FORGET, CANCEL, or REMOVE a past fact/preference, output:
+   DELETE [ID:<id>]
+
+OUTPUT FORMAT:
+Return ONLY the command line (ADD, UPDATE, DELETE, or NO_FACT). Nothing else."""},
             {"role": "user", "content": user_input}
         ]
+        
         classifier = _create_llm("llama-3.1-8b-instant", API_KEYS[0])
         result = classifier.invoke(prompt).content.strip()
         
-        if "NO_FACT" not in result and result:
-            tz = timezone(timedelta(hours=7))
-            timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-            execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)", 
-                          (username, result, timestamp))
-            print(f"🧠 [Memory Saved for {username}]: {result}")
+        if "NO_FACT" in result or not result:
+            return
+            
+        tz = timezone(timedelta(hours=7))
+        timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+        
+        import re
+        if result.startswith("ADD:"):
+            fact_text = result.replace("ADD:", "").strip()
+            if fact_text:
+                execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)", 
+                              (username, fact_text, timestamp))
+                print(f"🧠 [Knowledge Graph ADD for {username}]: {fact_text}")
+        elif result.startswith("UPDATE"):
+            id_match = re.search(r'\[ID:(\d+)\]', result)
+            fact_text = re.sub(r'UPDATE\s*\[ID:\d+\]:\s*', '', result).strip()
+            if id_match and fact_text:
+                target_id = int(id_match.group(1))
+                execute_query("UPDATE user_memories SET fact=?, timestamp=? WHERE id=? AND username=?",
+                              (fact_text, timestamp, target_id, username))
+                print(f"🧠 [Knowledge Graph UPDATE ID {target_id} for {username}]: {fact_text}")
+            elif fact_text:
+                execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)", 
+                              (username, fact_text, timestamp))
+        elif result.startswith("DELETE"):
+            id_match = re.search(r'\[ID:(\d+)\]', result)
+            if id_match:
+                target_id = int(id_match.group(1))
+                execute_query("DELETE FROM user_memories WHERE id=? AND username=?", (target_id, username))
+                print(f"🧠 [Knowledge Graph DELETE ID {target_id} for {username}]")
     except Exception as e:
-        print("Memory extraction error:", e)
+        print("Knowledge Graph extraction error:", e)
 
 @app.post("/api/upload")
 async def upload_file(username: str = Form(...), session_id: Optional[str] = Form(None), file: UploadFile = File(...)):
@@ -891,9 +941,21 @@ async def delete_dictionary(term: str):
     return {"status": "success"}
 
 def _decide_search(query: str) -> str:
+    """Kira 2.0 Autonomous Web Surfer Router: ตัดสินใจอย่างชาญฉลาดว่าต้องค้นหาข้อมูลเรียลไทม์หรือไม่"""
     try:
         search_prompt = [
-            {"role": "system", "content": "You are a web search router. If the user's message needs real-time info, news, weather, or facts not in your training data, output exactly: SEARCH_QUERY: <best_search_terms_in_thai_or_english>. If NO search is needed, output EXACTLY: NO_SEARCH."},
+            {"role": "system", "content": """You are Kira's Autonomous Web Surfer Router (Kira 2.0).
+Analyze the user's message and determine if searching the web is needed for:
+- Recent events, current news, live updates, 2024-2026 data
+- Realtime prices (crypto, gold, oil, stocks, currency)
+- Specific technical documentation, specifications, or facts
+- External URLs or specific companies/people
+
+If search is NEEDED, formulate the single most effective, concise search query in Thai or English and output:
+SEARCH_QUERY: <search_term>
+
+If NO search is needed (e.g. creative writing, pure coding assistance, standard knowledge, conversation, translation), output:
+NO_SEARCH"""},
             {"role": "user", "content": query}
         ]
         classifier = _create_llm("llama-3.1-8b-instant", API_KEYS[0])
@@ -1031,51 +1093,86 @@ Output: {"prompt": "A cozy small wooden cottage covered in fresh white snow nest
     }
 
 def _execute_search(search_term: str, version: str) -> str:
+    """Kira 2.0 Autonomous Web Surfer: ค้นหาเชิงลึก สกัดหลายแหล่งข้อมูล และตรวจสอบข้อเท็จจริง"""
     try:
-        print(f"🔍 [Deep Web Search Triggered]: {search_term}")
-        from langchain_community.tools import DuckDuckGoSearchResults
-        search_tool = DuckDuckGoSearchResults(num_results=3)
-        raw_results = search_tool.invoke(search_term)
-        
-        # Extract links
+        print(f"🔍 [Kira 2.0 Autonomous Web Surfer]: {search_term}")
         import re
-        links = re.findall(r"link:\s*(https?://[^\s,\]]+)", raw_results)
-        
-        if not links:
-            # Fallback to normal search
-            from langchain_community.tools import DuckDuckGoSearchRun
-            search_tool_basic = DuckDuckGoSearchRun()
-            raw_results = search_tool_basic.invoke(search_term)
-            if version == "1.0":
-                return f"\n\n[Web Search Results (Limited)]:\n{raw_results[:400]}\n(Instruction: Use this context briefly to answer. Do not analyze deeply. IMPORTANT: Answer ONLY in Thai language (ภาษาไทย) without any Chinese characters.)"
-            else:
-                return f"\n\n[Web Search Results (Detailed)]:\n{raw_results[:2000]}\n(Instruction: Analyze this real-time data deeply to give the Boss a comprehensive answer. IMPORTANT: Answer ONLY in fluent Thai language (ภาษาไทย) without any Chinese or weird characters.)"
-            
-        print(f"🔗 Found links to scrape: {links}")
-        
-        # Multi-threaded scraping
         import concurrent.futures
+        
+        links = []
+        raw_snippets = ""
+        
+        # 1. Try DuckDuckGo search
+        try:
+            from langchain_community.tools import DuckDuckGoSearchResults
+            search_tool = DuckDuckGoSearchResults(num_results=4)
+            raw_results = search_tool.invoke(search_term)
+            raw_snippets = str(raw_results)
+            # Extract links
+            found_links = re.findall(r"link:\s*(https?://[^\s,\]]+)", raw_snippets)
+            for l in found_links:
+                # Filter out junk/media domains that are not scrape-friendly
+                if not any(bad in l.lower() for bad in ['youtube.com', 'facebook.com', 'tiktok.com', 'instagram.com', 'twitter.com', 'x.com', '.pdf', '.mp4']):
+                    if l not in links:
+                        links.append(l)
+        except Exception as ddg_err:
+            print(f"DuckDuckGo search error: {ddg_err}")
+            
+        # Fallback if no links found
+        if not links:
+            try:
+                from langchain_community.tools import DuckDuckGoSearchRun
+                search_tool_basic = DuckDuckGoSearchRun()
+                raw_snippets = search_tool_basic.invoke(search_term)
+            except Exception as e:
+                print(f"DuckDuckGo fallback search error: {e}")
+                
+            if not raw_snippets:
+                return ""
+                
+            if version == "1.0":
+                return f"\n\n[Web Search Summary]:\n{raw_snippets[:500]}\n(Instruction: Use this summary briefly to answer in natural Thai.)"
+            else:
+                return f"\n\n[Kira 2.0 Web Search Dossier]:\n{raw_snippets[:2500]}\n(Instruction: Analyze this real-time data deeply. Synthesize facts and answer with high precision in fluent Thai.)"
+
+        print(f"🔗 [Autonomous Surfer] Scraping top {min(len(links), 3)} sources: {links[:3]}")
+        
+        # 2. Concurrently scrape top 3 clean URLs
         scraped_data = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            future_to_url = {executor.submit(_scrape_url, url): url for url in set(links[:3])}
+            future_to_url = {executor.submit(_scrape_url, url): url for url in links[:3]}
             for future in concurrent.futures.as_completed(future_to_url):
                 url = future_to_url[future]
                 try:
                     data = future.result()
-                    if data:
-                        scraped_data.append(f"--- Source: {url} ---\n{data[:3000]}")
+                    if data and len(data.strip()) > 100:
+                        scraped_data.append(f"--- แหล่งข้อมูล: {url} ---\n{data}")
                 except Exception as e:
-                    print(f"Scrape error for {url}: {e}")
+                    print(f"Scrape task error for {url}: {e}")
                     
-        combined_text = "\n\n".join(scraped_data)
-        
-        if version == "1.0":
-            return f"\n\n[Deep Web Search Results (3 Sources)]:\n{combined_text[:1000]}\n(Instruction: Use this context briefly to answer. Do not analyze deeply. IMPORTANT: Answer ONLY in Thai language (ภาษาไทย) without any Chinese characters.)"
-        else:
-            return f"\n\n[Deep Web Search Results (Multiple Sources)]:\n{combined_text[:6000]}\n(Instruction: Analyze this multi-source data deeply to give the Boss a comprehensive answer. Combine facts from multiple sources if possible. IMPORTANT: Answer ONLY in fluent Thai language (ภาษาไทย) without any Chinese or weird characters.)"
+        if scraped_data:
+            combined_text = "\n\n".join(scraped_data)
+            max_chars = 1500 if version == "1.0" else 6500
+            
+            return f"""
+
+[Kira 2.0 Autonomous Web Surfer Research Report]
+หัวข้อการค้นหา: {search_term}
+จำนวนแหล่งข้อมูลที่ตรวจสอบ: {len(scraped_data)} เว็บไซต์
+
+{combined_text[:max_chars]}
+
+[Instruction สำหรับการตอบ]:
+- ตรวจสอบความถูกต้องและเปรียบเทียบข้อมูลจากทุกแหล่งข้อมูลด้านบน
+- หากมีตัวเลข สถิติ หรือราคา ให้ใช้ข้อมูลที่ใหม่และตรงกันที่สุด
+- ตอบคำถามด้วยภาษาไทยที่สละสลวย ถูกต้อง 100% และกระชับชัดเจน
+- หากเหมาะสม ให้อ้างอิงชื่อเว็บไซต์หรือ URL ของแหล่งข้อมูลที่ใช้อย่างน่าเชื่อถือ
+"""
+        elif raw_snippets:
+            return f"\n\n[Kira 2.0 Web Search Dossier]:\n{raw_snippets[:2500]}\n(Instruction: Analyze this real-time data deeply. Synthesize facts and answer with high precision in fluent Thai.)"
             
     except Exception as e:
-        print("Search execution error:", e)
+        print("Autonomous Web Surfer error:", e)
     return ""
 
 def _parse_document(base64_data: str, filename: str) -> str:
@@ -1182,20 +1279,27 @@ plt.show = _intercepted_show
         return f"Error executing code: {str(e)}"
 
 def _scrape_url(url: str) -> str:
+    """Kira 2.0 Web Scraper: ดึงเนื้อหาเว็บและทำความสะอาดอย่างรวดเร็ว"""
     try:
         from bs4 import BeautifulSoup
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-        response = requests.get(url, headers=headers, timeout=10)
+        import re
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'th,en;q=0.9'
+        }
+        response = requests.get(url, headers=headers, timeout=7)
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
-            for script in soup(["script", "style", "nav", "footer", "header"]):
-                script.extract()
+            for tag in soup(["script", "style", "nav", "footer", "header", "aside", "form", "noscript", "svg"]):
+                tag.extract()
             text = soup.get_text(separator=' ', strip=True)
+            # Remove excessive whitespace
+            text = re.sub(r'\s+', ' ', text)
             # Limit length to avoid max tokens
-            return text[:8000]
+            return text[:4500]
         return ""
     except Exception as e:
-        print("Scrape error:", e)
+        print(f"Scrape error for {url}: {e}")
         return ""
 
 @app.post("/api/tts")
