@@ -229,6 +229,53 @@ body.light-mode .chat-header {
     color: var(--text-primary);
 }
 
+.engine-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #93c5fd;
+    cursor: default;
+    user-select: none;
+    backdrop-filter: blur(8px);
+    margin-right: 4px;
+}
+
+.pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.pulse-dot.cloud {
+    background-color: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+    animation: pulse-glow 2s infinite;
+}
+
+.pulse-dot.local {
+    background-color: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.3); opacity: 1; }
+}
+
+body.light-mode .engine-badge {
+    background: rgba(241, 245, 249, 0.9);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #1e40af;
+}
+
 .model-select {
     background-color: var(--input-bg);
     color: var(--text-primary);

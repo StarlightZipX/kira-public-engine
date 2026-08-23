@@ -207,6 +207,16 @@ def init_db():
                       username TEXT,
                       fact TEXT,
                       timestamp TEXT)''')
+        execute_query('''CREATE TABLE IF NOT EXISTS user_knowledge_graph
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      username TEXT,
+                      subject TEXT,
+                      predicate TEXT,
+                      object TEXT,
+                      category TEXT,
+                      fact TEXT,
+                      confidence REAL DEFAULT 1.0,
+                      timestamp TEXT)''')
         
         # Insert default prompts if not exists
         check_p1 = execute_query("SELECT id FROM system_settings WHERE key_name='prompt_1.0'", fetch='one')
@@ -975,8 +985,8 @@ OUTPUT RULES:
 
 
 async def _extract_and_save_memory(username: str, user_input: str, version: str):
-    """Kira 2.0 Personalized Knowledge Graph: วิเคราะห์และจดจำ/อัปเดต/ลบ ความจำระดับบุคคลอัตโนมัติ (Self-Correcting)"""
-    if version not in ["1.1", "1.2", "1.3"]:
+    """Kira 2.1 GraphRAG Relational Knowledge Graph: วิเคราะห์และจดจำ/อัปเดต/ลบ ความจำระดับบุคคลและโครงข่ายความสัมพันธ์"""
+    if version == "1.0":
         return
     try:
         # 1. Fetch existing memories to allow self-correcting / duplicate prevention
@@ -986,27 +996,28 @@ async def _extract_and_save_memory(username: str, user_input: str, version: str)
             existing_facts_str = "\n".join([f"[ID:{r[0]}] {r[1]}" for r in existing_rows])
 
         prompt = [
-            {"role": "system", "content": f"""You are Kira's Long-Term Memory Architect (Kira 2.0 Knowledge Graph).
-Your job is to analyze the user's latest message and maintain a clean, accurate, non-redundant profile of permanent facts about the user (e.g. preferences, identity, ongoing projects, work habits, rules they set, technical constraints).
+            {"role": "system", "content": f"""You are Kira's GraphRAG Knowledge Graph Architect (Kira 2.1).
+Your job is to analyze the user's latest message and maintain a clean, accurate, non-redundant relational profile of permanent facts and graph edges about the user (e.g. preferences, identity, ongoing projects, work habits, rules they set, technical constraints).
 
 Current Known Memories for this user:
 {existing_facts_str}
 
 Rules:
-1. If the message contains NO permanent personal/project facts (e.g. just casual chat, general questions, one-off math/coding questions), respond EXACTLY: NO_FACT
-2. If the user shares a NEW permanent fact that doesn't exist yet, output:
-   ADD: <Category: [ข้อมูลส่วนตัว|ความชอบ|โปรเจกต์|กฎการทำงาน]> <Fact in fluent Thai>
-3. If the user UPDATES, CHANGES, or CONTRADICTS an existing memory (e.g. previously liked red, now says prefer blue; or updated project stack), output:
-   UPDATE [ID:<id>]: <Category> <New updated Fact in fluent Thai>
-4. If the user explicitly asks to FORGET, CANCEL, or REMOVE a past fact/preference, output:
+1. If the message contains NO permanent personal/project facts, respond EXACTLY: NO_FACT
+2. If the user shares a NEW permanent fact, output in this exact Graph format:
+   ADD: [Category: ข้อมูลส่วนตัว|ความชอบ|โปรเจกต์|กฎการทำงาน] [Subject] -> [Predicate] -> [Object] | <Full fact in fluent Thai>
+   Example: ADD: [โปรเจกต์] [บอส] -> [กำลังพัฒนา] -> [Kira AI System 2.1] | บอสกำลังพัฒนาและปรับปรุงระบบ Kira AI System 2.1
+3. If the user UPDATES an existing memory:
+   UPDATE [ID:<id>]: [Category] [Subject] -> [Predicate] -> [Object] | <New updated Fact in fluent Thai>
+4. If the user asks to FORGET or DELETE:
    DELETE [ID:<id>]
 
 OUTPUT FORMAT:
-Return ONLY the command line (ADD, UPDATE, DELETE, or NO_FACT). Nothing else."""},
+Return ONLY the single command line. Nothing else."""},
             {"role": "user", "content": user_input}
         ]
         
-        classifier = _create_llm(PREFERRED_FLASH, API_KEYS[0])
+        classifier = _create_llm(PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
         result = classifier.invoke(prompt).content.strip()
         
         if "NO_FACT" in result or not result:
@@ -1017,22 +1028,33 @@ Return ONLY the command line (ADD, UPDATE, DELETE, or NO_FACT). Nothing else."""
         
         import re
         if result.startswith("ADD:"):
-            fact_text = result.replace("ADD:", "").strip()
-            if fact_text:
+            body = result.replace("ADD:", "").strip()
+            # Extract Graph Triple if present
+            graph_match = re.search(r'\[Category:\s*([^\]]+)\]\s*\[([^\]]+)\]\s*->\s*\[([^\]]+)\]\s*->\s*\[([^\]]+)\]\s*\|\s*(.*)', body)
+            if graph_match:
+                cat, subj, pred, obj, fact_text = graph_match.groups()
+                execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)", 
+                              (username, fact_text.strip(), timestamp))
+                execute_query("INSERT INTO user_knowledge_graph (username, subject, predicate, object, category, fact, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                              (username, subj.strip(), pred.strip(), obj.strip(), cat.strip(), fact_text.strip(), timestamp))
+                print(f"🕸️ [GraphRAG ADD for {username}]: ({subj}) -[{pred}]-> ({obj})")
+            else:
+                fact_text = body.split("|")[-1].strip() if "|" in body else body
                 execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)", 
                               (username, fact_text, timestamp))
                 print(f"🧠 [Knowledge Graph ADD for {username}]: {fact_text}")
         elif result.startswith("UPDATE"):
             id_match = re.search(r'\[ID:(\d+)\]', result)
             fact_text = re.sub(r'UPDATE\s*\[ID:\d+\]:\s*', '', result).strip()
-            if id_match and fact_text:
+            fact_clean = fact_text.split("|")[-1].strip() if "|" in fact_text else fact_text
+            if id_match and fact_clean:
                 target_id = int(id_match.group(1))
                 execute_query("UPDATE user_memories SET fact=?, timestamp=? WHERE id=? AND username=?",
-                              (fact_text, timestamp, target_id, username))
-                print(f"🧠 [Knowledge Graph UPDATE ID {target_id} for {username}]: {fact_text}")
-            elif fact_text:
+                              (fact_clean, timestamp, target_id, username))
+                print(f"🧠 [Knowledge Graph UPDATE ID {target_id} for {username}]: {fact_clean}")
+            elif fact_clean:
                 execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)", 
-                              (username, fact_text, timestamp))
+                              (username, fact_clean, timestamp))
         elif result.startswith("DELETE"):
             id_match = re.search(r'\[ID:(\d+)\]', result)
             if id_match:
@@ -1040,7 +1062,33 @@ Return ONLY the command line (ADD, UPDATE, DELETE, or NO_FACT). Nothing else."""
                 execute_query("DELETE FROM user_memories WHERE id=? AND username=?", (target_id, username))
                 print(f"🧠 [Knowledge Graph DELETE ID {target_id} for {username}]")
     except Exception as e:
-        print("Knowledge Graph extraction error:", e)
+        print("GraphRAG extraction error:", e)
+
+def _get_graph_memory_context(username: str, query: str) -> str:
+    """ดึงข้อมูลความจำแบบโครงข่าย GraphRAG และ Personalized Memory เพื่อแนบใน Context"""
+    try:
+        memories = execute_query("SELECT fact FROM user_memories WHERE username=? ORDER BY id DESC LIMIT 10", (username,), fetch='all')
+        graph_triples = execute_query("SELECT subject, predicate, object FROM user_knowledge_graph WHERE username=? ORDER BY id DESC LIMIT 8", (username,), fetch='all')
+        
+        if not memories and not graph_triples:
+            return ""
+            
+        ctx = "\n\n[Kira 2.1 GraphRAG Long-Term Knowledge Graph]:\n"
+        if graph_triples:
+            ctx += "โครงข่ายความสัมพันธ์ที่จดจำได้:\n"
+            for s, p, o in graph_triples:
+                ctx += f"- ({s}) --[{p}]--> ({o})\n"
+                
+        if memories:
+            ctx += "\nข้อเท็จจริงสำคัญของผู้ใช้:\n"
+            for m in memories:
+                ctx += f"- {m[0]}\n"
+                
+        ctx += "(Instruction: จงใช้ข้อมูลโครงข่ายความจำด้านบนเพื่อตอบคำถามอย่างเข้าใจลึกซึ้งและรู้ใจผู้ใช้เสมอ)\n"
+        return ctx
+    except Exception as e:
+        print("Graph context retrieval error:", e)
+        return ""
 
 @app.post("/api/upload")
 async def upload_file(username: str = Form(...), session_id: Optional[str] = Form(None), file: UploadFile = File(...)):
@@ -1111,6 +1159,18 @@ async def upload_file(username: str = Form(...), session_id: Optional[str] = For
     except Exception as e:
         print("Upload error:", e)
         return {"status": "error", "message": "เกิดข้อผิดพลาดในการอ่านไฟล์"}
+
+@app.get("/api/ollama/status")
+async def get_ollama_status():
+    """Kira 2.1 Hybrid Local-Cloud Switcher: ตรวจสอบสถานะของ Local GPU (Ollama) ในเครื่อง"""
+    try:
+        r = requests.get(f"{OLLAMA_BASE_URL.rstrip('/')}/api/tags", timeout=1.5)
+        if r.status_code == 200:
+            models = r.json().get("models", [])
+            return {"status": "online", "models": [m.get("name") for m in models]}
+    except Exception:
+        pass
+    return {"status": "offline", "models": []}
 
 @app.post("/api/feedback")
 async def save_feedback(req: FeedbackRequest):
@@ -1727,6 +1787,12 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         user_input += rag_context
     # --------------------------------------------------------------
 
+    # ------------------ GraphRAG Memory (Kira 2.1) ----------------
+    graph_memory_ctx = _get_graph_memory_context(uname, user_input)
+    if graph_memory_ctx:
+        user_input += graph_memory_ctx
+    # --------------------------------------------------------------
+
     if req.image_base64:
         msg_content = [
             {"type": "text", "text": user_input},
@@ -1818,6 +1884,36 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                 yield "[THINKING]✅ อ่านเว็บไซต์เสร็จแล้ว[/THINKING]"
 
         yield "[THINKING]✍️ กำลังเรียบเรียงคำตอบ...[/THINKING]"
+
+        # Pillar 1: Mixture-of-Agents (MoA Debate Swarm) for Ultra and Pro Deep Reasoning
+        is_moa_active = (model_version == "2.0-ultra") or (model_version == "2.0-pro" and (flavor == "reasoning" or len(user_input) > 50))
+        if is_moa_active and not req.image_base64:
+            yield "[THINKING]👥 เปิดระบบระดมสมอง Mixture-of-Agents (MoA Debate Swarm)...[/THINKING]"
+            yield "[THINKING]🧠 [Agent 1: Proposer] กำลังร่างแนวคิดและสถาปัตยกรรมคำตอบ...[/THINKING]"
+            await asyncio.sleep(0.05)
+            
+            proposer_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
+            draft_success, draft_chunks, _ = await _try_all_keys_and_models(temp_history, proposer_model)
+            draft_text = "".join([c.content for c in draft_chunks]) if draft_success else ""
+            
+            if draft_text:
+                yield "[THINKING]🧐 [Agent 2: Verifier & Critic] กำลังตรวจสอบความถูกต้องและข้อเท็จจริง...[/THINKING]"
+                await asyncio.sleep(0.05)
+                
+                critic_model = "meta-llama/llama-3.3-70b-instruct" if OPENROUTER_API_KEYS else PREFERRED_FLASH
+                critic_prompt = [
+                    SystemMessage(content="You are Kira's MoA Critic & Fact-Checker. Evaluate this draft answer for logic, completeness, code accuracy, and natural Thai phrasing. Provide brief actionable adjustments."),
+                    HumanMessage(content=f"User Query: {user_input}\n\nDraft Solution:\n{draft_text[:2000]}")
+                ]
+                critic_s, critic_chunks, _ = await _try_all_keys_and_models(critic_prompt, critic_model)
+                critic_text = "".join([c.content for c in critic_chunks]) if critic_s else ""
+                
+                yield "[THINKING]✨ [Agent 3: Synthesizer] สังเคราะห์ผลลัพธ์เอกฉันท์ขั้นสมบูรณ์...[/THINKING]"
+                await asyncio.sleep(0.05)
+                
+                if critic_text:
+                    temp_history.append(SystemMessage(content=f"[MoA Swarm Consensus Guidelines]: Incorporate these peer review points into the final response:\n{critic_text[:800]}"))
+
         elapsed_think = round(_time.time() - start_time, 1)
         yield f"[THINKING]⏱️ ใช้เวลาคิด: {elapsed_think} วินาที[/THINKING]"
         yield "[THINKING_DONE]"

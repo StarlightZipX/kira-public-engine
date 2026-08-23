@@ -167,9 +167,29 @@ async function loadUserProfile() {
     }
 }
 
+async function checkEngineStatus() {
+    const badge = document.getElementById('engine-status-badge');
+    if (!badge) return;
+    try {
+        const res = await fetch('/api/ollama/status');
+        const data = await res.json();
+        if (data.status === 'online' && data.models && data.models.length > 0) {
+            badge.innerHTML = `<span class="pulse-dot local"></span><span class="engine-text">Local GPU (${data.models[0]})</span>`;
+            badge.title = `เชื่อมต่อกับ Local GPU สำเร็จ (Ollama: ${data.models.join(', ')})`;
+        } else {
+            badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Swarm 2.1</span>`;
+            badge.title = "ประมวลผลผ่านโครงข่าย Supercluster Cloud Multi-Brain";
+        }
+    } catch (e) {
+        badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Swarm 2.1</span>`;
+    }
+}
+
 // Check auth on load
 checkAuth();
 updateModelUI();
+checkEngineStatus();
+setInterval(checkEngineStatus, 30000);
 
 // --- Auth UI Toggles ---
 goToRegister.addEventListener('click', (e) => {
