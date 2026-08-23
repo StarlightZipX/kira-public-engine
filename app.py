@@ -301,7 +301,7 @@ def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
     
     # สำหรับ Kira 1.0 ใช้สมองเล็กเสมอ (ประหยัดโควตา)
     if model_version == "1.0":
-        return PREFERRED_FLASH, "chat", "⚡ สมองมาตรฐาน"
+        return PREFERRED_FLASH, "chat", "⚡ สมองมาตรฐาน (Kira 1.0 Fast)"
     
     # Smart Router: วิเคราะห์ keyword เพื่อเลือกสมอง
     best_match = "chat"
@@ -315,9 +315,14 @@ def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
             best_score = score
             best_match = brain_type
     
-    # ถ้าข้อความยาวกว่า 100 ตัวอักษร แสดงว่าเป็นคำถามซับซ้อน ใช้สมองใหญ่
-    if best_score == 0 and len(user_input) > 100:
-        best_match = "logic"
+    # ยกระดับสมองอัตโนมัติตามระดับเวอร์ชัน
+    if best_score == 0:
+        if model_version == "1.3":
+            best_match = "logic"  # Enterprise: Ultimate Analytical Logic
+        elif model_version == "1.2":
+            best_match = "reasoning" if len(user_input) > 30 else "logic"  # Pro: Deep Cognitive Reasoning
+        elif len(user_input) > 80:
+            best_match = "logic"
     
     profile = BRAIN_PROFILES[best_match]
     return profile["model"], best_match, profile["description"]

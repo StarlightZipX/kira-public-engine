@@ -92,41 +92,39 @@ const isBoss = (name) => {
 
 function updateModelUI() {
     const modelSelect = document.getElementById('model-select');
-    const attachBtn = document.querySelector('.attach-btn');
+    const attachBtn = document.getElementById('attach-toggle-btn') || document.querySelector('.attach-btn');
     if (!modelSelect) return;
 
+    const opt10 = modelSelect.querySelector('option[value="1.0"]');
     const opt11 = modelSelect.querySelector('option[value="1.1"]');
     const opt12 = modelSelect.querySelector('option[value="1.2"]');
+    const opt13 = modelSelect.querySelector('option[value="1.3"]');
     const subModelContainer = document.getElementById('sub-model-container');
     
-    if (opt11) {
-        opt11.textContent = "Kira 1.1 [Pioneer]";
-    }
-    if (opt12) {
-        if (isBoss(currentUser)) {
-            opt12.textContent = "Kira 1.2 [Apex]";
-        } else {
-            opt12.textContent = "Kira 1.2 [Apex] 🔒";
-        }
-    }
+    if (opt10) opt10.textContent = "Kira 1.0 (Standard Fast)";
+    if (opt11) opt11.textContent = "Kira 1.1 (Advanced Multimodal)";
+    if (opt12) opt12.textContent = "Kira 1.2 (Pro Deep Reasoning)";
+    if (opt13) opt13.textContent = "Kira 1.3 (Enterprise Cognitive)";
 
-    if (modelSelect.value === '1.1' || modelSelect.value === '1.2') {
+    const isAdvanced = modelSelect.value !== '1.0';
+
+    if (isAdvanced) {
         document.body.classList.add('glow-1-1');
         if (attachBtn) {
             attachBtn.classList.add('unlocked');
-            attachBtn.title = "แนบไฟล์ (Kira PRO)";
+            attachBtn.title = "แนบไฟล์ / รูปภาพ (Kira Multimodal)";
         }
     } else {
         document.body.classList.remove('glow-1-1');
         if (attachBtn) {
             attachBtn.classList.remove('unlocked');
-            attachBtn.title = "แนบไฟล์ (ยังไม่รองรับใน 1.0)";
+            attachBtn.title = "แนบไฟล์ (รองรับใน 1.1 ขึ้นไป)";
         }
     }
 
-    // Toggle Sub-model UI with Animation
+    // Toggle Sub-model UI with Animation for all advanced versions (1.1, 1.2, 1.3)
     if (subModelContainer) {
-        if (modelSelect.value === '1.2') {
+        if (isAdvanced) {
             subModelContainer.style.maxHeight = '50px';
             subModelContainer.style.opacity = '1';
             subModelContainer.style.padding = '8px 15px';
@@ -629,78 +627,6 @@ newChatBtn.addEventListener('click', async () => {
     userInput.focus();
 });
 
-// Event Delegation for dynamic history items
-chatHistorySidebar.addEventListener('click', (e) => {
-    if (e.target.closest('.history-item')) {
-        alert("ระบบแยกห้องแชทกำลังพัฒนาค่ะ ปัจจุบันระบบจะเป็นการแชทแบบต่อเนื่องนะคะ");
-    }
-});
-
-const attachBtn = document.querySelector('.attach-btn');
-
-// Create hidden file input if it doesn't exist
-let hiddenFileInput = document.getElementById('kira-hidden-file-input');
-if (!hiddenFileInput) {
-    hiddenFileInput = document.createElement('input');
-    hiddenFileInput.type = 'file';
-    hiddenFileInput.id = 'kira-hidden-file-input';
-    hiddenFileInput.style.display = 'none';
-    document.body.appendChild(hiddenFileInput);
-    
-    // Listen for file selection
-    hiddenFileInput.addEventListener('change', async (e) => {
-        if (e.target.files.length > 0) {
-            const file = e.target.files[0];
-            const fileName = file.name;
-            const username = localStorage.getItem('username');
-            
-            if (!username) {
-                alert("กรุณาล็อกอินก่อนอัปโหลดไฟล์ค่ะ");
-                return;
-            }
-            
-            // Show uploading message in chat
-            addMessageToChat("System", `กำลังอัปโหลดไฟล์: ${fileName}... ⏳`);
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('username', username);
-            
-            try {
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    addMessageToChat("System", `✅ อัปโหลดไฟล์ ${fileName} สำเร็จแล้ว! บอสสามารถถามคำถามเกี่ยวกับไฟล์นี้ได้เลยค่ะ`);
-                } else {
-                    addMessageToChat("System", `❌ อัปโหลดไฟล์ล้มเหลว: ${data.message}`);
-                }
-            } catch (error) {
-                console.error("Upload error:", error);
-                addMessageToChat("System", `❌ เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์`);
-            }
-            
-            e.target.value = ''; // reset
-        }
-    });
-}
-
-if (attachBtn) {
-    attachBtn.addEventListener('click', () => {
-        const modelSelect = document.getElementById('model-select');
-        if (modelSelect && modelSelect.value === '1.1') {
-            // Trigger actual file picker for Boss!
-            hiddenFileInput.click();
-        } else {
-            alert("ฟีเจอร์นี้สงวนไว้สำหรับ Kira 1.1 (Next-Gen) เท่านั้นค่ะ เนื่องจากสมอง 1.0 ไม่รองรับการมองเห็นภาพ!");
-        }
-    });
-}
-
 const btnTheme = document.getElementById('btn-theme');
 if (btnTheme) {
     const isLightMode = localStorage.getItem('kira_theme') === 'light';
@@ -723,24 +649,13 @@ if (btnTheme) {
 
 const modelSelect = document.getElementById('model-select');
 if (modelSelect) {
-    // Restore previous selection if it's Boss
     const savedModel = localStorage.getItem('kira_model');
-    if (savedModel && (savedModel === '1.0' || isBoss(currentUser))) {
+    if (savedModel) {
         modelSelect.value = savedModel;
     }
 
     modelSelect.addEventListener('change', (e) => {
-        if (e.target.value === '1.2') {
-            if (!isBoss(currentUser)) {
-                alert("Kira 1.2 กำลังอยู่ในช่วงการฝึกฝนแบบปิด (Private Beta) และจะเปิดให้ทุกคนร่วมทดสอบเร็วๆ นี้ค่ะ! ✨");
-                e.target.value = '1.1'; // Revert back to 1.1 instead of 1.0 since 1.1 is public now
-                localStorage.setItem('kira_model', '1.1');
-            } else {
-                localStorage.setItem('kira_model', e.target.value);
-            }
-        } else {
-            localStorage.setItem('kira_model', e.target.value);
-        }
+        localStorage.setItem('kira_model', e.target.value);
         updateModelUI();
     });
 }
@@ -938,8 +853,8 @@ const docInput = document.getElementById('doc-input');
 if (attachToggleBtn && attachmentMenu) {
     attachToggleBtn.addEventListener('click', () => {
         const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "1.0";
-        if (modelVersion !== "1.1") {
-            alert("ฟีเจอร์แนบไฟล์สงวนสิทธิ์เฉพาะระดับ Boss (Kira 1.1 PRO) เท่านั้นครับ");
+        if (modelVersion === "1.0") {
+            alert("ฟีเจอร์แนบไฟล์และวิเคราะห์รูปภาพรองรับใน Kira 1.1 ขึ้นไปค่ะ กรุณาเลือกเวอร์ชันด้านบนนะคะ ✨");
             return;
         }
         attachmentMenu.style.display = attachmentMenu.style.display === 'none' ? 'flex' : 'none';
