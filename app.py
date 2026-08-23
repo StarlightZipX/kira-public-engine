@@ -953,7 +953,7 @@ OUTPUT RULES:
             {"role": "user", "content": f"คำถามของผู้ใช้: {user_question}\n\nคำตอบของ AI:\n{kira_response[:3000]}"}
         ]
         
-        reviewer = _create_llm("llama3-8b-8192", API_KEYS[0])
+        reviewer = _create_llm(PREFERRED_FLASH, API_KEYS[0])
         result = reviewer.invoke(review_prompt).content.strip()
         
         if "PASS" in result:
@@ -999,7 +999,7 @@ Return ONLY the command line (ADD, UPDATE, DELETE, or NO_FACT). Nothing else."""
             {"role": "user", "content": user_input}
         ]
         
-        classifier = _create_llm("llama3-8b-8192", API_KEYS[0])
+        classifier = _create_llm(PREFERRED_FLASH, API_KEYS[0])
         result = classifier.invoke(prompt).content.strip()
         
         if "NO_FACT" in result or not result:
@@ -1169,7 +1169,7 @@ If NO search is needed (e.g. creative writing, pure coding assistance, standard 
 NO_SEARCH"""},
             {"role": "user", "content": query}
         ]
-        classifier = _create_llm("llama3-8b-8192", API_KEYS[0])
+        classifier = _create_llm(PREFERRED_FLASH, API_KEYS[0])
         result = classifier.invoke(search_prompt).content.strip()
         
         if "NO_SEARCH" not in result and "SEARCH_QUERY:" in result:
@@ -1262,11 +1262,11 @@ Output: {"prompt": "A cozy small wooden cottage covered in fresh white snow nest
         
         # ใช้โมเดลใหญ่ที่ฉลาดที่สุดเพื่อให้แปลได้แม่นยำสูงสุด
         try:
-            classifier = _create_llm("llama3-70b-8192", API_KEYS[0])
+            classifier = _create_llm(PREFERRED_PRO, API_KEYS[0])
             result = classifier.invoke(translate_instruction).content.strip()
         except Exception:
-            # Fallback ถ้า 70B ไม่ว่าง ใช้ 8B แทน
-            classifier = _create_llm("llama3-8b-8192", API_KEYS[0])
+            # Fallback ถ้า PRO ไม่ว่าง ใช้ FLASH แทน
+            classifier = _create_llm(PREFERRED_FLASH, API_KEYS[0])
             result = classifier.invoke(translate_instruction).content.strip()
         
         # แกะ JSON จากผลลัพธ์
