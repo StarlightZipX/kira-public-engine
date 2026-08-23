@@ -776,6 +776,7 @@ class DictionaryRequest(BaseModel):
 
 class TTSRequest(BaseModel):
     text: str
+    voice: Optional[str] = "th-TH-PremwadeeNeural"
 
 # --- Endpoints ---
 @app.get("/", response_class=HTMLResponse)
@@ -1583,37 +1584,98 @@ def _scrape_url(url: str) -> str:
 
 @app.post("/api/tts")
 async def generate_tts(req: TTSRequest):
-    elevenlabs_api_key = execute_query("SELECT value FROM system_settings WHERE key_name='elevenlabs_api_key'", fetch='one')
-    elevenlabs_voice_id = execute_query("SELECT value FROM system_settings WHERE key_name='elevenlabs_voice_id'", fetch='one')
-    
-    if not elevenlabs_api_key or not elevenlabs_voice_id:
-        return JSONResponse(status_code=400, content={"status": "error", "message": "ElevenLabs API Key or Voice ID not set."})
-        
-    api_key = elevenlabs_api_key[0]
-    voice_id = elevenlabs_voice_id[0]
-    
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-    headers = {
-        "Accept": "audio/mpeg",
-        "Content-Type": "application/json",
-        "xi-api-key": api_key
-    }
-    data = {
-        "text": req.text,
-        "model_id": "eleven_multilingual_v2",
-        "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.75
-        }
-    }
+    """Kira 2.1 Free Natural Neural TTS: แปลงข้อความเป็นเสียงพากย์คุณภาพสูงแบบ Real-time (ฟรี 100%)"""
     try:
-        response = requests.post(url, json=data, headers=headers)
-        if response.status_code == 200:
-            return StreamingResponse(io.BytesIO(response.content), media_type="audio/mpeg")
-        else:
-            return JSONResponse(status_code=400, content={"status": "error", "message": response.text})
+        import edge_tts
+        import io
+        import re
+        from fastapi.responses import Response
+        
+        # Clean text from thinking tags, markdown links, code blocks, images
+        clean_text = re.sub(r'\[THINKING\].*?\[/THINKING\]', '', req.text, flags=re.DOTALL)
+        clean_text = re.sub(r'\[THINKING_DONE\]', '', clean_text)
+        clean_text = re.sub(r'```.*?```', 'มีบล็อกโค้ดแสดงบนหน้าจอค่ะ', clean_text, flags=re.DOTALL)
+        clean_text = re.sub(r'!\[.*?\]\(.*?\)', '', clean_text)
+        clean_text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', clean_text)
+        clean_text = re.sub(r'[*#_`~>]', '', clean_text).strip()
+        
+        if not clean_text:
+            clean_text = "สวัสดีค่ะ มีอะไรให้คิระช่วยไหมคะ"
+            
+        if len(clean_text) > 1500:
+            clean_text = clean_text[:1500] + " ... และข้อมูลส่วนที่เหลือแสดงบนหน้าจอแล้วค่ะ"
+            
+        voice = req.voice if req.voice in ["th-TH-PremwadeeNeural", "th-TH-NiwatNeural", "en-US-AriaNeural"] else "th-TH-PremwadeeNeural"
+        
+        communicate = edge_tts.Communicate(clean_text, voice)
+        audio_buffer = io.BytesIO()
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_buffer.write(chunk["data"])
+                
+        audio_buffer.seek(0)
+        return Response(content=audio_buffer.getvalue(), media_type="audio/mpeg")
     except Exception as e:
+        print("TTS Generation Error:", e)
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+@app.get("/api/user/graph/{username}")
+async def get_user_knowledge_graph(username: str):
+    """Kira 2.1 GraphRAG Mind-Map: ดึงโหนดและเส้นเชื่อมโยงความจำสำหรับทำ Interactive 3D/2D Graph"""
+    try:
+        triples = execute_query("SELECT id, subject, predicate, object, category, fact, timestamp FROM user_knowledge_graph WHERE username=? ORDER BY id DESC LIMIT 50", (username,), fetch='all')
+        memories = execute_query("SELECT id, fact, timestamp FROM user_memories WHERE username=? ORDER BY id DESC LIMIT 20", (username,), fetch='all')
+        
+        nodes = []
+        links = []
+        node_set = set()
+        
+        # Center Node: User
+        user_node_id = f"user_{username}"
+        nodes.append({"id": user_node_id, "label": username, "group": "user", "size": 25, "color": "#38bdf8"})
+        node_set.add(user_node_id)
+        
+        # Core Kira Node
+        kira_node_id = "agent_kira"
+        nodes.append({"id": kira_node_id, "label": "Kira AI", "group": "ai", "size": 22, "color": "#ec4899"})
+        node_set.add(kira_node_id)
+        links.append({"source": user_node_id, "target": kira_node_id, "label": "ร่วมพัฒนาและพูดคุย"})
+        
+        # Triples
+        if triples:
+            for tid, subj, pred, obj, cat, fact, ts in triples:
+                s_id = f"node_{subj}"
+                o_id = f"node_{obj}"
+                
+                if s_id not in node_set:
+                    nodes.append({"id": s_id, "label": subj, "group": cat or "concept", "size": 16, "color": "#a855f7"})
+                    node_set.add(s_id)
+                if o_id not in node_set:
+                    nodes.append({"id": o_id, "label": obj, "group": cat or "entity", "size": 16, "color": "#10b981"})
+                    node_set.add(o_id)
+                    
+                links.append({"source": s_id, "target": o_id, "label": pred, "fact": fact, "id": tid})
+                
+        # Standalone memories linked to user
+        if memories:
+            for mid, fact, ts in memories:
+                m_id = f"mem_{mid}"
+                if m_id not in node_set:
+                    label = fact[:25] + "..." if len(fact) > 25 else fact
+                    nodes.append({"id": m_id, "label": label, "group": "memory", "full_fact": fact, "size": 12, "color": "#f59e0b"})
+                    node_set.add(m_id)
+                    links.append({"source": user_node_id, "target": m_id, "label": "จดจำข้อเท็จจริง"})
+                    
+        return {
+            "status": "success",
+            "username": username,
+            "total_nodes": len(nodes),
+            "total_links": len(links),
+            "graph": {"nodes": nodes, "links": links}
+        }
+    except Exception as e:
+        print("Graph Fetch Error:", e)
+        return {"status": "error", "message": str(e), "graph": {"nodes": [], "links": []}}
 
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest, request: Request):

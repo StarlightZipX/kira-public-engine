@@ -123,6 +123,8 @@
                         <span class="pulse-dot cloud"></span>
                         <span class="engine-text">Cloud Swarm 2.1</span>
                     </div>
+                    <button title="ส่องโครงข่ายความจำ (Knowledge Graph Mind-Map)" id="btn-graph" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-diagram-project"></i></button>
+                    <button title="เปิด/ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak)" id="btn-autospeak" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-volume-xmark"></i></button>
                     <button title="บันทึกออก (Export PDF)" id="btn-export" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-file-export"></i></button>
                     <select id="model-select" class="model-select">
                         <optgroup label="✨ โมเดลปัจจุบัน (Kira 2.0)">
@@ -211,10 +213,49 @@
         </main>
     </div>
 
+    <!-- Live Interactive Code Canvas & Artifacts Drawer -->
+    <div id="artifacts-drawer" class="artifacts-drawer">
+        <div class="artifacts-header">
+            <div class="artifacts-title">
+                <i class="fa-solid fa-laptop-code"></i>
+                <span id="artifacts-name">Live Code Canvas</span>
+            </div>
+            <div class="artifacts-actions">
+                <button id="btn-viewport-desktop" class="viewport-btn active" title="มุมมองคอมพิวเตอร์ (Desktop)"><i class="fa-solid fa-desktop"></i></button>
+                <button id="btn-viewport-mobile" class="viewport-btn" title="มุมมองมือถือ (Mobile)"><i class="fa-solid fa-mobile-screen"></i></button>
+                <button id="btn-download-artifact" class="action-btn" title="ดาวน์โหลดไฟล์ HTML"><i class="fa-solid fa-download"></i></button>
+                <button id="btn-close-artifact" class="action-btn close-btn" title="ปิดหน้าต่าง Canvas"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+        <div class="artifacts-body">
+            <iframe id="artifacts-iframe" sandbox="allow-scripts allow-modals allow-forms allow-popups" title="Live Preview"></iframe>
+        </div>
+    </div>
+
+    <!-- Knowledge Graph Mind-Map Modal -->
+    <div id="graph-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content graph-modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-diagram-project"></i> โครงข่ายความจำอัจฉริยะ (Kira 2.1 GraphRAG)</h3>
+                <button id="close-graph-modal" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body graph-modal-body">
+                <p class="graph-hint">💡 คลิกหรือลากโหนดเพื่อสำรวจความจำและความสัมพันธ์ที่คิระจดจำเกี่ยวกับคุณ</p>
+                <div id="graph-canvas-container" class="graph-canvas-container">
+                    <canvas id="graph-canvas"></canvas>
+                </div>
+                <div id="graph-node-details" class="graph-node-details" style="display: none;">
+                    <div class="details-title"><i class="fa-solid fa-circle-info"></i> ข้อมูลโหนด: <span id="detail-node-name"></span></div>
+                    <div id="detail-node-desc" class="details-desc"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=10"></script>
+    <script src="/static/script.js?v=11"></script>
 </body>
 </html>

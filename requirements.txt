@@ -14,3 +14,4 @@ duckduckgo-search
 requests
 psycopg2-binary
 python-dotenv
+edge-tts

@@ -568,16 +568,20 @@ async function sendMessage() {
             chatBox.scrollTop = chatBox.scrollHeight;
         }
         
-        // Apply Advanced Markdown features (MathJax, Copy code)
-        if (typeof applyAdvancedMarkdown === 'function') {
-            applyAdvancedMarkdown(contentDiv);
-        }
+        // Apply Advanced Code Actions (Copy & Live Preview)
+        applyCodeActions(contentDiv);
         
-        // Append Feedback UI
+        // Append Feedback & Voice UI
         const feedbackUI = document.createElement('div');
         feedbackUI.className = 'feedback-ui';
-        feedbackUI.style.cssText = 'margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; gap: 8px; justify-content: flex-start;';
+        feedbackUI.style.cssText = 'margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; gap: 8px; justify-content: flex-start; align-items: center; flex-wrap: wrap;';
         
+        const speakerBtn = document.createElement('button');
+        speakerBtn.className = 'btn-speaker';
+        speakerBtn.title = 'ฟังเสียงคิระพากย์คำตอบนี้ (Free Neural Voice)';
+        speakerBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
+        speakerBtn.onclick = () => playKiraVoice(finalMarkdown || fullText, speakerBtn);
+
         const likeBtn = document.createElement('button');
         likeBtn.innerHTML = '<i class="fa-solid fa-thumbs-up"></i>';
         likeBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
@@ -605,12 +609,16 @@ async function sendMessage() {
         reviewBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
         reviewBtn.onclick = () => openReviewModal(fullText);
 
+        feedbackUI.appendChild(speakerBtn);
         feedbackUI.appendChild(likeBtn);
         feedbackUI.appendChild(dislikeBtn);
         feedbackUI.appendChild(reviewBtn);
         contentDiv.appendChild(feedbackUI);
         
-        // Play Voice Cloning (TTS) if disabled
+        // Auto-Speak if enabled
+        if (isAutoSpeakEnabled) {
+            playKiraVoice(finalMarkdown || fullText, speakerBtn);
+        }
 
         chatBox.scrollTop = chatBox.scrollHeight;
         loadUserProfile(); // Refresh points after message
@@ -1013,4 +1021,482 @@ if (btnExport) {
             window.print();
         }
     });
+}
+
+// =========================================================================
+// 🎙️ 1. Free Natural Neural Voice Engine (Edge-TTS Integration)
+// =========================================================================
+let currentAudio = null;
+let currentSpeakingBtn = null;
+let isAutoSpeakEnabled = localStorage.getItem('kira_auto_speak') === 'true';
+
+const btnAutoSpeak = document.getElementById('btn-autospeak');
+if (btnAutoSpeak) {
+    if (isAutoSpeakEnabled) {
+        btnAutoSpeak.classList.add('active');
+        btnAutoSpeak.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+        btnAutoSpeak.title = 'ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak Active)';
+    } else {
+        btnAutoSpeak.classList.remove('active');
+        btnAutoSpeak.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+        btnAutoSpeak.title = 'เปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak Off)';
+    }
+
+    btnAutoSpeak.addEventListener('click', () => {
+        isAutoSpeakEnabled = !isAutoSpeakEnabled;
+        localStorage.setItem('kira_auto_speak', isAutoSpeakEnabled);
+        if (isAutoSpeakEnabled) {
+            btnAutoSpeak.classList.add('active');
+            btnAutoSpeak.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            btnAutoSpeak.title = 'ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak Active)';
+        } else {
+            btnAutoSpeak.classList.remove('active');
+            btnAutoSpeak.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+            btnAutoSpeak.title = 'เปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak Off)';
+            if (currentAudio) {
+                currentAudio.pause();
+                if (currentSpeakingBtn) {
+                    currentSpeakingBtn.classList.remove('speaking');
+                    currentSpeakingBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
+                }
+            }
+        }
+    });
+}
+
+async function playKiraVoice(text, btn) {
+    if (!text) return;
+    
+    // Toggle Pause if same button is playing
+    if (currentAudio && !currentAudio.paused && currentSpeakingBtn === btn) {
+        currentAudio.pause();
+        btn.classList.remove('speaking');
+        btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
+        return;
+    }
+
+    // Stop any existing audio
+    if (currentAudio) {
+        currentAudio.pause();
+        if (currentSpeakingBtn) {
+            currentSpeakingBtn.classList.remove('speaking');
+            currentSpeakingBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
+        }
+    }
+
+    if (btn) {
+        btn.classList.add('speaking');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดเสียง...';
+    }
+
+    try {
+        const res = await fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text, voice: 'th-TH-PremwadeeNeural' })
+        });
+
+        if (!res.ok) {
+            throw new Error(`TTS Error: ${res.statusText}`);
+        }
+
+        const blob = await res.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        currentAudio = new Audio(audioUrl);
+        currentSpeakingBtn = btn;
+
+        currentAudio.onplay = () => {
+            if (btn) {
+                btn.classList.add('speaking');
+                btn.innerHTML = '<i class="fa-solid fa-waveform-lines"></i> กำลังพูด...';
+            }
+        };
+
+        currentAudio.onended = () => {
+            if (btn) {
+                btn.classList.remove('speaking');
+                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
+            }
+            currentAudio = null;
+            currentSpeakingBtn = null;
+        };
+
+        currentAudio.onerror = () => {
+            if (btn) {
+                btn.classList.remove('speaking');
+                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
+            }
+        };
+
+        await currentAudio.play();
+    } catch (e) {
+        console.error("Audio playback error:", e);
+        if (btn) {
+            btn.classList.remove('speaking');
+            btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> เล่นเสียงไม่สำเร็จ';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
+            }, 3000);
+        }
+    }
+}
+
+// =========================================================================
+// 🎨 2. Live Interactive Code Canvas & Artifacts
+// =========================================================================
+const artifactsDrawer = document.getElementById('artifacts-drawer');
+const artifactsIframe = document.getElementById('artifacts-iframe');
+const artifactsName = document.getElementById('artifacts-name');
+const btnCloseArtifact = document.getElementById('btn-close-artifact');
+const btnViewportDesktop = document.getElementById('btn-viewport-desktop');
+const btnViewportMobile = document.getElementById('btn-viewport-mobile');
+const btnDownloadArtifact = document.getElementById('btn-download-artifact');
+
+let currentArtifactCode = '';
+
+if (btnCloseArtifact) {
+    btnCloseArtifact.addEventListener('click', () => {
+        artifactsDrawer.classList.remove('open');
+    });
+}
+
+if (btnViewportDesktop && btnViewportMobile) {
+    btnViewportDesktop.addEventListener('click', () => {
+        btnViewportDesktop.classList.add('active');
+        btnViewportMobile.classList.remove('active');
+        artifactsIframe.classList.remove('mobile-view');
+    });
+
+    btnViewportMobile.addEventListener('click', () => {
+        btnViewportMobile.classList.add('active');
+        btnViewportDesktop.classList.remove('active');
+        artifactsIframe.classList.add('mobile-view');
+    });
+}
+
+if (btnDownloadArtifact) {
+    btnDownloadArtifact.addEventListener('click', () => {
+        if (!currentArtifactCode) return;
+        const blob = new Blob([currentArtifactCode], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'kira_live_app.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+}
+
+function openArtifacts(code, title = 'Live Preview') {
+    if (!artifactsDrawer || !artifactsIframe) return;
+    currentArtifactCode = code;
+    if (artifactsName) artifactsName.textContent = title;
+    
+    // Inject full HTML wrapper if code is just a fragment
+    let fullHtml = code;
+    if (!code.toLowerCase().includes('<!doctype') && !code.toLowerCase().includes('<html')) {
+        fullHtml = `
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kira Live Canvas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4">
+    ${code}
+</body>
+</html>`;
+    }
+    
+    artifactsIframe.srcdoc = fullHtml;
+    artifactsDrawer.classList.add('open');
+}
+
+function applyCodeActions(container) {
+    if (!container) return;
+    
+    const codeBlocks = container.querySelectorAll('pre code');
+    codeBlocks.forEach(block => {
+        const pre = block.parentElement;
+        if (pre.parentElement.querySelector('.code-action-bar')) return; // Already has bar
+        
+        const codeText = block.innerText;
+        const className = block.className || '';
+        const isHtmlOrWeb = className.includes('html') || className.includes('svg') || className.includes('xml') || codeText.includes('<div') || codeText.includes('<html') || codeText.includes('<svg');
+        
+        const actionBar = document.createElement('div');
+        actionBar.className = 'code-action-bar';
+        
+        // Copy Button
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'action-btn';
+        copyBtn.style.fontSize = '0.75rem';
+        copyBtn.style.padding = '2px 8px';
+        copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(codeText);
+            copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> คัดลอกแล้ว';
+            setTimeout(() => {
+                copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
+            }, 2000);
+        };
+        actionBar.appendChild(copyBtn);
+        
+        // Live Preview Button
+        if (isHtmlOrWeb) {
+            const previewBtn = document.createElement('button');
+            previewBtn.className = 'btn-run-code';
+            previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> พรีวิวสด (Live Canvas)';
+            previewBtn.onclick = () => openArtifacts(codeText, 'Live Web Artifact');
+            actionBar.appendChild(previewBtn);
+        }
+        
+        pre.parentElement.insertBefore(actionBar, pre);
+    });
+}
+
+// =========================================================================
+// 🕸️ 3. Interactive Knowledge Graph Mind-Map Simulation (Canvas 2D Force)
+// =========================================================================
+const graphModal = document.getElementById('graph-modal');
+const btnGraph = document.getElementById('btn-graph');
+const closeGraphModal = document.getElementById('close-graph-modal');
+const graphCanvas = document.getElementById('graph-canvas');
+const graphNodeDetails = document.getElementById('graph-node-details');
+const detailNodeName = document.getElementById('detail-node-name');
+const detailNodeDesc = document.getElementById('detail-node-desc');
+
+let graphAnimationId = null;
+let graphNodes = [];
+let graphLinks = [];
+let selectedNode = null;
+let draggedNode = null;
+
+if (btnGraph) {
+    btnGraph.addEventListener('click', () => openKnowledgeGraph());
+}
+
+if (closeGraphModal) {
+    closeGraphModal.addEventListener('click', () => {
+        graphModal.style.display = 'none';
+        if (graphAnimationId) cancelAnimationFrame(graphAnimationId);
+    });
+}
+
+async function openKnowledgeGraph() {
+    if (!graphModal || !graphCanvas) return;
+    graphModal.style.display = 'flex';
+    
+    // Resize Canvas
+    const container = document.getElementById('graph-canvas-container');
+    graphCanvas.width = container.clientWidth;
+    graphCanvas.height = container.clientHeight;
+    
+    try {
+        const res = await fetch(`/api/user/graph/${currentUser}`);
+        const data = await res.json();
+        
+        if (data.status === 'success' && data.graph) {
+            initGraphSimulation(data.graph.nodes, data.graph.links);
+        }
+    } catch (e) {
+        console.error("Knowledge Graph fetch error:", e);
+    }
+}
+
+function initGraphSimulation(nodes, links) {
+    const width = graphCanvas.width;
+    const height = graphCanvas.height;
+    
+    // Initialize node coordinates around center
+    graphNodes = nodes.map((n, i) => ({
+        ...n,
+        x: width / 2 + (Math.random() - 0.5) * (width * 0.6),
+        y: height / 2 + (Math.random() - 0.5) * (height * 0.6),
+        vx: 0,
+        vy: 0,
+        radius: n.size || 15
+    }));
+    
+    graphLinks = links.map(l => {
+        const sourceNode = graphNodes.find(n => n.id === l.source);
+        const targetNode = graphNodes.find(n => n.id === l.target);
+        return { ...l, sourceNode, targetNode };
+    }).filter(l => l.sourceNode && l.targetNode);
+
+    // Mouse Dragging & Hover Handling
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+
+    graphCanvas.onmousedown = (e) => {
+        const rect = graphCanvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        
+        draggedNode = graphNodes.find(n => Math.hypot(n.x - mx, n.y - my) <= n.radius + 6);
+        if (draggedNode) {
+            isDragging = true;
+            dragOffset.x = mx - draggedNode.x;
+            dragOffset.y = my - draggedNode.y;
+            showNodeDetails(draggedNode);
+        } else {
+            graphNodeDetails.style.display = 'none';
+        }
+    };
+
+    window.onmousemove = (e) => {
+        if (!isDragging || !draggedNode) return;
+        const rect = graphCanvas.getBoundingClientRect();
+        draggedNode.x = e.clientX - rect.left - dragOffset.x;
+        draggedNode.y = e.clientY - rect.top - dragOffset.y;
+        draggedNode.vx = 0;
+        draggedNode.vy = 0;
+    };
+
+    window.onmouseup = () => {
+        isDragging = false;
+        draggedNode = null;
+    };
+
+    startPhysicsLoop();
+}
+
+function showNodeDetails(node) {
+    if (!graphNodeDetails || !detailNodeName || !detailNodeDesc) return;
+    detailNodeName.textContent = node.label;
+    
+    let info = '';
+    if (node.group === 'user') {
+        info = `👤 โหนดศูนย์กลางผู้ใช้งาน: <strong>${node.label}</strong> (คุณ)`;
+    } else if (node.group === 'ai') {
+        info = `🤖 โหนดปัญญาประดิษฐ์: <strong>Kira AI System 2.1</strong> (ผู้ช่วยอัจฉริยะ)`;
+    } else if (node.full_fact) {
+        info = `📝 ข้อเท็จจริงที่จดจำ: "${node.full_fact}"`;
+    } else {
+        info = `🏷️ โครงข่ายความสัมพันธ์: หมวดหมู่ [${node.group || 'ความจำ'}]`;
+    }
+    
+    detailNodeDesc.innerHTML = info;
+    graphNodeDetails.style.display = 'block';
+}
+
+function startPhysicsLoop() {
+    const ctx = graphCanvas.getContext('2d');
+    const width = graphCanvas.width;
+    const height = graphCanvas.height;
+    
+    function tick() {
+        // Physics Simulation: Spring Tension & Repulsion
+        const k = 0.04;
+        const repulsion = 800;
+        
+        // Repulsion between nodes
+        for (let i = 0; i < graphNodes.length; i++) {
+            for (let j = i + 1; j < graphNodes.length; j++) {
+                const n1 = graphNodes[i];
+                const n2 = graphNodes[j];
+                const dx = n2.x - n1.x;
+                const dy = n2.y - n1.y;
+                const dist = Math.hypot(dx, dy) || 1;
+                if (dist < 300) {
+                    const force = repulsion / (dist * dist);
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+                    n1.vx -= fx;
+                    n1.vy -= fy;
+                    n2.vx += fx;
+                    n2.vy += fy;
+                }
+            }
+        }
+
+        // Link Spring Attraction
+        for (const link of graphLinks) {
+            const dx = link.targetNode.x - link.sourceNode.x;
+            const dy = link.targetNode.y - link.sourceNode.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            const force = (dist - 100) * k;
+            const fx = (dx / dist) * force;
+            const fy = (dy / dist) * force;
+            link.sourceNode.vx += fx;
+            link.sourceNode.vy += fy;
+            link.targetNode.vx -= fx;
+            link.targetNode.vy -= fy;
+        }
+
+        // Center Gravity & Damping
+        for (const n of graphNodes) {
+            if (n === draggedNode) continue;
+            n.vx += (width / 2 - n.x) * 0.005;
+            n.vy += (height / 2 - n.y) * 0.005;
+            n.vx *= 0.88;
+            n.vy *= 0.88;
+            n.x += n.vx;
+            n.y += n.vy;
+            
+            // Constrain within bounds
+            n.x = Math.max(n.radius + 10, Math.min(width - n.radius - 10, n.x));
+            n.y = Math.max(n.radius + 10, Math.min(height - n.radius - 10, n.y));
+        }
+
+        // Render Canvas
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw Links
+        for (const link of graphLinks) {
+            ctx.beginPath();
+            ctx.moveTo(link.sourceNode.x, link.sourceNode.y);
+            ctx.lineTo(link.targetNode.x, link.targetNode.y);
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Link Label
+            if (link.label) {
+                const midX = (link.sourceNode.x + link.targetNode.x) / 2;
+                const midY = (link.sourceNode.y + link.targetNode.y) / 2;
+                ctx.fillStyle = '#64748b';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(link.label, midX, midY - 3);
+            }
+        }
+
+        // Draw Nodes
+        for (const n of graphNodes) {
+            // Glow
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.radius + 4, 0, Math.PI * 2);
+            ctx.fillStyle = n.color ? `${n.color}33` : 'rgba(59, 130, 246, 0.2)';
+            ctx.fill();
+
+            // Core Node Circle
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+            ctx.fillStyle = n.color || '#3b82f6';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Node Text Label
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(n.label, n.x, n.y + n.radius + 14);
+        }
+
+        graphAnimationId = requestAnimationFrame(tick);
+    }
+
+    if (graphAnimationId) cancelAnimationFrame(graphAnimationId);
+    tick();
 }
