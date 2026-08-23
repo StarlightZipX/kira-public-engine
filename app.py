@@ -364,13 +364,20 @@ class UnifiedLLM:
             self.provider = "openrouter"
         elif any(k in model_name.lower() for k in ["ollama", "local/"]):
             self.provider = "ollama"
+        elif OPENROUTER_API_KEYS and (not API_KEYS or API_KEYS[0] == "YOUR_GROQ_API_KEY_HERE"):
+            self.provider = "openrouter"
+            if "llama" in model_name.lower():
+                self.model = "meta-llama/llama-3.3-70b-instruct"
         else:
             self.provider = "groq"
 
         # Determine endpoint and auth
         if self.provider == "openrouter":
             self.base_url = "https://openrouter.ai/api/v1/chat/completions"
-            self.api_key = api_key or (OPENROUTER_API_KEYS[0] if OPENROUTER_API_KEYS else "")
+            if not api_key or api_key.startswith("gsk_") or api_key == "YOUR_GROQ_API_KEY_HERE":
+                self.api_key = OPENROUTER_API_KEYS[0] if OPENROUTER_API_KEYS else ""
+            else:
+                self.api_key = api_key
         elif self.provider == "ollama":
             self.base_url = f"{OLLAMA_BASE_URL.rstrip('/')}/chat/completions"
             self.api_key = "ollama"
@@ -1297,9 +1304,10 @@ Output: {"prompt": "A cozy small wooden cottage covered in fresh white snow nest
     except Exception as e:
         print("Image prompt translation error:", e)
     
-    # Fallback สุดท้าย
+    # Fallback สุดท้าย: รวมคำขอของผู้ใช้พร้อม art modifiers
+    clean_th = thai_prompt.replace('"', '').replace("'", "")
     return {
-        "prompt": "a beautiful artistic masterpiece illustration, digital art, vibrant colors, highly detailed, best quality, sharp focus",
+        "prompt": f"{clean_th}, masterpiece, highly detailed, vivid colors, 8k resolution, sharp focus, digital art",
         "negative": "blurry, low quality, watermark, text, ugly, deformed"
     }
 
