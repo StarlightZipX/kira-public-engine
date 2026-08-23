@@ -211,6 +211,9 @@ body.light-mode .chat-header {
 
 .header-actions {
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .header-actions button {
@@ -224,6 +227,50 @@ body.light-mode .chat-header {
 
 .header-actions button:hover {
     color: var(--text-primary);
+}
+
+.model-select {
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.model-select:hover, .model-select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+}
+
+.model-select optgroup {
+    background-color: #0f172a;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.8rem;
+    padding: 6px 4px;
+}
+
+.model-select option {
+    background-color: #1e293b;
+    color: #f8fafc;
+    font-weight: 500;
+    padding: 6px 10px;
+}
+
+body.light-mode .model-select optgroup {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+body.light-mode .model-select option {
+    background-color: #ffffff;
+    color: #1e293b;
 }
 
 .messages-container {

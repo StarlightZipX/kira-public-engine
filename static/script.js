@@ -95,18 +95,11 @@ function updateModelUI() {
     const attachBtn = document.getElementById('attach-toggle-btn') || document.querySelector('.attach-btn');
     if (!modelSelect) return;
 
-    const opt10 = modelSelect.querySelector('option[value="1.0"]');
-    const opt11 = modelSelect.querySelector('option[value="1.1"]');
-    const opt12 = modelSelect.querySelector('option[value="1.2"]');
-    const opt13 = modelSelect.querySelector('option[value="1.3"]');
+    const val = modelSelect.value;
     const subModelContainer = document.getElementById('sub-model-container');
-    
-    if (opt10) opt10.textContent = "Kira 1.0 (Standard Fast)";
-    if (opt11) opt11.textContent = "Kira 1.1 (Advanced Multimodal)";
-    if (opt12) opt12.textContent = "Kira 1.2 (Pro Deep Reasoning)";
-    if (opt13) opt13.textContent = "Kira 1.3 (Enterprise Cognitive)";
 
-    const isAdvanced = modelSelect.value !== '1.0';
+    // Advanced models (all 2.0 series and legacy 1.1, 1.2, 1.3)
+    const isAdvanced = val !== '1.0';
 
     if (isAdvanced) {
         document.body.classList.add('glow-1-1');
@@ -118,11 +111,11 @@ function updateModelUI() {
         document.body.classList.remove('glow-1-1');
         if (attachBtn) {
             attachBtn.classList.remove('unlocked');
-            attachBtn.title = "แนบไฟล์ (รองรับใน 1.1 ขึ้นไป)";
+            attachBtn.title = "แนบไฟล์ (รองรับใน 1.1 หรือ 2.0 ขึ้นไป)";
         }
     }
 
-    // Toggle Sub-model UI with Animation for all advanced versions (1.1, 1.2, 1.3)
+    // Toggle Sub-model UI with Animation for all modern/advanced versions
     if (subModelContainer) {
         if (isAdvanced) {
             subModelContainer.style.maxHeight = '50px';
@@ -482,7 +475,7 @@ async function sendMessage() {
 
 
     try {
-        const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "1.0";
+        const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.0-flash";
         const flavor = document.querySelector('input[name="sub-model-flavor"]:checked') ? document.querySelector('input[name="sub-model-flavor"]:checked').value : "fast";
         const persona = document.getElementById('persona-select') ? document.getElementById('persona-select').value : "default";
 
@@ -509,7 +502,7 @@ async function sendMessage() {
             if (done) break;
             
             fullText += decoder.decode(value, { stream: true });
-            let displayTxt = fullText.replace(/^(✨ \*\*\[Kira 1\.1 PRO\]\*\*\n\n|🤖 \*\*\[Kira 1\.0\]\*\*\n\n|✨ \*\*\[Kira 1\.2 PRO\]\*\*\n\n)/i, "");
+            let displayTxt = fullText.replace(/^(✨ \*\*\[Kira.*?\]\*\*\n\n|🤖 \*\*\[Kira.*?\]\*\*\n\n|👁️ \*\*\[Kira.*?\]\*\*\n\n|🧠 \*\*\[Kira.*?\]\*\*\n\n|👑 \*\*\[Kira.*?\]\*\*\n\n|💼 \*\*\[Kira.*?\]\*\*\n\n)/i, "");
             
             // --- Parse Thinking Tags (<think> and [THINKING]) ---
             let normalizedTxt = displayTxt.replace(/<think>/gi, "[THINKING]").replace(/<\/think>/gi, "[/THINKING][THINKING_DONE]");

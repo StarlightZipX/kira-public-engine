@@ -285,12 +285,12 @@ BRAIN_PROFILES = {
 }
 
 def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
-    """Multi-Brain Router: เลือกสถาปัตยกรรมที่เหมาะสมที่สุดตามคำถาม
+    """Multi-Brain Router: เลือกสถาปัตยกรรมที่เหมาะสมที่สุดตามโมเดลและคำถาม
     Returns: (model_name, brain_type, description)
     """
     input_lower = user_input.lower()
     
-    # ถ้าผู้ใช้เลือก flavor มาตรงๆ ให้ใช้ตามนั้น
+    # 1. ถ้าผู้ใช้เลือก flavor มาตรงๆ ให้ใช้ตามนั้น
     if flavor == "fast":
         return PREFERRED_FLASH, "chat", "⚡ Instant Turbo (High-Speed Engine)"
     elif flavor == "reasoning":
@@ -299,11 +299,33 @@ def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
     elif flavor == "creative":
         return "mixtral-8x7b-32768", "creative", "✨ Generative Studio (Content & Idea Synthesis)"
     
-    # สำหรับ Kira 1.0 ใช้สมองเล็กเสมอ (ประหยัดโควตา)
+    # 2. การจัดสรรตามโมเดล Kira 2.0 (Current Generation)
+    if model_version == "2.0-flash":
+        return PREFERRED_FLASH, "chat", "⚡ Kira 2.0 Flash (High-Speed Engine)"
+    elif model_version == "2.0-vision":
+        profile = BRAIN_PROFILES["code"]
+        return profile["model"], "code", "👁️ Kira 2.0 Vision (Multimodal Engine)"
+    elif model_version == "2.0-pro":
+        profile = BRAIN_PROFILES["reasoning"]
+        return profile["model"], "reasoning", "🧠 Kira 2.0 Pro (Cognitive Reasoning Engine)"
+    elif model_version == "2.0-ultra":
+        profile = BRAIN_PROFILES["logic"]
+        return profile["model"], "logic", "👑 Kira 2.0 Ultra (Enterprise Logic Engine)"
+        
+    # 3. การจัดสรรตามโมเดล Legacy (1.0 Series)
     if model_version == "1.0":
-        return PREFERRED_FLASH, "chat", "⚡ สมองมาตรฐาน (Kira 1.0 Fast)"
+        return PREFERRED_FLASH, "chat", "🤖 Kira 1.0 Standard"
+    elif model_version == "1.1":
+        profile = BRAIN_PROFILES["code"]
+        return profile["model"], "code", "✨ Kira 1.1 Pioneer"
+    elif model_version == "1.2":
+        profile = BRAIN_PROFILES["reasoning"]
+        return profile["model"], "reasoning", "✨ Kira 1.2 Apex"
+    elif model_version == "1.3":
+        profile = BRAIN_PROFILES["logic"]
+        return profile["model"], "logic", "💼 Kira 1.3 Enterprise"
     
-    # Smart Router: วิเคราะห์ keyword เพื่อเลือกสมอง
+    # Smart Router Fallback: วิเคราะห์ keyword เพื่อเลือกสมอง
     best_match = "chat"
     best_score = 0
     
@@ -315,14 +337,8 @@ def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
             best_score = score
             best_match = brain_type
     
-    # ยกระดับสมองอัตโนมัติตามระดับเวอร์ชัน
-    if best_score == 0:
-        if model_version == "1.3":
-            best_match = "logic"  # Enterprise: Ultimate Analytical Logic
-        elif model_version == "1.2":
-            best_match = "reasoning" if len(user_input) > 30 else "logic"  # Pro: Deep Cognitive Reasoning
-        elif len(user_input) > 80:
-            best_match = "logic"
+    if best_score == 0 and len(user_input) > 80:
+        best_match = "logic"
     
     profile = BRAIN_PROFILES[best_match]
     return profile["model"], best_match, profile["description"]
@@ -1717,22 +1733,34 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
                   (uname, session_id, timestamp, "User", user_input))
     
-    # Trigger Memory Extraction in background for 1.1, 1.2, 1.3
-    if model_version in ["1.1", "1.2", "1.3"]:
+    # Trigger Memory Extraction in background for all modern versions
+    if model_version in ["2.0-flash", "2.0-vision", "2.0-pro", "2.0-ultra", "1.1", "1.2", "1.3"]:
         asyncio.create_task(_extract_and_save_memory(uname, user_input, model_version))
 
     async def generate():
         import time as _time
         start_time = _time.time()
         full_response = ""
-        if model_version == "1.1":
-            badge = "✨ **[Kira 1.1 PRO]**\n\n"
+        
+        # Clean Badges (Without Parentheses)
+        if model_version == "2.0-flash":
+            badge = "✨ **[Kira 2.0 Flash]**\n\n"
+        elif model_version == "2.0-vision":
+            badge = "👁️ **[Kira 2.0 Vision]**\n\n"
+        elif model_version == "2.0-pro":
+            badge = "🧠 **[Kira 2.0 Pro]**\n\n"
+        elif model_version == "2.0-ultra":
+            badge = "👑 **[Kira 2.0 Ultra]**\n\n"
+        elif model_version == "1.0":
+            badge = "🤖 **[Kira 1.0 Standard]**\n\n"
+        elif model_version == "1.1":
+            badge = "✨ **[Kira 1.1 Pioneer]**\n\n"
         elif model_version == "1.2":
-            badge = "✨ **[Kira 1.2 PRO]**\n\n"
+            badge = "✨ **[Kira 1.2 Apex]**\n\n"
         elif model_version == "1.3":
-            badge = "👑 **[Kira 1.3 APEX]**\n\n"
+            badge = "💼 **[Kira 1.3 Enterprise]**\n\n"
         else:
-            badge = "🤖 **[Kira 1.0]**\n\n"
+            badge = "✨ **[Kira 2.0 Flash]**\n\n"
         full_response += badge
         yield badge
         
