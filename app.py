@@ -207,6 +207,8 @@ def init_db():
                       username TEXT,
                       fact TEXT,
                       timestamp TEXT)''')
+        execute_query('''CREATE INDEX IF NOT EXISTS idx_memories_username ON user_memories (username)''')
+
         execute_query('''CREATE TABLE IF NOT EXISTS user_knowledge_graph
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
                       username TEXT,
@@ -217,6 +219,7 @@ def init_db():
                       fact TEXT,
                       confidence REAL DEFAULT 1.0,
                       timestamp TEXT)''')
+        execute_query('''CREATE INDEX IF NOT EXISTS idx_kg_username ON user_knowledge_graph (username)''')
         
         # Insert default prompts if not exists
         check_p1 = execute_query("SELECT id FROM system_settings WHERE key_name='prompt_1.0'", fetch='one')
