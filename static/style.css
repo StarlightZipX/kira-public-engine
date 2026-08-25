@@ -1394,3 +1394,36 @@ body.glow-1-1 .chat-input-wrapper {
     font-size: 0.85rem;
     color: #cbd5e1;
 }
+
+/* --- Voice Interaction (Speech-to-Text) --- */
+#mic-btn {
+    position: relative;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+#mic-btn.listening {
+    color: #f43f5e !important;
+    background: rgba(244, 63, 94, 0.18) !important;
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7);
+    animation: micPulse 1.4s infinite cubic-bezier(0.66, 0, 0, 1);
+    transform: scale(1.08);
+}
+
+@keyframes micPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 12px rgba(244, 63, 94, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+    }
+}
+

@@ -719,48 +719,77 @@ document.querySelectorAll('.quick-prompt-btn').forEach(btn => {
 });
 
 // --- Speech-to-Text (Web Speech API) ---
-var micBtn = document.getElementById('mic-btn');
+const micBtn = document.getElementById('mic-btn');
 if (micBtn) {
-    let recognition;
+    let recognition = null;
+    let isRecording = false;
+    let initialTextBeforeSpeech = '';
+
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
         recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'th-TH';
+        recognition.interimResults = true; // Stream words in real-time
+        recognition.lang = 'th-TH'; // Default to Thai with English loanword support
 
         recognition.onstart = function() {
-            micBtn.style.color = '#ef4444';
-            micBtn.classList.add('glow-1-1');
-            userInput.placeholder = "กำลังฟัง...";
+            isRecording = true;
+            micBtn.classList.add('listening');
+            micBtn.title = "กำลังฟัง... (คลิกอีกครั้งเพื่อหยุด)";
+            initialTextBeforeSpeech = userInput.value;
+            userInput.placeholder = "🎙️ กำลังฟังเสียงของคุณ...";
         };
 
         recognition.onresult = function(event) {
-            const transcript = event.results[0][0].transcript;
-            userInput.value += transcript;
-            sendBtn.disabled = false;
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+
+            const prefix = initialTextBeforeSpeech ? initialTextBeforeSpeech.trim() + ' ' : '';
+            userInput.value = prefix + (finalTranscript || interimTranscript);
+            
+            // Auto grow input
+            userInput.style.height = 'auto';
+            userInput.style.height = (userInput.scrollHeight) + 'px';
+            sendBtn.disabled = userInput.value.trim() === '';
         };
 
         recognition.onerror = function(event) {
-            console.error("Speech error:", event.error);
+            console.warn("Speech recognition notice:", event.error);
+            if (event.error === 'not-allowed') {
+                alert("กรุณาอนุญาตการเข้าถึงไมโครโฟนในเบราว์เซอร์เพื่อใช้งานระบบเสียงครับ");
+            }
         };
 
         recognition.onend = function() {
-            micBtn.style.color = ''; 
-            micBtn.classList.remove('glow-1-1');
+            isRecording = false;
+            micBtn.classList.remove('listening');
+            micBtn.title = "พูดด้วยเสียง (Web Speech API)";
             userInput.placeholder = "พิมพ์ข้อความหา Kira...";
+            userInput.focus();
         };
 
         micBtn.addEventListener('click', () => {
-            if (micBtn.style.color === 'rgb(239, 68, 68)' || micBtn.style.color === '#ef4444') {
+            if (isRecording) {
                 recognition.stop();
             } else {
-                recognition.start();
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error("Mic start error:", e);
+                }
             }
         });
     } else {
         micBtn.addEventListener('click', () => {
-            alert("เบราว์เซอร์ของคุณไม่รองรับระบบสั่งงานด้วยเสียง กรุณาใช้ Chrome หรือ Edge ครับ");
+            alert("เบราว์เซอร์ของคุณไม่รองรับระบบสั่งงานด้วยเสียง กรุณาเปิดใช้งานผ่าน Google Chrome หรือ Microsoft Edge ครับ");
         });
     }
 }
