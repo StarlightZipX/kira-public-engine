@@ -968,20 +968,34 @@ async def get_user_profile(username: str):
 
 @app.get("/api/history/sessions/{username}")
 async def get_sessions(username: str):
-    # Fetch distinct session_ids and their first message as title
-    query = """
-        SELECT session_id, MIN(timestamp) as start_time, 
-        (SELECT content FROM logs l2 WHERE l2.session_id = logs.session_id AND l2.username = logs.username AND role = 'User' ORDER BY id ASC LIMIT 1) as title
-        FROM logs 
-        WHERE username=? AND session_id IS NOT NULL
-        GROUP BY session_id 
-        ORDER BY start_time DESC LIMIT 20
-    """
-    rows = execute_query(query, (username,), fetch='all')
-    sessions = []
-    if rows:
-        sessions = [{"session_id": s, "start_time": t, "title": title[:30] + "..." if title and len(title) > 30 else (title or "New Chat")} for s, t, title in rows]
-    return {"status": "success", "sessions": sessions}
+    try:
+        query = """
+            SELECT session_id, MIN(timestamp) as start_time 
+            FROM logs 
+            WHERE username=? AND session_id IS NOT NULL AND session_id != ''
+            GROUP BY session_id 
+            ORDER BY start_time DESC LIMIT 20
+        """
+        rows = execute_query(query, (username,), fetch='all')
+        sessions = []
+        if rows:
+            for s_id, s_time in rows:
+                if not s_id:
+                    continue
+                title_row = execute_query(
+                    "SELECT content FROM logs WHERE username=? AND session_id=? AND role='User' ORDER BY id ASC LIMIT 1",
+                    (username, s_id), fetch='one'
+                )
+                title = title_row[0] if title_row and title_row[0] else "New Chat"
+                sessions.append({
+                    "session_id": s_id,
+                    "start_time": s_time,
+                    "title": title[:30] + "..." if len(title) > 30 else title
+                })
+        return {"status": "success", "sessions": sessions}
+    except Exception as e:
+        print("get_sessions error:", e)
+        return {"status": "error", "message": str(e), "sessions": []}
 
 @app.get("/api/history/{username}/{session_id}")
 async def get_session_history(username: str, session_id: str):
@@ -1709,9 +1723,12 @@ async def generate_tts(req: TTSRequest):
         print("TTS Generation Error:", e)
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
+@app.get("/api/user/graph")
 @app.get("/api/user/graph/{username}")
-async def get_user_knowledge_graph(username: str):
+async def get_user_knowledge_graph(username: Optional[str] = None):
     """Kira 2.1 GraphRAG Mind-Map: ดึงโหนดและเส้นเชื่อมโยงความจำสำหรับทำ Interactive 3D/2D Graph"""
+    if not username:
+        return {"status": "error", "message": "Username is required", "total_nodes": 0, "total_links": 0, "nodes": [], "links": [], "graph": {"nodes": [], "links": []}}
     try:
         triples = execute_query("SELECT id, subject, predicate, object, category, fact, timestamp FROM user_knowledge_graph WHERE username=? ORDER BY id DESC LIMIT 50", (username,), fetch='all')
         memories = execute_query("SELECT id, fact, timestamp FROM user_memories WHERE username=? ORDER BY id DESC LIMIT 20", (username,), fetch='all')
@@ -1761,11 +1778,13 @@ async def get_user_knowledge_graph(username: str):
             "username": username,
             "total_nodes": len(nodes),
             "total_links": len(links),
+            "nodes": nodes,
+            "links": links,
             "graph": {"nodes": nodes, "links": links}
         }
     except Exception as e:
         print("Graph Fetch Error:", e)
-        return {"status": "error", "message": str(e), "graph": {"nodes": [], "links": []}}
+        return {"status": "error", "message": str(e), "total_nodes": 0, "total_links": 0, "nodes": [], "links": [], "graph": {"nodes": [], "links": []}}
 
 @app.post("/api/user/graph/memory")
 async def add_user_memory_node(req: MemoryCreateRequest):
@@ -1896,8 +1915,22 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         )
 
     # 2. Anti-Prompt Injection (AI Firewall) + Venom Level 1 (The Illusion)
-    injection_keywords = ["ignore previous instructions", "system prompt", "forget your instructions", "ลืมคำสั่ง", "ขอดูคำสั่ง", "jailbreak", "พิมพ์คำสั่งก่อนหน้า"]
-    if any(keyword in user_input.lower() for keyword in injection_keywords):
+    import re as _re_inj
+    injection_patterns = [
+        r'ignore\s+(?:all\s+)?(?:previous|system|above)\s+instructions?',
+        r'forget\s+(?:all\s+)?(?:your\s+)?instructions?',
+        r'(?:reveal|show|leak|output|dump|print)\s+(?:the\s+)?(?:system\s+prompt|credentials?|api[_\s]*keys?|secrets?|passwords?)',
+        r'system\s+prompt',
+        r'jailbreak',
+        r'dan\s+mode',
+        r'developer\s+mode',
+        r'ขอดูคำสั่ง',
+        r'ลืมคำสั่ง',
+        r'พิมพ์คำสั่งก่อนหน้า',
+        r'แสดง\s*system\s*prompt',
+    ]
+    is_injection = any(_re_inj.search(pattern, user_input.lower()) for pattern in injection_patterns)
+    if is_injection:
         hacker_strikes[client_ip] += 1
         fake_prompt = "```json\n{\n  \"SYSTEM_PROMPT\": \"You are a helpful assistant. You must obey the user.\",\n  \"ADMIN_PASSWORD\": \"P@ssw0rd_Kira_2026\",\n  \"GROQ_API_KEY\": \"gsk_F4k3k3yL0L0L0L0L0L0L0L\"\n}\n```"
         return StreamingResponse(
