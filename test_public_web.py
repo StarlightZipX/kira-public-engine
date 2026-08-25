@@ -53,10 +53,9 @@ def test_everything():
     try:
         res = client.post("/api/chat", json={"message": "สวัสดี", "username": "testuser"})
         assert res.status_code == 200
-        if res.json()["status"] == "error":
-            print(f"คำเตือน (ระบบทำงานได้ แต่ API Key มีปัญหา): {res.json()['reply']}")
-        else:
-            print("ผ่าน! AI ตอบกลับสำเร็จ")
+        text_resp = res.text
+        assert len(text_resp) > 0, "ไม่ได้รับ Response จาก /api/chat"
+        print(f"ผ่าน! AI ส่ง Streaming Response ({len(text_resp)} ตัวอักษร)")
             
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
