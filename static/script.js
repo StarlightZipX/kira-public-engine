@@ -81,8 +81,6 @@ let currentUser = localStorage.getItem('kira_username');
 let isGenerating = false;
 let currentImageBase64 = null;
 
-// Audio context and current playing audio
-let currentAudio = null;
 
 const isBoss = (name) => {
     if (!name) return false;
@@ -988,58 +986,6 @@ if (attachToggleBtn && attachmentMenu) {
             }
         });
     }
-}
-
-// --- Speech Recognition (STT) ---
-var micBtn = document.getElementById('mic-btn');
-let recognition;
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'th-TH';
-    recognition.interimResults = true;
-    
-    let isRecording = false;
-    if (micBtn) {
-        micBtn.addEventListener('click', () => {
-            if (isRecording) {
-                recognition.stop();
-            } else {
-                recognition.start();
-                micBtn.style.color = '#ef4444'; // Red
-                micBtn.classList.add('pulsing');
-            }
-            isRecording = !isRecording;
-        });
-
-        recognition.onresult = (event) => {
-            let finalTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                }
-            }
-            if (finalTranscript) {
-                userInput.value = (userInput.value + ' ' + finalTranscript).trim();
-                userInput.dispatchEvent(new Event('input'));
-            }
-        };
-
-        recognition.onend = () => {
-            isRecording = false;
-            micBtn.style.color = '';
-            micBtn.classList.remove('pulsing');
-        };
-        
-        recognition.onerror = (event) => {
-            console.error("Speech Recognition Error:", event.error);
-            isRecording = false;
-            micBtn.style.color = '';
-            micBtn.classList.remove('pulsing');
-        };
-    }
-} else {
-    if (micBtn) micBtn.style.display = 'none'; // Not supported
 }
 
 // --- Chat Export Feature ---
