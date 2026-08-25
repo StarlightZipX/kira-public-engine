@@ -657,17 +657,30 @@ for key_idx, api_key in enumerate(API_KEYS):
         print(f"  ❌ Key#{key_idx+1} → Exception: {str(e)[:80]}")
 
 if groq_available_models:
-    # Update global candidates to only models we KNOW exist and are supported!
+    # Filter out whisper audio and pure guardrail models for chat generation
+    chat_models = [m for m in groq_available_models if not any(bad in m.lower() for bad in ["whisper", "guard", "orpheus"])]
+    if not chat_models:
+        chat_models = groq_available_models
+
+    # Update global candidates to valid chat models
     ALL_MODEL_CANDIDATES.clear()
-    ALL_MODEL_CANDIDATES.extend(groq_available_models)
+    ALL_MODEL_CANDIDATES.extend(chat_models)
     
-    # Auto-assign Pro (70b/90b/QWQ)
-    pro_c = [m for m in groq_available_models if "70b" in m.lower() or "90b" in m.lower() or "qwq" in m.lower()]
-    PREFERRED_PRO = pro_c[0] if pro_c else groq_available_models[-1]
+    # Auto-assign Pro (120b / compound / qwen)
+    pro_c = [m for m in chat_models if any(k in m.lower() for k in ["120b", "qwen", "compound", "70b"])]
+    PREFERRED_PRO = pro_c[0] if pro_c else chat_models[0]
     
-    # Auto-assign Flash (8b/7b/gemma/mixtral)
-    flash_c = [m for m in groq_available_models if "8b" in m.lower() or "7b" in m.lower() or "gemma" in m.lower() or "mixtral" in m.lower()]
-    PREFERRED_FLASH = flash_c[0] if flash_c else groq_available_models[0]
+    # Auto-assign Flash (compound-mini / 20b / mini)
+    flash_c = [m for m in chat_models if any(k in m.lower() for k in ["compound-mini", "20b", "mini", "8b", "allam"])]
+    PREFERRED_FLASH = flash_c[0] if flash_c else chat_models[-1]
+
+    # Update default brain profiles for Groq
+    BRAIN_PROFILES["logic"]["model"] = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in chat_models else PREFERRED_PRO
+    BRAIN_PROFILES["reasoning"]["model"] = "qwen/qwen3.6-27b" if "qwen/qwen3.6-27b" in chat_models else PREFERRED_PRO
+    BRAIN_PROFILES["code"]["model"] = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in chat_models else PREFERRED_PRO
+    BRAIN_PROFILES["creative"]["model"] = "groq/compound" if "groq/compound" in chat_models else PREFERRED_PRO
+    BRAIN_PROFILES["translate"]["model"] = PREFERRED_FLASH
+    BRAIN_PROFILES["chat"]["model"] = PREFERRED_FLASH
 else:
     print("⚠️ ไม่พบโมเดลจาก Groq (อาจคีย์เสียหรือจำกัดสิทธิ์) จะพยายาม Fallback...")
 
