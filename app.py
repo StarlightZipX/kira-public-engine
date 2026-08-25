@@ -1772,6 +1772,64 @@ async def delete_user_triple_node(triple_id: int, username: str):
         print("Delete triple error:", e)
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
+def _compress_and_roll_history(session_key: str, history: list) -> list:
+    """Kira 2.1 Rolling Memory & Token Compression:
+    เมื่อบทสนทนายาวเกินเกณฑ์ ระบบจะรวบรวมข้อความช่วงกลาง/เก่ามาสังเคราะห์เป็นสรุปความจำกระชับ
+    และเก็บข้อความล่าสุด 8-10 ข้อความไว้ ทำให้บทสนทนาสามารถคุยต่อเนื่องได้เป็นพันๆ ข้อความโดยไม่สูญเสียบริบท
+    """
+    THRESHOLD = 18
+    KEEP_RECENT = 8
+    
+    if len(history) <= THRESHOLD:
+        return history
+        
+    try:
+        system_msg = history[0] # System prompt
+        existing_summary = ""
+        
+        # Check if there is already a summary message at index 1
+        start_idx = 1
+        if len(history) > 1 and isinstance(history[1], SystemMessage) and "[สรุปบริบทบทสนทนาก่อนหน้า" in history[1].content:
+            existing_summary = history[1].content
+            start_idx = 2
+            
+        messages_to_compress = history[start_idx:-KEEP_RECENT]
+        recent_messages = history[-KEEP_RECENT:]
+        
+        if not messages_to_compress:
+            return history
+            
+        # Format text to summarize
+        conversation_text = ""
+        for m in messages_to_compress:
+            role = "ผู้ใช้" if isinstance(m, HumanMessage) else "คิระ"
+            content_str = str(m.content)[:400] if hasattr(m, 'content') else ""
+            conversation_text += f"{role}: {content_str}\n"
+            
+        prompt = [
+            {"role": "system", "content": """You are Kira's Rolling Memory Compressor.
+Summarize the key facts, user goals, decisions, technical context, and discussion points from this conversation snippet into 3-5 concise bullet points in Thai.
+Keep it strictly factual and condensed. Preserve all important details so Kira never forgets what was discussed."""},
+            {"role": "user", "content": f"{existing_summary}\n\n[ข้อความที่ต้องสรุปย่อ]:\n{conversation_text}"}
+        ]
+        
+        # Fast compression with flash model
+        summarizer = _create_llm(PREFERRED_FLASH, API_KEYS[0])
+        summary_result = summarizer.invoke(prompt).content.strip()
+        
+        summary_msg = SystemMessage(content=f"[สรุปบริบทบทสนทนาก่อนหน้า / Rolled Memory Context]:\n{summary_result}\n(Instruction: จดจำและนำบริบทสรุปนี้ไปใช้ประกอบการตอบคำถามอย่างต่อเนื่องเสมอ)")
+        
+        rolled_history = [system_msg, summary_msg] + recent_messages
+        user_sessions[session_key] = rolled_history
+        print(f"📚 [Rolling Memory Compressed] {len(history)} messages -> {len(rolled_history)} messages with compressed summary.")
+        return rolled_history
+    except Exception as e:
+        print("Rolling Memory compression notice:", e)
+        # Fallback to standard slice if compression fails
+        fallback_history = history[:1] + history[-14:]
+        user_sessions[session_key] = fallback_history
+        return fallback_history
+
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest, request: Request):
     user_input = req.message
@@ -1906,9 +1964,8 @@ async def chat_endpoint(req: ChatRequest, request: Request):
 
     history = user_sessions[session_key]
 
-    if len(history) > BASE_HISTORY_LEN + MAX_DYNAMIC_HISTORY:
-        user_sessions[session_key] = history[:BASE_HISTORY_LEN] + history[-MAX_DYNAMIC_HISTORY:]
-        history = user_sessions[session_key]
+    # Rolling Memory & Token Compression (Kira 2.1)
+    history = _compress_and_roll_history(session_key, history)
 
     # ------------------ RAG Retrieval (Kira 2.0) ------------------
     rag_context = ""
