@@ -57,7 +57,7 @@
 
 1. **ห้ามใช้วงเล็บในชื่อโมเดล (No Parentheses):** ต้องใช้รูปแบบ `Kira 1.0 Standard`, `Kira 2.0 Pro`, `Kira 2.0 Ultra` (ห้ามมีวงเล็บเด็ดขาด)
 2. **100-Agent Diagnostic Swarm Built-in:** ในโฟลเดอร์นี้มีไฟล์ `test_100_agents.py` ติดตั้งอยู่โดยตรง เมื่อ AI ใน IDE พัฒนาฟังก์ชันใหม่เสร็จ สามารถสั่งรันคำสั่ง `python test_100_agents.py` เพื่อระดมพลเอเจนต์วิศวกร 100 ตัวเข้าตรวจสอบระบบทุกจุดให้ได้คะแนน **100/100 PASSED** เสมอ
-3. **Auto-Sync to GitHub:** หลังจากทำงานเสร็จสิ้นทุกครั้ง ต้องรวมไฟล์และทำการ `git add`, `git commit` และ `git push` ขึ้นสู่ GitHub Main Branch โดยอัตโนมัติ
+3. **Auto-Sync to GitHub & Render Deployment:** หลังจากทำงานเสร็จสิ้นทุกครั้ง ต้องรวมไฟล์และทำการ `git add`, `git commit` และ `git push` ขึ้นสู่ GitHub Main Branch โดยอัตโนมัติ เพื่อทริกเกอร์ระบบ Auto-Deploy บน Render ให้ Production ทันสมัยอยู่เสมอ 100%
 
 ---
 *บันทึกข้อมูลเพื่อความต่อเนื่องของโครงการ Kira AI System อย่างยั่งยืน* 🚀

@@ -19,4 +19,5 @@
 - **100 Engineering Agents Swarm:** Run `python test_100_agents.py` directly in the workspace to audit all 100 checkpoints across DB, API, Security, MoA, Voice, Canvas, Brain, UI, Memory, and Operations.
 - Always maintain 100/100 PASSED before completing any task.
 - Strictly NO parentheses in model names (use `Kira 1.0 Standard`, `Kira 2.0 Pro`, `Kira 2.0 Ultra`).
-- Always auto-commit and push changes to GitHub `main` branch after major updates.
+- Always auto-commit and push changes to GitHub `main` branch immediately after every task to trigger Render Live Auto-Deployment.
+- Verify that GitHub repository and Render production environment are fully synchronized.
