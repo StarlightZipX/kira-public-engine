@@ -822,6 +822,14 @@ class TTSRequest(BaseModel):
     text: str
     voice: Optional[str] = "th-TH-PremwadeeNeural"
 
+class MemoryCreateRequest(BaseModel):
+    username: str
+    fact: str
+    category: Optional[str] = "custom"
+    subject: Optional[str] = None
+    predicate: Optional[str] = None
+    object: Optional[str] = None
+
 # --- Endpoints ---
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
@@ -1676,12 +1684,12 @@ async def get_user_knowledge_graph(username: str):
         
         # Center Node: User
         user_node_id = f"user_{username}"
-        nodes.append({"id": user_node_id, "label": username, "group": "user", "size": 25, "color": "#38bdf8"})
+        nodes.append({"id": user_node_id, "label": username, "group": "user", "size": 25, "color": "#38bdf8", "type": "user"})
         node_set.add(user_node_id)
         
         # Core Kira Node
         kira_node_id = "agent_kira"
-        nodes.append({"id": kira_node_id, "label": "Kira AI", "group": "ai", "size": 22, "color": "#ec4899"})
+        nodes.append({"id": kira_node_id, "label": "Kira AI", "group": "ai", "size": 22, "color": "#ec4899", "type": "ai"})
         node_set.add(kira_node_id)
         links.append({"source": user_node_id, "target": kira_node_id, "label": "ร่วมพัฒนาและพูดคุย"})
         
@@ -1692,13 +1700,13 @@ async def get_user_knowledge_graph(username: str):
                 o_id = f"node_{obj}"
                 
                 if s_id not in node_set:
-                    nodes.append({"id": s_id, "label": subj, "group": cat or "concept", "size": 16, "color": "#a855f7"})
+                    nodes.append({"id": s_id, "label": subj, "group": cat or "concept", "size": 16, "color": "#a855f7", "type": "concept", "db_id": tid, "db_type": "triple"})
                     node_set.add(s_id)
                 if o_id not in node_set:
-                    nodes.append({"id": o_id, "label": obj, "group": cat or "entity", "size": 16, "color": "#10b981"})
+                    nodes.append({"id": o_id, "label": obj, "group": cat or "entity", "size": 16, "color": "#10b981", "type": "entity", "db_id": tid, "db_type": "triple"})
                     node_set.add(o_id)
                     
-                links.append({"source": s_id, "target": o_id, "label": pred, "fact": fact, "id": tid})
+                links.append({"source": s_id, "target": o_id, "label": pred, "fact": fact, "id": tid, "db_id": tid, "db_type": "triple"})
                 
         # Standalone memories linked to user
         if memories:
@@ -1706,9 +1714,9 @@ async def get_user_knowledge_graph(username: str):
                 m_id = f"mem_{mid}"
                 if m_id not in node_set:
                     label = fact[:25] + "..." if len(fact) > 25 else fact
-                    nodes.append({"id": m_id, "label": label, "group": "memory", "full_fact": fact, "size": 12, "color": "#f59e0b"})
+                    nodes.append({"id": m_id, "label": label, "group": "memory", "full_fact": fact, "size": 12, "color": "#f59e0b", "type": "memory", "db_id": mid, "db_type": "memory"})
                     node_set.add(m_id)
-                    links.append({"source": user_node_id, "target": m_id, "label": "จดจำข้อเท็จจริง"})
+                    links.append({"source": user_node_id, "target": m_id, "label": "จดจำข้อเท็จจริง", "db_id": mid, "db_type": "memory"})
                     
         return {
             "status": "success",
@@ -1720,6 +1728,49 @@ async def get_user_knowledge_graph(username: str):
     except Exception as e:
         print("Graph Fetch Error:", e)
         return {"status": "error", "message": str(e), "graph": {"nodes": [], "links": []}}
+
+@app.post("/api/user/graph/memory")
+async def add_user_memory_node(req: MemoryCreateRequest):
+    """Kira 2.1 Interactive Brain Editing: เพิ่มความจำหรือความสัมพันธ์ใหม่ลงในสมองของคิระโดยตรง"""
+    try:
+        uname = req.username
+        tz = timezone(timedelta(hours=7))
+        ts = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+        
+        if req.subject and req.predicate and req.object:
+            fact_desc = req.fact or f"{req.subject} {req.predicate} {req.object}"
+            execute_query("INSERT INTO user_knowledge_graph (username, subject, predicate, object, category, fact, confidence, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                          (uname, req.subject.strip(), req.predicate.strip(), req.object.strip(), req.category or "custom", fact_desc, 1.0, ts))
+            return {"status": "success", "message": "เพิ่มความสัมพันธ์ลงในสมองเรียบร้อยแล้วค่ะ"}
+        elif req.fact:
+            execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
+                          (uname, req.fact.strip(), ts))
+            return {"status": "success", "message": "เพิ่มความจำลงในสมองเรียบร้อยแล้วค่ะ"}
+        else:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "กรุณาระบุข้อเท็จจริงหรือความสัมพันธ์ให้ครบถ้วนค่ะ"})
+    except Exception as e:
+        print("Add memory error:", e)
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+@app.delete("/api/user/graph/memory/{memory_id}")
+async def delete_user_memory_node(memory_id: int, username: str):
+    """Kira 2.1 Interactive Brain Editing: ลบข้อเท็จจริงออกจากสมอง"""
+    try:
+        execute_query("DELETE FROM user_memories WHERE id=? AND username=?", (memory_id, username))
+        return {"status": "success", "message": "ลบข้อมูลความจำเรียบร้อยแล้วค่ะ"}
+    except Exception as e:
+        print("Delete memory error:", e)
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+@app.delete("/api/user/graph/triple/{triple_id}")
+async def delete_user_triple_node(triple_id: int, username: str):
+    """Kira 2.1 Interactive Brain Editing: ลบเส้นความสัมพันธ์ออกจากสมอง"""
+    try:
+        execute_query("DELETE FROM user_knowledge_graph WHERE id=? AND username=?", (triple_id, username))
+        return {"status": "success", "message": "ลบความสัมพันธ์เรียบร้อยแล้วค่ะ"}
+    except Exception as e:
+        print("Delete triple error:", e)
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest, request: Request):

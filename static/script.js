@@ -1295,9 +1295,12 @@ function applyCodeActions(container) {
 // =========================================================================
 // 🕸️ 3. Interactive Knowledge Graph Mind-Map Simulation (Canvas 2D Force)
 // =========================================================================
-const graphModal = document.getElementById('graph-modal');
 const btnGraph = document.getElementById('btn-graph');
+const graphModal = document.getElementById('graph-modal');
 const closeGraphModal = document.getElementById('close-graph-modal');
+const btnAddMemory = document.getElementById('btn-add-memory');
+const btnDeleteNode = document.getElementById('btn-delete-node');
+const btnCloseDetail = document.getElementById('btn-close-detail');
 const graphCanvas = document.getElementById('graph-canvas');
 const graphNodeDetails = document.getElementById('graph-node-details');
 const detailNodeName = document.getElementById('detail-node-name');
@@ -1306,7 +1309,7 @@ const detailNodeDesc = document.getElementById('detail-node-desc');
 let graphAnimationId = null;
 let graphNodes = [];
 let graphLinks = [];
-let selectedNode = null;
+let selectedActiveNode = null;
 let draggedNode = null;
 
 if (btnGraph) {
@@ -1317,6 +1320,80 @@ if (closeGraphModal) {
     closeGraphModal.addEventListener('click', () => {
         graphModal.style.display = 'none';
         if (graphAnimationId) cancelAnimationFrame(graphAnimationId);
+    });
+}
+
+if (btnCloseDetail) {
+    btnCloseDetail.addEventListener('click', () => {
+        if (graphNodeDetails) graphNodeDetails.style.display = 'none';
+        selectedActiveNode = null;
+    });
+}
+
+if (btnDeleteNode) {
+    btnDeleteNode.addEventListener('click', async () => {
+        if (!selectedActiveNode) return;
+        
+        if (selectedActiveNode.type === 'user' || selectedActiveNode.type === 'ai') {
+            alert('โหนดศูนย์กลาง (ผู้ใช้ หรือ Kira) ไม่สามารถลบได้ค่ะ');
+            return;
+        }
+
+        const confirmDelete = confirm(`คุณต้องการลบ "${selectedActiveNode.label}" ออกจากสมองของคิระหรือไม่?`);
+        if (!confirmDelete) return;
+
+        try {
+            let url = '';
+            if (selectedActiveNode.db_type === 'memory' && selectedActiveNode.db_id) {
+                url = `/api/user/graph/memory/${selectedActiveNode.db_id}?username=${encodeURIComponent(currentUser)}`;
+            } else if (selectedActiveNode.db_type === 'triple' && selectedActiveNode.db_id) {
+                url = `/api/user/graph/triple/${selectedActiveNode.db_id}?username=${encodeURIComponent(currentUser)}`;
+            }
+
+            if (url) {
+                const res = await fetch(url, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    if (graphNodeDetails) graphNodeDetails.style.display = 'none';
+                    selectedActiveNode = null;
+                    await openKnowledgeGraph(); // Reload and simulate
+                } else {
+                    alert(data.message || 'เกิดข้อผิดพลาดในการลบข้อมูล');
+                }
+            } else {
+                alert('ไม่พบรหัสความจำในฐานข้อมูล');
+            }
+        } catch (err) {
+            console.error('Delete memory error:', err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+        }
+    });
+}
+
+if (btnAddMemory) {
+    btnAddMemory.addEventListener('click', async () => {
+        const fact = prompt('🧠 ป้อนข้อมูลหรือข้อเท็จจริงที่คุณต้องการให้คิระจดจำ (เช่น "ฉันชอบดื่มกาแฟดำไม่ใส่น้ำตาล"):');
+        if (!fact || !fact.trim()) return;
+
+        try {
+            const res = await fetch('/api/user/graph/memory', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: currentUser,
+                    fact: fact.trim()
+                })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                await openKnowledgeGraph(); // Reload and simulate
+            } else {
+                alert(data.message || 'เกิดข้อผิดพลาดในการบันทึกความจำ');
+            }
+        } catch (err) {
+            console.error('Add memory error:', err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+        }
     });
 }
 

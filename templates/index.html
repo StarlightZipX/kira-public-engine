@@ -236,18 +236,29 @@
     <!-- Knowledge Graph Mind-Map Modal -->
     <div id="graph-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content graph-modal-content">
-            <div class="modal-header">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h3><i class="fa-solid fa-diagram-project"></i> โครงข่ายความจำอัจฉริยะ (Kira 2.1 GraphRAG)</h3>
-                <button id="close-graph-modal" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button id="btn-add-memory" class="action-btn" style="background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; color: #93c5fd; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer;" title="เพิ่มความจำหรือความสัมพันธ์ใหม่"><i class="fa-solid fa-plus"></i> เพิ่มความจำ</button>
+                    <button id="close-graph-modal" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
             </div>
             <div class="modal-body graph-modal-body">
-                <p class="graph-hint">💡 คลิกหรือลากโหนดเพื่อสำรวจความจำและความสัมพันธ์ที่คิระจดจำเกี่ยวกับคุณ</p>
+                <p class="graph-hint">💡 คลิกโหนดเพื่อดูรายละเอียด แก้ไข หรือลบความจำ และลากเพื่อปรับโครงข่ายสมองของคิระ</p>
                 <div id="graph-canvas-container" class="graph-canvas-container">
                     <canvas id="graph-canvas"></canvas>
                 </div>
                 <div id="graph-node-details" class="graph-node-details" style="display: none;">
-                    <div class="details-title"><i class="fa-solid fa-circle-info"></i> ข้อมูลโหนด: <span id="detail-node-name"></span></div>
-                    <div id="detail-node-desc" class="details-desc"></div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <div class="details-title"><i class="fa-solid fa-circle-info"></i> โหนด: <span id="detail-node-name"></span></div>
+                            <div id="detail-node-desc" class="details-desc"></div>
+                        </div>
+                        <div id="detail-node-actions" style="display: flex; gap: 8px;">
+                            <button id="btn-delete-node" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;"><i class="fa-solid fa-trash-can"></i> ลบความจำนี้</button>
+                            <button id="btn-close-detail" style="background: transparent; border: 1px solid #475569; color: #94a3b8; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
