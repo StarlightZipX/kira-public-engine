@@ -1173,15 +1173,21 @@ async function playKiraVoice(text, btn) {
 // =========================================================================
 // 🎨 2. Live Interactive Code Canvas & Artifacts
 // =========================================================================
+// =========================================================================
+// 🎨 2. Live Interactive Code Canvas & Artifacts Version Control
+// =========================================================================
 const artifactsDrawer = document.getElementById('artifacts-drawer');
 const artifactsIframe = document.getElementById('artifacts-iframe');
 const artifactsName = document.getElementById('artifacts-name');
+const artifactsVersionsContainer = document.getElementById('artifacts-versions');
 const btnCloseArtifact = document.getElementById('btn-close-artifact');
 const btnViewportDesktop = document.getElementById('btn-viewport-desktop');
 const btnViewportMobile = document.getElementById('btn-viewport-mobile');
 const btnDownloadArtifact = document.getElementById('btn-download-artifact');
 
 let currentArtifactCode = '';
+let artifactVersions = []; // Array of { id: 1, label: 'v1', code: '...', fullHtml: '...', timestamp: Date }
+let activeVersionId = 1;
 
 if (btnCloseArtifact) {
     btnCloseArtifact.addEventListener('click', () => {
@@ -1210,7 +1216,9 @@ if (btnDownloadArtifact) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'kira_live_app.html';
+        const currentVersion = artifactVersions.find(v => v.id === activeVersionId);
+        const verLabel = currentVersion ? `_${currentVersion.label}` : '';
+        a.download = `kira_live_app${verLabel}.html`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1218,9 +1226,30 @@ if (btnDownloadArtifact) {
     });
 }
 
+function renderArtifactVersion(versionId) {
+    const version = artifactVersions.find(v => v.id === versionId);
+    if (!version) return;
+    
+    activeVersionId = versionId;
+    currentArtifactCode = version.code;
+    artifactsIframe.srcdoc = version.fullHtml;
+    
+    // Update version pills in header
+    if (artifactsVersionsContainer) {
+        artifactsVersionsContainer.innerHTML = '';
+        artifactVersions.forEach(v => {
+            const chip = document.createElement('button');
+            chip.className = `version-chip ${v.id === activeVersionId ? 'active' : ''}`;
+            chip.textContent = v.label;
+            chip.title = `สลับไปยังเวอร์ชัน ${v.label}`;
+            chip.onclick = () => renderArtifactVersion(v.id);
+            artifactsVersionsContainer.appendChild(chip);
+        });
+    }
+}
+
 function openArtifacts(code, title = 'Live Preview') {
     if (!artifactsDrawer || !artifactsIframe) return;
-    currentArtifactCode = code;
     if (artifactsName) artifactsName.textContent = title;
     
     // Inject full HTML wrapper if code is just a fragment
@@ -1245,7 +1274,24 @@ function openArtifacts(code, title = 'Live Preview') {
 </html>`;
     }
     
-    artifactsIframe.srcdoc = fullHtml;
+    // Version History Management: Check if this exact code already exists in history
+    let existingVersion = artifactVersions.find(v => v.code.trim() === code.trim());
+    if (!existingVersion) {
+        const newVersionId = artifactVersions.length + 1;
+        const newVersion = {
+            id: newVersionId,
+            label: `v${newVersionId}`,
+            code: code,
+            fullHtml: fullHtml,
+            timestamp: new Date()
+        };
+        artifactVersions.push(newVersion);
+        activeVersionId = newVersionId;
+    } else {
+        activeVersionId = existingVersion.id;
+    }
+    
+    renderArtifactVersion(activeVersionId);
     artifactsDrawer.classList.add('open');
 }
 
