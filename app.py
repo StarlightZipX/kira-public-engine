@@ -297,6 +297,47 @@ BRAIN_PROFILES = {
     }
 }
 
+def _should_trigger_moa(user_input: str, model_version: str, flavor: str) -> tuple:
+    """Kira 2.0 Adaptive MoA Router: วิเคราะห์ระดับความซับซ้อนของโจทย์เพื่อตัดสินใจเปิด MoA Swarm อย่างคุ้มค่า
+    Returns: (is_active: bool, routing_reason: str, hint: str)
+    """
+    if model_version not in ["2.0-ultra", "2.0-pro", "1.3"]:
+        return False, "fast_model", "โมเดลความเร็วสูง"
+
+    clean = user_input.strip().lower()
+    
+    # 1. Instant Pass (ข้าม MoA เพื่อความเร็วระดับมิลลิวินาทีสำหรับคำถามทั่วไป)
+    greetings = ["สวัสดี", "หวัดดี", "ดีครับ", "ดีค่ะ", "hello", "hi", "hey", " morning", "คุณชื่ออะไร", "ใครสร้างคุณ", "ทำอะไรได้บ้าง"]
+    gratitude = ["ขอบคุณ", "ขอบใจ", "thank", "thx", "แต๊งกิ้ว", "โอเค", "ok", "เข้าใจแล้ว", "รับทราบ", "บาย", "bye", "ลาก่อน"]
+    
+    if any(clean.startswith(g) or clean == g for g in greetings + gratitude) and len(clean) < 40:
+        return False, "simple_greeting", "คำทักทายทั่วไป (Ultra-Fast Path)"
+        
+    if len(clean) < 25 and not any(k in clean for k in ["โค้ด", "code", "เขียน", "ระบบ", "อัลกอ", "วิเคราะห์", "ทำไม", "อย่างไร"]):
+        return False, "short_query", "คำถามสั้นกระชับ (Direct Response)"
+
+    # 2. Deep Reasoning Trigger (เปิด MoA Swarm เพื่อสกัดคำตอบระดับปรมาจารย์)
+    deep_keywords = [
+        "โค้ด", "code", "python", "javascript", "typescript", "html", "css", "sql", "database",
+        "วิเคราะห์", "เปรียบเทียบ", "สรุปประเด็น", "สถาปัตยกรรม", "architecture", "อัลกอริทึม",
+        "algorithm", "กลยุทธ์", "strategy", "วางแผน", "ทำไม", "อย่างไร", "เพราะเหตุใด", "ขั้นตอน",
+        "พิสูจน์", "แก้ปัญหา", "debug", "refactor", "explain", "review", "security", "ความปลอดภัย"
+    ]
+    
+    has_deep_keyword = any(k in clean for k in deep_keywords)
+    
+    if model_version == "2.0-ultra":
+        return True, "ultra_deep_reasoning", "ภารกิจระดับองค์กร (Enterprise Deep Consensus)"
+        
+    if model_version in ["2.0-pro", "1.3"]:
+        if flavor == "reasoning":
+            return True, "user_forced_reasoning", "โหมดคิดวิเคราะห์ขั้นสูงตามคำขอ"
+        if has_deep_keyword or len(clean) > 60:
+            return True, "complex_task", "ตรวจพบโจทย์เชิงลึกหรือเนื้อหาซับซ้อน"
+            
+    return False, "standard_fast_path", "ประมวลผลความเร็วปกติ"
+
+
 def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
     """Multi-Brain Router: เลือกสถาปัตยกรรมที่เหมาะสมที่สุดตามโมเดลและคำถาม
     Returns: (model_name, brain_type, description)
@@ -1950,10 +1991,11 @@ async def chat_endpoint(req: ChatRequest, request: Request):
 
         yield "[THINKING]✍️ กำลังเรียบเรียงคำตอบ...[/THINKING]"
 
-        # Pillar 1: Mixture-of-Agents (MoA Debate Swarm) for Ultra and Pro Deep Reasoning
-        is_moa_active = (model_version == "2.0-ultra") or (model_version == "2.0-pro" and (flavor == "reasoning" or len(user_input) > 50))
+        # Pillar 1 & 2: Adaptive Mixture-of-Agents (Adaptive MoA Swarm Router)
+        is_moa_active, moa_reason, moa_hint = _should_trigger_moa(user_input, model_version, flavor)
+        
         if is_moa_active and not req.image_base64:
-            yield "[THINKING]👥 เปิดระบบระดมสมอง Mixture-of-Agents (MoA Debate Swarm)...[/THINKING]"
+            yield f"[THINKING]⚡ [Adaptive MoA] เปิดระบบระดมสมอง Swarm: {moa_hint}...[/THINKING]"
             yield "[THINKING]🧠 [Agent 1: Proposer] กำลังร่างแนวคิดและสถาปัตยกรรมคำตอบ...[/THINKING]"
             await asyncio.sleep(0.05)
             
@@ -1978,6 +2020,8 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                 
                 if critic_text:
                     temp_history.append(SystemMessage(content=f"[MoA Swarm Consensus Guidelines]: Incorporate these peer review points into the final response:\n{critic_text[:800]}"))
+        elif model_version in ["2.0-ultra", "2.0-pro"]:
+            yield f"[THINKING]⚡ [Adaptive MoA] ตรวจพบ {moa_hint} → สลับโหมด Ultra-Fast Response (ตอบกลับทันที)...[/THINKING]"
 
         elapsed_think = round(_time.time() - start_time, 1)
         yield f"[THINKING]⏱️ ใช้เวลาคิด: {elapsed_think} วินาที[/THINKING]"
