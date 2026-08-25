@@ -56,7 +56,7 @@
 ## ⚙️ 4. กฎเหล็กการพัฒนาและส่งมอบงาน (Engineering & CI/CD Standards)
 
 1. **ห้ามใช้วงเล็บในชื่อโมเดล (No Parentheses):** ต้องใช้รูปแบบ `Kira 1.0 Standard`, `Kira 2.0 Pro`, `Kira 2.0 Ultra` (ห้ามมีวงเล็บเด็ดขาด)
-2. **100-Agent Diagnostic Standard:** เมื่อพัฒนาฟังก์ชันใหม่เสร็จ ต้องรันสคริปต์ตรวจสอบความเสถียร 100 จุด (`scratch/test_100_agents.py`) ให้ได้ผลลัพธ์ **100/100 PASSED** เสมอ
+2. **100-Agent Diagnostic Swarm Built-in:** ในโฟลเดอร์นี้มีไฟล์ `test_100_agents.py` ติดตั้งอยู่โดยตรง เมื่อ AI ใน IDE พัฒนาฟังก์ชันใหม่เสร็จ สามารถสั่งรันคำสั่ง `python test_100_agents.py` เพื่อระดมพลเอเจนต์วิศวกร 100 ตัวเข้าตรวจสอบระบบทุกจุดให้ได้คะแนน **100/100 PASSED** เสมอ
 3. **Auto-Sync to GitHub:** หลังจากทำงานเสร็จสิ้นทุกครั้ง ต้องรวมไฟล์และทำการ `git add`, `git commit` และ `git push` ขึ้นสู่ GitHub Main Branch โดยอัตโนมัติ
 
 ---

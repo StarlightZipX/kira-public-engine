@@ -13,5 +13,6 @@
   3. GraphRAG Mind-Map (2D Canvas Physics + Add/Delete Memory Console)
   4. Live Code Canvas (Artifacts v1, v2, v3... Versioning + Sandboxed Iframe)
   5. Rolling Memory & Token Compression (Infinite Conversational Scaling)
-- Always run diagnostic test python C:\Users\ASUS\.gemini\antigravity\brain\c2ddc154-6b0c-41de-b546-e08d7e75cd18\scratch\test_100_agents.py after modifications to ensure 100/100 PASSED.
+- Built-in 100 Engineering Agents Swarm: Run `python test_100_agents.py` directly in the workspace to audit all 100 checkpoints across DB, API, Security, MoA, Voice, Canvas, Brain, UI, Memory, and Operations.
+- Always ensure 100/100 PASSED after major changes.
 - Always commit and push changes to GitHub main branch.
