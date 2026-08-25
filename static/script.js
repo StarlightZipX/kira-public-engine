@@ -40,6 +40,26 @@ window.copyCode = function(button) {
     });
 };
 
+// Global function for password visibility toggle
+window.togglePasswordVisibility = function(inputId, button) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const icon = button.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) {
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    } else {
+        input.type = 'password';
+        if (icon) {
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+};
+
 // --- UI Elements ---
 const authModal = document.getElementById('auth-modal');
 const appContainer = document.getElementById('app-container');
@@ -55,6 +75,7 @@ const loginUsernameInput = document.getElementById('login-username');
 const loginPasswordInput = document.getElementById('login-password');
 const btnLogin = document.getElementById('btn-login');
 const loginError = document.getElementById('login-error');
+const btnBossQuickLogin = document.getElementById('btn-boss-quick-login');
 
 // Register Elements
 const regUsernameInput = document.getElementById('reg-username');
@@ -130,19 +151,23 @@ function updateModelUI() {
 }
 
 function checkAuth() {
-    // 👑 VIP Auto-Login for Owner (Localhost only)
-    if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
-        if (!currentUser || currentUser === "👑 Boss (Owner)") {
-            currentUser = "👑 Boss (Owner)";
-            localStorage.setItem('kira_username', currentUser);
-        }
+    const storedUser = localStorage.getItem('kira_username');
+    const isExplicitlyLoggedOut = localStorage.getItem('kira_logged_out') === 'true';
+
+    // 👑 VIP Auto-Login for Owner only on initial visit (if user has not explicitly clicked Logout)
+    if ((window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && !storedUser && !isExplicitlyLoggedOut) {
+        currentUser = "👑 Boss (Owner)";
+        localStorage.setItem('kira_username', currentUser);
+    } else {
+        currentUser = storedUser;
     }
 
     if (currentUser) {
+        localStorage.removeItem('kira_logged_out');
         authModal.style.display = 'none';
         appContainer.style.display = 'flex';
         profileName.textContent = currentUser;
-        profilePic.src = `https://ui-avatars.com/api/?name=${currentUser}&background=0D8ABC&color=fff`;
+        profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser)}&background=0D8ABC&color=fff`;
         loadHistory();
         loadUserProfile();
     } else {
@@ -155,7 +180,7 @@ function checkAuth() {
 
 async function loadUserProfile() {
     try {
-        const response = await fetch(`/api/user/profile/${currentUser}`);
+        const response = await fetch(`/api/user/profile/${encodeURIComponent(currentUser)}`);
         const data = await response.json();
         if (data.status === 'success') {
             profileName.textContent = currentUser;
@@ -190,114 +215,214 @@ checkEngineStatus();
 setInterval(checkEngineStatus, 30000);
 
 // --- Auth UI Toggles ---
-goToRegister.addEventListener('click', (e) => {
-    e.preventDefault();
-    loginView.style.display = 'none';
-    registerView.style.display = 'block';
-    loginError.textContent = '';
+if (goToRegister) {
+    goToRegister.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginView.style.display = 'none';
+        registerView.style.display = 'block';
+        loginError.textContent = '';
+        if (regUsernameInput) regUsernameInput.focus();
+    });
+}
+
+if (goToLogin) {
+    goToLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        registerView.style.display = 'none';
+        loginView.style.display = 'block';
+        regError.textContent = '';
+        if (loginUsernameInput) loginUsernameInput.focus();
+    });
+}
+
+// --- Keyboard Enter Navigation ---
+[loginUsernameInput, loginPasswordInput].forEach(input => {
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                btnLogin.click();
+            }
+        });
+    }
 });
 
-goToLogin.addEventListener('click', (e) => {
-    e.preventDefault();
-    registerView.style.display = 'none';
-    loginView.style.display = 'block';
-    regError.textContent = '';
+[regUsernameInput, regPasswordInput, regConfirmInput].forEach(input => {
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                btnRegister.click();
+            }
+        });
+    }
 });
 
 // --- Auth API Calls ---
-btnLogin.addEventListener('click', async () => {
-    const username = loginUsernameInput.value.trim();
-    const password = loginPasswordInput.value.trim();
-    
-    if (!username || !password) {
-        loginError.style.color = '#ef4444';
-        loginError.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            localStorage.setItem('kira_username', data.username);
-            currentUser = data.username;
-            loginUsernameInput.value = '';
-            loginPasswordInput.value = '';
-            loginError.textContent = '';
-            checkAuth();
-            updateModelUI();
-        } else {
-            loginError.style.color = '#ef4444';
-            loginError.textContent = data.message;
+if (btnLogin) {
+    btnLogin.addEventListener('click', async () => {
+        const username = loginUsernameInput.value.trim();
+        const password = loginPasswordInput.value.trim();
+        
+        if (!username || !password) {
+            loginError.style.color = '#f87171';
+            loginError.textContent = "กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วนค่ะ";
+            return;
         }
-    } catch (err) {
-        loginError.style.color = '#ef4444';
-        loginError.textContent = "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้";
-    }
-});
 
-btnRegister.addEventListener('click', async () => {
-    const username = regUsernameInput.value.trim();
-    const password = regPasswordInput.value.trim();
-    const confirm = regConfirmInput.value.trim();
-    
-    if (!username || !password || !confirm) {
-        regError.style.color = '#ef4444';
-        regError.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
-        return;
-    }
+        const originalText = btnLogin.innerHTML;
+        btnLogin.disabled = true;
+        btnLogin.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเข้าสู่ระบบ...';
 
-    if (password !== confirm) {
-        regError.style.color = '#ef4444';
-        regError.textContent = "รหัสผ่านไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง";
-        return;
-    }
+        try {
+            const response = await fetch(`/api/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await response.json();
 
-    try {
-        const response = await fetch(`/api/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            regError.style.color = '#10b981';
-            regError.textContent = "สมัครสมาชิกสำเร็จ! กำลังพากลับไปหน้าเข้าสู่ระบบ...";
-            setTimeout(() => {
-                registerView.style.display = 'none';
-                loginView.style.display = 'block';
-                loginUsernameInput.value = username; // Auto-fill username
-                regUsernameInput.value = '';
-                regPasswordInput.value = '';
-                regConfirmInput.value = '';
-                regError.textContent = '';
-                loginError.style.color = '#10b981';
-                loginError.textContent = "ลงทะเบียนเรียบร้อยแล้ว กรุณาเข้าสู่ระบบ";
-            }, 1500);
-        } else {
-            regError.style.color = '#ef4444';
-            regError.textContent = data.message;
+            if (data.status === 'success') {
+                localStorage.setItem('kira_username', data.username);
+                localStorage.removeItem('kira_logged_out');
+                currentUser = data.username;
+                loginUsernameInput.value = '';
+                loginPasswordInput.value = '';
+                loginError.textContent = '';
+                checkAuth();
+                updateModelUI();
+            } else {
+                loginError.style.color = '#f87171';
+                loginError.textContent = data.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้องค่ะ";
+            }
+        } catch (err) {
+            loginError.style.color = '#f87171';
+            loginError.textContent = "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง";
+        } finally {
+            btnLogin.disabled = false;
+            btnLogin.innerHTML = originalText;
         }
-    } catch (err) {
-        regError.style.color = '#ef4444';
-        regError.textContent = "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้";
-    }
-});
+    });
+}
 
-btnLogout.addEventListener('click', () => {
-    localStorage.removeItem('kira_username');
-    currentUser = null;
-    chatBox.innerHTML = '';
-    chatHistorySidebar.innerHTML = '<p class="history-title">ยังไม่มีประวัติการแชท</p>';
-    checkAuth();
-    updateModelUI();
-});
+// 👑 VIP Boss 1-Click Login
+if (btnBossQuickLogin) {
+    btnBossQuickLogin.addEventListener('click', async () => {
+        const originalText = btnBossQuickLogin.innerHTML;
+        btnBossQuickLogin.disabled = true;
+        btnBossQuickLogin.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเข้าสู่ระบบ VIP...';
+
+        try {
+            const response = await fetch(`/api/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: "👑 Boss (Owner)", password: "kira1234" })
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                localStorage.setItem('kira_username', data.username);
+                localStorage.removeItem('kira_logged_out');
+                currentUser = data.username;
+                loginError.textContent = '';
+                checkAuth();
+                updateModelUI();
+            } else {
+                loginError.style.color = '#f87171';
+                loginError.textContent = data.message || "ไม่สามารถเข้าสู่ระบบ VIP ได้";
+            }
+        } catch (err) {
+            loginError.style.color = '#f87171';
+            loginError.textContent = "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้";
+        } finally {
+            btnBossQuickLogin.disabled = false;
+            btnBossQuickLogin.innerHTML = originalText;
+        }
+    });
+}
+
+if (btnRegister) {
+    btnRegister.addEventListener('click', async () => {
+        const username = regUsernameInput.value.trim();
+        const password = regPasswordInput.value.trim();
+        const confirm = regConfirmInput.value.trim();
+        
+        if (!username || !password || !confirm) {
+            regError.style.color = '#f87171';
+            regError.textContent = "กรุณากรอกข้อมูลให้ครบทุกช่องค่ะ";
+            return;
+        }
+
+        if (username.length < 3) {
+            regError.style.color = '#f87171';
+            regError.textContent = "ชื่อผู้ใช้ต้องมีความยาวอย่างน้อย 3 ตัวอักษรค่ะ";
+            return;
+        }
+
+        if (password.length < 4) {
+            regError.style.color = '#f87171';
+            regError.textContent = "รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษรค่ะ";
+            return;
+        }
+
+        if (password !== confirm) {
+            regError.style.color = '#f87171';
+            regError.textContent = "รหัสผ่านยืนยันไม่ตรงกัน กรุณาตรวจสอบอีกครั้งค่ะ";
+            return;
+        }
+
+        const originalText = btnRegister.innerHTML;
+        btnRegister.disabled = true;
+        btnRegister.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้างบัญชี...';
+
+        try {
+            const response = await fetch(`/api/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                regError.style.color = '#34d399';
+                regError.textContent = "✨ สมัครสมาชิกสำเร็จ! กำลังพากลับไปหน้าเข้าสู่ระบบ...";
+                setTimeout(() => {
+                    registerView.style.display = 'none';
+                    loginView.style.display = 'block';
+                    loginUsernameInput.value = username; // Auto-fill username
+                    regUsernameInput.value = '';
+                    regPasswordInput.value = '';
+                    regConfirmInput.value = '';
+                    regError.textContent = '';
+                    loginError.style.color = '#34d399';
+                    loginError.textContent = "ลงทะเบียนเรียบร้อยแล้ว กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบค่ะ";
+                    if (loginPasswordInput) loginPasswordInput.focus();
+                }, 1200);
+            } else {
+                regError.style.color = '#f87171';
+                regError.textContent = data.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก";
+            }
+        } catch (err) {
+            regError.style.color = '#f87171';
+            regError.textContent = "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง";
+        } finally {
+            btnRegister.disabled = false;
+            btnRegister.innerHTML = originalText;
+        }
+    });
+}
+
+if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+        localStorage.removeItem('kira_username');
+        localStorage.setItem('kira_logged_out', 'true');
+        currentUser = null;
+        chatBox.innerHTML = '';
+        chatHistorySidebar.innerHTML = '<p class="history-title">ยังไม่มีประวัติการแชท</p>';
+        checkAuth();
+        updateModelUI();
+    });
+}
 
 // --- Chat Logic ---
 let currentSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);

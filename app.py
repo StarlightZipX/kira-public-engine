@@ -888,9 +888,28 @@ async def admin_dashboard(
 
 @app.post("/api/register")
 async def register(req: AuthRequest):
+    username = req.username.strip() if req.username else ""
+    password = req.password.strip() if req.password else ""
+
+    if not username or not password:
+        return {"status": "error", "message": "กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วนค่ะ"}
+
+    if len(username) < 3:
+        return {"status": "error", "message": "ชื่อผู้ใช้ต้องมีความยาวอย่างน้อย 3 ตัวอักษรค่ะ"}
+
+    if len(username) > 30:
+        return {"status": "error", "message": "ชื่อผู้ใช้ต้องไม่เกิน 30 ตัวอักษรค่ะ"}
+
+    if len(password) < 4:
+        return {"status": "error", "message": "รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษรค่ะ"}
+
+    reserved_names = ["👑 boss (owner)", "boss", "admin", "administrator", "kira", "system", "owner", "root", "guest"]
+    if username.lower() in reserved_names or "👑" in username:
+        return {"status": "error", "message": "ชื่อผู้ใช้นี้เป็นชื่อสงวนของระบบ ไม่สามารถลงทะเบียนได้ค่ะ"}
+
     try:
         execute_query("INSERT INTO users (username, password_hash) VALUES (?, ?)",
-                  (req.username, hash_password(req.password)))
+                  (username, hash_password(password)))
         return {"status": "success", "message": "สมัครสมาชิกสำเร็จ!"}
     except Exception as e:
         err_str = str(e).lower()
@@ -900,37 +919,43 @@ async def register(req: AuthRequest):
 
 @app.post("/api/login")
 async def login(req: AuthRequest):
-    # Boss Override (กรณี Database ใหม่บนคลาวด์)
-    if req.username == "👑 Boss (Owner)" or req.username.lower() == "boss":
+    username = req.username.strip() if req.username else ""
+    password = req.password.strip() if req.password else ""
+
+    if not username or not password:
+        return {"status": "error", "message": "กรุณากรอกชื่อผู้ใช้และรหัสผ่านค่ะ"}
+
+    # Boss Override (กรณี Database ใหม่บนคลาวด์ หรือโหมดเจ้าของระบบ)
+    if username == "👑 Boss (Owner)" or username.lower() == "boss":
         boss_password = os.environ.get("BOSS_PASSWORD", "kira1234")
-        if req.password == boss_password:
-            req.username = "👑 Boss (Owner)"
-            if req.username not in user_sessions:
-                prompt_to_use = _get_full_system_prompt(req.username)
-                user_sessions[req.username] = [SystemMessage(content=prompt_to_use)]
+        if password == boss_password:
+            username = "👑 Boss (Owner)"
+            if username not in user_sessions:
+                prompt_to_use = _get_full_system_prompt(username)
+                user_sessions[username] = [SystemMessage(content=prompt_to_use)]
                 # Load history if any
-                history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (req.username,), fetch='all')
+                history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (username,), fetch='all')
                 if history_rows:
                     for role, content in history_rows:
                         if role == "User":
-                            user_sessions[req.username].append(HumanMessage(content=content))
+                            user_sessions[username].append(HumanMessage(content=content))
                         elif role == "Kira":
-                            user_sessions[req.username].append(AIMessage(content=content))
-            return {"status": "success", "username": req.username}
+                            user_sessions[username].append(AIMessage(content=content))
+            return {"status": "success", "username": username}
 
-    row = execute_query("SELECT password_hash FROM users WHERE username=?", (req.username,), fetch='one')
-    if row and row[0] == hash_password(req.password):
-        if req.username not in user_sessions:
-            prompt_to_use = _get_full_system_prompt(req.username)
-            user_sessions[req.username] = [SystemMessage(content=prompt_to_use)]
-            history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (req.username,), fetch='all')
+    row = execute_query("SELECT password_hash FROM users WHERE username=?", (username,), fetch='one')
+    if row and row[0] == hash_password(password):
+        if username not in user_sessions:
+            prompt_to_use = _get_full_system_prompt(username)
+            user_sessions[username] = [SystemMessage(content=prompt_to_use)]
+            history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (username,), fetch='all')
             if history_rows:
                 for role, content in history_rows:
                     if role == "User":
-                        user_sessions[req.username].append(HumanMessage(content=content))
+                        user_sessions[username].append(HumanMessage(content=content))
                     elif role == "Kira":
-                        user_sessions[req.username].append(AIMessage(content=content))
-        return {"status": "success", "username": req.username}
+                        user_sessions[username].append(AIMessage(content=content))
+        return {"status": "success", "username": username}
     else:
         return {"status": "error", "message": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้องค่ะ"}
 

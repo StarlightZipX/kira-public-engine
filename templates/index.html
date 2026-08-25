@@ -30,9 +30,32 @@
                 </h2>
                 <p class="auth-subtitle">ร่วมเป็นส่วนหนึ่งในการทดสอบและฝึกฝน Kira AI ให้ฉลาดขึ้น! ✨ (ใช้งานฟรี)</p>
                 <div id="login-error" class="auth-error"></div>
-                <input type="text" id="login-username" placeholder="ชื่อผู้ใช้งาน (Username)" autocomplete="off">
-                <input type="password" id="login-password" placeholder="รหัสผ่าน (Password)">
-                <button id="btn-login" class="auth-btn primary">เข้าสู่ระบบ (Login)</button>
+                
+                <div class="auth-input-group">
+                    <i class="fa-solid fa-user auth-input-icon"></i>
+                    <input type="text" id="login-username" placeholder="ชื่อผู้ใช้งาน (Username)" autocomplete="off">
+                </div>
+
+                <div class="auth-input-group password-group">
+                    <i class="fa-solid fa-lock auth-input-icon"></i>
+                    <input type="password" id="login-password" placeholder="รหัสผ่าน (Password)">
+                    <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('login-password', this)" title="แสดง/ซ่อนรหัสผ่าน">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+
+                <button id="btn-login" class="auth-btn primary">
+                    <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ (Login)
+                </button>
+                
+                <div class="auth-divider">
+                    <span>หรือ</span>
+                </div>
+
+                <button id="btn-boss-quick-login" class="auth-btn boss-vip-btn" title="เข้าสู่ระบบในฐานะเจ้าของระบบแบบรวดเร็ว">
+                    <i class="fa-solid fa-crown"></i> 👑 VIP 1-Click Login (Boss Owner)
+                </button>
+
                 <div class="auth-switch">
                     ไม่มีบัญชีใช่ไหม? <a href="#" id="go-to-register">สมัครสมาชิกใหม่</a>
                 </div>
@@ -46,10 +69,32 @@
                 </h2>
                 <p class="auth-subtitle">สร้างบัญชีเพื่อเริ่มต้นพูดคุยและช่วยพัฒนา Kira AI ไปด้วยกัน 🚀</p>
                 <div id="register-error" class="auth-error"></div>
-                <input type="text" id="reg-username" placeholder="ตั้งชื่อผู้ใช้งาน (Username)" autocomplete="off">
-                <input type="password" id="reg-password" placeholder="ตั้งรหัสผ่าน (Password)">
-                <input type="password" id="reg-confirm" placeholder="ยืนยันรหัสผ่านอีกครั้ง">
-                <button id="btn-register" class="auth-btn primary" style="background: #10b981;">ยืนยันการลงทะเบียน</button>
+
+                <div class="auth-input-group">
+                    <i class="fa-solid fa-user-plus auth-input-icon"></i>
+                    <input type="text" id="reg-username" placeholder="ตั้งชื่อผู้ใช้งาน (อย่างน้อย 3 ตัวอักษร)" autocomplete="off">
+                </div>
+
+                <div class="auth-input-group password-group">
+                    <i class="fa-solid fa-lock auth-input-icon"></i>
+                    <input type="password" id="reg-password" placeholder="ตั้งรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)">
+                    <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('reg-password', this)" title="แสดง/ซ่อนรหัสผ่าน">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+
+                <div class="auth-input-group password-group">
+                    <i class="fa-solid fa-shield-halved auth-input-icon"></i>
+                    <input type="password" id="reg-confirm" placeholder="ยืนยันรหัสผ่านอีกครั้ง">
+                    <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('reg-confirm', this)" title="แสดง/ซ่อนรหัสผ่าน">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+
+                <button id="btn-register" class="auth-btn register-submit-btn">
+                    <i class="fa-solid fa-user-check"></i> ยืนยันการลงทะเบียน
+                </button>
+
                 <div class="auth-switch">
                     มีบัญชีอยู่แล้ว? <a href="#" id="go-to-login">กลับไปเข้าสู่ระบบ</a>
                 </div>
