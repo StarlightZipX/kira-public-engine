@@ -150,9 +150,14 @@
             </div>
 
             <div class="sidebar-footer">
-                <div class="user-profile">
-                    <img id="profile-pic" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
-                    <span id="profile-name">User</span>
+                <div class="user-profile-wrapper" style="display: flex; flex-direction: column; gap: 4px; overflow: hidden; flex: 1;">
+                    <div class="user-profile">
+                        <img id="profile-pic" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
+                        <span id="profile-name">User</span>
+                    </div>
+                    <div id="user-quota-badge" style="font-size: 0.72rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); padding: 2px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; width: fit-content; margin-left: 2px;">
+                        <i class="fa-solid fa-bolt-lightning"></i> <span id="quota-text">โควตาวันนี้: กำลังโหลด...</span>
+                    </div>
                 </div>
                 <button class="settings-btn" id="btn-logout" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
@@ -315,11 +320,43 @@
         </div>
     </div>
 
+    <!-- System Info Modal -->
+    <div class="modal-overlay" id="info-modal" style="display: none; z-index: 1070;">
+        <div class="modal-card" style="max-width: 520px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 8px; color: #38bdf8;">
+                    <i class="fa-solid fa-circle-info"></i> เกี่ยวกับ Kira AI System 2.1
+                </h3>
+                <button id="close-info-modal" style="background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <strong style="color: #f8fafc;">✨ นวัตกรรมระบบ:</strong>
+                    <p style="margin: 4px 0 0 0; color: #94a3b8;">Kira AI สถาปัตยกรรมอัจฉริยะแบบ Hybrid Cognitive Engine ผสานโมเดลระดับท็อป (Qwen 72B, DeepSeek-R1, Llama 70B, Mixtral) พร้อมระบบความจำระยะยาว GraphRAG และ Live Canvas</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                    <strong style="color: #38bdf8;"><i class="fa-solid fa-star"></i> ไฮไลต์ฟีเจอร์เด่น:</strong>
+                    <ul style="margin: 6px 0 0 16px; padding: 0; color: #94a3b8; font-size: 0.85rem;">
+                        <li>👑 <strong>Kira 2.1 Reasoning:</strong> คิดวิเคราะห์ตรรกะและแผนงานเชิงลึก</li>
+                        <li>📊 <strong>Mermaid Flowchart:</strong> วาดผังงานและไดอะแกรมอัตโนมัติ</li>
+                        <li>🎨 <strong>Live Code Canvas:</strong> พรีวิวหน้าเว็บ HTML/JS สดแบบ interactive</li>
+                        <li>🕸️ <strong>Knowledge Mind-Map:</strong> ส่องและแก้ไขโครงข่ายความจำของสมอง AI</li>
+                        <li>🎙️ <strong>Neural Voice:</strong> สั่งงานด้วยเสียงและฟังเสียงอ่านภาษาไทยที่เป็นธรรมชาติ</li>
+                    </ul>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                    <span>เวอร์ชัน: <strong>Kira 2.1 Next-Gen (Build 2026.8)</strong></span>
+                    <span>ผู้สร้าง: <strong>Kira AI System Team</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=12"></script>
+    <script src="/static/script.js?v=13"></script>
 </body>
 </html>

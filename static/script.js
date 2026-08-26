@@ -185,6 +185,20 @@ async function loadUserProfile() {
         if (data.status === 'success') {
             profileName.textContent = currentUser;
         }
+        
+        // Fetch Quota
+        const qRes = await fetch(`/api/user/quota/${encodeURIComponent(currentUser)}`);
+        const qData = await qRes.json();
+        const quotaBadge = document.getElementById('user-quota-badge');
+        const quotaText = document.getElementById('quota-text');
+        if (quotaBadge && quotaText && qData.status === 'success') {
+            quotaText.textContent = qData.badge;
+            if (qData.is_boss) {
+                quotaBadge.style.color = '#f59e0b';
+                quotaBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+                quotaBadge.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+            }
+        }
     } catch (e) {
         console.error("Profile fetch error:", e);
     }
@@ -427,6 +441,44 @@ if (btnLogout) {
 // --- Chat Logic ---
 let currentSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
 
+function renderWelcomeHub() {
+    chatBox.innerHTML = `
+        <div class="welcome-hero-card">
+            <div class="welcome-header">
+                <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo">
+                <div>
+                    <h3 class="welcome-title">สวัสดีค่ะคุณ ${currentUser || 'ผู้ใช้'}! 🌸</h3>
+                    <p class="welcome-subtitle">หนูคือ Kira AI 2.1 ผู้ช่วยอัจฉริยะส่วนตัวของคุณ พร้อมช่วยงานทุกด้านแล้วค่ะ</p>
+                </div>
+            </div>
+            <div class="welcome-grid">
+                <div class="welcome-pill" onclick="sendQuickPrompt('ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บร้านกาแฟสวยๆ พร้อม Tailwind CSS และ Interactive Elements')">
+                    <span class="welcome-pill-title"><i class="fa-solid fa-code"></i> พรีวิวโค้ดสด (Live Canvas)</span>
+                    <span class="welcome-pill-desc">สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที</span>
+                </div>
+                <div class="welcome-pill" onclick="sendQuickPrompt('ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานของระบบสั่งอาหาร Delivery')">
+                    <span class="welcome-pill-title"><i class="fa-solid fa-project-diagram"></i> วาดผังงาน (Mermaid)</span>
+                    <span class="welcome-pill-desc">สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ</span>
+                </div>
+                <div class="welcome-pill" onclick="sendQuickPrompt('ช่วยวิเคราะห์จุดเด่นจุดด้อยและกลยุทธ์การนำ AI มาใช้ในองค์กรยุค 2026')">
+                    <span class="welcome-pill-title"><i class="fa-solid fa-brain"></i> คิดวิเคราะห์เชิงลึก (Reasoning)</span>
+                    <span class="welcome-pill-desc">สกัดตรรกะ วิจัย วางแผนกลยุทธ์ และคำนวณซับซ้อน</span>
+                </div>
+                <div class="welcome-pill" onclick="sendQuickPrompt('สรุปข่าวเทคโนโลยี AI และแนวโน้มสำคัญล่าสุดของวันนี้ให้ฟังหน่อย')">
+                    <span class="welcome-pill-title"><i class="fa-solid fa-globe"></i> ค้นหาเว็บสด (Web Search)</span>
+                    <span class="welcome-pill-desc">สืบค้นข่าวสาร ข้อมูลสด และราคาสินทรัพย์แบบเรียลไทม์</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function sendQuickPrompt(promptText) {
+    if (!userInput) return;
+    userInput.value = promptText;
+    sendMessage();
+}
+
 async function loadHistory() {
     try {
         const response = await fetch(`/api/history/sessions/${currentUser}`);
@@ -442,8 +494,7 @@ async function loadHistory() {
         newChatDiv.innerHTML = `<i class="fa-solid fa-plus"></i> แชทใหม่ (New Chat)`;
         newChatDiv.onclick = () => {
             currentSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-            chatBox.innerHTML = '';
-            addMessage(`สวัสดีค่ะคุณ ${currentUser}! หนู Kira ยินดีต้อนรับนะคะ วันนี้มีอะไรให้หนูช่วยไหมคะ?`, false);
+            renderWelcomeHub();
             document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
             newChatDiv.classList.add('active');
         };
@@ -470,8 +521,7 @@ async function loadHistory() {
         } else {
             // New user, no sessions
             newChatDiv.classList.add('active');
-            chatBox.innerHTML = '';
-            addMessage(`สวัสดีค่ะคุณ ${currentUser}! หนู Kira ยินดีต้อนรับนะคะ วันนี้มีอะไรให้หนูช่วยไหมคะ?`, false);
+            renderWelcomeHub();
         }
     } catch (err) {
         console.error("Load sessions error:", err);
@@ -484,7 +534,7 @@ async function loadSession(sessionId) {
         const data = await response.json();
         chatBox.innerHTML = '';
         if (data.history.length === 0) {
-            addMessage(`สวัสดีค่ะคุณ ${currentUser}! หนู Kira ยินดีต้อนรับนะคะ วันนี้มีอะไรให้หนูช่วยไหมคะ?`, false);
+            renderWelcomeHub();
         } else {
             data.history.forEach(msg => {
                 // Strip badge when rendering old history
@@ -727,11 +777,24 @@ async function sendMessage() {
             likeBtn.style.borderColor = '#334155'; 
         };
 
+        const copyMsgBtn = document.createElement('button');
+        copyMsgBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
+        copyMsgBtn.title = 'คัดลอกคำตอบนี้';
+        copyMsgBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
+        copyMsgBtn.onclick = () => {
+            navigator.clipboard.writeText(finalMarkdown || fullText);
+            copyMsgBtn.innerHTML = '<i class="fa-solid fa-check" style="color: #38bdf8;"></i> คัดลอกแล้ว';
+            setTimeout(() => {
+                copyMsgBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
+            }, 2000);
+        };
+
         const reviewBtn = document.createElement('button');
-        reviewBtn.innerHTML = '<i class="fa-solid fa-comment-dots"></i> รีวิวติชม';
+        reviewBtn.innerHTML = '<i class="fa-solid fa-comment-dots"></i> รีวิว';
         reviewBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
         reviewBtn.onclick = () => openReviewModal(fullText);
 
+        feedbackUI.appendChild(copyMsgBtn);
         feedbackUI.appendChild(speakerBtn);
         feedbackUI.appendChild(likeBtn);
         feedbackUI.appendChild(dislikeBtn);
@@ -744,7 +807,7 @@ async function sendMessage() {
         }
 
         chatBox.scrollTop = chatBox.scrollHeight;
-        loadUserProfile(); // Refresh points after message
+        loadUserProfile(); // Refresh points & quota after message
         
     } catch (error) {
         hideTypingIndicator();
@@ -766,28 +829,93 @@ newChatBtn.addEventListener('click', async () => {
             body: JSON.stringify({ message: "", username: currentUser })
         });
     } catch(e) { console.error(e); }
-    chatBox.innerHTML = ''; 
-    addMessage(`สร้างหน้าต่างแชทใหม่แล้วค่ะคุณ ${currentUser}! วันนี้มีอะไรให้หนูช่วยไหมคะ?`, false);
+    currentSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+    renderWelcomeHub();
     userInput.focus();
 });
 
+// --- Theme Switcher ---
 const btnTheme = document.getElementById('btn-theme');
 if (btnTheme) {
-    const isLightMode = localStorage.getItem('kira_theme') === 'light';
-    if (isLightMode) {
-        document.body.classList.add('light-mode');
-        btnTheme.innerHTML = '<i class="fa-solid fa-sun"></i>';
+    const isLight = localStorage.getItem('kira_theme') === 'light';
+    if (isLight) {
+        document.body.classList.add('light-theme');
+        btnTheme.innerHTML = '<i class="fa-solid fa-sun" style="color: #f59e0b;"></i>';
     }
 
     btnTheme.addEventListener('click', () => {
-        document.body.classList.toggle('light-mode');
-        if (document.body.classList.contains('light-mode')) {
+        const lightActive = document.body.classList.toggle('light-theme');
+        if (lightActive) {
             localStorage.setItem('kira_theme', 'light');
-            btnTheme.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            btnTheme.innerHTML = '<i class="fa-solid fa-sun" style="color: #f59e0b;"></i>';
         } else {
             localStorage.setItem('kira_theme', 'dark');
             btnTheme.innerHTML = '<i class="fa-solid fa-moon"></i>';
         }
+    });
+}
+
+// --- Export Chat History ---
+const btnExport = document.getElementById('btn-export');
+if (btnExport) {
+    btnExport.addEventListener('click', () => {
+        const messages = chatBox.querySelectorAll('.message');
+        if (!messages || messages.length === 0) {
+            alert('ยังไม่มีข้อความในประวัติการสนทนานี้ค่ะ');
+            return;
+        }
+        
+        let mdContent = `# 💬 Kira AI System 2.1 - ประวัติการสนทนา\n`;
+        mdContent += `**ผู้ใช้งาน:** ${currentUser || 'User'}\n`;
+        mdContent += `**วันที่บันทึก:** ${new Date().toLocaleString('th-TH')}\n\n---\n\n`;
+        
+        messages.forEach(msg => {
+            const isUser = msg.classList.contains('user');
+            const contentEl = msg.querySelector('.content');
+            if (!contentEl) return;
+            
+            // Clone and remove feedback buttons before getting text
+            const clone = contentEl.cloneNode(true);
+            const fb = clone.querySelector('div[style*="border-top"]');
+            if (fb) fb.remove();
+            const txt = clone.innerText.trim();
+            
+            if (isUser) {
+                mdContent += `### 👤 คุณ (${currentUser}):\n${txt}\n\n`;
+            } else {
+                mdContent += `### 🤖 Kira AI:\n${txt}\n\n`;
+            }
+        });
+        
+        const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Kira_Chat_${Date.now()}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+}
+
+// --- Info Modal ---
+const btnInfo = document.getElementById('btn-info');
+const infoModal = document.getElementById('info-modal');
+const closeInfoModal = document.getElementById('close-info-modal');
+
+if (btnInfo && infoModal) {
+    btnInfo.addEventListener('click', () => {
+        infoModal.style.display = 'flex';
+    });
+}
+
+if (closeInfoModal && infoModal) {
+    closeInfoModal.addEventListener('click', () => {
+        infoModal.style.display = 'none';
+    });
+    infoModal.addEventListener('click', (e) => {
+        if (e.target === infoModal) infoModal.style.display = 'none';
     });
 }
 

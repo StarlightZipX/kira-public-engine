@@ -975,6 +975,31 @@ async def get_user_profile(username: str):
         return {"status": "success", "points": row[0]}
     return {"status": "error", "message": "User not found"}
 
+@app.get("/api/user/quota/{username}")
+async def get_user_quota(username: str):
+    """ส่งคืนสถานะโควตาการใช้งานรายวันของผู้ใช้"""
+    try:
+        is_boss = _is_boss(username)
+        if is_boss:
+            return {"status": "success", "is_boss": True, "used": 0, "remaining": 9999, "limit": 9999, "badge": "👑 Unlimited Boss Pass"}
+        
+        tz = timezone(timedelta(hours=7))
+        today_prefix = datetime.now(tz).strftime("%Y-%m-%d")
+        row = execute_query("SELECT COUNT(*) FROM logs WHERE username=? AND role='User' AND timestamp LIKE ?", (username, f"{today_prefix}%"), fetch='one')
+        used = row[0] if row else 0
+        limit = 150
+        remaining = max(0, limit - used)
+        return {
+            "status": "success",
+            "is_boss": False,
+            "used": used,
+            "remaining": remaining,
+            "limit": limit,
+            "badge": f"⚡ โควตาวันนี้: {remaining}/{limit} ข้อความ"
+        }
+    except Exception as e:
+        return {"status": "success", "is_boss": False, "used": 0, "remaining": 150, "limit": 150, "badge": "⚡ โควตาวันนี้: 150/150 ข้อความ"}
+
 @app.get("/api/history/sessions/{username}")
 async def get_sessions(username: str):
     try:
