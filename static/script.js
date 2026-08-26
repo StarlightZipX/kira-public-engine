@@ -618,7 +618,7 @@ async function sendMessage() {
 
 
     try {
-        const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.0-flash";
+        const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.1-reasoning";
         const flavor = document.querySelector('input[name="sub-model-flavor"]:checked') ? document.querySelector('input[name="sub-model-flavor"]:checked').value : "fast";
         const persona = document.getElementById('persona-select') ? document.getElementById('persona-select').value : "default";
 
@@ -1323,9 +1323,40 @@ function openArtifacts(code, title = 'Live Preview') {
     if (!artifactsDrawer || !artifactsIframe) return;
     if (artifactsName) artifactsName.textContent = title;
     
-    // Inject full HTML wrapper if code is just a fragment
+    const isMermaid = title.toLowerCase().includes('mermaid') || 
+                      code.trim().startsWith('graph ') || 
+                      code.trim().startsWith('flowchart ') || 
+                      code.trim().startsWith('sequenceDiagram ') || 
+                      code.trim().startsWith('classDiagram ') || 
+                      code.trim().startsWith('stateDiagram') || 
+                      code.trim().startsWith('erDiagram');
+
+    // Inject full HTML wrapper if code is just a fragment or mermaid
     let fullHtml = code;
-    if (!code.toLowerCase().includes('<!doctype') && !code.toLowerCase().includes('<html')) {
+    if (isMermaid) {
+        fullHtml = `
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kira Mermaid Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body { margin: 0; padding: 2rem; background: #0f172a; color: #f8fafc; font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .mermaid { background: rgba(30, 41, 59, 0.7); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 100%; overflow: auto; }
+    </style>
+</head>
+<body>
+    <div class="mermaid">
+${code}
+    </div>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+</body>
+</html>`;
+    } else if (!code.toLowerCase().includes('<!doctype') && !code.toLowerCase().includes('<html')) {
         fullHtml = `
 <!DOCTYPE html>
 <html lang="th">
@@ -1376,6 +1407,13 @@ function applyCodeActions(container) {
         
         const codeText = block.innerText;
         const className = block.className || '';
+        const isMermaid = className.includes('mermaid') || 
+                          codeText.trim().startsWith('graph ') || 
+                          codeText.trim().startsWith('flowchart ') || 
+                          codeText.trim().startsWith('sequenceDiagram ') || 
+                          codeText.trim().startsWith('classDiagram ') || 
+                          codeText.trim().startsWith('stateDiagram') || 
+                          codeText.trim().startsWith('erDiagram');
         const isHtmlOrWeb = className.includes('html') || className.includes('svg') || className.includes('xml') || codeText.includes('<div') || codeText.includes('<html') || codeText.includes('<svg');
         
         const actionBar = document.createElement('div');
@@ -1396,8 +1434,15 @@ function applyCodeActions(container) {
         };
         actionBar.appendChild(copyBtn);
         
-        // Live Preview Button
-        if (isHtmlOrWeb) {
+        // Live Preview Button (Mermaid or Web Canvas)
+        if (isMermaid) {
+            const mermaidBtn = document.createElement('button');
+            mermaidBtn.className = 'btn-run-code';
+            mermaidBtn.style.background = 'linear-gradient(135deg, #8b5cf6, #ec4899)';
+            mermaidBtn.innerHTML = '<i class="fa-solid fa-project-diagram"></i> ดูผังไดอะแกรม (Mermaid Flowchart)';
+            mermaidBtn.onclick = () => openArtifacts(codeText, 'Mermaid Flowchart / Diagram');
+            actionBar.appendChild(mermaidBtn);
+        } else if (isHtmlOrWeb) {
             const previewBtn = document.createElement('button');
             previewBtn.className = 'btn-run-code';
             previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> พรีวิวสด (Live Canvas)';

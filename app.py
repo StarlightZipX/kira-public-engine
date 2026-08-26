@@ -298,10 +298,10 @@ BRAIN_PROFILES = {
 }
 
 def _should_trigger_moa(user_input: str, model_version: str, flavor: str) -> tuple:
-    """Kira 2.0 Adaptive MoA Router: วิเคราะห์ระดับความซับซ้อนของโจทย์เพื่อตัดสินใจเปิด MoA Swarm อย่างคุ้มค่า
+    """Kira 2.1 Adaptive MoA Router: วิเคราะห์ระดับความซับซ้อนของโจทย์เพื่อตัดสินใจเปิด MoA Swarm อย่างคุ้มค่า
     Returns: (is_active: bool, routing_reason: str, hint: str)
     """
-    if model_version not in ["2.0-ultra", "2.0-pro", "1.3"]:
+    if model_version not in ["2.1-reasoning", "2.1-pro", "2.0-ultra", "2.0-pro", "1.3"]:
         return False, "fast_model", "โมเดลความเร็วสูง"
 
     clean = user_input.strip().lower()
@@ -313,7 +313,7 @@ def _should_trigger_moa(user_input: str, model_version: str, flavor: str) -> tup
     if any(clean.startswith(g) or clean == g for g in greetings + gratitude) and len(clean) < 40:
         return False, "simple_greeting", "คำทักทายทั่วไป (Ultra-Fast Path)"
         
-    if len(clean) < 25 and not any(k in clean for k in ["โค้ด", "code", "เขียน", "ระบบ", "อัลกอ", "วิเคราะห์", "ทำไม", "อย่างไร"]):
+    if len(clean) < 25 and not any(k in clean for k in ["โค้ด", "code", "เขียน", "ระบบ", "อัลกอ", "วิเคราะห์", "ทำไม", "อย่างไร", "mermaid", "ผังงาน"]):
         return False, "short_query", "คำถามสั้นกระชับ (Direct Response)"
 
     # 2. Deep Reasoning Trigger (เปิด MoA Swarm เพื่อสกัดคำตอบระดับปรมาจารย์)
@@ -321,19 +321,20 @@ def _should_trigger_moa(user_input: str, model_version: str, flavor: str) -> tup
         "โค้ด", "code", "python", "javascript", "typescript", "html", "css", "sql", "database",
         "วิเคราะห์", "เปรียบเทียบ", "สรุปประเด็น", "สถาปัตยกรรม", "architecture", "อัลกอริทึม",
         "algorithm", "กลยุทธ์", "strategy", "วางแผน", "ทำไม", "อย่างไร", "เพราะเหตุใด", "ขั้นตอน",
-        "พิสูจน์", "แก้ปัญหา", "debug", "refactor", "explain", "review", "security", "ความปลอดภัย"
+        "พิสูจน์", "แก้ปัญหา", "debug", "refactor", "explain", "review", "security", "ความปลอดภัย",
+        "mermaid", "flowchart", "ไดอะแกรม", "แผนผัง"
     ]
     
     has_deep_keyword = any(k in clean for k in deep_keywords)
     
-    if model_version == "2.0-ultra":
-        return True, "ultra_deep_reasoning", "ภารกิจระดับองค์กร (Enterprise Deep Consensus)"
+    if model_version in ["2.1-reasoning", "2.0-ultra"]:
+        return True, "ultra_deep_reasoning", "ภารกิจวิเคราะห์เชิงลึก (Kira 2.1 Deep Reasoning Swarm)"
         
-    if model_version in ["2.0-pro", "1.3"]:
+    if model_version in ["2.1-pro", "2.0-pro", "1.3"]:
         if flavor == "reasoning":
             return True, "user_forced_reasoning", "โหมดคิดวิเคราะห์ขั้นสูงตามคำขอ"
-        if has_deep_keyword or len(clean) > 60:
-            return True, "complex_task", "ตรวจพบโจทย์เชิงลึกหรือเนื้อหาซับซ้อน"
+        if has_deep_keyword or len(clean) > 50:
+            return True, "complex_task", "ตรวจพบโจทย์เชิงลึกหรือเนื้อหาซับซ้อน (Kira 2.1 Super-Agent)"
             
     return False, "standard_fast_path", "ประมวลผลความเร็วปกติ"
 
@@ -353,8 +354,16 @@ def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
     elif flavor == "creative":
         return "mixtral-8x7b-32768", "creative", "✨ Generative Studio (Content & Idea Synthesis)"
     
-    # 2. การจัดสรรตามโมเดล Kira 2.0 (Current Generation)
-    if model_version == "2.0-flash":
+    # 2. การจัดสรรตามโมเดล Kira 2.1 (Next-Gen Series)
+    if model_version == "2.1-reasoning":
+        profile = BRAIN_PROFILES["reasoning"]
+        return profile["model"], "reasoning", "👑 Kira 2.1 Reasoning (Cognitive Deep Thinker)"
+    elif model_version == "2.1-pro":
+        profile = BRAIN_PROFILES["logic"]
+        return profile["model"], "logic", "🧠 Kira 2.1 Pro (Super-Agent Architecture)"
+
+    # 3. การจัดสรรตามโมเดล Kira 2.0 (Current Generation)
+    elif model_version == "2.0-flash":
         return PREFERRED_FLASH, "chat", "⚡ Kira 2.0 Flash (High-Speed Engine)"
     elif model_version == "2.0-vision":
         profile = BRAIN_PROFILES["code"]
@@ -366,7 +375,7 @@ def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
         profile = BRAIN_PROFILES["logic"]
         return profile["model"], "logic", "👑 Kira 2.0 Ultra (Enterprise Logic Engine)"
         
-    # 3. การจัดสรรตามโมเดล Legacy (1.0 Series)
+    # 4. การจัดสรรตามโมเดล Legacy (1.0 Series)
     if model_version == "1.0":
         return PREFERRED_FLASH, "chat", "🤖 Kira 1.0 Standard"
     elif model_version == "1.1":
@@ -2093,7 +2102,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                   (uname, session_id, timestamp, "User", user_input))
     
     # Trigger Memory Extraction in background for all modern versions
-    if model_version in ["2.0-flash", "2.0-vision", "2.0-pro", "2.0-ultra", "1.1", "1.2", "1.3"]:
+    if model_version in ["2.1-reasoning", "2.1-pro", "2.0-flash", "2.0-vision", "2.0-pro", "2.0-ultra", "1.1", "1.2", "1.3"]:
         asyncio.create_task(_extract_and_save_memory(uname, user_input, model_version))
 
     async def generate():
@@ -2102,7 +2111,11 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         full_response = ""
         
         # Clean Badges (Without Parentheses)
-        if model_version == "2.0-flash":
+        if model_version == "2.1-reasoning":
+            badge = "👑 **[Kira 2.1 Reasoning]**\n\n"
+        elif model_version == "2.1-pro":
+            badge = "🧠 **[Kira 2.1 Pro]**\n\n"
+        elif model_version == "2.0-flash":
             badge = "✨ **[Kira 2.0 Flash]**\n\n"
         elif model_version == "2.0-vision":
             badge = "👁️ **[Kira 2.0 Vision]**\n\n"
@@ -2119,7 +2132,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         elif model_version == "1.3":
             badge = "💼 **[Kira 1.3 Enterprise]**\n\n"
         else:
-            badge = "✨ **[Kira 2.0 Flash]**\n\n"
+            badge = "👑 **[Kira 2.1 Reasoning]**\n\n"
         full_response += badge
         yield badge
         

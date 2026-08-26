@@ -172,8 +172,12 @@
                     <button title="เปิด/ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak)" id="btn-autospeak" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-volume-xmark"></i></button>
                     <button title="บันทึกออก (Export PDF)" id="btn-export" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-file-export"></i></button>
                     <select id="model-select" class="model-select">
-                        <optgroup label="✨ โมเดลปัจจุบัน (Kira 2.0)">
-                            <option value="2.0-flash" selected>Kira 2.0 Flash</option>
+                        <optgroup label="🚀 โมเดลรุ่นล่าสุด (Kira 2.1 Next-Gen)">
+                            <option value="2.1-reasoning" selected>👑 Kira 2.1 Reasoning (Deep Thinker)</option>
+                            <option value="2.1-pro">🧠 Kira 2.1 Pro (Super-Agent)</option>
+                        </optgroup>
+                        <optgroup label="✨ โมเดล Kira 2.0">
+                            <option value="2.0-flash">Kira 2.0 Flash</option>
                             <option value="2.0-vision">Kira 2.0 Vision</option>
                             <option value="2.0-pro">Kira 2.0 Pro</option>
                             <option value="2.0-ultra">Kira 2.0 Ultra</option>
@@ -314,7 +318,8 @@
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=11"></script>
+    <script src="/static/script.js?v=12"></script>
 </body>
 </html>

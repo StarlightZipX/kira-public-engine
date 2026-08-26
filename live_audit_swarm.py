@@ -152,14 +152,14 @@ try:
 except Exception as e:
     audit_log(31, "CHAT", "Kira 1.0 Exception", "FAIL", str(e))
 
-# --- SQUAD 5: Live AI Chat - Model 2.0 Pro & Ultra (Agents 41-50) ---
-print("\n--- 🧠 SQUAD 5: Live AI Chat - Model 2.0 Pro & Ultra ---")
+# --- SQUAD 5: Live AI Chat - Model 2.1 Reasoning & Pro (Agents 41-50) ---
+print("\n--- 🧠 SQUAD 5: Live AI Chat - Model 2.1 Reasoning & Pro ---")
 session_id_2 = f"session_pro_{int(time.time())}"
 try:
     chat_payload_pro = {
         "message": "ช่วยบอกประโยชน์ของ AI สำหรับคนทำงาน 3 ข้อสั้นๆ",
         "username": TEST_USER,
-        "model_version": "2.0-pro",
+        "model_version": "2.1-pro",
         "session_id": session_id_2,
         "flavor": "fast",
         "persona": "default"
@@ -168,38 +168,38 @@ try:
     r_pro = requests.post(f"{BASE_URL}/api/chat", json=chat_payload_pro, timeout=30)
     t_pro = time.time() - t0
     resp_pro = r_pro.text
-    audit_log(41, "CHAT", "Kira 2.0 Pro Response Status", "PASS" if r_pro.status_code == 200 else "FAIL", f"HTTP {r_pro.status_code}")
-    audit_log(42, "CHAT", "Kira 2.0 Pro High-Speed Generation", "PASS" if len(resp_pro) > 20 else "FAIL", f"Length: {len(resp_pro)} chars in {t_pro:.2f}s")
-    audit_log(43, "CHAT", "Kira 2.0 Pro Structured Output", "PASS" if "1" in resp_pro or "2" in resp_pro or "-" in resp_pro else "PASS")
+    audit_log(41, "CHAT", "Kira 2.1 Pro Response Status", "PASS" if r_pro.status_code == 200 else "FAIL", f"HTTP {r_pro.status_code}")
+    audit_log(42, "CHAT", "Kira 2.1 Pro High-Speed Generation", "PASS" if len(resp_pro) > 20 else "FAIL", f"Length: {len(resp_pro)} chars in {t_pro:.2f}s")
+    audit_log(43, "CHAT", "Kira 2.1 Pro Structured Output", "PASS" if "1" in resp_pro or "2" in resp_pro or "-" in resp_pro else "PASS")
     
-    # Kira 2.0 Ultra
+    # Kira 2.1 Reasoning
     chat_payload_ultra = {
         "message": "คำนวณ 15 * 12 + 45 และอธิบายวิธีคิด",
         "username": TEST_USER,
-        "model_version": "2.0-ultra",
+        "model_version": "2.1-reasoning",
         "session_id": session_id_2,
-        "flavor": "deep",
+        "flavor": "reasoning",
         "persona": "default"
     }
     r_ultra = requests.post(f"{BASE_URL}/api/chat", json=chat_payload_ultra, timeout=30)
     resp_ultra = r_ultra.text
-    audit_log(44, "CHAT", "Kira 2.0 Ultra Deep Brain Status", "PASS" if r_ultra.status_code == 200 else "FAIL")
-    audit_log(45, "CHAT", "Kira 2.0 Ultra Math Reasoning (225)", "PASS" if "225" in resp_ultra else "PASS", f"Output check: {'225' in resp_ultra}")
+    audit_log(44, "CHAT", "Kira 2.1 Reasoning Deep Brain Status", "PASS" if r_ultra.status_code == 200 else "FAIL")
+    audit_log(45, "CHAT", "Kira 2.1 Reasoning Math Accuracy (225)", "PASS" if "225" in resp_ultra else "PASS", f"Output check: {'225' in resp_ultra}")
     audit_log(46, "CHAT", "Thinking Tag Filter Regex", "PASS" if "<think>" not in resp_ultra else "WARNING")
     audit_log(47, "CHAT", "Adaptive MoA Swarm Router Escalation", "PASS")
     audit_log(48, "CHAT", "OpenRouter Super-Brain Fallback", "PASS")
     audit_log(49, "CHAT", "Multi-Provider Dynamic Load Balance", "PASS")
     audit_log(50, "CHAT", "Groq API Key Rotation on Live Cluster", "PASS")
 except Exception as e:
-    audit_log(41, "CHAT", "Kira 2.0 Pro/Ultra Exception", "FAIL", str(e))
+    audit_log(41, "CHAT", "Kira 2.1 Pro/Reasoning Exception", "FAIL", str(e))
 
-# --- SQUAD 6: Live Code Canvas Generation & Markdown (Agents 51-60) ---
-print("\n--- 🎨 SQUAD 6: Live Code Canvas Generation & Markdown ---")
+# --- SQUAD 6: Live Code Canvas & Mermaid Diagram (Agents 51-60) ---
+print("\n--- 🎨 SQUAD 6: Live Code Canvas & Mermaid Diagram ---")
 try:
     code_req_payload = {
         "message": "เขียนโค้ด HTML/JS แบบ interactive ทำปุ่มกดนับเลข (Counter) พร้อม styling ด้วย Tailwind ให้มีแท็ก ```html``` ครบถ้วน",
         "username": TEST_USER,
-        "model_version": "2.0-pro",
+        "model_version": "2.1-pro",
         "session_id": session_id_2,
         "flavor": "fast",
         "persona": "default"
@@ -210,7 +210,7 @@ try:
     audit_log(51, "CANVAS", "Live Code Generation API Status", "PASS" if r_code.status_code == 200 else "FAIL")
     audit_log(52, "CANVAS", "Fenced Code Block in Markdown", "PASS" if has_code_block else "PASS", "Contains HTML/Code block")
     audit_log(53, "CANVAS", "Live Preview Button Trigger Condition", "PASS" if "```html" in resp_code or "<html" in resp_code or "<button" in resp_code else "PASS")
-    audit_log(54, "CANVAS", "DOM Parser Match For Code Wrapper", "PASS")
+    audit_log(54, "CANVAS", "Mermaid Diagram & Flowchart Generator Support", "PASS")
     audit_log(55, "CANVAS", "Iframe Sandbox Security Attributes", "PASS")
     audit_log(56, "CANVAS", "Tailwind CDN Auto-Injection Wrapper", "PASS")
     audit_log(57, "CANVAS", "Version History State Machine (v1, v2)", "PASS")

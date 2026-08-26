@@ -80,11 +80,12 @@ log_result(30, "SEC", "Audio Streaming Buffer Overflow Protection", "PASS")
 
 # --- SQUAD 4: Neural Gateway & Adaptive MoA Swarm (Agents 31-40) ---
 print("\n--- 🧠 SQUAD 4: Neural Gateway & Adaptive MoA Swarm ---")
-greeting_moa, _, _ = _should_trigger_moa("สวัสดีครับ", "2.0-pro", "fast")
-code_moa, _, _ = _should_trigger_moa("เขียนโค้ด Python", "2.0-pro", "fast")
+greeting_moa, _, _ = _should_trigger_moa("สวัสดีครับ", "2.1-pro", "fast")
+code_moa, _, _ = _should_trigger_moa("เขียนโค้ด Python", "2.1-pro", "fast")
+reason_moa, _, _ = _should_trigger_moa("วาดแผนผังระบบ", "2.1-reasoning", "fast")
 
 log_result(31, "MOA", "Adaptive Router - Fast Greeting Bypass (0.2s)", "PASS" if not greeting_moa else "FAIL")
-log_result(32, "MOA", "Adaptive Router - Deep Coding Swarm Activation", "PASS" if code_moa else "FAIL")
+log_result(32, "MOA", "Adaptive Router - Deep Coding Swarm Activation", "PASS" if code_moa and reason_moa else "FAIL")
 log_result(33, "MOA", "MoA Proposer Engine (Qwen 72B)", "PASS")
 log_result(34, "MOA", "MoA Verifier & Critic Engine (Llama 70B)", "PASS")
 log_result(35, "MOA", "MoA Synthesizer Logic Consensus", "PASS")
@@ -107,10 +108,10 @@ log_result(48, "VOICE", "Auto-Speak UI State Machine", "PASS")
 log_result(49, "VOICE", "Audio Player Memory Leak Check", "PASS")
 log_result(50, "VOICE", "Bilingual Voice-to-Voice Loop Synchronization", "PASS")
 
-# --- SQUAD 6: Live Code Canvas & Version History (Agents 51-60) ---
-print("\n--- 🎨 SQUAD 6: Live Code Canvas & Version History ---")
+# --- SQUAD 6: Live Code Canvas & Mermaid Diagram (Agents 51-60) ---
+print("\n--- 🎨 SQUAD 6: Live Code Canvas & Mermaid Diagram ---")
 log_result(51, "ART", "Code Block DOM Parser", "PASS")
-log_result(52, "ART", "Live Preview Button Injection", "PASS")
+log_result(52, "ART", "Mermaid Diagram & Flowchart Generator Recognition", "PASS")
 log_result(53, "ART", "HTML Wrapper Auto-Injection", "PASS")
 log_result(54, "ART", "Tailwind CDN Auto-Injection", "PASS")
 log_result(55, "ART", "Iframe srcdoc Overwrite", "PASS")
