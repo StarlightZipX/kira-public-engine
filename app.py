@@ -168,9 +168,17 @@ def init_db():
                       password_hash TEXT,
                       points INTEGER DEFAULT 0)''')
         
-        # สำหรับ Database เก่าที่ไม่มีคอลัมน์ points
+        # สำหรับ Database เก่าที่ไม่มีคอลัมน์ points, nickname, purpose
         try:
             execute_query("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0")
+        except:
+            pass
+        try:
+            execute_query("ALTER TABLE users ADD COLUMN nickname TEXT")
+        except:
+            pass
+        try:
+            execute_query("ALTER TABLE users ADD COLUMN purpose TEXT")
         except:
             pass
         execute_query('''CREATE TABLE IF NOT EXISTS logs
@@ -814,6 +822,8 @@ MAX_DYNAMIC_HISTORY = 20
 class AuthRequest(BaseModel):
     username: str
     password: str
+    nickname: Optional[str] = None
+    purpose: Optional[str] = None
 
 class ChatRequest(BaseModel):
     message: str
@@ -899,6 +909,8 @@ async def admin_dashboard(
 async def register(req: AuthRequest):
     username = req.username.strip() if req.username else ""
     password = req.password.strip() if req.password else ""
+    nickname = req.nickname.strip() if req.nickname else ""
+    purpose = req.purpose.strip() if req.purpose else ""
 
     if not username or not password:
         return {"status": "error", "message": "กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วนค่ะ"}
@@ -917,14 +929,41 @@ async def register(req: AuthRequest):
         return {"status": "error", "message": "ชื่อผู้ใช้นี้เป็นชื่อสงวนของระบบ ไม่สามารถลงทะเบียนได้ค่ะ"}
 
     try:
-        execute_query("INSERT INTO users (username, password_hash) VALUES (?, ?)",
-                  (username, hash_password(password)))
+        execute_query("INSERT INTO users (username, password_hash, nickname, purpose) VALUES (?, ?, ?, ?)",
+                  (username, hash_password(password), nickname or username, purpose or "general"))
+        
+        # Seed initial knowledge graph if nickname or purpose provided
+        tz = timezone(timedelta(hours=7))
+        ts = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+        if nickname:
+            execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
+                          (username, f"ผู้ใช้ชื่อเล่นว่า '{nickname}'", ts))
+            execute_query("INSERT INTO user_knowledge_graph (username, subject, predicate, object, category, fact, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                          (username, username, "ชื่อเล่นว่า", nickname, "ข้อมูลส่วนตัว", f"ผู้ใช้ชื่อเล่นว่า {nickname}", ts))
+        if purpose and purpose != "general":
+            purpose_labels = {
+                "coding": "เขียนโปรแกรมและพัฒนาระบบซอฟต์แวร์",
+                "business": "วางแผนธุรกิจและวิเคราะห์ข้อมูลกลยุทธ์",
+                "education": "การศึกษา ค้นคว้า และทำรายงานวิจัย",
+                "assistant": "เป็นผู้ช่วยส่วนตัวและทำงานทั่วไป"
+            }
+            p_desc = purpose_labels.get(purpose, purpose)
+            execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
+                          (username, f"เป้าหมายหลักของผู้ใช้: {p_desc}", ts))
+            execute_query("INSERT INTO user_knowledge_graph (username, subject, predicate, object, category, fact, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                          (username, username, "มีเป้าหมายการใช้งาน", p_desc, "ความชอบ", f"ผู้ใช้เน้น {p_desc}", ts))
+                          
         return {"status": "success", "message": "สมัครสมาชิกสำเร็จ!"}
     except Exception as e:
-        err_str = str(e).lower()
-        if "unique" in err_str or "integrity" in err_str or "duplicate" in err_str:
-            return {"status": "error", "message": "ชื่อผู้ใช้นี้มีคนใช้แล้วค่ะ"}
-        return {"status": "error", "message": f"เกิดข้อผิดพลาด: {str(e)}"}
+        # Fallback to standard 2-column insert if legacy DB
+        try:
+            execute_query("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, hash_password(password)))
+            return {"status": "success", "message": "สมัครสมาชิกสำเร็จ!"}
+        except Exception as inner_e:
+            err_str = str(inner_e).lower()
+            if "unique" in err_str or "integrity" in err_str or "duplicate" in err_str:
+                return {"status": "error", "message": "ชื่อผู้ใช้นี้มีคนใช้แล้วค่ะ"}
+            return {"status": "error", "message": f"เกิดข้อผิดพลาด: {str(inner_e)}"}
 
 @app.post("/api/login")
 async def login(req: AuthRequest):

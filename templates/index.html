@@ -18,17 +18,43 @@
 </head>
 <body>
 
-    <!-- Auth Modal -->
+    <!-- Auth Modal / Portal -->
     <div id="auth-modal" class="auth-modal">
-        <div class="auth-box" id="auth-box">
+        <!-- Ambient Glowing Background Spheres -->
+        <div class="auth-ambient-glow glow-1"></div>
+        <div class="auth-ambient-glow glow-2"></div>
+        
+        <div class="auth-box auth-portal-card" id="auth-box">
             
-            <!-- Login Form -->
-            <div id="login-view">
-                <h2 style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover; box-shadow: 0 0 10px rgba(56,189,248,0.3);"> 
-                    เข้าสู่ระบบ Kira AI
-                </h2>
-                <p class="auth-subtitle">ร่วมเป็นส่วนหนึ่งในการทดสอบและฝึกฝน Kira AI ให้ฉลาดขึ้น! ✨ (ใช้งานฟรี)</p>
+            <!-- Hero Branding Header with Animated Holographic Orbital Ring -->
+            <div class="auth-brand-header">
+                <div class="kira-orbital-avatar">
+                    <div class="orbital-ring orbital-ring-1"></div>
+                    <div class="orbital-ring orbital-ring-2"></div>
+                    <div class="orbital-core">
+                        <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo" class="kira-brand-logo">
+                    </div>
+                </div>
+                <h1 class="auth-brand-title">Kira AI <span class="brand-version-badge">2.1</span></h1>
+                <p class="auth-brand-subtitle">Autonomous Multi-Brain Intelligence & Supercluster</p>
+                <div class="auth-live-badge">
+                    <span class="live-dot-pulse"></span>
+                    <span>Cloud Swarm 2.1 Active • ใช้งานฟรี 150 ข้อความ/วัน</span>
+                </div>
+            </div>
+
+            <!-- Tab Switcher Navigation -->
+            <div class="auth-tab-nav">
+                <button type="button" id="tab-login" class="auth-tab-btn active">
+                    <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ
+                </button>
+                <button type="button" id="tab-register" class="auth-tab-btn">
+                    <i class="fa-solid fa-user-plus"></i> สมัครสมาชิกใหม่
+                </button>
+            </div>
+
+            <!-- Login Form View -->
+            <div id="login-view" class="auth-view-content active">
                 <div id="login-error" class="auth-error"></div>
                 
                 <div class="auth-input-group">
@@ -44,12 +70,19 @@
                     </button>
                 </div>
 
+                <div class="auth-options-row">
+                    <label class="auth-checkbox-label">
+                        <input type="checkbox" id="remember-me" checked>
+                        <span>จดจำการเข้าสู่ระบบ</span>
+                    </label>
+                </div>
+
                 <button id="btn-login" class="auth-btn primary">
                     <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ (Login)
                 </button>
                 
                 <div class="auth-divider">
-                    <span>หรือ</span>
+                    <span>หรือสำหรับเจ้าของระบบ</span>
                 </div>
 
                 <button id="btn-boss-quick-login" class="auth-btn boss-vip-btn" title="เข้าสู่ระบบในฐานะเจ้าของระบบแบบรวดเร็ว">
@@ -57,42 +90,82 @@
                 </button>
 
                 <div class="auth-switch">
-                    ไม่มีบัญชีใช่ไหม? <a href="#" id="go-to-register">สมัครสมาชิกใหม่</a>
+                    ยังไม่มีบัญชีใช่ไหม? <a href="#" id="go-to-register">สมัครสมาชิกฟรีที่นี่</a>
                 </div>
             </div>
 
-            <!-- Register Form -->
-            <div id="register-view" style="display: none;">
-                <h2 style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover; box-shadow: 0 0 10px rgba(56,189,248,0.3);"> 
-                    สมัครสมาชิก
-                </h2>
-                <p class="auth-subtitle">สร้างบัญชีเพื่อเริ่มต้นพูดคุยและช่วยพัฒนา Kira AI ไปด้วยกัน 🚀</p>
+            <!-- Register Form View -->
+            <div id="register-view" class="auth-view-content" style="display: none;">
                 <div id="register-error" class="auth-error"></div>
 
+                <!-- Username -->
                 <div class="auth-input-group">
-                    <i class="fa-solid fa-user-plus auth-input-icon"></i>
-                    <input type="text" id="reg-username" placeholder="ตั้งชื่อผู้ใช้งาน (อย่างน้อย 3 ตัวอักษร)" autocomplete="off">
+                    <i class="fa-solid fa-user-tag auth-input-icon"></i>
+                    <input type="text" id="reg-username" placeholder="ตั้งชื่อบัญชีผู้ใช้ (อย่างน้อย 3 ตัวอักษร)" autocomplete="off">
                 </div>
 
-                <div class="auth-input-group password-group">
+                <!-- Nickname (Personalized Greeting) -->
+                <div class="auth-input-group">
+                    <i class="fa-solid fa-heart auth-input-icon" style="color: #ec4899;"></i>
+                    <input type="text" id="reg-nickname" placeholder="ชื่อเล่นที่อยากให้คิระเรียก (เช่น บาส, พี่ท็อป)" autocomplete="off">
+                </div>
+
+                <!-- Purpose Selector -->
+                <div class="purpose-section">
+                    <label class="purpose-label"><i class="fa-solid fa-compass"></i> วัตถุประสงค์หลักในการใช้งาน:</label>
+                    <div class="purpose-pills-grid">
+                        <button type="button" class="purpose-pill active" data-purpose="coding">
+                            <i class="fa-solid fa-code"></i> เขียนโค้ด
+                        </button>
+                        <button type="button" class="purpose-pill" data-purpose="business">
+                            <i class="fa-solid fa-chart-line"></i> ธุรกิจ/งาน
+                        </button>
+                        <button type="button" class="purpose-pill" data-purpose="education">
+                            <i class="fa-solid fa-graduation-cap"></i> การเรียน
+                        </button>
+                        <button type="button" class="purpose-pill" data-purpose="assistant">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> ผู้ช่วยทั่วไป
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Password with Live Strength Meter -->
+                <div class="auth-input-group password-group" style="margin-bottom: 6px;">
                     <i class="fa-solid fa-lock auth-input-icon"></i>
                     <input type="password" id="reg-password" placeholder="ตั้งรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)">
                     <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('reg-password', this)" title="แสดง/ซ่อนรหัสผ่าน">
                         <i class="fa-solid fa-eye"></i>
                     </button>
                 </div>
+                
+                <!-- Password Strength Meter Bar -->
+                <div class="password-strength-container" id="strength-container" style="display: none;">
+                    <div class="strength-bar-track">
+                        <div class="strength-bar-fill" id="strength-bar"></div>
+                    </div>
+                    <span class="strength-label" id="strength-text">ความปลอดภัย: ปานกลาง</span>
+                </div>
 
-                <div class="auth-input-group password-group">
+                <!-- Confirm Password -->
+                <div class="auth-input-group password-group" style="margin-top: 10px;">
                     <i class="fa-solid fa-shield-halved auth-input-icon"></i>
                     <input type="password" id="reg-confirm" placeholder="ยืนยันรหัสผ่านอีกครั้ง">
                     <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('reg-confirm', this)" title="แสดง/ซ่อนรหัสผ่าน">
                         <i class="fa-solid fa-eye"></i>
                     </button>
+                    <span id="match-status-icon" class="match-status-icon"></span>
+                </div>
+
+                <!-- Terms agreement -->
+                <div class="auth-terms-group">
+                    <label class="auth-checkbox-label">
+                        <input type="checkbox" id="reg-terms" checked>
+                        <span>ยอมรับข้อตกลงและเงื่อนไขการใช้งาน Kira AI</span>
+                    </label>
                 </div>
 
                 <button id="btn-register" class="auth-btn register-submit-btn">
-                    <i class="fa-solid fa-user-check"></i> ยืนยันการลงทะเบียน
+                    <i class="fa-solid fa-user-check"></i> ยืนยันการลงทะเบียน (Register)
                 </button>
 
                 <div class="auth-switch">

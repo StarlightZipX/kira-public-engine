@@ -79,10 +79,18 @@ const btnBossQuickLogin = document.getElementById('btn-boss-quick-login');
 
 // Register Elements
 const regUsernameInput = document.getElementById('reg-username');
+const regNicknameInput = document.getElementById('reg-nickname');
 const regPasswordInput = document.getElementById('reg-password');
 const regConfirmInput = document.getElementById('reg-confirm');
+const regTermsInput = document.getElementById('reg-terms');
 const btnRegister = document.getElementById('btn-register');
 const regError = document.getElementById('register-error');
+const tabLogin = document.getElementById('tab-login');
+const tabRegister = document.getElementById('tab-register');
+const strengthContainer = document.getElementById('strength-container');
+const strengthBar = document.getElementById('strength-bar');
+const strengthText = document.getElementById('strength-text');
+const matchStatusIcon = document.getElementById('match-status-icon');
 
 // App Elements
 const profileName = document.getElementById('profile-name');
@@ -228,24 +236,120 @@ updateModelUI();
 checkEngineStatus();
 setInterval(checkEngineStatus, 30000);
 
-// --- Auth UI Toggles ---
+// --- Auth UI Toggles & Tabs ---
+function switchAuthTab(tab) {
+    if (tab === 'login') {
+        if (tabLogin) tabLogin.classList.add('active');
+        if (tabRegister) tabRegister.classList.remove('active');
+        if (loginView) loginView.style.display = 'flex';
+        if (registerView) registerView.style.display = 'none';
+        if (loginError) loginError.textContent = '';
+        if (loginUsernameInput) loginUsernameInput.focus();
+    } else {
+        if (tabRegister) tabRegister.classList.add('active');
+        if (tabLogin) tabLogin.classList.remove('active');
+        if (registerView) registerView.style.display = 'flex';
+        if (loginView) loginView.style.display = 'none';
+        if (regError) regError.textContent = '';
+        if (regUsernameInput) regUsernameInput.focus();
+    }
+}
+
+if (tabLogin) tabLogin.addEventListener('click', () => switchAuthTab('login'));
+if (tabRegister) tabRegister.addEventListener('click', () => switchAuthTab('register'));
+
 if (goToRegister) {
     goToRegister.addEventListener('click', (e) => {
         e.preventDefault();
-        loginView.style.display = 'none';
-        registerView.style.display = 'block';
-        loginError.textContent = '';
-        if (regUsernameInput) regUsernameInput.focus();
+        switchAuthTab('register');
     });
 }
 
 if (goToLogin) {
     goToLogin.addEventListener('click', (e) => {
         e.preventDefault();
-        registerView.style.display = 'none';
-        loginView.style.display = 'block';
-        regError.textContent = '';
-        if (loginUsernameInput) loginUsernameInput.focus();
+        switchAuthTab('login');
+    });
+}
+
+// --- Purpose Selector Pills ---
+let selectedPurpose = 'coding';
+const purposePills = document.querySelectorAll('.purpose-pill');
+purposePills.forEach(pill => {
+    pill.addEventListener('click', () => {
+        purposePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        selectedPurpose = pill.dataset.purpose || 'general';
+    });
+});
+
+// --- Password Strength Meter ---
+function calculatePasswordStrength(password) {
+    if (!password) return { score: 0, text: '', color: '', width: '0%' };
+    let score = 0;
+    if (password.length >= 4) score += 1;
+    if (password.length >= 8) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+    if (score <= 2) {
+        return { score: 1, text: 'ความปลอดภัย: ต่ำ (Weak)', color: '#ef4444', width: '33%' };
+    } else if (score <= 3) {
+        return { score: 2, text: 'ความปลอดภัย: ปานกลาง (Medium)', color: '#f59e0b', width: '66%' };
+    } else {
+        return { score: 3, text: 'ความปลอดภัย: แข็งแกร่ง (Strong) 🛡️', color: '#10b981', width: '100%' };
+    }
+}
+
+if (regPasswordInput && strengthContainer && strengthBar && strengthText) {
+    regPasswordInput.addEventListener('input', () => {
+        const val = regPasswordInput.value;
+        if (!val) {
+            strengthContainer.style.display = 'none';
+            return;
+        }
+        strengthContainer.style.display = 'flex';
+        const res = calculatePasswordStrength(val);
+        strengthBar.style.width = res.width;
+        strengthBar.style.backgroundColor = res.color;
+        strengthText.textContent = res.text;
+        strengthText.style.color = res.color;
+        checkPasswordMatch();
+    });
+}
+
+// --- Real-time Password Confirmation Match Checker ---
+function checkPasswordMatch() {
+    if (!regConfirmInput || !matchStatusIcon) return;
+    const p1 = regPasswordInput ? regPasswordInput.value : '';
+    const p2 = regConfirmInput.value;
+    if (!p2) {
+        matchStatusIcon.innerHTML = '';
+        return;
+    }
+    if (p1 === p2) {
+        matchStatusIcon.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #10b981;" title="รหัสผ่านตรงกัน"></i>';
+    } else {
+        matchStatusIcon.innerHTML = '<i class="fa-solid fa-circle-xmark" style="color: #ef4444;" title="รหัสผ่านไม่ตรงกัน"></i>';
+    }
+}
+
+if (regConfirmInput) {
+    regConfirmInput.addEventListener('input', checkPasswordMatch);
+}
+
+// --- Interactive Mouse Spotlight Effect on Auth Card ---
+const authBoxElement = document.getElementById('auth-box');
+if (authBoxElement) {
+    authBoxElement.addEventListener('mousemove', (e) => {
+        const rect = authBoxElement.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        authBoxElement.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(56, 189, 248, 0.12) 0%, rgba(30, 41, 59, 0.85) 45%, rgba(15, 23, 42, 0.92) 100%)`;
+    });
+    authBoxElement.addEventListener('mouseleave', () => {
+        authBoxElement.style.background = 'linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.92) 100%)';
     });
 }
 
@@ -261,7 +365,7 @@ if (goToLogin) {
     }
 });
 
-[regUsernameInput, regPasswordInput, regConfirmInput].forEach(input => {
+[regUsernameInput, regNicknameInput, regPasswordInput, regConfirmInput].forEach(input => {
     if (input) {
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -358,8 +462,10 @@ if (btnBossQuickLogin) {
 if (btnRegister) {
     btnRegister.addEventListener('click', async () => {
         const username = regUsernameInput.value.trim();
+        const nickname = regNicknameInput ? regNicknameInput.value.trim() : '';
         const password = regPasswordInput.value.trim();
         const confirm = regConfirmInput.value.trim();
+        const termsChecked = regTermsInput ? regTermsInput.checked : true;
         
         if (!username || !password || !confirm) {
             regError.style.color = '#f87171';
@@ -385,6 +491,12 @@ if (btnRegister) {
             return;
         }
 
+        if (!termsChecked) {
+            regError.style.color = '#f87171';
+            regError.textContent = "กรุณากดยอมรับข้อตกลงและเงื่อนไขการใช้งานค่ะ";
+            return;
+        }
+
         const originalText = btnRegister.innerHTML;
         btnRegister.disabled = true;
         btnRegister.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้างบัญชี...';
@@ -393,7 +505,12 @@ if (btnRegister) {
             const response = await fetch(`/api/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ 
+                    username, 
+                    password, 
+                    nickname: nickname || username,
+                    purpose: selectedPurpose || 'general' 
+                })
             });
             const data = await response.json();
 
@@ -401,13 +518,15 @@ if (btnRegister) {
                 regError.style.color = '#34d399';
                 regError.textContent = "✨ สมัครสมาชิกสำเร็จ! กำลังพากลับไปหน้าเข้าสู่ระบบ...";
                 setTimeout(() => {
-                    registerView.style.display = 'none';
-                    loginView.style.display = 'block';
+                    switchAuthTab('login');
                     loginUsernameInput.value = username; // Auto-fill username
                     regUsernameInput.value = '';
+                    if (regNicknameInput) regNicknameInput.value = '';
                     regPasswordInput.value = '';
                     regConfirmInput.value = '';
                     regError.textContent = '';
+                    if (strengthContainer) strengthContainer.style.display = 'none';
+                    if (matchStatusIcon) matchStatusIcon.innerHTML = '';
                     loginError.style.color = '#34d399';
                     loginError.textContent = "ลงทะเบียนเรียบร้อยแล้ว กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบค่ะ";
                     if (loginPasswordInput) loginPasswordInput.focus();
