@@ -1051,15 +1051,6 @@ if (modelSelect) {
     });
 }
 
-const btnInfo = document.getElementById('btn-info');
-if (btnInfo) {
-    btnInfo.addEventListener('click', () => {
-        alert("Kira AI - Public Cloud Engine\nเวอร์ชัน: 1.0 (ระบบทดสอบ)\nผู้สร้าง: Kira Studio");
-    });
-}
-
-// Duplicate declaration removed
-
 userInput.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
@@ -1360,15 +1351,6 @@ if (attachToggleBtn && attachmentMenu) {
     }
 }
 
-// --- Chat Export Feature ---
-const btnExport = document.getElementById('btn-export');
-if (btnExport) {
-    btnExport.addEventListener('click', () => {
-        if (confirm('ต้องการบันทึกบทสนทนานี้เป็น PDF ใช่หรือไม่? (ระบบจะเปิดหน้าต่าง Print ให้เลือก Save as PDF)')) {
-            window.print();
-        }
-    });
-}
 
 // =========================================================================
 // 🎙️ 1. Free Natural Neural Voice Engine (Edge-TTS Integration)
