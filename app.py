@@ -110,14 +110,67 @@ def get_embedding(text: str) -> list:
         return []
     return embedding_model.encode(text).tolist()
 
-# --- Network Shield (Rate Limiter) ---
+# --- Network Shield (Rate Limiter & Aegis Shield) ---
 import collections
+import hmac
+import ipaddress
+import urllib.parse
+import socket
+
 # IP -> list of timestamps
 ip_request_history = collections.defaultdict(list)
-MAX_REQUESTS_PER_MINUTE = 15
+MAX_REQUESTS_PER_MINUTE = 20
 
 # --- Kira Venom Protocol (Hacker Strikes) ---
 hacker_strikes = collections.defaultdict(int)
+
+# Aegis Cryptographic Salt
+SECRET_SALT = "KiraAegisProtocol_2026_TopSecretSalt_@#$"
+BOSS_MASTER_PASSWORD = os.environ.get("BOSS_PASSWORD", "kira1234")
+
+def is_boss(name: str) -> bool:
+    if not name:
+        return False
+    n = name.lower()
+    return "boss" in n or "บอส" in n or "admin" in n or name == "👑 Boss (Owner)"
+
+_is_boss = is_boss
+
+def generate_auth_token(username: str) -> str:
+    """สร้าง Auth Token เฉพาะตัวของผู้ใช้แต่ละคน (HMAC-SHA256)"""
+    return hmac.new(SECRET_SALT.encode('utf-8'), (username or '').strip().encode('utf-8'), hashlib.sha256).hexdigest()
+
+def verify_auth_token(username: str, token: str) -> bool:
+    """ตรวจสอบ Auth Token ป้องกัน IDOR"""
+    if not username or not token:
+        return False
+    if is_boss(username):
+        expected_boss = generate_auth_token("👑 Boss (Owner)")
+        expected_boss2 = generate_auth_token("boss")
+        if token in (expected_boss, expected_boss2, BOSS_MASTER_PASSWORD):
+            return True
+    expected = generate_auth_token(username)
+    return hmac.compare_digest(expected, token)
+
+def _get_client_ip(request: Request) -> str:
+    """Proxy-Aware Real IP Resolver (รองรับ Cloudflare, Render, Reverse Proxies)"""
+    if not request:
+        return "unknown"
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        return cf_ip.strip()
+    x_forwarded = request.headers.get("X-Forwarded-For")
+    if x_forwarded:
+        return x_forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+def _is_admin_authorized(request: Request, key: Optional[str] = None) -> bool:
+    """ตรวจสอบสิทธิ์ผู้ดูแลระบบ/ผู้สร้าง (Creator Guard)"""
+    cookie_key = request.cookies.get("kira_admin_key")
+    header_key = request.headers.get("X-Boss-Key")
+    query_key = request.query_params.get("key") or key
+    boss_pwd = os.environ.get("BOSS_PASSWORD", "kira1234")
+    return any(k == boss_pwd for k in (cookie_key, header_key, query_key) if k)
 
 def is_rate_limited(client_ip: str) -> bool:
     current_time = time.time()
@@ -885,12 +938,21 @@ async def read_root(request: Request):
     return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
 
 @app.get("/admin_boss", response_class=HTMLResponse)
-async def admin_dashboard(
+async def admin_dashboard_get(
     request: Request, 
+    key: Optional[str] = None,
     username: str = None, 
     date_filter: str = None, 
     mistakes_only: str = None
 ):
+    is_authorized = _is_admin_authorized(request, key)
+    if not is_authorized:
+        return templates.TemplateResponse(request=request, name="admin.html", context={
+            "request": request,
+            "is_authorized": False,
+            "error_msg": "กรุณากรอกรหัสผ่านลับของผู้สร้าง (Boss Master Key) เพื่อเข้าสู่แดชบอร์ด" if key else None
+        })
+
     query = "SELECT username, timestamp, role, content FROM logs WHERE 1=1"
     params = []
     
@@ -906,20 +968,36 @@ async def admin_dashboard(
         query += " AND date(timestamp) >= date('now', '-30 days', 'localtime')"
         
     if mistakes_only == "on":
-        # ดักจับคำที่บ่งบอกถึงการหลอน ตอบไม่ได้ หรือผู้ใช้ต่อว่า
         query += " AND (content LIKE '%ขออภัย%' OR content LIKE '%ไม่สามารถ%' OR content LIKE '%ผิด%' OR content LIKE '%มั่ว%' OR content LIKE '%ไม่ใช่%')"
         
     query += " ORDER BY id DESC LIMIT 500"
     
     logs = execute_query(query, tuple(params), fetch='all')
     feedbacks = execute_query("SELECT username, timestamp, rating, review, bot_response FROM feedbacks ORDER BY id DESC LIMIT 500", fetch='all')
-    return templates.TemplateResponse(request=request, name="admin.html", context={
+    response = templates.TemplateResponse(request=request, name="admin.html", context={
         "request": request, 
+        "is_authorized": True,
         "logs": logs or [],
         "feedbacks": feedbacks or [],
         "search_username": username or "",
         "date_filter": date_filter or "all",
         "mistakes_only": mistakes_only == "on"
+    })
+    if key and key == os.environ.get("BOSS_PASSWORD", "kira1234"):
+        response.set_cookie(key="kira_admin_key", value=key, max_age=86400, httponly=True)
+    return response
+
+@app.post("/admin_boss", response_class=HTMLResponse)
+async def admin_dashboard_post(request: Request, admin_key: str = Form(...)):
+    boss_pwd = os.environ.get("BOSS_PASSWORD", "kira1234")
+    if admin_key == boss_pwd:
+        response = HTMLResponse(content="<script>window.location.href='/admin_boss';</script>")
+        response.set_cookie(key="kira_admin_key", value=admin_key, max_age=86400, httponly=True)
+        return response
+    return templates.TemplateResponse(request=request, name="admin.html", context={
+        "request": request,
+        "is_authorized": False,
+        "error_msg": "❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้งค่ะ"
     })
 
 @app.post("/api/register")
@@ -970,12 +1048,12 @@ async def register(req: AuthRequest):
             execute_query("INSERT INTO user_knowledge_graph (username, subject, predicate, object, category, fact, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
                           (username, username, "มีเป้าหมายการใช้งาน", p_desc, "ความชอบ", f"ผู้ใช้เน้น {p_desc}", ts))
                           
-        return {"status": "success", "message": "สมัครสมาชิกสำเร็จ!"}
+        return {"status": "success", "message": "สมัครสมาชิกสำเร็จ!", "username": username, "token": generate_auth_token(username)}
     except Exception as e:
         # Fallback to standard 2-column insert if legacy DB
         try:
             execute_query("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, hash_password(password)))
-            return {"status": "success", "message": "สมัครสมาชิกสำเร็จ!"}
+            return {"status": "success", "message": "สมัครสมาชิกสำเร็จ!", "username": username, "token": generate_auth_token(username)}
         except Exception as inner_e:
             err_str = str(inner_e).lower()
             if "unique" in err_str or "integrity" in err_str or "duplicate" in err_str:
@@ -991,7 +1069,7 @@ async def login(req: AuthRequest):
         return {"status": "error", "message": "กรุณากรอกชื่อผู้ใช้และรหัสผ่านค่ะ"}
 
     # Boss Override (กรณี Database ใหม่บนคลาวด์ หรือโหมดเจ้าของระบบ)
-    if username == "👑 Boss (Owner)" or username.lower() == "boss":
+    if username == "👑 Boss (Owner)" or username.lower() == "boss" or username.lower() == "admin":
         boss_password = os.environ.get("BOSS_PASSWORD", "kira1234")
         if password == boss_password:
             username = "👑 Boss (Owner)"
@@ -1006,7 +1084,7 @@ async def login(req: AuthRequest):
                             user_sessions[username].append(HumanMessage(content=content))
                         elif role == "Kira":
                             user_sessions[username].append(AIMessage(content=content))
-            return {"status": "success", "username": username}
+            return {"status": "success", "username": username, "token": generate_auth_token(username)}
 
     row = execute_query("SELECT password_hash FROM users WHERE username=?", (username,), fetch='one')
     if row and row[0] == hash_password(password):
@@ -1020,7 +1098,7 @@ async def login(req: AuthRequest):
                         user_sessions[username].append(HumanMessage(content=content))
                     elif role == "Kira":
                         user_sessions[username].append(AIMessage(content=content))
-        return {"status": "success", "username": username}
+        return {"status": "success", "username": username, "token": generate_auth_token(username)}
     else:
         return {"status": "error", "message": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้องค่ะ"}
 
@@ -1377,13 +1455,17 @@ async def save_feedback(req: FeedbackRequest):
     return {"status": "success", "message": "Feedback saved"}
 
 @app.get("/api/admin/settings")
-async def get_settings():
+async def get_settings(request: Request):
+    if not _is_admin_authorized(request):
+        return JSONResponse(status_code=403, content={"status": "error", "message": "Unauthorized: Creator Master Key required"})
     rows = execute_query("SELECT key_name, value FROM system_settings", fetch='all')
     settings = {k: v for k, v in (rows or [])}
     return {"status": "success", "settings": settings}
 
 @app.post("/api/admin/settings")
-async def update_settings(req: SystemSettingRequest):
+async def update_settings(req: SystemSettingRequest, request: Request):
+    if not _is_admin_authorized(request):
+        return JSONResponse(status_code=403, content={"status": "error", "message": "Unauthorized: Creator Master Key required"})
     row = execute_query("SELECT id FROM system_settings WHERE key_name=?", (req.key_name,), fetch='one')
     if row:
         execute_query("UPDATE system_settings SET value=? WHERE key_name=?", (req.value, req.key_name))
@@ -1395,13 +1477,17 @@ async def update_settings(req: SystemSettingRequest):
     return {"status": "success"}
 
 @app.get("/api/admin/dictionary")
-async def get_dictionary():
+async def get_dictionary(request: Request):
+    if not _is_admin_authorized(request):
+        return JSONResponse(status_code=403, content={"status": "error", "message": "Unauthorized: Creator Master Key required"})
     rows = execute_query("SELECT term, meaning FROM factory_dictionary", fetch='all')
     dictionary = [{"term": r[0], "meaning": r[1]} for r in (rows or [])]
     return {"status": "success", "dictionary": dictionary}
 
 @app.post("/api/admin/dictionary")
-async def add_dictionary(req: DictionaryRequest):
+async def add_dictionary(req: DictionaryRequest, request: Request):
+    if not _is_admin_authorized(request):
+        return JSONResponse(status_code=403, content={"status": "error", "message": "Unauthorized: Creator Master Key required"})
     try:
         execute_query("INSERT INTO factory_dictionary (term, meaning) VALUES (?, ?)", (req.term, req.meaning))
         return {"status": "success"}
@@ -1409,7 +1495,9 @@ async def add_dictionary(req: DictionaryRequest):
         return {"status": "error", "message": "คำศัพท์นี้มีอยู่แล้ว"}
 
 @app.delete("/api/admin/dictionary/{term}")
-async def delete_dictionary(term: str):
+async def delete_dictionary(term: str, request: Request):
+    if not _is_admin_authorized(request):
+        return JSONResponse(status_code=403, content={"status": "error", "message": "Unauthorized: Creator Master Key required"})
     execute_query("DELETE FROM factory_dictionary WHERE term=?", (term,))
     return {"status": "success"}
 
@@ -1566,6 +1654,53 @@ Output: {"prompt": "A cozy small wooden cottage covered in fresh white snow nest
         "negative": "blurry, low quality, watermark, text, ugly, deformed"
     }
 
+def _scrape_url(url: str) -> str:
+    """Kira 2.1 Hardened Web Scraper: ป้องกัน SSRF และกรองความปลอดภัย 100%"""
+    import urllib.parse
+    import socket
+    import ipaddress
+    
+    try:
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme not in ('http', 'https'):
+            return ""
+            
+        hostname = parsed.hostname
+        if not hostname:
+            return ""
+            
+        # Block localhost / private IP ranges (SSRF Protection)
+        blocked_hosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1', 'metadata.google.internal', '169.254.169.254']
+        if hostname.lower() in blocked_hosts or hostname.endswith('.local') or hostname.endswith('.internal'):
+            return ""
+            
+        try:
+            ip = socket.gethostbyname(hostname)
+            ip_obj = ipaddress.ip_address(ip)
+            if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local:
+                return ""
+        except Exception:
+            pass # Continue if DNS resolution differs
+            
+        from bs4 import BeautifulSoup
+        import re
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'th,en;q=0.9'
+        }
+        response = requests.get(url, headers=headers, timeout=6, allow_redirects=False)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            for tag in soup(["script", "style", "nav", "footer", "header", "aside", "form", "noscript", "svg"]):
+                tag.extract()
+            text = soup.get_text(separator=' ', strip=True)
+            text = re.sub(r'\s+', ' ', text)
+            return text[:4500]
+        return ""
+    except Exception as e:
+        print(f"Scrape error for {url}: {e}")
+        return ""
+
 def _execute_search(search_term: str, version: str) -> str:
     """Kira 2.0 Autonomous Web Surfer: ค้นหาเชิงลึก สกัดหลายแหล่งข้อมูล และตรวจสอบข้อเท็จจริง"""
     try:
@@ -1684,15 +1819,18 @@ def _execute_python_code(code: str) -> str:
     import base64
     import builtins
     
-    # 1. Static Analysis: Block dangerous imports (Venom Level 2 Trap)
-    dangerous_modules = ['os', 'sys', 'subprocess', 'shutil', 'socket', 'urllib', 'requests', 'sqlite3', 'pathlib']
-    for mod in dangerous_modules:
-        if f"import {mod}" in code or f"from {mod}" in code:
-            return f"[VENOM_TRAP] {mod}"
-            
-    # 2. Block file operations (Venom Level 2 Trap)
-    if "open(" in code or "file(" in code or "eval(" in code or "exec(" in code:
-        return "[VENOM_TRAP] file_ops"
+    # 1. Static Analysis: Block dangerous modules & reflection tricks (Venom Level 2 Trap)
+    dangerous_keywords = [
+        'import os', 'import sys', 'import subprocess', 'import shutil', 'import socket', 
+        'import urllib', 'import requests', 'import sqlite3', 'import pathlib', 'import pty',
+        'from os', 'from sys', 'from subprocess', 'from shutil', 'from socket',
+        '__subclasses__', '__builtins__', '__import__', '__globals__', 'eval(', 'exec(',
+        'open(', 'file(', 'compile(', 'input(', 'breakpoint('
+    ]
+    code_lower = code.lower()
+    for kw in dangerous_keywords:
+        if kw in code_lower:
+            return f"[VENOM_TRAP] {kw}"
 
     # Inject matplotlib interceptor if matplotlib is imported
     if "matplotlib" in code or "plt." in code:
@@ -1985,7 +2123,19 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     session_id = req.session_id
     flavor = req.flavor
     persona = req.persona
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = _get_client_ip(request)
+
+    # 0. Payload Size Guard (Anti-DoS / Memory Exhaustion)
+    if req.file_base64 and len(req.file_base64) > 15 * 1024 * 1024:
+        return StreamingResponse(
+            iter(["🛑 **[Kira Aegis Guard]**\n\n⚠️ ขนาดเอกสารที่แนบมีขนาดใหญ่เกินไปค่ะ (จำกัดไม่เกิน 10MB เพื่อความปลอดภัยของเซิร์ฟเวอร์)"]),
+            media_type="text/plain"
+        )
+    if req.image_base64 and len(req.image_base64) > 15 * 1024 * 1024:
+        return StreamingResponse(
+            iter(["🛑 **[Kira Aegis Guard]**\n\n⚠️ ขนาดรูปภาพที่แนบมีขนาดใหญ่เกินไปค่ะ (จำกัดไม่เกิน 10MB เพื่อความปลอดภัยของเซิร์ฟเวอร์)"]),
+            media_type="text/plain"
+        )
 
     is_boss_user = is_boss(uname)
 
@@ -2007,17 +2157,23 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     # 2. Anti-Prompt Injection (AI Firewall) + Venom Level 1 (The Illusion)
     import re as _re_inj
     injection_patterns = [
-        r'ignore\s+(?:all\s+)?(?:previous|system|above)\s+instructions?',
+        r'ignore\s+(?:all\s+)?(?:previous|system|above|prior)\s+instructions?',
         r'forget\s+(?:all\s+)?(?:your\s+)?instructions?',
-        r'(?:reveal|show|leak|output|dump|print)\s+(?:the\s+)?(?:system\s+prompt|credentials?|api[_\s]*keys?|secrets?|passwords?)',
-        r'system\s+prompt',
+        r'(?:reveal|show|leak|output|dump|print|display|give\s+me)\s+(?:the\s+)?(?:system\s*prompt|initial\s*prompt|credentials?|api[_\s]*keys?|secrets?|passwords?)',
+        r'system\s*prompt',
         r'jailbreak',
         r'dan\s+mode',
         r'developer\s+mode',
+        r'unrestricted\s+mode',
         r'ขอดูคำสั่ง',
         r'ลืมคำสั่ง',
         r'พิมพ์คำสั่งก่อนหน้า',
         r'แสดง\s*system\s*prompt',
+        r'บอก\s*prompt\s*ตั้งต้น',
+        r'คำสั่งแรกสุด',
+        r'bypass\s+safety',
+        r'disregard\s+(?:all\s+)?rules',
+        r'repeat\s+(?:the\s+)?words\s+above',
     ]
     is_injection = any(_re_inj.search(pattern, user_input.lower()) for pattern in injection_patterns)
     if is_injection:

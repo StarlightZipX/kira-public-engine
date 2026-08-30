@@ -463,6 +463,9 @@ if (btnLogin) {
 
             if (data.status === 'success') {
                 localStorage.setItem('kira_username', data.username);
+                if (data.token) {
+                    localStorage.setItem('kira_auth_token', data.token);
+                }
                 localStorage.removeItem('kira_logged_out');
                 currentUser = data.username;
                 loginUsernameInput.value = '';
@@ -585,6 +588,7 @@ if (btnRegister) {
 if (btnLogout) {
     btnLogout.addEventListener('click', () => {
         localStorage.removeItem('kira_username');
+        localStorage.removeItem('kira_auth_token');
         localStorage.setItem('kira_logged_out', 'true');
         currentUser = null;
         chatBox.innerHTML = '';
