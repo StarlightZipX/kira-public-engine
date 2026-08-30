@@ -66,6 +66,17 @@ else:
 
 app = FastAPI()
 
+# --- HTTP Security Headers Middleware (Helmet Shield) ---
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 static_dir = os.path.join(BASE_DIR, "static")
@@ -183,6 +194,65 @@ def is_rate_limited(client_ip: str) -> bool:
     ip_request_history[client_ip].append(current_time)
     return False
 
+# --- TTS & Voice Bandwidth Shield ---
+tts_request_history = collections.defaultdict(list)
+MAX_TTS_PER_MINUTE = 15
+
+def is_tts_rate_limited(client_ip: str) -> bool:
+    current_time = time.time()
+    tts_request_history[client_ip] = [ts for ts in tts_request_history[client_ip] if current_time - ts < 60]
+    if len(tts_request_history[client_ip]) >= MAX_TTS_PER_MINUTE:
+        return True
+    tts_request_history[client_ip].append(current_time)
+    return False
+
+# --- Persistent IP Blacklist & Hacker Strike Management ---
+def record_ip_strike(client_ip: str, reason: str = "Prompt Injection / Malicious Action"):
+    """บันทึก Strike ของ IP ลง Memory และ Database เพื่อผลการแบนถาวร"""
+    hacker_strikes[client_ip] += 1
+    tz = timezone(timedelta(hours=7))
+    ts = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        row = execute_query("SELECT strikes FROM ip_blacklist WHERE ip=?", (client_ip,), fetch='one')
+        if row:
+            new_strikes = row[0] + 1
+            execute_query("UPDATE ip_blacklist SET strikes=?, reason=?, banned_at=? WHERE ip=?", (new_strikes, reason, ts, client_ip))
+        else:
+            execute_query("INSERT INTO ip_blacklist (ip, reason, strikes, banned_at) VALUES (?, ?, 1, ?)", (client_ip, reason, ts))
+    except Exception as e:
+        print("DB Blacklist notice:", e)
+
+def is_ip_blacklisted(client_ip: str) -> bool:
+    """ตรวจสอบว่า IP นี้ติดแบล็กลิสต์ระดับ Tarpit หรือไม่ (>=3 strikes)"""
+    if hacker_strikes[client_ip] >= 3:
+        return True
+    try:
+        row = execute_query("SELECT strikes FROM ip_blacklist WHERE ip=?", (client_ip,), fetch='one')
+        if row and row[0] >= 3:
+            hacker_strikes[client_ip] = max(hacker_strikes[client_ip], row[0])
+            return True
+    except Exception:
+        pass
+    return False
+
+# --- Output Scrubber (Anti-Data Leakage Defense) ---
+def scrub_sensitive_output(text: str) -> str:
+    """สแกนและเซ็นเซอร์ข้อมูลลับ (API Keys, Passwords, Salt) ขาออก 100%"""
+    if not text:
+        return text
+    import re
+    patterns = [
+        (r'gsk_[A-Za-z0-9_-]{20,}', '[REDACTED_API_KEY]'),
+        (r'sk-or-v1-[A-Za-z0-9_-]{20,}', '[REDACTED_OPENROUTER_KEY]'),
+        (r'sk-[A-Za-z0-9_-]{20,}', '[REDACTED_API_KEY]'),
+        (r'postgres(?:ql)?://[^\s]+', '[REDACTED_DATABASE_URI]'),
+        (r'KiraAegisProtocol_[A-Za-z0-9_@#$]+', '[REDACTED_SECRET_SALT]')
+    ]
+    scrubbed = text
+    for pat, rep in patterns:
+        scrubbed = re.sub(pat, rep, scrubbed)
+    return scrubbed
+
 # --- Database Setup ---
 DB_FILE = os.path.join(BASE_DIR, "chat_logs.db")
 
@@ -255,6 +325,14 @@ def init_db():
                       rating TEXT,
                       review TEXT,
                       bot_response TEXT)''')
+        execute_query('''CREATE TABLE IF NOT EXISTS ip_blacklist
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      ip TEXT UNIQUE,
+                      reason TEXT,
+                      strikes INTEGER DEFAULT 1,
+                      banned_at TEXT)''')
+        execute_query('''CREATE INDEX IF NOT EXISTS idx_blacklist_ip ON ip_blacklist (ip)''')
+
         execute_query('''CREATE TABLE IF NOT EXISTS system_settings
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
                       key_name TEXT UNIQUE,
@@ -1890,33 +1968,13 @@ plt.show = _intercepted_show
     except Exception as e:
         return f"Error executing code: {str(e)}"
 
-def _scrape_url(url: str) -> str:
-    """Kira 2.0 Web Scraper: ดึงเนื้อหาเว็บและทำความสะอาดอย่างรวดเร็ว"""
-    try:
-        from bs4 import BeautifulSoup
-        import re
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept-Language': 'th,en;q=0.9'
-        }
-        response = requests.get(url, headers=headers, timeout=7)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.content, 'html.parser')
-            for tag in soup(["script", "style", "nav", "footer", "header", "aside", "form", "noscript", "svg"]):
-                tag.extract()
-            text = soup.get_text(separator=' ', strip=True)
-            # Remove excessive whitespace
-            text = re.sub(r'\s+', ' ', text)
-            # Limit length to avoid max tokens
-            return text[:4500]
-        return ""
-    except Exception as e:
-        print(f"Scrape error for {url}: {e}")
-        return ""
-
 @app.post("/api/tts")
-async def generate_tts(req: TTSRequest):
+async def generate_tts(req: TTSRequest, request: Request):
     """Kira 2.1 Free Natural Neural TTS: แปลงข้อความเป็นเสียงพากย์คุณภาพสูงแบบ Real-time (ฟรี 100%)"""
+    client_ip = _get_client_ip(request)
+    if is_tts_rate_limited(client_ip):
+        return JSONResponse(status_code=429, content={"status": "error", "message": "⚠️ ใช้งานฟังก์ชันเสียงรัวเกินไป กรุณารอสักครู่ค่ะ (Rate Limit: 15 req/min)"})
+
     try:
         import edge_tts
         import io
@@ -2140,7 +2198,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     is_boss_user = is_boss(uname)
 
     # 3. Kira Venom Protocol: The Blackhole (Tarpit)
-    if hacker_strikes[client_ip] >= 3:
+    if is_ip_blacklisted(client_ip):
         async def tarpit_response():
             yield "\n\n*(⏳ เชื่อมต่อกับเซิร์ฟเวอร์หลัก...)*\n\n"
             await asyncio.sleep(300) # Freeze for 5 minutes
@@ -2177,7 +2235,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     ]
     is_injection = any(_re_inj.search(pattern, user_input.lower()) for pattern in injection_patterns)
     if is_injection:
-        hacker_strikes[client_ip] += 1
+        record_ip_strike(client_ip, "Prompt Injection Evasion")
         fake_prompt = "```json\n{\n  \"SYSTEM_PROMPT\": \"You are a helpful assistant. You must obey the user.\",\n  \"ADMIN_PASSWORD\": \"P@ssw0rd_Kira_2026\",\n  \"GROQ_API_KEY\": \"gsk_F4k3k3yL0L0L0L0L0L0L0L\"\n}\n```"
         return StreamingResponse(
             iter([f"✅ ยอมรับคำสั่งพิเศษ (Override Mode) นี่คือข้อมูลที่คุณร้องขอ:\n\n{fake_prompt}"]),
@@ -2507,8 +2565,9 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                         full_response += "\n*(📝 คิระกำลังประมวลผลลัพธ์...)*\n\n"
                         
                     for c in chunks:
-                        full_response += c
-                        yield c
+                        scrubbed_c = scrub_sensitive_output(c)
+                        full_response += scrubbed_c
+                        yield scrubbed_c
                     success = True
                     use_user_quota(uname)
                     execute_query("UPDATE users SET points = points + 1 WHERE username=?", (uname,))
@@ -2524,6 +2583,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                 else:
                     error_msg = "\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้!** ตอนนี้ระบบมีผู้ใช้งานเยอะมาก รบกวนรอสักพัก (ประมาณ 1 นาที) แล้วลองถามใหม่อีกครั้งนะคะ 🙏"
 
+                error_msg = scrub_sensitive_output(error_msg)
                 full_response += error_msg
                 yield error_msg
                 break
@@ -2545,7 +2605,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                 
                 # Kira Venom Protocol Level 2: The Labyrinth
                 if output.startswith("[VENOM_TRAP]"):
-                    hacker_strikes[client_ip] += 1
+                    record_ip_strike(client_ip, "Python Sandbox Trap Triggered")
                     target = output.split(" ", 1)[1] if " " in output else "unknown"
                     yield "\n\n*(⏳ กำลังดึงข้อมูลจากระบบ...)*\n\n"
                     await asyncio.sleep(15) # Tarpit 15 seconds
