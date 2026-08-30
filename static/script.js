@@ -230,11 +230,67 @@ async function checkEngineStatus() {
     }
 }
 
+// --- Neural Core Connection & Cold-Start Supervisor ---
+let isCoreWaking = false;
+
+function showConnectionToast(text, type = 'waking') {
+    const toast = document.getElementById('kira-connection-toast');
+    const toastText = document.getElementById('kira-toast-text');
+    if (!toast || !toastText) return;
+    
+    toastText.textContent = text;
+    toast.className = `kira-connection-toast ${type}`;
+}
+
+function hideConnectionToast(delayMs = 2500) {
+    const toast = document.getElementById('kira-connection-toast');
+    if (!toast) return;
+    setTimeout(() => {
+        toast.classList.add('hidden');
+    }, delayMs);
+}
+
+async function checkNeuralCoreHealth(isInitial = false) {
+    const startTime = Date.now();
+    let showTimer = null;
+    
+    if (isInitial) {
+        showTimer = setTimeout(() => {
+            isCoreWaking = true;
+            showConnectionToast('⚡ กำลังเชื่อมต่อ Kira Neural Core บน Cloud... (กำลังปลุกระบบ 5-10s)', 'waking');
+        }, 1800);
+    }
+    
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 35000);
+        const res = await fetch('/api/health', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (showTimer) clearTimeout(showTimer);
+        
+        if (res.ok) {
+            const data = await res.json();
+            if (isCoreWaking || (Date.now() - startTime > 2000)) {
+                showConnectionToast('✨ Kira Neural Core เชื่อมต่อสำเร็จ พร้อมใช้งาน!', 'ready');
+                hideConnectionToast(2500);
+                isCoreWaking = false;
+            }
+            return true;
+        }
+    } catch (e) {
+        if (showTimer) clearTimeout(showTimer);
+        console.log("Core wakeup ping notice:", e);
+    }
+    return false;
+}
+
 // Check auth on load
+checkNeuralCoreHealth(true);
 checkAuth();
 updateModelUI();
 checkEngineStatus();
 setInterval(checkEngineStatus, 30000);
+setInterval(() => checkNeuralCoreHealth(false), 240000); // 4-min Keepalive Heartbeat
 
 // --- Auth UI Toggles & Tabs ---
 function switchAuthTab(tab) {
@@ -392,12 +448,18 @@ if (btnLogin) {
         btnLogin.disabled = true;
         btnLogin.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเข้าสู่ระบบ...';
 
+        const coldStartTimer = setTimeout(() => {
+            btnLogin.innerHTML = '<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> กำลังปลุกระบบ Cloud...';
+            showConnectionToast('⚡ เซิร์ฟเวอร์กำลังตื่นจากการหลับ (Cold Start) กรุณารอสักครู่...', 'waking');
+        }, 2200);
+
         try {
             const response = await fetch(`/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
+            clearTimeout(coldStartTimer);
             const data = await response.json();
 
             if (data.status === 'success') {
@@ -407,6 +469,7 @@ if (btnLogin) {
                 loginUsernameInput.value = '';
                 loginPasswordInput.value = '';
                 loginError.textContent = '';
+                hideConnectionToast(500);
                 checkAuth();
                 updateModelUI();
             } else {
@@ -414,9 +477,11 @@ if (btnLogin) {
                 loginError.textContent = data.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้องค่ะ";
             }
         } catch (err) {
+            clearTimeout(coldStartTimer);
             loginError.style.color = '#f87171';
             loginError.textContent = "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง";
         } finally {
+            clearTimeout(coldStartTimer);
             btnLogin.disabled = false;
             btnLogin.innerHTML = originalText;
         }
@@ -430,12 +495,18 @@ if (btnBossQuickLogin) {
         btnBossQuickLogin.disabled = true;
         btnBossQuickLogin.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเข้าสู่ระบบ VIP...';
 
+        const coldStartTimer = setTimeout(() => {
+            btnBossQuickLogin.innerHTML = '<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> กำลังปลุกระบบ Cloud...';
+            showConnectionToast('⚡ เซิร์ฟเวอร์กำลังตื่นจากการหลับ (Cold Start) กรุณารอสักครู่...', 'waking');
+        }, 2200);
+
         try {
             const response = await fetch(`/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: "👑 Boss (Owner)", password: "kira1234" })
             });
+            clearTimeout(coldStartTimer);
             const data = await response.json();
 
             if (data.status === 'success') {
@@ -443,6 +514,7 @@ if (btnBossQuickLogin) {
                 localStorage.removeItem('kira_logged_out');
                 currentUser = data.username;
                 loginError.textContent = '';
+                hideConnectionToast(500);
                 checkAuth();
                 updateModelUI();
             } else {
@@ -450,9 +522,11 @@ if (btnBossQuickLogin) {
                 loginError.textContent = data.message || "ไม่สามารถเข้าสู่ระบบ VIP ได้";
             }
         } catch (err) {
+            clearTimeout(coldStartTimer);
             loginError.style.color = '#f87171';
             loginError.textContent = "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้";
         } finally {
+            clearTimeout(coldStartTimer);
             btnBossQuickLogin.disabled = false;
             btnBossQuickLogin.innerHTML = originalText;
         }
@@ -501,6 +575,11 @@ if (btnRegister) {
         btnRegister.disabled = true;
         btnRegister.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้างบัญชี...';
 
+        const coldStartTimer = setTimeout(() => {
+            btnRegister.innerHTML = '<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> กำลังปลุกระบบ Cloud...';
+            showConnectionToast('⚡ เซิร์ฟเวอร์กำลังตื่นจากการหลับ (Cold Start) กรุณารอสักครู่...', 'waking');
+        }, 2200);
+
         try {
             const response = await fetch(`/api/register`, {
                 method: 'POST',
@@ -512,11 +591,13 @@ if (btnRegister) {
                     purpose: selectedPurpose || 'general' 
                 })
             });
+            clearTimeout(coldStartTimer);
             const data = await response.json();
 
             if (data.status === 'success') {
                 regError.style.color = '#34d399';
                 regError.textContent = "✨ สมัครสมาชิกสำเร็จ! กำลังพากลับไปหน้าเข้าสู่ระบบ...";
+                hideConnectionToast(500);
                 setTimeout(() => {
                     switchAuthTab('login');
                     loginUsernameInput.value = username; // Auto-fill username
@@ -536,9 +617,11 @@ if (btnRegister) {
                 regError.textContent = data.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก";
             }
         } catch (err) {
+            clearTimeout(coldStartTimer);
             regError.style.color = '#f87171';
             regError.textContent = "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง";
         } finally {
+            clearTimeout(coldStartTimer);
             btnRegister.disabled = false;
             btnRegister.innerHTML = originalText;
         }

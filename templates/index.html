@@ -11,12 +11,20 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=8">
+    <link rel="stylesheet" href="/static/style.css?v=9">
     <!-- MathJax for LaTeX Rendering -->
 
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
+
+    <!-- Neural Core Live Status / Cold-Start Wakeup Toast -->
+    <div id="kira-connection-toast" class="kira-connection-toast hidden">
+        <div class="toast-content">
+            <span class="toast-pulse-icon"><i class="fa-solid fa-bolt"></i></span>
+            <span class="toast-text" id="kira-toast-text">กำลังเชื่อมต่อ Neural Core...</span>
+        </div>
+    </div>
 
     <!-- Auth Modal / Portal -->
     <div id="auth-modal" class="auth-modal">

@@ -863,6 +863,23 @@ class MemoryCreateRequest(BaseModel):
     object: Optional[str] = None
 
 # --- Endpoints ---
+@app.get("/api/health")
+@app.get("/api/ping")
+async def health_check():
+    """Kira Instant Health Check & Cold-Start Wakeup Ping Endpoint"""
+    tz = timezone(timedelta(hours=7))
+    return {
+        "status": "online",
+        "engine": "Kira 2.1 Multi-Brain Supercluster",
+        "version": "2.1.0",
+        "timestamp": datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S"),
+        "providers": {
+            "groq_keys": len(API_KEYS),
+            "openrouter": bool(OPENROUTER_API_KEYS),
+            "ollama": ENABLE_OLLAMA
+        }
+    }
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
