@@ -35,7 +35,7 @@ try:
     html_text = r_root.text
     audit_log(2, "ASSETS", "Auth Modal Elements in HTML", "PASS" if 'id="auth-modal"' in html_text and 'id="login-view"' in html_text else "FAIL")
     audit_log(3, "ASSETS", "Password Eye Toggles Markup", "PASS" if 'togglePasswordVisibility' in html_text else "FAIL")
-    audit_log(4, "ASSETS", "VIP Boss 1-Click Button Markup", "PASS" if 'btn-boss-quick-login' in html_text else "FAIL")
+    audit_log(4, "ASSETS", "Unified Secure Login Form Markup", "PASS" if 'id="btn-login"' in html_text else "FAIL")
     audit_log(5, "ASSETS", "Model Selector Markup", "PASS" if 'id="model-select"' in html_text else "FAIL")
     audit_log(6, "ASSETS", "Brain Graph Canvas Markup", "PASS" if 'id="brain-canvas"' in html_text or 'id="graph-canvas"' in html_text or 'brain' in html_text.lower() else "FAIL")
     audit_log(7, "ASSETS", "Live Code Canvas Drawer Markup", "PASS" if 'canvas-drawer' in html_text or 'code-canvas' in html_text or 'live-preview' in html_text.lower() else "PASS")

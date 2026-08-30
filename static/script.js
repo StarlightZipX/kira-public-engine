@@ -75,7 +75,6 @@ const loginUsernameInput = document.getElementById('login-username');
 const loginPasswordInput = document.getElementById('login-password');
 const btnLogin = document.getElementById('btn-login');
 const loginError = document.getElementById('login-error');
-const btnBossQuickLogin = document.getElementById('btn-boss-quick-login');
 
 // Register Elements
 const regUsernameInput = document.getElementById('reg-username');
@@ -484,51 +483,6 @@ if (btnLogin) {
             clearTimeout(coldStartTimer);
             btnLogin.disabled = false;
             btnLogin.innerHTML = originalText;
-        }
-    });
-}
-
-// 👑 VIP Boss 1-Click Login
-if (btnBossQuickLogin) {
-    btnBossQuickLogin.addEventListener('click', async () => {
-        const originalText = btnBossQuickLogin.innerHTML;
-        btnBossQuickLogin.disabled = true;
-        btnBossQuickLogin.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเข้าสู่ระบบ VIP...';
-
-        const coldStartTimer = setTimeout(() => {
-            btnBossQuickLogin.innerHTML = '<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> กำลังปลุกระบบ Cloud...';
-            showConnectionToast('⚡ เซิร์ฟเวอร์กำลังตื่นจากการหลับ (Cold Start) กรุณารอสักครู่...', 'waking');
-        }, 2200);
-
-        try {
-            const response = await fetch(`/api/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: "👑 Boss (Owner)", password: "kira1234" })
-            });
-            clearTimeout(coldStartTimer);
-            const data = await response.json();
-
-            if (data.status === 'success') {
-                localStorage.setItem('kira_username', data.username);
-                localStorage.removeItem('kira_logged_out');
-                currentUser = data.username;
-                loginError.textContent = '';
-                hideConnectionToast(500);
-                checkAuth();
-                updateModelUI();
-            } else {
-                loginError.style.color = '#f87171';
-                loginError.textContent = data.message || "ไม่สามารถเข้าสู่ระบบ VIP ได้";
-            }
-        } catch (err) {
-            clearTimeout(coldStartTimer);
-            loginError.style.color = '#f87171';
-            loginError.textContent = "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้";
-        } finally {
-            clearTimeout(coldStartTimer);
-            btnBossQuickLogin.disabled = false;
-            btnBossQuickLogin.innerHTML = originalText;
         }
     });
 }
