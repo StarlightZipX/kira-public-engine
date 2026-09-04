@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from app import app, init_db, execute_query, DB_FILE, _should_trigger_moa, _compress_and_roll_history, get_user_briefing, HumanMessage, AIMessage, SystemMessage
+from app import app, init_db, execute_query, DB_FILE, _should_trigger_moa, _compress_and_roll_history, get_user_briefing, HumanMessage, AIMessage, SystemMessage, BRAIN_PROFILES, _route_brain
 
 print("====================================================================")
 print("🌐 KIRA 2.1 - 100 ENGINEERING AGENTS DIAGNOSTIC & AUDIT SWARM")
@@ -94,7 +94,9 @@ log_result(32, "MOA", "Adaptive Router - Deep Coding Swarm Activation", "PASS" i
 log_result(33, "MOA", "MoA Proposer Engine (Qwen 72B)", "PASS")
 log_result(34, "MOA", "MoA Verifier & Critic Engine (Llama 70B)", "PASS")
 log_result(35, "MOA", "MoA Synthesizer Logic Consensus", "PASS")
-log_result(36, "MOA", "OpenRouter Fallback Cascade", "PASS")
+vision_model, vision_brain_type, _ = _route_brain("ช่วยดูรูปนี้", "2.0-vision", "fast")
+vision_ok = vision_model == "qwen/qwen-2.5-vl-72b-instruct" and vision_brain_type == "vision" and "vision" in BRAIN_PROFILES
+log_result(36, "MOA", "Multimodal Vision Gateway (Qwen-VL-72B Routing)", "PASS" if vision_ok else "FAIL")
 log_result(37, "MOA", "Groq API Key Rotation", "PASS")
 log_result(38, "MOA", "Thinking Tag Streaming Regex", "PASS")
 log_result(39, "MOA", "Context Token Truncation", "PASS")
@@ -148,7 +150,10 @@ log_result(74, "UI", "Code Syntax Highlighting (Highlight.js)", "PASS")
 log_result(75, "UI", "Mobile Viewport Responsiveness", "PASS")
 log_result(76, "UI", "Sidebar State Retention", "PASS")
 log_result(77, "UI", "Chat Scrolling Autoscroll", "PASS")
-log_result(78, "UI", "Image Upload Preview", "PASS")
+with open(os.path.join(BASE_DIR, "templates", "index.html"), "r", encoding="utf-8") as f:
+    tpl_content = f.read()
+vision_ui_ok = "html2canvas" in tpl_content and "drag-drop-overlay" in tpl_content and "btn-inspect-canvas" in tpl_content
+log_result(78, "UI", "Live Screen & Vision Inspector DOM (Canvas Snapshot & Drag-Drop)", "PASS" if vision_ui_ok else "FAIL")
 log_result(79, "UI", "Feedback Like/Dislike Toggle", "PASS")
 log_result(80, "UI", "Local Storage Preferences", "PASS")
 

@@ -397,6 +397,11 @@ ALL_MODEL_CANDIDATES = [
 # ========== Multi-Brain Profiles (Kira 2.1) ==========
 # เลือกสมองที่เหมาะสมที่สุดตามประเภทคำถาม รองรับทั้ง Qwen, DeepSeek, และ Groq
 BRAIN_PROFILES = {
+    "vision": {
+        "model": "qwen/qwen-2.5-vl-72b-instruct" if OPENROUTER_API_KEYS else "meta-llama/llama-3.2-11b-vision-instruct",
+        "keywords": ["รูป", "ภาพ", "ตรวจภาพ", "ดูรูป", "ดูภาพ", "หน้าจอ", "แคป", "ui", "image", "photo", "screen", "screenshot", "inspect", "canvas"],
+        "description": "สถาปัตยกรรมจักษุประสาทวิเคราะห์ (Multimodal Vision Engine)"
+    },
     "logic": {
         "model": "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else "llama3-70b-8192",
         "keywords": ["คำนวณ", "วิเคราะห์", "เปรียบเทียบ", "สถิติ", "ตรรกะ", "เหตุผล", "ข้อดี", "ข้อเสีย", 
@@ -478,12 +483,23 @@ def _should_trigger_moa(user_input: str, model_version: str, flavor: str) -> tup
     return False, "standard_fast_path", "ประมวลผลความเร็วปกติ"
 
 
-def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
+def _route_brain(user_input: str = "", model_version: str = "2.1-reasoning", flavor: str = "") -> tuple:
     """Multi-Brain Router: เลือกสถาปัตยกรรมที่เหมาะสมที่สุดตามโมเดลและคำถาม
     Returns: (model_name, brain_type, description)
     """
-    input_lower = user_input.lower()
+    # If the user passed model_version as first arg for convenience
+    if user_input in BRAIN_PROFILES or user_input in ("2.0-vision", "2.0-flash", "2.1-reasoning", "2.1-pro", "2.0-pro", "2.0-ultra", "1.0", "1.1", "1.2", "1.3"):
+        if model_version == "2.1-reasoning" and not flavor:
+            model_version = user_input
+            user_input = ""
+
+    input_lower = user_input.lower() if user_input else ""
     
+    # 0. Vision Multimodal Priority
+    if model_version == "2.0-vision":
+        profile = BRAIN_PROFILES["vision"]
+        return profile["model"], "vision", "👁️ Kira 2.0 Vision (Multimodal Engine)"
+
     # 1. ถ้าผู้ใช้เลือก flavor มาตรงๆ ให้ใช้ตามนั้น
     if flavor == "fast":
         return PREFERRED_FLASH, "chat", "⚡ Instant Turbo (High-Speed Engine)"
@@ -505,8 +521,8 @@ def _route_brain(user_input: str, model_version: str, flavor: str) -> tuple:
     elif model_version == "2.0-flash":
         return PREFERRED_FLASH, "chat", "⚡ Kira 2.0 Flash (High-Speed Engine)"
     elif model_version == "2.0-vision":
-        profile = BRAIN_PROFILES["code"]
-        return profile["model"], "code", "👁️ Kira 2.0 Vision (Multimodal Engine)"
+        profile = BRAIN_PROFILES["vision"]
+        return profile["model"], "vision", "👁️ Kira 2.0 Vision (Multimodal Engine)"
     elif model_version == "2.0-pro":
         profile = BRAIN_PROFILES["reasoning"]
         return profile["model"], "reasoning", "🧠 Kira 2.0 Pro (Cognitive Reasoning Engine)"
@@ -553,7 +569,7 @@ class SimpleChunk:
 
 class UnifiedLLM:
     """Kira 2.1 Multi-Provider Neural Gateway
-    รองรับทั้ง Groq (High-Speed), OpenRouter (Qwen 2.5/3.8, DeepSeek-R1), และ Local Ollama
+    รองรับทั้ง Groq (High-Speed), OpenRouter (Qwen 2.5/3.8, DeepSeek-R1, Qwen-VL Vision), และ Local Ollama
     """
     def __init__(self, model_name: str, api_key: str = None, provider: str = None, temperature: float = 0.7):
         self.model = model_name
@@ -562,7 +578,7 @@ class UnifiedLLM:
         # Auto-detect provider
         if provider:
             self.provider = provider
-        elif any(k in model_name.lower() for k in ["qwen", "deepseek", "openrouter"]):
+        elif any(k in model_name.lower() for k in ["qwen", "deepseek", "openrouter", "vl", "vision", "gemini"]):
             self.provider = "openrouter"
         elif any(k in model_name.lower() for k in ["ollama", "local/"]):
             self.provider = "ollama"
@@ -2673,6 +2689,17 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                 temp_history.insert(-1, SystemMessage(content=f"\n[เนื้อหาจากเว็บไซต์ {url_to_scrape}]:\n{scraped_text}\n(Instruction: ใช้ข้อมูลนี้ตอบคำถามให้ครบถ้วน)"))
                 yield "[THINKING]✅ อ่านเว็บไซต์เสร็จแล้ว[/THINKING]"
 
+        if req.image_base64:
+            yield "[THINKING]👁️ [Kira Live Vision Inspector] กำลังวิเคราะห์องค์ประกอบภาพ, โค้ด และ UI/UX อย่างลึกซึ้ง...[/THINKING]"
+            vision_guideline = (
+                "\n[Kira 2.2 Live Vision Inspector Protocol]:\n"
+                "ผู้ใช้ได้แนบรูปภาพ UI/หน้าจอ Canvas/Screenshot หรือภาพ Error Trace เข้ามาในการสนทนานี้\n"
+                "- จงวิเคราะห์องค์ประกอบภาพ, โครงสร้าง UI/UX, Layout, Palette สี, Typography และข้อผิดพลาดอย่างละเอียดและลึกซึ้ง\n"
+                "- หากตรวจพบข้อผิดพลาดหรือจุดที่ควรปรับปรุง ให้เสนอแนวทางแก้ไขที่ตรงจุดและชัดเจน\n"
+                "- หากเป็นการตรวจงาน Canvas หรือเขียนหน้าเว็บ จงส่งมอบโค้ด HTML/CSS/JS ฉบับปรับปรุงแก้ไขที่สมบูรณ์ในบล็อก ```html...``` เพื่อให้ผู้ใช้สามารถกดรันสดบน Live Code Canvas ได้ทันที\n"
+            )
+            temp_history.insert(-1, SystemMessage(content=vision_guideline))
+
         yield "[THINKING]✍️ กำลังเรียบเรียงคำตอบ...[/THINKING]"
 
         # Pillar 1 & 2: Adaptive Mixture-of-Agents (Adaptive MoA Swarm Router)
@@ -2750,9 +2777,9 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                     yield wait_msg
                     await asyncio.sleep(60)
 
-                # Force Full Vision model if image is present
+                # Force Full Multimodal Vision model if image is present (Pillar 3: Live Screen & Vision Inspector)
                 if req.image_base64:
-                    preferred_model = "llama-3.2-90b-vision-preview"
+                    preferred_model = "qwen/qwen-2.5-vl-72b-instruct" if OPENROUTER_API_KEYS else "meta-llama/llama-3.2-11b-vision-instruct"
 
                 s, chunks, err = await _try_all_keys_and_models(clean_history, preferred_model)
 

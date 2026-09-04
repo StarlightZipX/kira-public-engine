@@ -289,6 +289,7 @@ checkAuth();
 updateModelUI();
 checkEngineStatus();
 initProactiveHeartbeat();
+initLiveScreenInspector();
 setInterval(checkEngineStatus, 30000);
 setInterval(() => checkNeuralCoreHealth(false), 240000); // 4-min Keepalive Heartbeat
 
@@ -829,6 +830,156 @@ function initProactiveHeartbeat() {
     });
 }
 
+// --- 📷 3. Live Screen & Vision Inspector (Pillar 3) ---
+function initLiveScreenInspector() {
+    const btnInspectCanvas = document.getElementById('btn-inspect-canvas');
+    const chatArea = document.querySelector('.chat-area');
+    const dragOverlay = document.getElementById('drag-drop-overlay');
+
+    // 1. Live Canvas Snapshot Inspector
+    if (btnInspectCanvas) {
+        btnInspectCanvas.addEventListener('click', async () => {
+            try {
+                if (!artifactsIframe) return;
+                const iframeDoc = artifactsIframe.contentDocument || (artifactsIframe.contentWindow ? artifactsIframe.contentWindow.document : null);
+                if (!iframeDoc || !iframeDoc.body || !iframeDoc.body.innerText.trim()) {
+                    alert('ไม่พบเนื้อหาใน Live Canvas สำหรับตรวจสอบครับ กรุณารันโค้ดก่อน');
+                    return;
+                }
+
+                btnInspectCanvas.disabled = true;
+                const originalHtml = btnInspectCanvas.innerHTML;
+                btnInspectCanvas.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจ...';
+
+                if (typeof html2canvas === 'undefined') {
+                    throw new Error('html2canvas library is not loaded');
+                }
+
+                const canvas = await html2canvas(iframeDoc.body, {
+                    scale: 1.5,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: null
+                });
+
+                const snapshotDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                currentImageBase64 = snapshotDataUrl;
+
+                const imgPreview = document.getElementById('img-preview');
+                const imgPreviewContainer = document.getElementById('image-preview-container');
+                if (imgPreview) imgPreview.src = snapshotDataUrl;
+                if (imgPreviewContainer) imgPreviewContainer.style.display = 'block';
+
+                // Auto-switch to Vision model
+                const modelSelect = document.getElementById('model-select');
+                if (modelSelect) {
+                    modelSelect.value = '2.0-vision';
+                    localStorage.setItem('kira_model', '2.0-vision');
+                    updateModelUI();
+                }
+
+                if (!userInput.value.trim()) {
+                    userInput.value = 'ช่วยตรวจสอบ UI, Layout, สี และฟังก์ชันการทำงานของหน้าจอ Canvas นี้อย่างละเอียด พร้อมระบุจุดที่ควรปรับปรุง';
+                }
+                userInput.style.height = 'auto';
+                userInput.style.height = (userInput.scrollHeight) + 'px';
+                userInput.focus();
+                sendBtn.disabled = false;
+
+                showConnectionToast('📷 จับภาพ Canvas ส่งให้ Kira Vision Inspector เรียบร้อย!', 'ready');
+                hideConnectionToast(3000);
+            } catch (err) {
+                console.error('Inspect canvas error:', err);
+                alert('ไม่สามารถจับภาพ Canvas ได้: ' + err.message);
+            } finally {
+                if (btnInspectCanvas) {
+                    btnInspectCanvas.disabled = false;
+                    btnInspectCanvas.innerHTML = '<i class="fa-solid fa-camera"></i> ตรวจ Canvas';
+                }
+            }
+        });
+    }
+
+    // 2. Drag & Drop Vision Diagnostics
+    if (chatArea && dragOverlay) {
+        let dragCounter = 0;
+
+        chatArea.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter++;
+            dragOverlay.classList.add('active');
+        });
+
+        chatArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!dragOverlay.classList.contains('active')) {
+                dragOverlay.classList.add('active');
+            }
+        });
+
+        chatArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter--;
+            if (dragCounter <= 0) {
+                dragCounter = 0;
+                dragOverlay.classList.remove('active');
+            }
+        });
+
+        chatArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter = 0;
+            dragOverlay.classList.remove('active');
+
+            const files = e.dataTransfer ? e.dataTransfer.files : null;
+            if (files && files.length > 0) {
+                const file = files[0];
+                if (!file.type.startsWith('image/')) {
+                    alert('กรุณาวางไฟล์รูปภาพ (JPG, PNG, WebP) เท่านั้นครับ');
+                    return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('ขนาดรูปภาพต้องไม่เกิน 5MB ครับ');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    currentImageBase64 = event.target.result;
+                    const imgPreview = document.getElementById('img-preview');
+                    const imgPreviewContainer = document.getElementById('image-preview-container');
+                    if (imgPreview) imgPreview.src = currentImageBase64;
+                    if (imgPreviewContainer) imgPreviewContainer.style.display = 'block';
+
+                    // Auto-switch to Vision model
+                    const modelSelect = document.getElementById('model-select');
+                    if (modelSelect) {
+                        modelSelect.value = '2.0-vision';
+                        localStorage.setItem('kira_model', '2.0-vision');
+                        updateModelUI();
+                    }
+
+                    if (!userInput.value.trim()) {
+                        userInput.value = 'ช่วยวิเคราะห์และตรวจสอบภาพนี้อย่างละเอียด';
+                    }
+                    userInput.style.height = 'auto';
+                    userInput.style.height = (userInput.scrollHeight) + 'px';
+                    userInput.focus();
+                    sendBtn.disabled = false;
+
+                    showConnectionToast('🖼️ โหลดรูปภาพสำเร็จ! Kira Vision Inspector สแตนด์บาย', 'ready');
+                    hideConnectionToast(2500);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+}
+
 function sendQuickPrompt(promptText) {
     if (!userInput) return;
     userInput.value = promptText;
@@ -903,7 +1054,7 @@ async function loadSession(sessionId) {
     }
 }
 
-function addMessage(text, isUser) {
+function addMessage(text, isUser, imageBase64 = null) {
     const msgDiv = document.createElement('div');
     msgDiv.className = `message ${isUser ? 'user' : 'ai'}`;
 
@@ -915,7 +1066,30 @@ function addMessage(text, isUser) {
     content.className = 'content';
     
     if (isUser) {
-        content.textContent = text;
+        if (imageBase64) {
+            const imgEl = document.createElement('img');
+            imgEl.src = imageBase64;
+            imgEl.className = 'chat-user-thumbnail';
+            imgEl.alt = 'User uploaded image';
+            imgEl.style.maxWidth = '240px';
+            imgEl.style.maxHeight = '180px';
+            imgEl.style.borderRadius = '12px';
+            imgEl.style.display = 'block';
+            imgEl.style.marginBottom = text ? '8px' : '0';
+            imgEl.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+            imgEl.style.cursor = 'pointer';
+            imgEl.title = 'คลิกเพื่อดูภาพขนาดเต็ม';
+            imgEl.onclick = () => {
+                const w = window.open('');
+                if (w) w.document.write(`<img src="${imageBase64}" style="max-width:100%; height:auto; background:#0f172a;">`);
+            };
+            content.appendChild(imgEl);
+        }
+        if (text) {
+            const textSpan = document.createElement('span');
+            textSpan.textContent = text;
+            content.appendChild(textSpan);
+        }
     } else {
         if (!text) {
             content.innerHTML = '<span class="typing-cursor"></span>';
@@ -992,9 +1166,10 @@ function hideTypingIndicator() {
 
 async function sendMessage() {
     const text = userInput.value.trim();
-    if (!text || !currentUser) return;
+    const imgBase64ToSend = currentImageBase64;
+    if ((!text && !imgBase64ToSend) || !currentUser) return;
 
-    addMessage(text, true);
+    addMessage(text || 'ส่งรูปภาพเพื่อตรวจสอบ (Visual Diagnostic)', true, imgBase64ToSend);
 
     // Ensure sidebar has the active chat item if not already there
     if (!chatHistorySidebar.querySelector('.history-item.active')) {
@@ -1012,16 +1187,12 @@ async function sendMessage() {
     isGenerating = true;
     showTypingIndicator();
 
-    const imgBase64ToSend = currentImageBase64;
     // Clear image immediately from UI after sending
     currentImageBase64 = null;
     const imgPreviewContainer = document.getElementById('image-preview-container');
     const imgInput = document.getElementById('img-input');
     if (imgPreviewContainer) imgPreviewContainer.style.display = 'none';
     if (imgInput) imgInput.value = '';
-
-
-
 
     try {
         const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.1-reasoning";
@@ -1031,7 +1202,7 @@ async function sendMessage() {
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text, username: currentUser, model_version: modelVersion, image_base64: imgBase64ToSend, session_id: currentSessionId, flavor: flavor, persona: persona })
+            body: JSON.stringify({ message: text || 'ช่วยวิเคราะห์และตรวจสอบภาพนี้อย่างละเอียด', username: currentUser, model_version: modelVersion, image_base64: imgBase64ToSend, session_id: currentSessionId, flavor: flavor, persona: persona })
         });
 
         hideTypingIndicator();

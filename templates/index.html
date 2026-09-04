@@ -11,10 +11,11 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=10">
+    <link rel="stylesheet" href="/static/style.css?v=11">
     <!-- MathJax for LaTeX Rendering -->
-
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- html2canvas for Live Screen & Canvas Inspection -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -362,6 +363,15 @@
                 </div>
                 <p class="disclaimer">Kira อาจให้ข้อมูลที่ไม่ถูกต้องได้ กรุณาตรวจสอบก่อนนำไปใช้งาน</p>
             </div>
+
+            <!-- Drag & Drop Visual Inspector Overlay -->
+            <div id="drag-drop-overlay" class="drag-drop-overlay hidden">
+                <div class="drag-drop-box">
+                    <i class="fa-solid fa-cloud-arrow-up drag-drop-icon"></i>
+                    <h4>วางรูปภาพที่นี่ (Kira Vision Inspector)</h4>
+                    <p>ปล่อยเพื่อส่งรูปภาพ UI, หน้าจอ หรือ Error Trace ให้คิระวิเคราะห์ทันที</p>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -377,6 +387,7 @@
             <div class="artifacts-actions">
                 <button id="btn-viewport-desktop" class="viewport-btn active" title="มุมมองคอมพิวเตอร์ (Desktop)"><i class="fa-solid fa-desktop"></i></button>
                 <button id="btn-viewport-mobile" class="viewport-btn" title="มุมมองมือถือ (Mobile)"><i class="fa-solid fa-mobile-screen"></i></button>
+                <button id="btn-inspect-canvas" class="action-btn inspect-canvas-btn" title="📷 แคปเจอร์หน้าจอส่งให้ Kira ตรวจสอบ (Live Vision Inspector)"><i class="fa-solid fa-camera"></i> ตรวจ Canvas</button>
                 <button id="btn-download-artifact" class="action-btn" title="ดาวน์โหลดไฟล์ HTML"><i class="fa-solid fa-download"></i></button>
                 <button id="btn-close-artifact" class="action-btn close-btn" title="ปิดหน้าต่าง Canvas"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -455,6 +466,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=14"></script>
+    <script src="/static/script.js?v=15"></script>
 </body>
 </html>
