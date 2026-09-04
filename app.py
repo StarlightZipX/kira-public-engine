@@ -1212,6 +1212,203 @@ async def get_user_quota(username: str):
     except Exception as e:
         return {"status": "success", "is_boss": False, "used": 0, "remaining": 150, "limit": 150, "badge": "⚡ โควตาวันนี้: 150/150 ข้อความ"}
 
+@app.get("/api/user/briefing/{username}")
+async def get_user_briefing(username: str, token: Optional[str] = None):
+    """Kira 2.2 Proactive Heartbeat: Time-Aware Greeting, Context Briefing & GraphRAG Suggestions"""
+    try:
+        clean_user = (username or '').strip()
+        is_user_boss = _is_boss(clean_user)
+        
+        # 1. Time-Aware Detection (Bangkok UTC+7)
+        tz = timezone(timedelta(hours=7))
+        now = datetime.now(tz)
+        hour = now.hour
+        time_str = now.strftime("%H:%M น.")
+        thai_days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์']
+        thai_months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+        date_thai = f"วัน{thai_days[now.weekday()]}ที่ {now.day} {thai_months[now.month - 1]} {now.year + 543}"
+
+        if 5 <= hour < 12:
+            time_of_day = "morning"
+            greeting_prefix = "อรุณสวัสดิ์ยามเช้าค่ะ"
+            greeting_sub = "เริ่มต้นวันใหม่ด้วยพลังบวก คิระพร้อมเคียงข้างและช่วยวางแผนงานให้ราบรื่นทุกขั้นตอนค่ะ ☀️"
+        elif 12 <= hour < 17:
+            time_of_day = "afternoon"
+            greeting_prefix = "สวัสดีตอนบ่ายค่ะ"
+            greeting_sub = "ช่วงบ่ายนี้มีโปรเจกต์ไหนที่ต้องการให้คิระช่วยเขียนโค้ด วิเคราะห์ หรือตรวจทานเป็นพิเศษไหมคะ 💻"
+        elif 17 <= hour < 21:
+            time_of_day = "evening"
+            greeting_prefix = "สวัสดีช่วงเย็นค่ะ"
+            greeting_sub = "ทำงานหรือเดินทางมาทั้งวันแล้ว ผ่อนคลายและให้คิระช่วยสรุปงานของวันนี้ได้นะคะ 🌆"
+        else:
+            time_of_day = "night"
+            greeting_prefix = "ราตรีสวัสดิ์ยามดึกค่ะ"
+            greeting_sub = "ดึกแล้วอย่าลืมดื่มน้ำและพักผ่อนสายตานะคะ หากยังมีไอเดียหรือภารกิจสำคัญ คิระพร้อมอยู่เป็นเพื่อนเสมอค่ะ 🌙"
+
+        # 2. User & Boss Customization
+        nickname = None
+        user_row = execute_query("SELECT nickname, purpose, points FROM users WHERE username=?", (clean_user,), fetch='one')
+        if user_row:
+            nickname = user_row[0] if user_row[0] else None
+        
+        if is_user_boss:
+            greeting_title = f"{greeting_prefix} ท่านประธาน 👑"
+            greeting_sub = "ระบบประสาทและสถาปัตยกรรมทั้งหมดของ Kira AI Core 2.2 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ ✨"
+        elif nickname:
+            greeting_title = f"{greeting_prefix} คุณ{nickname}! 🌸"
+        else:
+            greeting_title = f"{greeting_prefix} คุณ{clean_user or 'ผู้ใช้'}! 🌸"
+
+        # 3. Memories Highlights from GraphRAG (user_memories & user_knowledge_graph)
+        memory_highlights = []
+        try:
+            mem_rows = execute_query(
+                "SELECT fact FROM user_memories WHERE username=? ORDER BY id DESC LIMIT 3",
+                (clean_user,), fetch='all'
+            )
+            if mem_rows:
+                memory_highlights = [r[0] for r in mem_rows if r[0]]
+            
+            # If standard memories are empty, check knowledge graph triples
+            if not memory_highlights:
+                kg_rows = execute_query(
+                    "SELECT subject, predicate, object FROM user_knowledge_graph WHERE username=? ORDER BY id DESC LIMIT 3",
+                    (clean_user,), fetch='all'
+                )
+                if kg_rows:
+                    memory_highlights = [f"{s} {p} {o}" for s, p, o in kg_rows]
+        except Exception as e:
+            print("Briefing memory fetch notice:", e)
+
+        # 4. Last Active Session / Conversation Topic
+        last_topic = None
+        last_session_id = None
+        try:
+            last_log = execute_query(
+                "SELECT session_id, content FROM logs WHERE username=? AND role='User' AND content IS NOT NULL ORDER BY id DESC LIMIT 1",
+                (clean_user,), fetch='one'
+            )
+            if last_log and last_log[1]:
+                last_session_id = last_log[0]
+                raw_topic = last_log[1].strip()
+                last_topic = raw_topic[:45] + "..." if len(raw_topic) > 45 else raw_topic
+        except Exception as e:
+            print("Briefing last log notice:", e)
+
+        # 5. Proactive Dynamic Suggestions
+        proactive_suggestions = []
+        if is_user_boss:
+            proactive_suggestions = [
+                {
+                    "title": "ตรวจสอบสถาปัตยกรรมระบบ",
+                    "desc": "ตรวจเช็กความพร้อมโมเดล Swarm, หน่วยความจำ และเกราะป้องกัน Enterprise",
+                    "prompt": "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.2 เช็กความพร้อมของ Multi-Brain Swarm และเกราะป้องกันล่าสุดให้บอสหน่อย",
+                    "icon": "fa-solid fa-shield-halved",
+                    "tag": "ADMIN CORE"
+                },
+                {
+                    "title": "พัฒนาฟังก์ชันใหม่ (Pillars Roadmap)",
+                    "desc": "วางแผนและเขียนโค้ดต่อยอด 4 เสาหลักสู่ Kira 2.2 / 3.0",
+                    "prompt": "ช่วยสรุปสถานะการพัฒนาแผนงาน 4 เสาหลักใน PROJECT_CONTEXT.md และแนะนำขั้นตอนถัดไปให้หน่อย",
+                    "icon": "fa-solid fa-cubes-stacked",
+                    "tag": "ROADMAP"
+                },
+                {
+                    "title": "สังเคราะห์โค้ดพรีวิวบน Live Canvas",
+                    "desc": "สร้าง UI เว็บไซต์แบบทันสมัยพร้อม Interactive Components",
+                    "prompt": "ช่วยเขียนโค้ดหน้าเว็บ Dashboard ล้ำยุคธีม Dark Cyberpunk สไตล์มินิมอล พร้อม Tailwind CSS พรีวิวสดบน Canvas",
+                    "icon": "fa-solid fa-code",
+                    "tag": "CANVAS STUDIO"
+                },
+                {
+                    "title": "วิจัยและคิดวิเคราะห์เชิงลึก (MoA Swarm)",
+                    "desc": "ระดมสมอง Qwen 72B และ Llama 70B วิเคราะห์ยุทธศาสตร์",
+                    "prompt": "ช่วยคิดวิเคราะห์เชิงลึกและวางกลยุทธ์การขยายขีดความสามารถของ Kira AI สู่การเป็น Symbiotic Agentic OS ในระดับสากล",
+                    "icon": "fa-solid fa-brain",
+                    "tag": "SUPER BRAIN"
+                }
+            ]
+        else:
+            if time_of_day == "morning":
+                proactive_suggestions.append({
+                    "title": "วางแผนและจัดลำดับงานวันนี้",
+                    "desc": "ช่วยสรุปเป้าหมายสำคัญและ Checklist สำหรับวันนี้",
+                    "prompt": "ช่วยเป็นโค้ชวางแผนตารางงานและเป้าหมายสำคัญประจำวันนี้ให้มีประสิทธิภาพสูงสุดหน่อยค่ะ",
+                    "icon": "fa-solid fa-list-check",
+                    "tag": "MORNING BOOST"
+                })
+            elif time_of_day in ("afternoon", "evening"):
+                proactive_suggestions.append({
+                    "title": "สรุปข่าวและเทรนด์เทคโนโลยีสด",
+                    "desc": "ค้นหาข่าวความเคลื่อนไหว AI และเทคโนโลยีสำคัญของวันนี้",
+                    "prompt": "สรุปข่าวเทคโนโลยี AI และแนวโน้มสำคัญล่าสุดของวันนี้ให้ฟังหน่อย",
+                    "icon": "fa-solid fa-globe",
+                    "tag": "LIVE WEB"
+                })
+            else:
+                proactive_suggestions.append({
+                    "title": "ทบทวนบทเรียนและไอเดียยามดึก",
+                    "desc": "สนทนา ระดมความคิด หรือผ่อนคลายก่อนนอน",
+                    "prompt": "ช่วยสรุปไอเดียสร้างสรรค์ที่น่าสนใจ หรือเล่าเรื่องราวความรู้เชิงปรัชญาสบายๆ ให้ฟังหน่อยค่ะ",
+                    "icon": "fa-solid fa-moon",
+                    "tag": "NIGHT REFLECTION"
+                })
+
+            proactive_suggestions.extend([
+                {
+                    "title": "พรีวิวโค้ดสด (Live Code Canvas)",
+                    "desc": "สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที",
+                    "prompt": "ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บร้านกาแฟสวยๆ พร้อม Tailwind CSS และ Interactive Elements",
+                    "icon": "fa-solid fa-code",
+                    "tag": "LIVE PREVIEW"
+                },
+                {
+                    "title": "วาดผังงาน (Mermaid Flowchart)",
+                    "desc": "สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ",
+                    "prompt": "ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานของระบบสั่งอาหาร Delivery",
+                    "icon": "fa-solid fa-project-diagram",
+                    "tag": "DIAGRAM"
+                },
+                {
+                    "title": "คิดวิเคราะห์เชิงลึก (Reasoning)",
+                    "desc": "สกัดตรรกะ วิจัย วางแผนกลยุทธ์ และคำนวณซับซ้อน",
+                    "prompt": "ช่วยวิเคราะห์จุดเด่นจุดด้อยและกลยุทธ์การนำ AI มาใช้ในองค์กรยุค 2026",
+                    "icon": "fa-solid fa-brain",
+                    "tag": "REASONING"
+                }
+            ])
+
+        return {
+            "status": "success",
+            "username": clean_user,
+            "nickname": nickname,
+            "is_boss": is_user_boss,
+            "time_of_day": time_of_day,
+            "time_str": time_str,
+            "date_thai": date_thai,
+            "greeting_title": greeting_title,
+            "greeting_subtitle": greeting_sub,
+            "last_topic": last_topic,
+            "last_session_id": last_session_id,
+            "memory_highlights": memory_highlights,
+            "proactive_suggestions": proactive_suggestions[:4],
+            "system_status": {
+                "core": "Kira 2.2 Active",
+                "heartbeat": "Active (ตื่นรู้)",
+                "brains_online": 1 + len(OPENROUTER_API_KEYS)
+            }
+        }
+    except Exception as e:
+        print("Proactive briefing error:", e)
+        return {
+            "status": "error",
+            "message": str(e),
+            "time_of_day": "general",
+            "greeting_title": f"สวัสดีค่ะคุณ {username}! 🌸",
+            "greeting_subtitle": "หนูคือ Kira AI 2.1 ผู้ช่วยอัจฉริยะส่วนตัวของคุณ พร้อมช่วยงานทุกด้านแล้วค่ะ",
+            "proactive_suggestions": []
+        }
+
 @app.get("/api/history/sessions/{username}")
 async def get_sessions(username: str):
     try:

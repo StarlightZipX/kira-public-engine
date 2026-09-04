@@ -288,6 +288,7 @@ checkNeuralCoreHealth(true);
 checkAuth();
 updateModelUI();
 checkEngineStatus();
+initProactiveHeartbeat();
 setInterval(checkEngineStatus, 30000);
 setInterval(() => checkNeuralCoreHealth(false), 240000); // 4-min Keepalive Heartbeat
 
@@ -601,36 +602,231 @@ if (btnLogout) {
 // --- Chat Logic ---
 let currentSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
 
-function renderWelcomeHub() {
+// --- Kira 2.2 Proactive Heartbeat & Briefing Suite ---
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.toString().replace(/[&<>"']/g, m => map[m]);
+}
+
+let latestBriefingData = null;
+let lastUserActivityTime = Date.now();
+let proactiveToastDismissed = false;
+
+async function loadProactiveBriefing() {
+    if (!currentUser) return null;
+    try {
+        const token = localStorage.getItem('kira_auth_token') || '';
+        const url = `/api/user/briefing/${encodeURIComponent(currentUser)}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+        const res = await fetch(url);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.status === 'success') {
+                latestBriefingData = data;
+                return data;
+            }
+        }
+    } catch (err) {
+        console.warn("Proactive briefing fetch notice:", err);
+    }
+    return null;
+}
+
+async function renderWelcomeHub() {
     chatBox.innerHTML = `
         <div class="welcome-hero-card">
+            <div class="welcome-meta-bar">
+                <span class="welcome-time-tag" style="border-color: rgba(244,63,94,0.3); color:#fda4af;">
+                    <i class="fa-solid fa-heart-pulse heartbeat-icon" style="color:#f43f5e;"></i> Kira Proactive Heartbeat
+                </span>
+            </div>
             <div class="welcome-header">
                 <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo">
-                <div>
-                    <h3 class="welcome-title">สวัสดีค่ะคุณ ${currentUser || 'ผู้ใช้'}! 🌸</h3>
-                    <p class="welcome-subtitle">หนูคือ Kira AI 2.1 ผู้ช่วยอัจฉริยะส่วนตัวของคุณ พร้อมช่วยงานทุกด้านแล้วค่ะ</p>
-                </div>
-            </div>
-            <div class="welcome-grid">
-                <div class="welcome-pill" onclick="sendQuickPrompt('ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บร้านกาแฟสวยๆ พร้อม Tailwind CSS และ Interactive Elements')">
-                    <span class="welcome-pill-title"><i class="fa-solid fa-code"></i> พรีวิวโค้ดสด (Live Canvas)</span>
-                    <span class="welcome-pill-desc">สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที</span>
-                </div>
-                <div class="welcome-pill" onclick="sendQuickPrompt('ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานของระบบสั่งอาหาร Delivery')">
-                    <span class="welcome-pill-title"><i class="fa-solid fa-project-diagram"></i> วาดผังงาน (Mermaid)</span>
-                    <span class="welcome-pill-desc">สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ</span>
-                </div>
-                <div class="welcome-pill" onclick="sendQuickPrompt('ช่วยวิเคราะห์จุดเด่นจุดด้อยและกลยุทธ์การนำ AI มาใช้ในองค์กรยุค 2026')">
-                    <span class="welcome-pill-title"><i class="fa-solid fa-brain"></i> คิดวิเคราะห์เชิงลึก (Reasoning)</span>
-                    <span class="welcome-pill-desc">สกัดตรรกะ วิจัย วางแผนกลยุทธ์ และคำนวณซับซ้อน</span>
-                </div>
-                <div class="welcome-pill" onclick="sendQuickPrompt('สรุปข่าวเทคโนโลยี AI และแนวโน้มสำคัญล่าสุดของวันนี้ให้ฟังหน่อย')">
-                    <span class="welcome-pill-title"><i class="fa-solid fa-globe"></i> ค้นหาเว็บสด (Web Search)</span>
-                    <span class="welcome-pill-desc">สืบค้นข่าวสาร ข้อมูลสด และราคาสินทรัพย์แบบเรียลไทม์</span>
+                <div style="flex: 1;">
+                    <h3 class="welcome-title">สวัสดีค่ะคุณ ${escapeHtml(currentUser || 'ผู้ใช้')}! 🌸</h3>
+                    <p class="welcome-subtitle">กำลังประมวลผลบริบทและสังเคราะห์คำทักทายเชิงรุก...</p>
                 </div>
             </div>
         </div>
     `;
+
+    const briefing = await loadProactiveBriefing();
+    const data = briefing || {
+        greeting_title: `สวัสดีค่ะคุณ ${currentUser || 'ผู้ใช้'}! 🌸`,
+        greeting_subtitle: `หนูคือ Kira AI 2.1 ผู้ช่วยอัจฉริยะส่วนตัวของคุณ พร้อมช่วยงานทุกด้านแล้วค่ะ`,
+        time_str: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
+        date_thai: 'วันนี้',
+        is_boss: currentUser && (currentUser.includes('Boss') || currentUser.toLowerCase().includes('admin')),
+        proactive_suggestions: [
+            { title: "พรีวิวโค้ดสด (Live Canvas)", desc: "สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที", prompt: "ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บร้านกาแฟสวยๆ พร้อม Tailwind CSS และ Interactive Elements", icon: "fa-solid fa-code", tag: "LIVE CANVAS" },
+            { title: "วาดผังงาน (Mermaid)", desc: "สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ", prompt: "ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานของระบบสั่งอาหาร Delivery", icon: "fa-solid fa-project-diagram", tag: "DIAGRAM" },
+            { title: "คิดวิเคราะห์เชิงลึก (Reasoning)", desc: "สกัดตรรกะ วิจัย วางแผนกลยุทธ์ และคำนวณซับซ้อน", prompt: "ช่วยวิเคราะห์จุดเด่นจุดด้อยและกลยุทธ์การนำ AI มาใช้ในองค์กรยุค 2026", icon: "fa-solid fa-brain", tag: "REASONING" },
+            { title: "ค้นหาเว็บสด (Web Search)", desc: "สืบค้นข่าวสาร ข้อมูลสด และราคาสินทรัพย์แบบเรียลไทม์", prompt: "สรุปข่าวเทคโนโลยี AI และแนวโน้มสำคัญล่าสุดของวันนี้ให้ฟังหน่อย", icon: "fa-solid fa-globe", tag: "LIVE WEB" }
+        ]
+    };
+
+    let continueHtml = '';
+    if (data.last_topic && data.last_session_id) {
+        continueHtml = `
+            <div class="welcome-continue-card" onclick="loadSession('${escapeHtml(data.last_session_id)}')" title="คลิกเพื่อสนทนาต่อจากหัวข้อเดิม">
+                <div class="welcome-continue-info">
+                    <span class="welcome-continue-label"><i class="fa-solid fa-arrow-rotate-left"></i> คุยต่อจากที่ค้างไว้ล่าสุด</span>
+                    <span class="welcome-continue-topic">"${escapeHtml(data.last_topic)}"</span>
+                </div>
+                <button type="button" class="welcome-continue-btn"><i class="fa-solid fa-play"></i> เปิดแชทนี้</button>
+            </div>
+        `;
+    }
+
+    let memoryHtml = '';
+    if (data.memory_highlights && data.memory_highlights.length > 0) {
+        const memoryPills = data.memory_highlights.map(fact => {
+            const escapedFact = escapeHtml(fact);
+            const safeParam = escapedFact.replace(/'/g, "\\'");
+            return `
+                <span class="welcome-memory-pill" onclick="sendQuickPrompt('ช่วยเล่าหรือทบทวนความจำเรื่อง: ${safeParam}')" title="คลิกเพื่อคุยเรื่องนี้ต่อ">
+                    <i class="fa-solid fa-lightbulb"></i> ${escapedFact}
+                </span>
+            `;
+        }).join('');
+
+        memoryHtml = `
+            <div class="welcome-memory-container">
+                <div class="welcome-memory-header">
+                    <i class="fa-solid fa-brain" style="color: #c084fc;"></i> ความจำล่าสุดที่คิระจดจำเกี่ยวกับคุณ (GraphRAG):
+                </div>
+                <div class="welcome-memory-pills">
+                    ${memoryPills}
+                </div>
+            </div>
+        `;
+    }
+
+    const suggestions = data.proactive_suggestions && data.proactive_suggestions.length > 0
+        ? data.proactive_suggestions
+        : [
+            { title: "พรีวิวโค้ดสด (Live Canvas)", desc: "สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที", prompt: "ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บร้านกาแฟสวยๆ พร้อม Tailwind CSS และ Interactive Elements", icon: "fa-solid fa-code", tag: "LIVE CANVAS" },
+            { title: "วาดผังงาน (Mermaid)", desc: "สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ", prompt: "ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานของระบบสั่งอาหาร Delivery", icon: "fa-solid fa-project-diagram", tag: "DIAGRAM" },
+            { title: "คิดวิเคราะห์เชิงลึก (Reasoning)", desc: "สกัดตรรกะ วิจัย วางแผนกลยุทธ์ และคำนวณซับซ้อน", prompt: "ช่วยวิเคราะห์จุดเด่นจุดด้อยและกลยุทธ์การนำ AI มาใช้ในองค์กรยุค 2026", icon: "fa-solid fa-brain", tag: "REASONING" },
+            { title: "ค้นหาเว็บสด (Web Search)", desc: "สืบค้นข่าวสาร ข้อมูลสด และราคาสินทรัพย์แบบเรียลไทม์", prompt: "สรุปข่าวเทคโนโลยี AI และแนวโน้มสำคัญล่าสุดของวันนี้ให้ฟังหน่อย", icon: "fa-solid fa-globe", tag: "LIVE WEB" }
+        ];
+
+    const suggestionsHtml = suggestions.map(s => {
+        const safePrompt = escapeHtml(s.prompt).replace(/'/g, "\\'");
+        return `
+            <div class="welcome-pill" onclick="sendQuickPrompt('${safePrompt}')">
+                ${s.tag ? `<span class="welcome-pill-badge">${escapeHtml(s.tag)}</span>` : ''}
+                <span class="welcome-pill-title"><i class="${s.icon || 'fa-solid fa-bolt'}"></i> ${escapeHtml(s.title)}</span>
+                <span class="welcome-pill-desc">${escapeHtml(s.desc)}</span>
+            </div>
+        `;
+    }).join('');
+
+    const bossBadge = data.is_boss ? `<span class="welcome-boss-tag"><i class="fa-solid fa-crown"></i> ฐานบัญชาการผู้สร้าง</span>` : '';
+    const timeTag = `<span class="welcome-time-tag"><i class="fa-regular fa-clock"></i> ${escapeHtml(data.date_thai || '')} • ${escapeHtml(data.time_str || '')}</span>`;
+    const heartbeatTag = `<span class="welcome-time-tag" style="border-color: rgba(244,63,94,0.3); color:#fda4af;"><i class="fa-solid fa-heart-pulse heartbeat-icon" style="color:#f43f5e;"></i> Heartbeat ตื่นรู้</span>`;
+
+    chatBox.innerHTML = `
+        <div class="welcome-hero-card">
+            <div class="welcome-meta-bar">
+                ${bossBadge}
+                ${timeTag}
+                ${heartbeatTag}
+            </div>
+            <div class="welcome-header">
+                <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo">
+                <div style="flex: 1;">
+                    <h3 class="welcome-title">${escapeHtml(data.greeting_title)}</h3>
+                    <p class="welcome-subtitle">${escapeHtml(data.greeting_subtitle)}</p>
+                </div>
+            </div>
+            ${continueHtml}
+            ${memoryHtml}
+            <div class="welcome-grid">
+                ${suggestionsHtml}
+            </div>
+        </div>
+    `;
+}
+
+// --- Proactive Ambient Heartbeat & Idle Care Loop ---
+function initProactiveHeartbeat() {
+    const toast = document.getElementById('kira-proactive-toast');
+    const toastMsg = document.getElementById('proactive-toast-msg');
+    const toastTime = document.getElementById('proactive-toast-time');
+    const btnDismiss = document.getElementById('btn-proactive-toast-dismiss');
+    const btnAction = document.getElementById('btn-proactive-toast-action');
+
+    const resetActivity = () => {
+        lastUserActivityTime = Date.now();
+    };
+    window.addEventListener('mousemove', resetActivity, { passive: true });
+    window.addEventListener('keydown', resetActivity, { passive: true });
+    window.addEventListener('click', resetActivity, { passive: true });
+    window.addEventListener('scroll', resetActivity, { passive: true });
+
+    if (btnDismiss) {
+        btnDismiss.addEventListener('click', () => {
+            if (toast) toast.classList.add('hidden');
+            proactiveToastDismissed = true;
+        });
+    }
+
+    if (btnAction) {
+        btnAction.addEventListener('click', () => {
+            if (toast) toast.classList.add('hidden');
+            if (userInput) {
+                userInput.focus();
+                if (!userInput.value) {
+                    userInput.placeholder = "มีอะไรให้คิระช่วยบอกได้เลยนะคะ 🌸";
+                }
+            }
+        });
+    }
+
+    // Periodic Heartbeat Check (every 60 seconds)
+    setInterval(() => {
+        if (!currentUser) return;
+        const now = Date.now();
+        const idleDuration = now - lastUserActivityTime;
+
+        // If idle > 7 minutes (420,000 ms) and not dismissed, show gentle ambient care
+        if (idleDuration > 420000 && !proactiveToastDismissed && toast) {
+            const tzTime = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            if (toastTime) toastTime.textContent = tzTime;
+            if (toastMsg) {
+                const msgs = [
+                    "ทำงานต่อเนื่องมาสักพักแล้ว อย่าลืมพักสายตาและดื่มน้ำหน่อยนะคะ 🌸",
+                    "คิระยังอยู่ตรงนี้เสมอ หากมีไอเดียใหม่หรือต้องการให้ช่วยสรุปงาน เรียกได้ทันทีนะคะ ✨",
+                    "หากต้องการให้ค้นหาข้อมูลหรือเขียนโค้ดเพิ่ม บอกคิระได้เลยนะคะ 💻"
+                ];
+                toastMsg.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+            }
+            toast.classList.remove('hidden');
+        }
+    }, 60000);
+
+    // Page Visibility Change (Wake on return)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && currentUser) {
+            const awayDuration = Date.now() - lastUserActivityTime;
+            lastUserActivityTime = Date.now();
+            if (awayDuration > 600000) { // Away for > 10 mins
+                proactiveToastDismissed = false; // Reset dismiss flag
+                const hbBadge = document.getElementById('heartbeat-badge');
+                if (hbBadge) {
+                    hbBadge.style.boxShadow = '0 0 20px rgba(244, 63, 94, 0.6)';
+                    setTimeout(() => { hbBadge.style.boxShadow = ''; }, 2000);
+                }
+            }
+        }
+    });
 }
 
 function sendQuickPrompt(promptText) {

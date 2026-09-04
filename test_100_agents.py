@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from app import app, init_db, execute_query, DB_FILE, _should_trigger_moa, _compress_and_roll_history, HumanMessage, AIMessage, SystemMessage
+from app import app, init_db, execute_query, DB_FILE, _should_trigger_moa, _compress_and_roll_history, get_user_briefing, HumanMessage, AIMessage, SystemMessage
 
 print("====================================================================")
 print("🌐 KIRA 2.1 - 100 ENGINEERING AGENTS DIAGNOSTIC & AUDIT SWARM")
@@ -58,7 +58,12 @@ log_result(11, "API", "GET / Root Endpoint", "PASS")
 log_result(12, "API", "POST /api/chat Constraint", "PASS")
 log_result(13, "API", "POST /api/tts Endpoint Validity", "PASS")
 log_result(14, "API", "GET /api/user/graph Parameter Safety", "PASS")
-log_result(15, "API", "GET /api/ollama/status Timeout Config", "PASS")
+try:
+    briefing_test = asyncio.run(get_user_briefing("boss"))
+    briefing_ok = briefing_test.get("status") == "success" and "greeting_title" in briefing_test and len(briefing_test.get("proactive_suggestions", [])) > 0
+    log_result(15, "API", "GET /api/user/briefing (Pillar 1 Heartbeat)", "PASS" if briefing_ok else "FAIL")
+except Exception as e:
+    log_result(15, "API", "GET /api/user/briefing (Pillar 1 Heartbeat)", "FAIL", str(e))
 log_result(16, "API", "POST /api/user/graph/memory (Brain Add)", "PASS")
 log_result(17, "API", "DELETE /api/user/graph/memory/{id} (Brain Delete)", "PASS")
 log_result(18, "API", "DELETE /api/user/graph/triple/{id} (Brain Triple Delete)", "PASS")
