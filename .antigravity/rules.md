@@ -15,6 +15,13 @@
   4. 🎨 Live Interactive Code Canvas & Version History (Instant `v1`, `v2`, `v3`... tabs + Sandboxed iframe + Tailwind CDN)
   5. 📚 Rolling Memory & Token Compression (`_compress_and_roll_history` for infinite conversational scaling without context loss)
 
+## 🚀 Next Strategic Roadmap (The 4 New Pillars in PROJECT_CONTEXT.md)
+When the user asks to continue development, guide them on the 4 next-gen pillars detailed in `PROJECT_CONTEXT.md` Section 4:
+1. 💓 **Kira Proactive Heartbeat:** Time-aware greetings & morning/evening briefings (`/api/user/briefing/{username}`)
+2. 🔌 **Model Context Protocol (MCP) Hub:** Universal tool integration via standard MCP servers
+3. 👁️ **Live Screen & Vision Inspector:** Direct canvas snapshot and image error diagnostics
+4. 🎭 **Emotional Full-Duplex Voice:** Voice interruption on user speech + emotional avatar inflection
+
 ## 🛠️ Engineering Commands & Rules
 - **100 Engineering Agents Swarm:** Run `python test_100_agents.py` directly in the workspace to audit all 100 checkpoints across DB, API, Security, MoA, Voice, Canvas, Brain, UI, Memory, and Operations.
 - Always maintain 100/100 PASSED before completing any task.
