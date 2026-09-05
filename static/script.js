@@ -973,7 +973,7 @@ function initLiveScreenInspector() {
                 const snapshotDataUrl = canvas.toDataURL('image/jpeg', 0.85);
                 currentImageBase64 = snapshotDataUrl;
 
-                const imgPreview = document.getElementById('img-preview');
+                const imgPreview = document.getElementById('image-preview') || document.getElementById('img-preview');
                 const imgPreviewContainer = document.getElementById('image-preview-container');
                 if (imgPreview) imgPreview.src = snapshotDataUrl;
                 if (imgPreviewContainer) imgPreviewContainer.style.display = 'block';
@@ -1058,7 +1058,7 @@ function initLiveScreenInspector() {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     currentImageBase64 = event.target.result;
-                    const imgPreview = document.getElementById('img-preview');
+                    const imgPreview = document.getElementById('image-preview') || document.getElementById('img-preview');
                     const imgPreviewContainer = document.getElementById('image-preview-container');
                     if (imgPreview) imgPreview.src = currentImageBase64;
                     if (imgPreviewContainer) imgPreviewContainer.style.display = 'block';
@@ -1793,10 +1793,10 @@ if (btnSubmitFeedback) {
 // --- Voice Features (STT) removed per request ---
 
 // --- Image Upload (Vision) ---
-const imgUploadBtn = document.getElementById('img-upload-btn');
+const imgUploadBtn = document.getElementById('img-upload-btn') || document.getElementById('menu-img-btn');
 const imgInput = document.getElementById('img-input');
 const imgPreviewContainer = document.getElementById('image-preview-container');
-const imgPreview = document.getElementById('image-preview');
+const imgPreview = document.getElementById('image-preview') || document.getElementById('img-preview');
 const removeImgBtn = document.getElementById('remove-img-btn');
 
 const attachToggleBtn = document.getElementById('attach-toggle-btn');
