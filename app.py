@@ -1,4 +1,5 @@
 import os
+import json
 import hashlib
 import sys
 import time
@@ -674,13 +675,12 @@ class UnifiedLLM:
             return SimpleChunk("")
         msg_obj = choices[0].get("message", {})
         content = msg_obj.get("content", "")
-        reasoning = msg_obj.get("reasoning_content", "")
+        reasoning = msg_obj.get("reasoning_content") or msg_obj.get("reasoning") or ""
         if reasoning:
             content = f"<think>\n{reasoning}\n</think>\n\n{content}"
         return SimpleChunk(content)
 
     async def astream(self, messages):
-        import asyncio
         msgs = self._convert_messages(messages)
         headers = {
             "Authorization": f"Bearer {self.api_key}" if self.api_key else "",
@@ -698,47 +698,46 @@ class UnifiedLLM:
             "stream": True
         }
 
-        loop = asyncio.get_event_loop()
-        def _request_stream():
-            return requests.post(self.base_url, headers=headers, json=payload, stream=True, timeout=60)
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            async with client.stream("POST", self.base_url, headers=headers, json=payload) as resp:
+                if resp.status_code != 200:
+                    err_bytes = await resp.aread()
+                    raise Exception(f"{self.provider} error {resp.status_code}: {err_bytes.decode('utf-8', errors='ignore')[:120]}")
 
-        resp = await loop.run_in_executor(None, _request_stream)
-        if resp.status_code != 200:
-            raise Exception(f"{self.provider} error {resp.status_code}: {resp.text}")
-
-        in_thinking = False
-        for line in resp.iter_lines():
-            if not line:
-                continue
-            line_str = line.decode("utf-8")
-            if line_str.startswith("data: "):
-                raw_json = line_str[6:].strip()
-                if raw_json == "[DONE]":
-                    if in_thinking:
-                        yield SimpleChunk("[/THINKING][THINKING_DONE]\n\n")
-                        in_thinking = False
-                    break
-                try:
-                    chunk_data = json.loads(raw_json)
-                    choices = chunk_data.get("choices", [])
-                    if choices:
-                        delta = choices[0].get("delta", {})
-                        reasoning = delta.get("reasoning_content", "")
-                        delta_content = delta.get("content", "")
-                        
-                        if reasoning:
-                            if not in_thinking:
-                                yield SimpleChunk("[THINKING]")
-                                in_thinking = True
-                            yield SimpleChunk(reasoning)
-                        elif delta_content:
+                in_thinking = False
+                async for line in resp.aiter_lines():
+                    if not line:
+                        continue
+                    if line.startswith("data: "):
+                        raw_json = line[6:].strip()
+                        if raw_json == "[DONE]":
                             if in_thinking:
                                 yield SimpleChunk("[/THINKING][THINKING_DONE]\n\n")
                                 in_thinking = False
-                            yield SimpleChunk(delta_content)
-                except Exception:
-                    continue
-            await asyncio.sleep(0)
+                            break
+                        try:
+                            chunk_data = json.loads(raw_json)
+                            choices = chunk_data.get("choices", [])
+                            if choices:
+                                delta = choices[0].get("delta", {})
+                                reasoning = delta.get("reasoning_content") or delta.get("reasoning") or ""
+                                delta_content = delta.get("content", "")
+                                
+                                if reasoning:
+                                    clean_r = reasoning.replace("<think>", "").replace("</think>", "")
+                                    if clean_r:
+                                        if not in_thinking:
+                                            yield SimpleChunk("[THINKING]")
+                                            in_thinking = True
+                                        yield SimpleChunk(clean_r)
+                                elif delta_content:
+                                    if in_thinking:
+                                        yield SimpleChunk("[/THINKING][THINKING_DONE]\n\n")
+                                        in_thinking = False
+                                    yield SimpleChunk(delta_content)
+                        except Exception:
+                            continue
+
 
 
 def _create_llm(model_name, api_key=None):
@@ -768,6 +767,9 @@ async def _try_all_keys_and_models(history, preferred_model):
                 async for chunk in llm.astream(history):
                     if chunk.content:
                         chunks.append(chunk.content)
+                if not chunks or not "".join(chunks).strip():
+                    print(f"[Skip] OpenRouter {preferred_model}: Empty response, trying next...")
+                    continue
                 print(f"[OK] OpenRouter {preferred_model} สำเร็จ!")
                 return True, chunks, ""
             except Exception as e:
@@ -783,8 +785,11 @@ async def _try_all_keys_and_models(history, preferred_model):
             async for chunk in llm.astream(history):
                 if chunk.content:
                     chunks.append(chunk.content)
-            print(f"[OK] Ollama {preferred_model} สำเร็จ!")
-            return True, chunks, ""
+            if not chunks or not "".join(chunks).strip():
+                print(f"[Skip] Ollama {preferred_model}: Empty response, trying next...")
+            else:
+                print(f"[OK] Ollama {preferred_model} สำเร็จ!")
+                return True, chunks, ""
         except Exception as e:
             last_error = str(e)
             print(f"[Skip] Ollama {preferred_model}: {last_error[:80]}")
@@ -804,6 +809,10 @@ async def _try_all_keys_and_models(history, preferred_model):
                     if content:
                         chunks.append(content)
                 
+                if not chunks or not "".join(chunks).strip():
+                    print(f"[Skip] Groq Key#{key_idx+1} {model_name}: Empty content, trying next...")
+                    continue
+
                 if key_idx > 0 or model_name != preferred_model:
                     print(f"[OK] Groq Key#{key_idx+1} + {model_name} สำเร็จ (Fallback)!")
                 return True, chunks, ""
@@ -849,8 +858,8 @@ for key_idx, api_key in enumerate(API_KEYS):
         print(f"  ❌ Key#{key_idx+1} → Exception: {str(e)[:80]}")
 
 if groq_available_models:
-    # Filter out whisper audio and pure guardrail models for chat generation
-    chat_models = [m for m in groq_available_models if not any(bad in m.lower() for bad in ["whisper", "guard", "orpheus"])]
+    # Filter out whisper audio, prompt-guards, and low-token experimental models for chat generation
+    chat_models = [m for m in groq_available_models if not any(bad in m.lower() for bad in ["whisper", "guard", "orpheus", "allam", "safeguard"])]
     if not chat_models:
         chat_models = groq_available_models
 
@@ -862,8 +871,8 @@ if groq_available_models:
     pro_c = [m for m in chat_models if any(k in m.lower() for k in ["120b", "qwen", "compound", "70b"])]
     PREFERRED_PRO = pro_c[0] if pro_c else chat_models[0]
     
-    # Auto-assign Flash (compound-mini / 20b / mini)
-    flash_c = [m for m in chat_models if any(k in m.lower() for k in ["compound-mini", "20b", "mini", "8b", "allam"])]
+    # Auto-assign Flash (20b / compound-mini / mini / 8b)
+    flash_c = [m for m in chat_models if any(k in m.lower() for k in ["20b", "compound-mini", "mini", "8b"])]
     PREFERRED_FLASH = flash_c[0] if flash_c else chat_models[-1]
 
     # Update default brain profiles for Groq
@@ -875,6 +884,7 @@ if groq_available_models:
     BRAIN_PROFILES["chat"]["model"] = PREFERRED_FLASH
 else:
     print("⚠️ ไม่พบโมเดลจาก Groq (อาจคีย์เสียหรือจำกัดสิทธิ์) จะพยายาม Fallback...")
+
 
 
 print(f"🤖 ========================================")
@@ -3125,7 +3135,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             
             proposer_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
             draft_success, draft_chunks, _ = await _try_all_keys_and_models(temp_history, proposer_model)
-            draft_text = "".join([c.content for c in draft_chunks]) if draft_success else ""
+            draft_text = "".join([getattr(c, "content", c) for c in draft_chunks]) if draft_success else ""
             
             if draft_text:
                 yield "[THINKING]🧐 [Agent 2: Verifier & Critic] กำลังตรวจสอบความถูกต้องและข้อเท็จจริง...[/THINKING]"
@@ -3137,7 +3147,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                     HumanMessage(content=f"User Query: {user_input}\n\nDraft Solution:\n{draft_text[:2000]}")
                 ]
                 critic_s, critic_chunks, _ = await _try_all_keys_and_models(critic_prompt, critic_model)
-                critic_text = "".join([c.content for c in critic_chunks]) if critic_s else ""
+                critic_text = "".join([getattr(c, "content", c) for c in critic_chunks]) if critic_s else ""
                 
                 yield "[THINKING]✨ [Agent 3: Synthesizer] สังเคราะห์ผลลัพธ์เอกฉันท์ขั้นสมบูรณ์...[/THINKING]"
                 await asyncio.sleep(0.05)

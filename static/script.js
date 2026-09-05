@@ -1220,13 +1220,15 @@ function addMessage(text, isUser, imageBase64 = null) {
                                               .replace(/\[THINKING_DONE\]/g, "")
                                               .trim();
                 
-                let stepsHtml = steps.map(s => `<div class="thinking-step" style="white-space: pre-wrap; font-size: 0.9em; line-height: 1.5; color: #94a3b8;">${marked.parse(s)}</div>`).join('');
+                let hasSubstantialAnswer = finalMarkdown.length > 25;
+                let boxClass = hasSubstantialAnswer ? "thinking-box done collapsed" : "thinking-box done";
+                let toggleIcon = hasSubstantialAnswer ? "▼" : "▲";
                 
                 htmlContent += `
-                <div class="thinking-box done collapsed">
+                <div class="${boxClass}">
                     <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
                         <div class="thinking-title">🧠 กระบวนการคิดเชิงลึก (Deep Reasoning)</div>
-                        <div class="thinking-toggle-icon">▼</div>
+                        <div class="thinking-toggle-icon">${toggleIcon}</div>
                     </div>
                     <div class="thinking-progress-bar"></div>
                     <div class="thinking-content">
@@ -1240,6 +1242,13 @@ function addMessage(text, isUser, imageBase64 = null) {
                 htmlContent += finalMarkdown ? marked.parse(finalMarkdown) : "";
             } catch (mErr) {
                 htmlContent += `<div style="white-space: pre-wrap;">${finalMarkdown}</div>`;
+            }
+
+            if (!finalMarkdown && normalizedTxt.includes("[THINKING]")) {
+                htmlContent += `<div class="thinking-summary-note" style="margin-top: 10px; padding: 10px 14px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; color: #7dd3fc; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-check" style="color: #38bdf8;"></i>
+                    <span>คิระได้วิเคราะห์และสรุปแนวทางไว้ในขั้นตอนการคิดเชิงลึกด้านบนเรียบร้อยแล้วค่ะ</span>
+                </div>`;
             }
             content.innerHTML = htmlContent;
         }
@@ -1358,8 +1367,9 @@ async function sendMessage() {
                                               .trim();
                 
                 let stepsHtml = steps.map(s => `<div class="thinking-step" style="white-space: pre-wrap; font-size: 0.9em; line-height: 1.5; color: #94a3b8;">${marked.parse(s)}</div>`).join('');
-                let boxClass = isDone ? "thinking-box done collapsed" : "thinking-box";
-                let toggleIcon = isDone ? "▼" : "▲";
+                let hasSubstantialAnswer = finalMarkdown.length > 25;
+                let boxClass = (isDone && hasSubstantialAnswer) ? "thinking-box done collapsed" : (isDone ? "thinking-box done" : "thinking-box");
+                let toggleIcon = (isDone && hasSubstantialAnswer) ? "▼" : "▲";
                 
                 htmlContent += `
                 <div class="${boxClass}">
@@ -1379,6 +1389,13 @@ async function sendMessage() {
                 htmlContent += finalMarkdown ? marked.parse(finalMarkdown) : "";
             } catch (mErr) {
                 htmlContent += `<div style="white-space: pre-wrap;">${finalMarkdown}</div>`;
+            }
+
+            if (normalizedTxt.includes("[THINKING_DONE]") && !finalMarkdown) {
+                htmlContent += `<div class="thinking-summary-note" style="margin-top: 10px; padding: 10px 14px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; color: #7dd3fc; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-check" style="color: #38bdf8;"></i>
+                    <span>คิระได้วิเคราะห์รายละเอียดและขั้นตอนการคิดไว้ในบล็อกด้านบนนี้เรียบร้อยแล้วค่ะ</span>
+                </div>`;
             }
             contentDiv.innerHTML = htmlContent;
             chatBox.scrollTop = chatBox.scrollHeight;
