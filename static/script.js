@@ -180,6 +180,10 @@ function checkAuth() {
         } else {
             profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser)}&background=0D8ABC&color=fff`;
         }
+        const adminBtn = document.getElementById('btn-admin-dashboard');
+        if (adminBtn) {
+            adminBtn.style.display = isBoss(currentUser) ? 'inline-flex' : 'none';
+        }
         loadHistory();
         loadUserProfile();
     } else {
@@ -209,6 +213,8 @@ async function loadUserProfile() {
                 quotaBadge.style.color = '#f59e0b';
                 quotaBadge.style.background = 'rgba(245, 158, 11, 0.15)';
                 quotaBadge.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+                const adminBtn = document.getElementById('btn-admin-dashboard');
+                if (adminBtn) adminBtn.style.display = 'inline-flex';
             }
         }
     } catch (e) {
