@@ -1128,7 +1128,11 @@ function addMessage(text, isUser, imageBase64 = null) {
                 `;
             }
             
-            htmlContent += finalMarkdown ? marked.parse(finalMarkdown) : "";
+            try {
+                htmlContent += finalMarkdown ? marked.parse(finalMarkdown) : "";
+            } catch (mErr) {
+                htmlContent += `<div style="white-space: pre-wrap;">${finalMarkdown}</div>`;
+            }
             content.innerHTML = htmlContent;
         }
     }
@@ -1263,7 +1267,11 @@ async function sendMessage() {
                 `;
             }
             
-            htmlContent += finalMarkdown ? marked.parse(finalMarkdown) : "";
+            try {
+                htmlContent += finalMarkdown ? marked.parse(finalMarkdown) : "";
+            } catch (mErr) {
+                htmlContent += `<div style="white-space: pre-wrap;">${finalMarkdown}</div>`;
+            }
             contentDiv.innerHTML = htmlContent;
             chatBox.scrollTop = chatBox.scrollHeight;
         }
@@ -1337,8 +1345,11 @@ async function sendMessage() {
         loadUserProfile(); // Refresh points & quota after message
         
     } catch (error) {
+        console.error("Chat streaming error:", error);
         hideTypingIndicator();
-        addMessage('ระบบขัดข้อง: ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', false);
+        if (!fullText || fullText.trim() === '') {
+            addMessage('ระบบขัดข้อง: ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', false);
+        }
     } finally {
         isGenerating = false;
         userInput.disabled = false;
