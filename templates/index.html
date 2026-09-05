@@ -306,7 +306,7 @@
                         <i class="fa-solid fa-bolt-lightning"></i> <span id="quota-text">โควตาวันนี้: กำลังโหลด...</span>
                     </div>
                 </div>
-                <button class="settings-btn" id="btn-sidebar-guide" onclick="openOnboardingGuide(1)" title="คู่มือการใช้งาน (Kira Guide)" style="margin-right: 4px; color: #38bdf8;"><i class="fa-solid fa-book-open"></i></button>
+                <button class="settings-btn" id="btn-sidebar-guide" title="คู่มือการใช้งาน (Kira Guide)" style="margin-right: 4px; color: #38bdf8;"><i class="fa-solid fa-book-open"></i></button>
                 <a href="/admin_boss" target="_blank" class="settings-btn" id="btn-admin-dashboard" title="แดชบอร์ดผู้สร้าง (God Mode)" style="display: none; color: #f59e0b; text-decoration: none; align-items: center; justify-content: center; margin-right: 6px;"><i class="fa-solid fa-shield-halved"></i></a>
                 <button class="settings-btn" id="btn-logout" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
@@ -329,7 +329,7 @@
                     <button title="ส่องโครงข่ายความจำ (Knowledge Graph Mind-Map)" id="btn-graph" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-diagram-project"></i></button>
                     <button title="เปิด/ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak)" id="btn-autospeak" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-volume-xmark"></i></button>
                     <button title="บันทึกออก (Export PDF)" id="btn-export" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-file-export"></i></button>
-                    <button title="คู่มือแนะนำการใช้งาน (Kira Interactive Guide)" id="btn-open-guide" onclick="openOnboardingGuide(1)" class="header-action-btn" style="background: none; border: none; color: #38bdf8; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-book-open"></i></button>
+                    <button title="คู่มือแนะนำการใช้งาน (Kira Interactive Guide)" id="btn-open-guide" class="header-action-btn" style="background: none; border: none; color: #38bdf8; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-book-open"></i></button>
                     <select id="model-select" class="model-select">
                         <optgroup label="🚀 โมเดลรุ่นล่าสุด (Kira 2.1 Next-Gen)">
                             <option value="2.1-reasoning" selected>👑 Kira 2.1 Reasoning (Deep Thinker)</option>
@@ -525,7 +525,7 @@
                     <i class="fa-solid fa-sparkles"></i> <span>KIRA INTERACTIVE GUIDE</span>
                 </div>
                 <div class="onboarding-progress-text" id="guide-progress-text">ขั้นตอน 1 / 4</div>
-                <button class="onboarding-skip-btn" id="btn-skip-guide" onclick="closeOnboardingGuide()" title="ข้ามคู่มือ (เข้าสู่แชททันที)">
+                <button class="onboarding-skip-btn" id="btn-skip-guide" title="ข้ามคู่มือ (เข้าสู่แชททันที)">
                     ข้าม <i class="fa-solid fa-forward-step"></i>
                 </button>
             </div>
@@ -702,13 +702,13 @@
                     <span class="guide-dot" data-step="4"></span>
                 </div>
                 <div class="onboarding-actions">
-                    <button class="onboarding-btn secondary" id="btn-prev-guide" onclick="guidePrev()" style="display: none;">
+                    <button class="onboarding-btn secondary" id="btn-prev-guide" style="display: none;">
                         <i class="fa-solid fa-chevron-left"></i> ย้อนกลับ
                     </button>
-                    <button class="onboarding-btn primary" id="btn-next-guide" onclick="guideNext()">
+                    <button class="onboarding-btn primary" id="btn-next-guide">
                         ถัดไป <i class="fa-solid fa-chevron-right"></i>
                     </button>
-                    <button class="onboarding-btn finish-btn" id="btn-finish-guide" onclick="finishOnboardingWithAnimation()" style="display: none;">
+                    <button class="onboarding-btn finish-btn" id="btn-finish-guide" style="display: none;">
                         <span>✨ เริ่มต้นใช้งาน Kira</span> <i class="fa-solid fa-rocket"></i>
                     </button>
                 </div>
@@ -721,6 +721,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=25"></script>
+    <script src="/static/script.js?v=26"></script>
 </body>
 </html>

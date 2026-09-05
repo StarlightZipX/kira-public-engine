@@ -2557,6 +2557,7 @@ function startPhysicsLoop() {
 // ==========================================
 let currentGuideStep = 1;
 const totalGuideSteps = 4;
+let guideBusy = false;
 
 function updateGuideUI() {
     const slides = document.querySelectorAll('.onboarding-slide');
@@ -2591,6 +2592,37 @@ function updateGuideUI() {
     }
 }
 
+function guideNext() {
+    if (guideBusy) return;
+    if (currentGuideStep < totalGuideSteps) {
+        guideBusy = true;
+        currentGuideStep++;
+        updateGuideUI();
+        setTimeout(() => { guideBusy = false; }, 180);
+    }
+}
+
+function guidePrev() {
+    if (guideBusy) return;
+    if (currentGuideStep > 1) {
+        guideBusy = true;
+        currentGuideStep--;
+        updateGuideUI();
+        setTimeout(() => { guideBusy = false; }, 180);
+    }
+}
+
+function guideGoToStep(targetStep) {
+    if (guideBusy) return;
+    const step = parseInt(targetStep, 10);
+    if (step >= 1 && step <= totalGuideSteps && step !== currentGuideStep) {
+        guideBusy = true;
+        currentGuideStep = step;
+        updateGuideUI();
+        setTimeout(() => { guideBusy = false; }, 180);
+    }
+}
+
 function openOnboardingGuide(step = 1) {
     const modal = document.getElementById('onboarding-modal');
     if (!modal) return;
@@ -2608,20 +2640,24 @@ function closeOnboardingGuide() {
 }
 
 function finishOnboardingWithAnimation() {
+    if (guideBusy) return;
     const modal = document.getElementById('onboarding-modal');
     const card = document.getElementById('onboarding-card');
     if (!modal) return;
 
+    guideBusy = true;
     if (card) {
         card.classList.add('celebrate-warp');
         setTimeout(() => {
             modal.style.display = 'none';
             card.classList.remove('celebrate-warp');
             localStorage.setItem('kira_onboarding_seen', 'true');
+            guideBusy = false;
             if (userInput) userInput.focus();
         }, 420);
     } else {
         closeOnboardingGuide();
+        guideBusy = false;
     }
 }
 
@@ -2658,42 +2694,37 @@ function initOnboardingGuide() {
     }
 
     if (btnSkipGuide) {
-        btnSkipGuide.addEventListener('click', () => {
+        btnSkipGuide.addEventListener('click', (e) => {
+            e.preventDefault();
             closeOnboardingGuide();
         });
     }
 
     if (btnPrev) {
-        btnPrev.addEventListener('click', () => {
-            if (currentGuideStep > 1) {
-                currentGuideStep--;
-                updateGuideUI();
-            }
+        btnPrev.addEventListener('click', (e) => {
+            e.preventDefault();
+            guidePrev();
         });
     }
 
     if (btnNext) {
-        btnNext.addEventListener('click', () => {
-            if (currentGuideStep < totalGuideSteps) {
-                currentGuideStep++;
-                updateGuideUI();
-            }
+        btnNext.addEventListener('click', (e) => {
+            e.preventDefault();
+            guideNext();
         });
     }
 
     if (btnFinish) {
-        btnFinish.addEventListener('click', () => {
+        btnFinish.addEventListener('click', (e) => {
+            e.preventDefault();
             finishOnboardingWithAnimation();
         });
     }
 
     dots.forEach(dot => {
-        dot.addEventListener('click', () => {
-            const targetStep = parseInt(dot.dataset.step, 10);
-            if (targetStep >= 1 && targetStep <= totalGuideSteps) {
-                currentGuideStep = targetStep;
-                updateGuideUI();
-            }
+        dot.addEventListener('click', (e) => {
+            e.preventDefault();
+            guideGoToStep(dot.dataset.step);
         });
     });
 
@@ -2711,15 +2742,13 @@ function initOnboardingGuide() {
             closeOnboardingGuide();
         } else if (e.key === 'ArrowRight') {
             if (currentGuideStep < totalGuideSteps) {
-                currentGuideStep++;
-                updateGuideUI();
+                guideNext();
             } else if (currentGuideStep === totalGuideSteps) {
                 finishOnboardingWithAnimation();
             }
         } else if (e.key === 'ArrowLeft') {
             if (currentGuideStep > 1) {
-                currentGuideStep--;
-                updateGuideUI();
+                guidePrev();
             }
         }
     });
@@ -2731,16 +2760,8 @@ function initOnboardingGuide() {
 window.openOnboardingGuide = openOnboardingGuide;
 window.closeOnboardingGuide = closeOnboardingGuide;
 window.finishOnboardingWithAnimation = finishOnboardingWithAnimation;
-window.guideNext = function() {
-    if (currentGuideStep < totalGuideSteps) {
-        currentGuideStep++;
-        updateGuideUI();
-    }
-};
-window.guidePrev = function() {
-    if (currentGuideStep > 1) {
-        currentGuideStep--;
-        updateGuideUI();
-    }
-};
+window.guideNext = guideNext;
+window.guidePrev = guidePrev;
+window.guideGoToStep = guideGoToStep;
+
 
