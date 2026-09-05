@@ -11,7 +11,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=11">
+    <link rel="stylesheet" href="/static/style.css?v=12">
     <!-- MathJax for LaTeX Rendering -->
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <!-- html2canvas for Live Screen & Canvas Inspection -->
@@ -43,6 +43,18 @@
                 <div class="proactive-toast-actions">
                     <button type="button" class="proactive-toast-action-btn" id="btn-proactive-toast-action"><i class="fa-solid fa-comment"></i> ตอบกลับ</button>
                     <button type="button" class="proactive-toast-dismiss-btn" id="btn-proactive-toast-dismiss" title="ปิด"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <!-- Inline Proactive Reply Suite -->
+                <div class="proactive-toast-reply-box hidden" id="proactive-toast-reply-box">
+                    <div class="proactive-quick-chips">
+                        <button type="button" class="proactive-chip" data-reply="ขอบคุณนะคิระ ดื่มน้ำเรียบร้อยแล้วค่ะ 💧">💧 ดื่มน้ำแล้ว</button>
+                        <button type="button" class="proactive-chip" data-reply="ขอบคุณที่เป็นห่วงนะคิระ 💖">💖 ขอบคุณนะ</button>
+                        <button type="button" class="proactive-chip" data-reply="คิระ ช่วยสรุปงานให้หน่อยได้ไหม 📝">📝 สรุปงาน</button>
+                    </div>
+                    <div class="proactive-reply-input-row">
+                        <input type="text" id="proactive-reply-input" placeholder="พิมพ์ข้อความตอบกลับคิระ..." autocomplete="off">
+                        <button type="button" id="btn-proactive-send-reply" class="proactive-send-btn" title="ส่งข้อความ"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -498,6 +510,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=17"></script>
+    <script src="/static/script.js?v=19"></script>
 </body>
 </html>

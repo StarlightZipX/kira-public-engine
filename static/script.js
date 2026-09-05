@@ -786,6 +786,9 @@ function initProactiveHeartbeat() {
     const toastTime = document.getElementById('proactive-toast-time');
     const btnDismiss = document.getElementById('btn-proactive-toast-dismiss');
     const btnAction = document.getElementById('btn-proactive-toast-action');
+    const replyBox = document.getElementById('proactive-toast-reply-box');
+    const replyInput = document.getElementById('proactive-reply-input');
+    const btnSendReply = document.getElementById('btn-proactive-send-reply');
 
     const resetActivity = () => {
         lastUserActivityTime = Date.now();
@@ -795,21 +798,100 @@ function initProactiveHeartbeat() {
     window.addEventListener('click', resetActivity, { passive: true });
     window.addEventListener('scroll', resetActivity, { passive: true });
 
+    // Smooth dismissal handler
+    const dismissProactiveToast = () => {
+        if (!toast) return;
+        proactiveToastDismissed = true;
+        toast.classList.add('fade-out');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+            toast.classList.remove('fade-out');
+            if (replyBox) replyBox.classList.add('hidden');
+            if (replyInput) replyInput.value = '';
+        }, 260);
+    };
+
+    // Reply sender handler
+    const sendProactiveReply = (text) => {
+        if (!text || !text.trim()) return;
+        const replyMsg = text.trim();
+        dismissProactiveToast();
+        if (userInput) {
+            userInput.value = replyMsg;
+            userInput.style.height = 'auto';
+            if (sendBtn) sendBtn.disabled = false;
+            if (typeof sendMessage === 'function' && !isGenerating) {
+                sendMessage();
+            } else {
+                userInput.focus();
+            }
+        }
+    };
+
+    // Expose globally for testing / direct access
+    window.dismissProactiveToast = dismissProactiveToast;
+    window.sendProactiveReply = sendProactiveReply;
+
     if (btnDismiss) {
-        btnDismiss.addEventListener('click', () => {
-            if (toast) toast.classList.add('hidden');
-            proactiveToastDismissed = true;
+        btnDismiss.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dismissProactiveToast();
         });
     }
 
     if (btnAction) {
-        btnAction.addEventListener('click', () => {
-            if (toast) toast.classList.add('hidden');
-            if (userInput) {
-                userInput.focus();
-                if (!userInput.value) {
-                    userInput.placeholder = "มีอะไรให้คิระช่วยบอกได้เลยนะคะ 🌸";
+        btnAction.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (replyBox) {
+                const isHidden = replyBox.classList.contains('hidden');
+                if (isHidden) {
+                    replyBox.classList.remove('hidden');
+                    if (replyInput) {
+                        setTimeout(() => replyInput.focus(), 80);
+                    }
+                } else {
+                    replyBox.classList.add('hidden');
                 }
+            } else {
+                dismissProactiveToast();
+                if (userInput) {
+                    userInput.focus();
+                    if (!userInput.value) {
+                        userInput.placeholder = "มีอะไรให้คิระช่วยบอกได้เลยนะคะ 🌸";
+                    }
+                }
+            }
+        });
+    }
+
+    // Quick chips interaction
+    if (toast) {
+        const chips = toast.querySelectorAll('.proactive-chip');
+        chips.forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const msg = chip.getAttribute('data-reply') || chip.textContent.trim();
+                sendProactiveReply(msg);
+            });
+        });
+    }
+
+    // Custom input reply interaction
+    if (btnSendReply && replyInput) {
+        btnSendReply.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            sendProactiveReply(replyInput.value);
+        });
+
+        replyInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                sendProactiveReply(replyInput.value);
             }
         });
     }
@@ -832,7 +914,10 @@ function initProactiveHeartbeat() {
                 ];
                 toastMsg.textContent = msgs[Math.floor(Math.random() * msgs.length)];
             }
+            toast.classList.remove('fade-out');
             toast.classList.remove('hidden');
+            if (replyBox) replyBox.classList.add('hidden');
+            if (replyInput) replyInput.value = '';
         }
     }, 60000);
 
