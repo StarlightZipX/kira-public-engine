@@ -10,11 +10,13 @@ load_dotenv()
 
 import uvicorn
 from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Optional
 from pydantic import BaseModel
+import secrets
+import httpx
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
@@ -55,6 +57,15 @@ OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1")
 ENABLE_OLLAMA = os.environ.get("ENABLE_OLLAMA", "false").lower() in ("true", "1", "yes")
 if ENABLE_OLLAMA:
     print(f"🖥️ Local Ollama Server Active: {OLLAMA_BASE_URL}")
+
+# ========== Multi-Platform OAuth 2.0 (Google & GitHub) ==========
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
+GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
+
+# In-memory CSRF State Store with TTL
+oauth_states = {} # state -> timestamp
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 USE_POSTGRES = DATABASE_URL is not None
@@ -302,6 +313,23 @@ def init_db():
             pass
         try:
             execute_query("ALTER TABLE users ADD COLUMN purpose TEXT")
+        except:
+            pass
+        # สำหรับ OAuth 2.0 Multi-Platform (Google & GitHub)
+        try:
+            execute_query("ALTER TABLE users ADD COLUMN email TEXT")
+        except:
+            pass
+        try:
+            execute_query("ALTER TABLE users ADD COLUMN auth_provider TEXT")
+        except:
+            pass
+        try:
+            execute_query("ALTER TABLE users ADD COLUMN provider_id TEXT")
+        except:
+            pass
+        try:
+            execute_query("ALTER TABLE users ADD COLUMN avatar_url TEXT")
         except:
             pass
         execute_query('''CREATE TABLE IF NOT EXISTS logs
@@ -1030,6 +1058,391 @@ async def health_check():
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
+
+# ========== OAuth 2.0 Multi-Platform Social Login Helpers & Endpoints ==========
+def _clean_oauth_states():
+    """ลบ CSRF States ที่หมดอายุ (>10 นาที)"""
+    now = time.time()
+    expired = [s for s, t in oauth_states.items() if now - t > 600]
+    for s in expired:
+        oauth_states.pop(s, None)
+
+def _get_oauth_redirect_uri(request: Request, provider: str) -> str:
+    """คำนวณ Redirect Callback URL อัตโนมัติ (รองรับ Production Render และ Localhost)"""
+    explicit_base = os.environ.get("OAUTH_BASE_URL", "").strip()
+    if explicit_base:
+        return f"{explicit_base.rstrip('/')}/auth/{provider}/callback"
+    
+    host = request.headers.get("host", "")
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    if "onrender.com" in host or not host:
+        return f"https://kira-public-engine.onrender.com/auth/{provider}/callback"
+    return f"{proto}://{host}/auth/{provider}/callback"
+
+def _generate_social_callback_html(username: str, token: str, avatar_url: str = "") -> HTMLResponse:
+    """สร้าง HTML น้ำหนักเบาเพื่อบันทึก Session Token ลงใน localStorage ของเบราว์เซอร์อย่างปลอดภัย 100%"""
+    import json
+    user_json = json.dumps(username)
+    token_json = json.dumps(token)
+    avatar_json = json.dumps(avatar_url) if avatar_url else "null"
+    
+    html = f"""<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ Kira AI สำเร็จ</title>
+    <style>
+        body {{
+            background: #0b1120;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }}
+        .card {{
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(56, 189, 248, 0.2);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            max-width: 380px;
+            width: 100%;
+        }}
+        .spinner {{
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(56, 189, 248, 0.2);
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1.5rem auto;
+        }}
+        @keyframes spin {{ to {{ transform: rotate(360deg); }} }}
+        h3 {{ margin: 0 0 8px 0; font-size: 1.25rem; color: #38bdf8; }}
+        p {{ margin: 0; color: #94a3b8; font-size: 0.9rem; }}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="spinner"></div>
+        <h3>เข้าสู่ระบบสำเร็จ!</h3>
+        <p>กำลังนำคุณเข้าสู่ Kira AI System...</p>
+    </div>
+    <script>
+        try {{
+            localStorage.setItem('kira_username', {user_json});
+            localStorage.setItem('kira_auth_token', {token_json});
+            localStorage.setItem('kira_user', {user_json});
+            localStorage.setItem('kira_token', {token_json});
+            localStorage.removeItem('kira_logged_out');
+            if ({avatar_json}) {{
+                localStorage.setItem('kira_avatar', {avatar_json});
+            }}
+        }} catch(e) {{
+            console.error("Storage error:", e);
+        }}
+        window.location.replace('/');
+    </script>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
+
+def _upsert_social_user(provider: str, provider_id: str, email: str, display_name: str, avatar_url: str = "") -> str:
+    """ค้นหาหรือสร้างบัญชีผู้ใช้ Social Login ป้องกันการแย่งชิงชื่อสงวนและ Boss"""
+    import re
+    
+    # 1. ตรวจสอบว่าเคยเข้าสู่ระบบด้วย Provider + Provider ID นี้แล้วหรือไม่
+    if provider and provider_id:
+        row = execute_query(
+            "SELECT username FROM users WHERE auth_provider=? AND provider_id=?",
+            (provider, str(provider_id)),
+            fetch='one'
+        )
+        if row and row[0]:
+            username = row[0]
+            if avatar_url or email:
+                try:
+                    execute_query(
+                        "UPDATE users SET avatar_url=COALESCE(?, avatar_url), email=COALESCE(?, email) WHERE username=?",
+                        (avatar_url or None, email or None, username)
+                    )
+                except Exception:
+                    pass
+            return username
+
+    # 2. ตรวจสอบว่ามีบัญชีเดิมที่ใช้อีเมลตรงกันหรือไม่ (Account Linking)
+    if email:
+        row = execute_query(
+            "SELECT username, auth_provider FROM users WHERE email=?",
+            (email,),
+            fetch='one'
+        )
+        if row and row[0]:
+            username = row[0]
+            # ห้าม Link ทับสิทธิ์ Boss หรือ Owner
+            if not is_boss(username):
+                try:
+                    execute_query(
+                        "UPDATE users SET auth_provider=?, provider_id=?, avatar_url=COALESCE(?, avatar_url) WHERE username=?",
+                        (provider, str(provider_id), avatar_url or None, username)
+                    )
+                except Exception:
+                    pass
+            return username
+
+    # 3. สร้าง Username ใหม่จาก display_name หรือ email
+    raw_name = (display_name or "").strip()
+    if not raw_name and email:
+        raw_name = email.split("@")[0]
+    if not raw_name:
+        raw_name = f"{provider}_user"
+
+    # กรองเฉพาะตัวอักษรและตัวเลข
+    base_username = re.sub(r'[^A-Za-z0-9_]', '', raw_name.replace(' ', '_'))
+    if len(base_username) < 3:
+        base_username = f"{provider}_{base_username}"[:15]
+    base_username = base_username[:20]
+
+    # ป้องกันชื่อสงวน (Reserved names & Boss)
+    reserved = ["boss", "admin", "administrator", "kira", "system", "owner", "root", "guest"]
+    if base_username.lower() in reserved or any(r in base_username.lower() for r in ["boss", "admin", "kira"]):
+        base_username = f"user_{base_username}"[:20]
+
+    # ตรวจสอบความซ้ำซ้อนของ Username ในฐานข้อมูล
+    candidate_username = base_username
+    counter = 1
+    while True:
+        existing = execute_query("SELECT id FROM users WHERE username=?", (candidate_username,), fetch='one')
+        if not existing:
+            break
+        suffix = f"_{counter}"
+        candidate_username = f"{base_username[:20-len(suffix)]}{suffix}"
+        counter += 1
+
+    # สุ่มรหัสผ่านนิรนามสำหรับบัญชี OAuth
+    dummy_pass_hash = hash_password(secrets.token_hex(24))
+    nickname = display_name or candidate_username
+
+    try:
+        execute_query(
+            """INSERT INTO users 
+               (username, password_hash, nickname, purpose, email, auth_provider, provider_id, avatar_url) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (candidate_username, dummy_pass_hash, nickname, "general", email or None, provider, str(provider_id), avatar_url or None)
+        )
+    except Exception:
+        # Fallback กรณีคอลัมน์ใหม่อาจยังไม่พร้อมใน legacy SQLite
+        try:
+            execute_query(
+                "INSERT INTO users (username, password_hash, nickname, purpose) VALUES (?, ?, ?, ?)",
+                (candidate_username, dummy_pass_hash, nickname, "general")
+            )
+        except Exception:
+            execute_query(
+                "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+                (candidate_username, dummy_pass_hash)
+            )
+
+    return candidate_username
+
+@app.get("/auth/google/login")
+async def google_login(request: Request):
+    """ริเริ่มกระบวนการ Google OAuth 2.0 Authorization Code Flow"""
+    if not GOOGLE_CLIENT_ID:
+        return RedirectResponse("/?auth_error=Google+OAuth+is+not+configured")
+    
+    _clean_oauth_states()
+    state = secrets.token_urlsafe(32)
+    oauth_states[state] = time.time()
+    
+    redirect_uri = _get_oauth_redirect_uri(request, "google")
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "access_type": "online",
+        "prompt": "select_account"
+    }
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+    return RedirectResponse(auth_url)
+
+@app.get("/auth/google/callback")
+async def google_callback(
+    request: Request,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None
+):
+    """รับ Authorization Code จาก Google แลก Access Token และ Login เข้าสู่ระบบ"""
+    if error:
+        return RedirectResponse(f"/?auth_error={urllib.parse.quote(error)}")
+    
+    if not code or not state:
+        return RedirectResponse("/?auth_error=Missing+code+or+state")
+    
+    _clean_oauth_states()
+    if state not in oauth_states:
+        return RedirectResponse("/?auth_error=Invalid+or+expired+state")
+    oauth_states.pop(state, None)
+    
+    redirect_uri = _get_oauth_redirect_uri(request, "google")
+    token_url = "https://oauth2.googleapis.com/token"
+    data = {
+        "code": code,
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code"
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            token_resp = await client.post(token_url, data=data)
+            if token_resp.status_code != 200:
+                err_body = token_resp.text[:120]
+                return RedirectResponse(f"/?auth_error=Google+token+exchange+failed:+{urllib.parse.quote(err_body)}")
+            
+            token_data = token_resp.json()
+            access_token = token_data.get("access_token")
+            if not access_token:
+                return RedirectResponse("/?auth_error=No+access+token+received+from+Google")
+            
+            userinfo_resp = await client.get(
+                "https://www.googleapis.com/oauth2/v2/userinfo",
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            if userinfo_resp.status_code != 200:
+                return RedirectResponse("/?auth_error=Failed+to+fetch+Google+user+profile")
+            
+            user_info = userinfo_resp.json()
+            provider_id = user_info.get("id", "")
+            email = user_info.get("email", "")
+            name = user_info.get("name") or (email.split("@")[0] if email else "GoogleUser")
+            avatar_url = user_info.get("picture", "")
+            
+            username = _upsert_social_user(
+                provider="google",
+                provider_id=provider_id,
+                email=email,
+                display_name=name,
+                avatar_url=avatar_url
+            )
+            token = generate_auth_token(username)
+            return _generate_social_callback_html(username, token, avatar_url)
+            
+    except Exception as e:
+        return RedirectResponse(f"/?auth_error={urllib.parse.quote(str(e)[:100])}")
+
+@app.get("/auth/github/login")
+async def github_login(request: Request):
+    """ริเริ่มกระบวนการ GitHub OAuth 2.0 Authorization Code Flow"""
+    if not GITHUB_CLIENT_ID:
+        return RedirectResponse("/?auth_error=GitHub+OAuth+is+not+configured+by+admin")
+    
+    _clean_oauth_states()
+    state = secrets.token_urlsafe(32)
+    oauth_states[state] = time.time()
+    
+    redirect_uri = _get_oauth_redirect_uri(request, "github")
+    params = {
+        "client_id": GITHUB_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "scope": "read:user user:email",
+        "state": state
+    }
+    auth_url = f"https://github.com/login/oauth/authorize?{urllib.parse.urlencode(params)}"
+    return RedirectResponse(auth_url)
+
+@app.get("/auth/github/callback")
+async def github_callback(
+    request: Request,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None
+):
+    """รับ Authorization Code จาก GitHub แลก Access Token และ Login เข้าสู่ระบบ"""
+    if error:
+        return RedirectResponse(f"/?auth_error={urllib.parse.quote(error)}")
+    
+    if not code or not state:
+        return RedirectResponse("/?auth_error=Missing+code+or+state")
+    
+    _clean_oauth_states()
+    if state not in oauth_states:
+        return RedirectResponse("/?auth_error=Invalid+or+expired+state")
+    oauth_states.pop(state, None)
+    
+    redirect_uri = _get_oauth_redirect_uri(request, "github")
+    token_url = "https://github.com/login/oauth/access_token"
+    headers = {"Accept": "application/json"}
+    data = {
+        "client_id": GITHUB_CLIENT_ID,
+        "client_secret": GITHUB_CLIENT_SECRET,
+        "code": code,
+        "redirect_uri": redirect_uri
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            token_resp = await client.post(token_url, data=data, headers=headers)
+            if token_resp.status_code != 200:
+                err_body = token_resp.text[:120]
+                return RedirectResponse(f"/?auth_error=GitHub+token+exchange+failed:+{urllib.parse.quote(err_body)}")
+            
+            token_data = token_resp.json()
+            access_token = token_data.get("access_token")
+            if not access_token:
+                err_msg = token_data.get("error_description") or token_data.get("error") or "No access token received"
+                return RedirectResponse(f"/?auth_error={urllib.parse.quote(err_msg)}")
+            
+            user_headers = {
+                "Authorization": f"Bearer {access_token}",
+                "User-Agent": "Kira-Engine/2.2"
+            }
+            user_resp = await client.get("https://api.github.com/user", headers=user_headers)
+            if user_resp.status_code != 200:
+                return RedirectResponse("/?auth_error=Failed+to+fetch+GitHub+profile")
+            
+            user_info = user_resp.json()
+            provider_id = str(user_info.get("id", ""))
+            name = user_info.get("name") or user_info.get("login", "GitHubUser")
+            email = user_info.get("email") or ""
+            avatar_url = user_info.get("avatar_url", "")
+            
+            # หากอีเมลใน profile เป็น None (Private Email ใน GitHub) ดึงจาก /user/emails
+            if not email:
+                try:
+                    email_resp = await client.get("https://api.github.com/user/emails", headers=user_headers)
+                    if email_resp.status_code == 200:
+                        emails = email_resp.json()
+                        primary_emails = [e["email"] for e in emails if e.get("primary") and e.get("verified")]
+                        if primary_emails:
+                            email = primary_emails[0]
+                        elif emails:
+                            email = emails[0].get("email", "")
+                except Exception:
+                    pass
+            
+            username = _upsert_social_user(
+                provider="github",
+                provider_id=provider_id,
+                email=email,
+                display_name=name,
+                avatar_url=avatar_url
+            )
+            token = generate_auth_token(username)
+            return _generate_social_callback_html(username, token, avatar_url)
+            
+    except Exception as e:
+        return RedirectResponse(f"/?auth_error={urllib.parse.quote(str(e)[:100])}")
 
 @app.get("/admin_boss", response_class=HTMLResponse)
 async def admin_dashboard_get(

@@ -1368,6 +1368,73 @@ textarea::placeholder {
     text-decoration: underline;
 }
 
+/* =========================================================================
+   🌐 Multi-Platform Social Login (Google & GitHub)
+   ========================================================================= */
+.social-login-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 0.2rem;
+    width: 100%;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0.75rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+    cursor: pointer;
+    user-select: none;
+}
+
+.google-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #f8fafc;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.google-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(66, 133, 244, 0.6);
+    box-shadow: 0 4px 18px rgba(66, 133, 244, 0.3);
+    transform: translateY(-2px);
+    color: #ffffff;
+}
+
+.github-btn {
+    background: rgba(24, 23, 23, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #f8fafc;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.github-btn:hover {
+    background: rgba(36, 41, 46, 0.95);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
+    color: #ffffff;
+}
+
+.social-icon {
+    font-size: 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;

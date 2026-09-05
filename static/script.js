@@ -158,7 +158,7 @@ function updateModelUI() {
 }
 
 function checkAuth() {
-    const storedUser = localStorage.getItem('kira_username');
+    const storedUser = localStorage.getItem('kira_username') || localStorage.getItem('kira_user');
     const isExplicitlyLoggedOut = localStorage.getItem('kira_logged_out') === 'true';
 
     // 👑 VIP Auto-Login for Owner only on initial visit (if user has not explicitly clicked Logout)
@@ -174,7 +174,12 @@ function checkAuth() {
         authModal.style.display = 'none';
         appContainer.style.display = 'flex';
         profileName.textContent = currentUser;
-        profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser)}&background=0D8ABC&color=fff`;
+        const customAvatar = localStorage.getItem('kira_avatar');
+        if (customAvatar) {
+            profilePic.src = customAvatar;
+        } else {
+            profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser)}&background=0D8ABC&color=fff`;
+        }
         loadHistory();
         loadUserProfile();
     } else {
@@ -281,6 +286,21 @@ async function checkNeuralCoreHealth(isInitial = false) {
         console.log("Core wakeup ping notice:", e);
     }
     return false;
+}
+
+// --- Check for OAuth Return Errors ---
+try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const authErr = urlParams.get('auth_error');
+    if (authErr) {
+        if (loginError) {
+            loginError.style.color = '#f87171';
+            loginError.textContent = `❌ เข้าสู่ระบบไม่สำเร็จ: ${authErr}`;
+        }
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+} catch (e) {
+    console.warn("Auth error check notice:", e);
 }
 
 // Check auth on load
@@ -591,6 +611,9 @@ if (btnLogout) {
     btnLogout.addEventListener('click', () => {
         localStorage.removeItem('kira_username');
         localStorage.removeItem('kira_auth_token');
+        localStorage.removeItem('kira_user');
+        localStorage.removeItem('kira_token');
+        localStorage.removeItem('kira_avatar');
         localStorage.setItem('kira_logged_out', 'true');
         currentUser = null;
         chatBox.innerHTML = '';
