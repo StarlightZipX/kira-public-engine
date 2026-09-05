@@ -186,6 +186,9 @@ function checkAuth() {
         }
         loadHistory();
         loadUserProfile();
+        if (typeof checkAndTriggerOnboarding === 'function') {
+            checkAndTriggerOnboarding();
+        }
     } else {
         authModal.style.display = 'flex';
         appContainer.style.display = 'none';
@@ -316,6 +319,7 @@ updateModelUI();
 checkEngineStatus();
 initProactiveHeartbeat();
 initLiveScreenInspector();
+initOnboardingGuide();
 setInterval(checkEngineStatus, 30000);
 setInterval(() => checkNeuralCoreHealth(false), 240000); // 4-min Keepalive Heartbeat
 
@@ -2547,3 +2551,196 @@ function startPhysicsLoop() {
     if (graphAnimationId) cancelAnimationFrame(graphAnimationId);
     tick();
 }
+
+// ==========================================
+// 📖 Interactive Onboarding Tour & Feature Guide
+// ==========================================
+let currentGuideStep = 1;
+const totalGuideSteps = 4;
+
+function updateGuideUI() {
+    const slides = document.querySelectorAll('.onboarding-slide');
+    const dots = document.querySelectorAll('.guide-dot');
+    const progressText = document.getElementById('guide-progress-text');
+    const btnPrev = document.getElementById('btn-prev-guide');
+    const btnNext = document.getElementById('btn-next-guide');
+    const btnFinish = document.getElementById('btn-finish-guide');
+
+    slides.forEach(slide => {
+        const step = parseInt(slide.dataset.step, 10);
+        slide.classList.toggle('active', step === currentGuideStep);
+    });
+
+    dots.forEach(dot => {
+        const step = parseInt(dot.dataset.step, 10);
+        dot.classList.toggle('active', step === currentGuideStep);
+    });
+
+    if (progressText) {
+        progressText.textContent = `ขั้นตอน ${currentGuideStep} / ${totalGuideSteps}`;
+    }
+
+    if (btnPrev) {
+        btnPrev.style.display = currentGuideStep > 1 ? 'inline-flex' : 'none';
+    }
+    if (btnNext) {
+        btnNext.style.display = currentGuideStep < totalGuideSteps ? 'inline-flex' : 'none';
+    }
+    if (btnFinish) {
+        btnFinish.style.display = currentGuideStep === totalGuideSteps ? 'inline-flex' : 'none';
+    }
+}
+
+function openOnboardingGuide(step = 1) {
+    const modal = document.getElementById('onboarding-modal');
+    if (!modal) return;
+    currentGuideStep = Math.max(1, Math.min(step, totalGuideSteps));
+    updateGuideUI();
+    modal.style.display = 'flex';
+}
+
+function closeOnboardingGuide() {
+    const modal = document.getElementById('onboarding-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    localStorage.setItem('kira_onboarding_seen', 'true');
+}
+
+function finishOnboardingWithAnimation() {
+    const modal = document.getElementById('onboarding-modal');
+    const card = document.getElementById('onboarding-card');
+    if (!modal) return;
+
+    if (card) {
+        card.classList.add('celebrate-warp');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            card.classList.remove('celebrate-warp');
+            localStorage.setItem('kira_onboarding_seen', 'true');
+            if (userInput) userInput.focus();
+        }, 420);
+    } else {
+        closeOnboardingGuide();
+    }
+}
+
+function checkAndTriggerOnboarding() {
+    if (currentUser && !localStorage.getItem('kira_onboarding_seen')) {
+        setTimeout(() => {
+            openOnboardingGuide(1);
+        }, 500);
+    }
+}
+
+function initOnboardingGuide() {
+    const btnOpenGuide = document.getElementById('btn-open-guide');
+    const btnSidebarGuide = document.getElementById('btn-sidebar-guide');
+    const btnSkipGuide = document.getElementById('btn-skip-guide');
+    const btnPrev = document.getElementById('btn-prev-guide');
+    const btnNext = document.getElementById('btn-next-guide');
+    const btnFinish = document.getElementById('btn-finish-guide');
+    const dots = document.querySelectorAll('.guide-dot');
+    const modal = document.getElementById('onboarding-modal');
+
+    if (btnOpenGuide) {
+        btnOpenGuide.addEventListener('click', (e) => {
+            e.preventDefault();
+            openOnboardingGuide(1);
+        });
+    }
+
+    if (btnSidebarGuide) {
+        btnSidebarGuide.addEventListener('click', (e) => {
+            e.preventDefault();
+            openOnboardingGuide(1);
+        });
+    }
+
+    if (btnSkipGuide) {
+        btnSkipGuide.addEventListener('click', () => {
+            closeOnboardingGuide();
+        });
+    }
+
+    if (btnPrev) {
+        btnPrev.addEventListener('click', () => {
+            if (currentGuideStep > 1) {
+                currentGuideStep--;
+                updateGuideUI();
+            }
+        });
+    }
+
+    if (btnNext) {
+        btnNext.addEventListener('click', () => {
+            if (currentGuideStep < totalGuideSteps) {
+                currentGuideStep++;
+                updateGuideUI();
+            }
+        });
+    }
+
+    if (btnFinish) {
+        btnFinish.addEventListener('click', () => {
+            finishOnboardingWithAnimation();
+        });
+    }
+
+    dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+            const targetStep = parseInt(dot.dataset.step, 10);
+            if (targetStep >= 1 && targetStep <= totalGuideSteps) {
+                currentGuideStep = targetStep;
+                updateGuideUI();
+            }
+        });
+    });
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeOnboardingGuide();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (!modal || modal.style.display !== 'flex') return;
+        if (e.key === 'Escape') {
+            closeOnboardingGuide();
+        } else if (e.key === 'ArrowRight') {
+            if (currentGuideStep < totalGuideSteps) {
+                currentGuideStep++;
+                updateGuideUI();
+            } else if (currentGuideStep === totalGuideSteps) {
+                finishOnboardingWithAnimation();
+            }
+        } else if (e.key === 'ArrowLeft') {
+            if (currentGuideStep > 1) {
+                currentGuideStep--;
+                updateGuideUI();
+            }
+        }
+    });
+
+    checkAndTriggerOnboarding();
+}
+
+// Expose globally for header/sidebar or browser console access
+window.openOnboardingGuide = openOnboardingGuide;
+window.closeOnboardingGuide = closeOnboardingGuide;
+window.finishOnboardingWithAnimation = finishOnboardingWithAnimation;
+window.guideNext = function() {
+    if (currentGuideStep < totalGuideSteps) {
+        currentGuideStep++;
+        updateGuideUI();
+    }
+};
+window.guidePrev = function() {
+    if (currentGuideStep > 1) {
+        currentGuideStep--;
+        updateGuideUI();
+    }
+};
+

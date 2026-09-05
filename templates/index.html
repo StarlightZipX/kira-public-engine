@@ -306,6 +306,7 @@
                         <i class="fa-solid fa-bolt-lightning"></i> <span id="quota-text">โควตาวันนี้: กำลังโหลด...</span>
                     </div>
                 </div>
+                <button class="settings-btn" id="btn-sidebar-guide" onclick="openOnboardingGuide(1)" title="คู่มือการใช้งาน (Kira Guide)" style="margin-right: 4px; color: #38bdf8;"><i class="fa-solid fa-book-open"></i></button>
                 <a href="/admin_boss" target="_blank" class="settings-btn" id="btn-admin-dashboard" title="แดชบอร์ดผู้สร้าง (God Mode)" style="display: none; color: #f59e0b; text-decoration: none; align-items: center; justify-content: center; margin-right: 6px;"><i class="fa-solid fa-shield-halved"></i></a>
                 <button class="settings-btn" id="btn-logout" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
@@ -328,6 +329,7 @@
                     <button title="ส่องโครงข่ายความจำ (Knowledge Graph Mind-Map)" id="btn-graph" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-diagram-project"></i></button>
                     <button title="เปิด/ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak)" id="btn-autospeak" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-volume-xmark"></i></button>
                     <button title="บันทึกออก (Export PDF)" id="btn-export" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-file-export"></i></button>
+                    <button title="คู่มือแนะนำการใช้งาน (Kira Interactive Guide)" id="btn-open-guide" onclick="openOnboardingGuide(1)" class="header-action-btn" style="background: none; border: none; color: #38bdf8; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-book-open"></i></button>
                     <select id="model-select" class="model-select">
                         <optgroup label="🚀 โมเดลรุ่นล่าสุด (Kira 2.1 Next-Gen)">
                             <option value="2.1-reasoning" selected>👑 Kira 2.1 Reasoning (Deep Thinker)</option>
@@ -514,11 +516,211 @@
         </div>
     </div>
 
+    <!-- 📖 Interactive Onboarding Tour & Model Feature Guide Modal -->
+    <div class="modal-overlay" id="onboarding-modal" style="display: none; z-index: 1080;">
+        <div class="onboarding-card glass-panel" id="onboarding-card">
+            <!-- Modal Header -->
+            <div class="onboarding-header">
+                <div class="onboarding-badge">
+                    <i class="fa-solid fa-sparkles"></i> <span>KIRA INTERACTIVE GUIDE</span>
+                </div>
+                <div class="onboarding-progress-text" id="guide-progress-text">ขั้นตอน 1 / 4</div>
+                <button class="onboarding-skip-btn" id="btn-skip-guide" onclick="closeOnboardingGuide()" title="ข้ามคู่มือ (เข้าสู่แชททันที)">
+                    ข้าม <i class="fa-solid fa-forward-step"></i>
+                </button>
+            </div>
+
+            <!-- Slides Container -->
+            <div class="onboarding-slides-container">
+                <!-- Slide 1: Welcome & Overview -->
+                <div class="onboarding-slide active" data-step="1">
+                    <div class="slide-hero">
+                        <div class="slide-icon-wrapper pulse-glow">
+                            <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo" class="slide-hero-logo">
+                        </div>
+                        <h2 class="slide-title">ยินดีต้อนรับสู่ <span class="gradient-text">Kira AI 2.1</span></h2>
+                        <p class="slide-subtitle">ระบบประสาทสังเคราะห์อัจฉริยะ (Next-Gen Hybrid Cognitive Intelligence)</p>
+                    </div>
+                    <div class="slide-features-grid">
+                        <div class="feature-chip">
+                            <div class="chip-icon"><i class="fa-solid fa-bolt text-cyan"></i></div>
+                            <div class="chip-info">
+                                <strong>ตอบไวเสี้ยววินาที</strong>
+                                <span>สตรีมมิ่งสดผ่าน Cloud Supercluster ประมวลผลตรรกะเร็วเหนือชั้น</span>
+                            </div>
+                        </div>
+                        <div class="feature-chip">
+                            <div class="chip-icon"><i class="fa-solid fa-brain text-pink"></i></div>
+                            <div class="chip-info">
+                                <strong>จำคุณได้ตลอดไป (GraphRAG)</strong>
+                                <span>จดจำความสนใจ สไตล์ และประวัติการสนทนาอย่างปลอดภัยเฉพาะตัว</span>
+                            </div>
+                        </div>
+                        <div class="feature-chip">
+                            <div class="chip-icon"><i class="fa-solid fa-shield-halved text-amber"></i></div>
+                            <div class="chip-info">
+                                <strong>ปลอดภัยด้วย Kira Aegis</strong>
+                                <span>ระบบเกราะคุ้มกัน AI Firewall และแซนด์บ็อกซ์ประมวลผลที่มีเสถียรภาพ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Model Matrix Guide -->
+                <div class="onboarding-slide" data-step="2">
+                    <div class="slide-header-mini">
+                        <h2 class="slide-title-sm"><i class="fa-solid fa-microchip text-cyan"></i> ผังการเลือกใช้สมองโมเดล (Model Guide)</h2>
+                        <p class="slide-subtitle-sm">เลือกใช้โมเดลให้ตรงกับโจทย์ เพื่อประสิทธิผลและคำตอบที่ดีที่สุด</p>
+                    </div>
+                    <div class="model-cards-list">
+                        <div class="model-guide-card">
+                            <div class="model-badge-col">
+                                <span class="model-tag tag-standard">1.0 Standard</span>
+                            </div>
+                            <div class="model-desc-col">
+                                <strong>ความเร็วแสง (High-Speed Engine)</strong>
+                                <p>เหมาะสำหรับ: ถาม-ตอบทั่วไป, แปลภาษา, สรุปบทความสั้น และบทสนทนาประจำวัน</p>
+                            </div>
+                        </div>
+                        <div class="model-guide-card">
+                            <div class="model-badge-col">
+                                <span class="model-tag tag-nextgen">1.1 Next-Gen</span>
+                            </div>
+                            <div class="model-desc-col">
+                                <strong>คิดเชิงเหตุผล & การเขียนโค้ด</strong>
+                                <p>เหมาะสำหรับ: เขียนโค้ด, ตรรกะโปรแกรมมิ่ง, ตรวจแก้ Bug และงานเอกสารเชิงเทคนิค</p>
+                            </div>
+                        </div>
+                        <div class="model-guide-card">
+                            <div class="model-badge-col">
+                                <span class="model-tag tag-research">1.2 Deep Research</span>
+                            </div>
+                            <div class="model-desc-col">
+                                <strong>รัน Python สด & แซนด์บ็อกซ์คำนวณ</strong>
+                                <p>เหมาะสำหรับ: เขียนและรันโค้ด Python จริงในตัว, คำนวณคณิตศาสตร์ และพล็อตชาร์ตข้อมูล</p>
+                            </div>
+                        </div>
+                        <div class="model-guide-card">
+                            <div class="model-badge-col">
+                                <span class="model-tag tag-enterprise">1.3 Enterprise</span>
+                            </div>
+                            <div class="model-desc-col">
+                                <strong>ระบบระดมสมอง Swarm (Adaptive MoA 3 เอเจนต์)</strong>
+                                <p>เหมาะสำหรับ: ออกแบบสถาปัตยกรรมระบบ, โครงสร้างโปรเจกต์ขนาดใหญ่ และโจทย์เชิงลึก</p>
+                            </div>
+                        </div>
+                        <div class="model-guide-card">
+                            <div class="model-badge-col">
+                                <span class="model-tag tag-vision">2.0 Multimodal</span>
+                            </div>
+                            <div class="model-desc-col">
+                                <strong>AI ตาเห็น & ตรวจหน้าจอ Canvas (Vision)</strong>
+                                <p>เหมาะสำหรับ: ส่องตรวจ UI/UX จาก Live Canvas, ลากวางรูปภาพ, วิเคราะห์ไดอะแกรมและอ่านเอกสาร</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: 4 Super-Features -->
+                <div class="onboarding-slide" data-step="3">
+                    <div class="slide-header-mini">
+                        <h2 class="slide-title-sm"><i class="fa-solid fa-wand-magic-sparkles text-pink"></i> 4 เสาหลักฟีเจอร์ระดับ Super-Features</h2>
+                        <p class="slide-subtitle-sm">เครื่องมือทรงพลังที่ติดตั้งมาให้คุณใช้งานได้แบบไร้รอยต่อ</p>
+                    </div>
+                    <div class="super-features-grid">
+                        <div class="super-feature-card">
+                            <div class="sfeat-icon"><i class="fa-solid fa-laptop-code text-cyan"></i></div>
+                            <div class="sfeat-content">
+                                <strong>🎨 Live Code Canvas</strong>
+                                <p>เมื่อขอให้คิระเขียนเว็บ ระบบจะกางแถบพรีวิวสดแบบ Interactive ทันที พร้อมปุ่มสลับมือถือ/เดสก์ท็อป และปุ่มดาวน์โหลดไฟล์ .html</p>
+                            </div>
+                        </div>
+                        <div class="super-feature-card">
+                            <div class="sfeat-icon"><i class="fa-solid fa-camera-retro text-amber"></i></div>
+                            <div class="sfeat-content">
+                                <strong>📷 Live Screen & Vision Inspector</strong>
+                                <p>กดปุ่ม "📷 ตรวจ Canvas" ในหน้าต่างพรีวิว เพื่อให้ AI แคปหน้าจอมาตรวจวิเคราะห์ Layout หรือจะลากวางไฟล์รูปภาพลงในแชทได้ทันที</p>
+                            </div>
+                        </div>
+                        <div class="super-feature-card">
+                            <div class="sfeat-icon"><i class="fa-solid fa-diagram-project text-purple"></i></div>
+                            <div class="sfeat-content">
+                                <strong>🕸️ Interactive Brain (GraphRAG)</strong>
+                                <p>คลิกไอคอนโครงข่ายสมองด้านบน เพื่อเปิดดูแผนผังความจำ 2D Physics ที่คุณสามารถคลิกสำรวจ เพิ่มความจำใหม่ หรือลบข้อมูลเก่าได้เอง</p>
+                            </div>
+                        </div>
+                        <div class="super-feature-card">
+                            <div class="sfeat-icon"><i class="fa-solid fa-volume-high text-rose"></i></div>
+                            <div class="sfeat-content">
+                                <strong>🎙️ Free Neural Voice Suite</strong>
+                                <p>พากย์เสียงอ่านภาษาไทยแบบสมจริงระดับมนุษย์ รองรับโหมด Auto-Speak และปุ่มไมโครโฟนสำหรับสั่งงานด้วยเสียงพูด (STT)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Pro-Tips & Start -->
+                <div class="onboarding-slide" data-step="4">
+                    <div class="slide-hero-mini">
+                        <div class="slide-icon-mini-wrapper">
+                            <i class="fa-solid fa-lightbulb text-amber"></i>
+                        </div>
+                        <h2 class="slide-title">เคล็ดลับการใช้งาน & ทางลัดล้ำๆ</h2>
+                        <p class="slide-subtitle">เพิ่มความคล่องตัวในการทำงานร่วมกับคิระ</p>
+                    </div>
+                    <div class="tips-container">
+                        <div class="tip-row">
+                            <span class="tip-kbd">วาดรูป ...</span>
+                            <span class="tip-text">พิมพ์ <code>วาดรูป แมวนักบินอวกาศ</code> หรือ <code>/image ...</code> เพื่อสร้างรูปภาพศิลปะ</span>
+                        </div>
+                        <div class="tip-row">
+                            <span class="tip-kbd">[THINKING]</span>
+                            <span class="tip-text">แถบ <strong>🧠 กระบวนการคิดเชิงลึก</strong> สามารถคลิกเพื่อกางดูหรือพับเก็บขั้นตอนตรรกะของ AI ได้ตลอดเวลา</span>
+                        </div>
+                        <div class="tip-row">
+                            <span class="tip-kbd">แนบเอกสาร</span>
+                            <span class="tip-text">กดปุ่มคลิปหนีบกระดาษ 📎 เพื่อส่งไฟล์ PDF, Word, หรือ TXT ให้คิระช่วยอ่านและสรุปข้อมูล</span>
+                        </div>
+                        <div class="tip-row">
+                            <span class="tip-kbd">เปิดคู่มือซ้ำ</span>
+                            <span class="tip-text">คุณสามารถกดไอคอน 📖 ในแถบเมนูด้านบน เพื่อเปิดคู่มือนี้ทบทวนได้ทุกเมื่อ</span>
+                        </div>
+                    </div>
+                    <div class="ready-banner">
+                        <div class="ready-glow"></div>
+                        <p>ทุกระบบพร้อมแล้ว พร้อมสัมผัสประสบการณ์แห่งอนาคตหรือยังคะ?</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="onboarding-footer">
+                <div class="onboarding-dots" id="guide-dots">
+                    <span class="guide-dot active" data-step="1"></span>
+                    <span class="guide-dot" data-step="2"></span>
+                    <span class="guide-dot" data-step="3"></span>
+                    <span class="guide-dot" data-step="4"></span>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="onboarding-btn secondary" id="btn-prev-guide" onclick="guidePrev()" style="display: none;">
+                        <i class="fa-solid fa-chevron-left"></i> ย้อนกลับ
+                    </button>
+                    <button class="onboarding-btn primary" id="btn-next-guide" onclick="guideNext()">
+                        ถัดไป <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                    <button class="onboarding-btn finish-btn" id="btn-finish-guide" onclick="finishOnboardingWithAnimation()" style="display: none;">
+                        <span>✨ เริ่มต้นใช้งาน Kira</span> <i class="fa-solid fa-rocket"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=21"></script>
+    <script src="/static/script.js?v=25"></script>
 </body>
 </html>

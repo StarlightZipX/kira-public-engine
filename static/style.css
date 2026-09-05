@@ -3041,3 +3041,564 @@ body.light-theme .drag-drop-overlay {
 body.light-theme .drag-drop-box h4 {
     color: #0f172a;
 }
+
+/* ==========================================================================
+   📖 Kira Interactive Onboarding Tour & Model Guide
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(3, 7, 18, 0.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1080;
+    padding: 1.5rem 1rem;
+    overflow-y: auto;
+    animation: fadeInPortal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-card {
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    color: #f8fafc;
+    width: 90%;
+    max-width: 540px;
+}
+
+.onboarding-card {
+    max-width: 720px;
+    width: 92%;
+    max-height: 88vh;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 35px rgba(56, 189, 248, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    color: #f8fafc;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, filter 0.4s ease;
+}
+
+.onboarding-card.celebrate-warp {
+    animation: portalWarp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes portalWarp {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+        filter: brightness(1) blur(0);
+        box-shadow: 0 0 35px rgba(56, 189, 248, 0.2);
+    }
+    40% {
+        transform: scale(1.04);
+        opacity: 0.9;
+        filter: brightness(1.5) blur(1px);
+        box-shadow: 0 0 70px rgba(56, 189, 248, 0.6), 0 0 100px rgba(168, 85, 247, 0.5);
+    }
+    100% {
+        transform: scale(1.08);
+        opacity: 0;
+        filter: brightness(2) blur(6px);
+    }
+}
+
+.onboarding-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(30, 41, 59, 0.3);
+}
+
+.onboarding-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 4px 10px;
+    border-radius: 9999px;
+}
+
+.onboarding-progress-text {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.onboarding-skip-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.onboarding-skip-btn:hover {
+    color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.onboarding-slides-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+    min-height: 380px;
+}
+
+.onboarding-slide {
+    display: none;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.onboarding-slide.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+    animation: slideFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Slide 1 Styles */
+.slide-hero {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.slide-icon-wrapper {
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.2), transparent 70%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.25);
+}
+
+.slide-hero-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    object-fit: cover;
+}
+
+.slide-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+    color: #f8fafc;
+}
+
+.slide-subtitle {
+    font-size: 0.88rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.gradient-text {
+    background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.slide-features-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.feature-chip {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.2s;
+}
+
+.feature-chip:hover {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(56, 189, 248, 0.25);
+    transform: translateX(4px);
+}
+
+.chip-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.chip-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.chip-info strong {
+    font-size: 0.92rem;
+    color: #f1f5f9;
+}
+
+.chip-info span {
+    font-size: 0.82rem;
+    color: #94a3b8;
+}
+
+/* Slide 2: Model Matrix Cards */
+.slide-header-mini {
+    margin-bottom: 16px;
+}
+
+.slide-title-sm {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.slide-subtitle-sm {
+    font-size: 0.84rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.model-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.model-guide-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 11px 16px;
+    border-radius: 14px;
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.2s;
+}
+
+.model-guide-card:hover {
+    border-color: rgba(56, 189, 248, 0.3);
+    background: rgba(30, 41, 59, 0.7);
+}
+
+.model-badge-col {
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.model-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-align: center;
+    width: 100%;
+}
+
+.tag-standard { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.tag-nextgen { background: rgba(129, 140, 248, 0.15); color: #818cf8; border: 1px solid rgba(129, 140, 248, 0.3); }
+.tag-research { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+.tag-enterprise { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+.tag-vision { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+
+.model-desc-col strong {
+    font-size: 0.9rem;
+    color: #e2e8f0;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.model-desc-col p {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin: 0;
+    line-height: 1.35;
+}
+
+/* Slide 3: Super Features */
+.super-features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.super-feature-card {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.super-feature-card:hover {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(56, 189, 248, 0.3);
+    transform: translateY(-2px);
+}
+
+.sfeat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.sfeat-content strong {
+    font-size: 0.92rem;
+    color: #f1f5f9;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.sfeat-content p {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin: 0;
+    line-height: 1.45;
+}
+
+/* Slide 4: Pro Tips */
+.slide-hero-mini {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.slide-icon-mini-wrapper {
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin: 0 auto 10px;
+}
+
+.tips-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tip-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tip-kbd {
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: #7dd3fc;
+    font-family: monospace;
+    font-size: 0.78rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.tip-text {
+    font-size: 0.82rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+}
+
+.tip-text code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #38bdf8;
+}
+
+.ready-banner {
+    text-align: center;
+    padding: 12px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(168, 85, 247, 0.1));
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.ready-banner p {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+/* Footer & Controls */
+.onboarding-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 28px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(30, 41, 59, 0.3);
+}
+
+.onboarding-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.guide-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.guide-dot.active {
+    width: 24px;
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.onboarding-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.onboarding-btn {
+    padding: 9px 18px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    border: none;
+}
+
+.onboarding-btn.secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+}
+
+.onboarding-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.onboarding-btn.primary {
+    background: linear-gradient(135deg, #0284c7, #2563eb);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+}
+
+.onboarding-btn.primary:hover {
+    background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45);
+    transform: translateY(-1px);
+}
+
+.onboarding-btn.finish-btn {
+    background: linear-gradient(135deg, #059669, #0284c7, #7c3aed);
+    background-size: 200% 200%;
+    animation: gradientShift 4s ease infinite;
+    color: #fff;
+    padding: 10px 22px;
+    box-shadow: 0 4px 20px rgba(2, 132, 199, 0.45);
+}
+
+.onboarding-btn.finish-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 25px rgba(124, 58, 237, 0.55);
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@media (max-width: 640px) {
+    .onboarding-card {
+        width: 95%;
+        max-height: 92vh;
+        border-radius: 18px;
+    }
+    .onboarding-slides-container {
+        padding: 18px;
+    }
+    .super-features-grid {
+        grid-template-columns: 1fr;
+    }
+    .model-guide-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    .model-badge-col {
+        width: auto;
+    }
+}
