@@ -186,6 +186,7 @@ function checkAuth() {
         }
         loadHistory();
         loadUserProfile();
+        loadSettingsPreferences();
         if (typeof checkAndTriggerOnboarding === 'function') {
             checkAndTriggerOnboarding();
         }
@@ -1301,6 +1302,7 @@ async function sendMessage() {
     if ((!text && !imgBase64ToSend) || !currentUser) return;
 
     addMessage(text || 'ส่งรูปภาพเพื่อตรวจสอบ (Visual Diagnostic)', true, imgBase64ToSend);
+    playKiraSound('send');
 
     // Ensure sidebar has the active chat item if not already there
     if (!chatHistorySidebar.querySelector('.history-item.active')) {
@@ -1378,8 +1380,9 @@ async function sendMessage() {
                 
                 let stepsHtml = steps.map(s => `<div class="thinking-step" style="white-space: pre-wrap; font-size: 0.9em; line-height: 1.5; color: #94a3b8;">${marked.parse(s)}</div>`).join('');
                 let hasSubstantialAnswer = finalMarkdown.length > 25;
-                let boxClass = (isDone && hasSubstantialAnswer) ? "thinking-box done collapsed" : (isDone ? "thinking-box done" : "thinking-box");
-                let toggleIcon = (isDone && hasSubstantialAnswer) ? "▼" : "▲";
+                let shouldCollapse = localStorage.getItem('kira_thinking_accordion') !== 'always_open';
+                let boxClass = (isDone && hasSubstantialAnswer && shouldCollapse) ? "thinking-box done collapsed" : (isDone ? "thinking-box done" : "thinking-box");
+                let toggleIcon = (isDone && hasSubstantialAnswer && shouldCollapse) ? "▼" : "▲";
                 
                 htmlContent += `
                 <div class="${boxClass}">
@@ -1476,6 +1479,16 @@ async function sendMessage() {
             playKiraVoice(finalMarkdown || fullText, speakerBtn);
         }
 
+        playKiraSound('receive');
+
+        // Auto-open live canvas if enabled and an interactive web artifact was produced
+        if (localStorage.getItem('kira_auto_canvas') !== 'false' && artifactsDrawer && !artifactsDrawer.classList.contains('open')) {
+            if (contentDiv.querySelector('.btn-run-code')) {
+                const runBtn = contentDiv.querySelector('.btn-run-code');
+                if (runBtn) runBtn.click();
+            }
+        }
+
         chatBox.scrollTop = chatBox.scrollHeight;
         loadUserProfile(); // Refresh points & quota after message
         
@@ -1507,23 +1520,23 @@ newChatBtn.addEventListener('click', async () => {
     userInput.focus();
 });
 
-// --- Theme Switcher ---
+// --- Theme Switcher (Dark / Light / OLED) ---
 const btnTheme = document.getElementById('btn-theme');
 if (btnTheme) {
-    const isLight = localStorage.getItem('kira_theme') === 'light';
-    if (isLight) {
-        document.body.classList.add('light-theme');
-        btnTheme.innerHTML = '<i class="fa-solid fa-sun" style="color: #f59e0b;"></i>';
-    }
-
     btnTheme.addEventListener('click', () => {
-        const lightActive = document.body.classList.toggle('light-theme');
-        if (lightActive) {
-            localStorage.setItem('kira_theme', 'light');
-            btnTheme.innerHTML = '<i class="fa-solid fa-sun" style="color: #f59e0b;"></i>';
-        } else {
-            localStorage.setItem('kira_theme', 'dark');
-            btnTheme.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        const currentTheme = localStorage.getItem('kira_theme') || 'dark';
+        let nextTheme = 'light';
+        if (currentTheme === 'dark') nextTheme = 'light';
+        else if (currentTheme === 'light') nextTheme = 'oled';
+        else nextTheme = 'dark';
+        applyTheme(nextTheme);
+        // Persist to backend
+        if (currentUser) {
+            fetch('/api/user/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser, theme: nextTheme })
+            }).catch(() => {});
         }
     });
 }
@@ -1710,9 +1723,17 @@ if (micBtn) {
 }
 
 userInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        if (!isGenerating) sendMessage();
+    const enterAction = localStorage.getItem('kira_enter_send') || 'enter';
+    if (enterAction === 'shift_enter') {
+        if (e.key === 'Enter' && e.shiftKey) {
+            e.preventDefault();
+            if (!isGenerating) sendMessage();
+        }
+    } else {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (!isGenerating) sendMessage();
+        }
     }
 });
 
@@ -1973,10 +1994,12 @@ async function playKiraVoice(text, btn) {
     }
 
     try {
+        const activeVoice = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
+        const activeRate = parseFloat(localStorage.getItem('kira_speech_rate') || '1.0');
         const res = await fetch('/api/tts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text, voice: 'th-TH-PremwadeeNeural' })
+            body: JSON.stringify({ text: text, voice: activeVoice, rate: activeRate })
         });
 
         if (!res.ok) {
@@ -2763,5 +2786,746 @@ window.finishOnboardingWithAnimation = finishOnboardingWithAnimation;
 window.guideNext = guideNext;
 window.guidePrev = guidePrev;
 window.guideGoToStep = guideGoToStep;
+
+// =========================================================================
+// ⚙️ Kira 2.1 Full-Featured Settings Modal Controller & Synchronization
+// =========================================================================
+
+// Synthesized Audio Chimes (Web Audio API)
+function playKiraSound(type = 'send') {
+    if (localStorage.getItem('kira_sound_effects') === 'false') return;
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        if (type === 'send') {
+            osc.frequency.setValueAtTime(440, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.06, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.12);
+        } else if (type === 'receive') {
+            osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.16);
+            gain.gain.setValueAtTime(0.06, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.16);
+        }
+    } catch (e) {}
+}
+
+function applyTheme(themeName) {
+    document.body.classList.remove('light-theme', 'oled-theme');
+    const btnThemeEl = document.getElementById('btn-theme');
+    if (themeName === 'light') {
+        document.body.classList.add('light-theme');
+        if (btnThemeEl) btnThemeEl.innerHTML = '<i class="fa-solid fa-sun" style="color: #f59e0b;"></i>';
+    } else if (themeName === 'oled') {
+        document.body.classList.add('oled-theme');
+        if (btnThemeEl) btnThemeEl.innerHTML = '<i class="fa-solid fa-circle" style="color: #a855f7;"></i>';
+    } else {
+        // dark
+        if (btnThemeEl) btnThemeEl.innerHTML = '<i class="fa-solid fa-moon"></i>';
+    }
+    localStorage.setItem('kira_theme', themeName);
+    
+    const radio = document.querySelector(`input[name="setting-theme"][value="${themeName}"]`);
+    if (radio) radio.checked = true;
+}
+
+function applyFontSize(size) {
+    document.body.classList.remove('chat-font-small', 'chat-font-medium', 'chat-font-large');
+    if (size === 'small') {
+        document.body.classList.add('chat-font-small');
+    } else if (size === 'large') {
+        document.body.classList.add('chat-font-large');
+    } else {
+        document.body.classList.add('chat-font-medium');
+    }
+    localStorage.setItem('kira_font_size', size);
+    const select = document.getElementById('setting-font-size');
+    if (select) select.value = size;
+}
+
+async function loadSettingsPreferences() {
+    if (!currentUser) return;
+    
+    // 1. Initial cached values
+    const cachedTheme = localStorage.getItem('kira_theme') || 'dark';
+    applyTheme(cachedTheme);
+    
+    const cachedFontSize = localStorage.getItem('kira_font_size') || 'medium';
+    applyFontSize(cachedFontSize);
+    
+    const cachedEnter = localStorage.getItem('kira_enter_send') || 'enter';
+    const enterSelect = document.getElementById('setting-enter-send');
+    if (enterSelect) enterSelect.value = cachedEnter;
+    
+    const soundChk = document.getElementById('setting-sound-effects');
+    if (soundChk) soundChk.checked = localStorage.getItem('kira_sound_effects') !== 'false';
+    
+    const canvasChk = document.getElementById('setting-auto-canvas');
+    if (canvasChk) canvasChk.checked = localStorage.getItem('kira_auto_canvas') !== 'false';
+    
+    const pyConfirmChk = document.getElementById('setting-python-confirm');
+    if (pyConfirmChk) pyConfirmChk.checked = localStorage.getItem('kira_python_confirm') !== 'false';
+    
+    const thinkingSelect = document.getElementById('setting-thinking-accordion');
+    if (thinkingSelect) thinkingSelect.value = localStorage.getItem('kira_thinking_accordion') || 'auto_collapse';
+
+    const voiceSel = document.getElementById('setting-voice-name');
+    if (voiceSel) voiceSel.value = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
+
+    const rateSlider = document.getElementById('setting-speech-rate');
+    const rateVal = document.getElementById('speech-rate-val');
+    if (rateSlider) {
+        const r = localStorage.getItem('kira_speech_rate') || '1.0';
+        rateSlider.value = r;
+        if (rateVal) rateVal.textContent = `${parseFloat(r).toFixed(1)}x`;
+    }
+
+    const autoSpeakChk = document.getElementById('setting-auto-speak');
+    if (autoSpeakChk) autoSpeakChk.checked = localStorage.getItem('kira_auto_speak') === 'true';
+
+    // 2. Fetch full settings from backend
+    try {
+        const res = await fetch(`/api/user/settings/${encodeURIComponent(currentUser)}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.status === 'success') {
+                const prefs = data.preferences || {};
+                
+                // Account Tab Info
+                const userDisplay = document.getElementById('settings-username-display');
+                if (userDisplay) userDisplay.textContent = data.user.nickname || data.user.username;
+                
+                const userRole = document.getElementById('settings-user-role');
+                if (userRole) {
+                    if (data.user.role === 'admin' || isBoss(currentUser)) {
+                        userRole.textContent = '👑 Admin / Boss';
+                        userRole.style.color = '#f59e0b';
+                        userRole.style.background = 'rgba(245, 158, 11, 0.15)';
+                        userRole.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+                    } else {
+                        userRole.textContent = '⚡ Free Member';
+                    }
+                }
+                
+                const userCreated = document.getElementById('settings-user-created');
+                if (userCreated && data.user.created_at) {
+                    const dateStr = data.user.created_at.split(' ')[0] || data.user.created_at;
+                    userCreated.textContent = `สมาชิกตั้งแต่: ${dateStr}`;
+                }
+                
+                const avatarImg = document.getElementById('settings-user-avatar');
+                if (avatarImg) {
+                    avatarImg.src = profilePic ? profilePic.src : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser)}&background=0D8ABC&color=fff`;
+                }
+                
+                // Quota
+                const quotaCount = document.getElementById('settings-quota-count');
+                const quotaBar = document.getElementById('settings-quota-bar');
+                if (data.quota) {
+                    const used = data.quota.used || 0;
+                    const limit = data.quota.limit || 150;
+                    if (quotaCount) quotaCount.textContent = `${used} / ${limit} ข้อความ`;
+                    if (quotaBar) {
+                        const pct = Math.min(100, Math.round((used / limit) * 100));
+                        quotaBar.style.width = `${pct}%`;
+                    }
+                }
+                
+                // Form values from backend
+                if (prefs.theme) applyTheme(prefs.theme);
+                if (prefs.chat_font_size) applyFontSize(prefs.chat_font_size);
+                
+                const nameInput = document.getElementById('setting-preferred-name');
+                if (nameInput) nameInput.value = prefs.preferred_name || '';
+                
+                const aboutText = document.getElementById('setting-custom-about');
+                if (aboutText) aboutText.value = prefs.custom_about || '';
+                
+                const styleText = document.getElementById('setting-custom-style');
+                if (styleText) styleText.value = prefs.custom_style || '';
+                
+                const modelSel = document.getElementById('setting-default-model');
+                if (modelSel && prefs.default_model) {
+                    modelSel.value = prefs.default_model;
+                    const mainModelSelect = document.getElementById('model-select');
+                    if (mainModelSelect && !sessionStorage.getItem('user_switched_model')) {
+                        mainModelSelect.value = prefs.default_model;
+                        updateModelUI();
+                    }
+                }
+                
+                const personaSel = document.getElementById('setting-persona');
+                if (personaSel && prefs.persona) {
+                    personaSel.value = prefs.persona;
+                    const mainPersonaSelect = document.getElementById('persona-select');
+                    if (mainPersonaSelect) mainPersonaSelect.value = prefs.persona;
+                }
+                
+                if (voiceSel && prefs.voice_name) {
+                    voiceSel.value = prefs.voice_name;
+                    localStorage.setItem('kira_voice_name', prefs.voice_name);
+                }
+                
+                if (rateSlider && prefs.speech_rate) {
+                    rateSlider.value = prefs.speech_rate;
+                    if (rateVal) rateVal.textContent = `${parseFloat(prefs.speech_rate).toFixed(1)}x`;
+                    localStorage.setItem('kira_speech_rate', prefs.speech_rate);
+                }
+                
+                if (autoSpeakChk && prefs.auto_speak !== undefined) {
+                    autoSpeakChk.checked = Boolean(prefs.auto_speak);
+                    isAutoSpeakEnabled = Boolean(prefs.auto_speak);
+                    localStorage.setItem('kira_auto_speak', isAutoSpeakEnabled);
+                    const btnAutoSpeak = document.getElementById('btn-autospeak');
+                    if (btnAutoSpeak) {
+                        btnAutoSpeak.classList.toggle('active', isAutoSpeakEnabled);
+                        btnAutoSpeak.innerHTML = isAutoSpeakEnabled ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
+                    }
+                }
+                
+                const memoryChk = document.getElementById('setting-graph-memory');
+                if (memoryChk && prefs.long_term_memory !== undefined) {
+                    memoryChk.checked = Boolean(prefs.long_term_memory);
+                    localStorage.setItem('kira_graph_memory', Boolean(prefs.long_term_memory));
+                }
+            }
+        }
+    } catch (err) {
+        console.warn("Could not load backend preferences:", err);
+    }
+}
+
+async function saveSettings() {
+    if (!currentUser) return;
+    
+    const saveBtn = document.getElementById('btn-save-settings');
+    const statusText = document.getElementById('settings-save-status');
+    const originalBtnHtml = saveBtn ? saveBtn.innerHTML : '';
+    
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+    }
+    
+    const selectedTheme = document.querySelector('input[name="setting-theme"]:checked')?.value || 'dark';
+    const fontSize = document.getElementById('setting-font-size')?.value || 'medium';
+    const enterSend = document.getElementById('setting-enter-send')?.value || 'enter';
+    const soundEffects = document.getElementById('setting-sound-effects')?.checked ?? true;
+    const autoCanvas = document.getElementById('setting-auto-canvas')?.checked ?? true;
+    
+    const preferredName = document.getElementById('setting-preferred-name')?.value?.trim() || '';
+    const defaultModel = document.getElementById('setting-default-model')?.value || '2.1-reasoning';
+    const persona = document.getElementById('setting-persona')?.value || 'default';
+    const thinkingAccordion = document.getElementById('setting-thinking-accordion')?.value || 'auto_collapse';
+    const customAbout = document.getElementById('setting-custom-about')?.value?.trim() || '';
+    const customStyle = document.getElementById('setting-custom-style')?.value?.trim() || '';
+    
+    const autoSpeak = document.getElementById('setting-auto-speak')?.checked ?? false;
+    const voiceName = document.getElementById('setting-voice-name')?.value || 'th-TH-PremwadeeNeural';
+    const speechRate = parseFloat(document.getElementById('setting-speech-rate')?.value || 1.0);
+    const sttLang = document.getElementById('setting-stt-lang')?.value || 'th-TH';
+    
+    const longTermMemory = document.getElementById('setting-graph-memory')?.checked ?? true;
+    const pythonConfirm = document.getElementById('setting-python-confirm')?.checked ?? true;
+
+    // Apply immediate local changes
+    applyTheme(selectedTheme);
+    applyFontSize(fontSize);
+    localStorage.setItem('kira_enter_send', enterSend);
+    localStorage.setItem('kira_sound_effects', soundEffects);
+    localStorage.setItem('kira_auto_canvas', autoCanvas);
+    localStorage.setItem('kira_thinking_accordion', thinkingAccordion);
+    localStorage.setItem('kira_voice_name', voiceName);
+    localStorage.setItem('kira_speech_rate', speechRate);
+    localStorage.setItem('kira_stt_lang', sttLang);
+    localStorage.setItem('kira_auto_speak', autoSpeak);
+    localStorage.setItem('kira_graph_memory', longTermMemory);
+    localStorage.setItem('kira_python_confirm', pythonConfirm);
+    
+    isAutoSpeakEnabled = autoSpeak;
+    const btnAutoSpeak = document.getElementById('btn-autospeak');
+    if (btnAutoSpeak) {
+        btnAutoSpeak.classList.toggle('active', isAutoSpeakEnabled);
+        btnAutoSpeak.innerHTML = isAutoSpeakEnabled ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
+    }
+    
+    const mainPersonaSelect = document.getElementById('persona-select');
+    if (mainPersonaSelect) mainPersonaSelect.value = persona;
+    
+    const payload = {
+        username: currentUser,
+        preferred_name: preferredName,
+        theme: selectedTheme,
+        chat_font_size: fontSize,
+        auto_speak: autoSpeak,
+        voice_name: voiceName,
+        speech_rate: speechRate,
+        default_model: defaultModel,
+        persona: persona,
+        custom_about: customAbout,
+        custom_style: customStyle,
+        sound_effects: soundEffects,
+        auto_canvas: autoCanvas,
+        thinking_accordion: thinkingAccordion,
+        long_term_memory: longTermMemory,
+        enter_key_behavior: enterSend
+    };
+    
+    try {
+        const res = await fetch('/api/user/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        
+        if (data.status === 'success') {
+            if (statusText) {
+                statusText.className = 'settings-footer-status saved';
+                statusText.innerHTML = '<i class="fa-solid fa-circle-check"></i> บันทึกการตั้งค่าเรียบร้อยแล้ว ✨';
+            }
+            playKiraSound('receive');
+            setTimeout(() => {
+                if (statusText) {
+                    statusText.className = 'settings-footer-status';
+                    statusText.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> พร้อมบันทึกการตั้งค่า';
+                }
+            }, 3000);
+        } else {
+            alert(data.message || 'บันทึกการตั้งค่าไม่สำเร็จ');
+        }
+    } catch (e) {
+        console.error("Save settings error:", e);
+        if (statusText) {
+            statusText.className = 'settings-footer-status';
+            statusText.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color: #f87171;"></i> บันทึกในเบราว์เซอร์สำเร็จ (เซิร์ฟเวอร์ออฟไลน์)';
+        }
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalBtnHtml;
+        }
+    }
+}
+
+function openSettingsModal(targetTab = 'general') {
+    const modal = document.getElementById('settings-modal');
+    if (!modal) return;
+    switchSettingsTab(targetTab);
+    modal.style.display = 'flex';
+    loadSettingsPreferences();
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function switchSettingsTab(tabName) {
+    const tabs = document.querySelectorAll('.settings-tab-btn');
+    const panels = document.querySelectorAll('.settings-panel');
+    
+    tabs.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+    
+    panels.forEach(panel => {
+        panel.classList.toggle('active', panel.id === `settings-panel-${tabName}`);
+    });
+}
+
+async function previewVoiceSample() {
+    const previewBtn = document.getElementById('btn-preview-voice');
+    const voice = document.getElementById('setting-voice-name')?.value || 'th-TH-PremwadeeNeural';
+    const rate = parseFloat(document.getElementById('setting-speech-rate')?.value || 1.0);
+    
+    const sampleText = voice.startsWith('en-') 
+        ? "Hello, I am Kira. Your next-generation intelligent AI assistant, ready to help you."
+        : "สวัสดีค่ะ ฉันคือคิระ ระบบปัญญาประดิษฐ์อัจฉริยะ พร้อมช่วยเหลือคุณแล้วค่ะ";
+        
+    if (previewBtn) {
+        previewBtn.disabled = true;
+        previewBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด...';
+    }
+    
+    try {
+        const res = await fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: sampleText, voice: voice, rate: rate })
+        });
+        
+        if (!res.ok) throw new Error("TTS failed");
+        
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        
+        if (previewBtn) previewBtn.innerHTML = '<i class="fa-solid fa-waveform-lines"></i> กำลังเล่น...';
+        
+        audio.onended = () => {
+            if (previewBtn) {
+                previewBtn.disabled = false;
+                previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> ทดลองฟัง';
+            }
+        };
+        audio.onerror = () => {
+            if (previewBtn) {
+                previewBtn.disabled = false;
+                previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> ทดลองฟัง';
+            }
+        };
+        await audio.play();
+    } catch (err) {
+        console.error("Preview voice error:", err);
+        alert("ไม่สามารถเล่นเสียงตัวอย่างได้ กรุณาลองใหม่อีกครั้ง");
+        if (previewBtn) {
+            previewBtn.disabled = false;
+            previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> ทดลองฟัง';
+        }
+    }
+}
+
+async function submitChangePassword() {
+    const currentPass = document.getElementById('setting-current-pass')?.value;
+    const newPass = document.getElementById('setting-new-pass')?.value;
+    const confirmPass = document.getElementById('setting-confirm-pass')?.value;
+    const errBox = document.getElementById('settings-pass-error');
+    const btnSubmit = document.getElementById('btn-submit-change-pass');
+    
+    const showError = (msg) => {
+        if (!errBox) return;
+        errBox.textContent = msg;
+        errBox.classList.remove('hidden');
+        errBox.style.color = '#f87171';
+        errBox.style.background = 'rgba(239, 68, 68, 0.1)';
+        errBox.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+    };
+    
+    const showSuccess = (msg) => {
+        if (!errBox) return;
+        errBox.textContent = msg;
+        errBox.classList.remove('hidden');
+        errBox.style.color = '#34d399';
+        errBox.style.background = 'rgba(16, 185, 129, 0.1)';
+        errBox.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+    };
+    
+    if (!currentPass || !newPass || !confirmPass) {
+        showError("กรุณากรอกข้อมูลให้ครบทุกช่อง");
+        return;
+    }
+    
+    if (newPass.length < 4) {
+        showError("รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร");
+        return;
+    }
+    
+    if (newPass !== confirmPass) {
+        showError("รหัสผ่านใหม่และการยืนยันไม่ตรงกัน");
+        return;
+    }
+    
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเปลี่ยนรหัสผ่าน...';
+    }
+    
+    try {
+        const res = await fetch('/api/user/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: currentUser,
+                current_password: currentPass,
+                new_password: newPass
+            })
+        });
+        const data = await res.json();
+        
+        if (data.status === 'success') {
+            showSuccess("เปลี่ยนรหัสผ่านสำเร็จเรียบร้อยแล้ว ✨");
+            document.getElementById('setting-current-pass').value = '';
+            document.getElementById('setting-new-pass').value = '';
+            document.getElementById('setting-confirm-pass').value = '';
+        } else {
+            showError(data.message || "เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน");
+        }
+    } catch (e) {
+        showError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+    } finally {
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="fa-solid fa-lock"></i> บันทึกรหัสผ่านใหม่';
+        }
+    }
+}
+
+async function clearAllChatHistory() {
+    if (!confirm("⚠️ คำเตือน: คุณต้องการลบประวัติการสนทนาทั้งหมดจริงหรือไม่?\n\nการกระทำนี้จะล้างประวัติแชททั้งหมดในฐานข้อมูลและไม่สามารถกู้คืนได้")) {
+        return;
+    }
+    try {
+        const res = await fetch(`/api/history/${encodeURIComponent(currentUser)}/all`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            chatBox.innerHTML = '';
+            chatHistorySidebar.innerHTML = '<p class="history-title">ยังไม่มีประวัติการแชท</p>';
+            renderWelcomeHub();
+            alert("ล้างประวัติการสนทนาทั้งหมดเรียบร้อยแล้วค่ะ ✨");
+            closeSettingsModal();
+        } else {
+            alert(data.message || "ล้างประวัติแชทไม่สำเร็จ");
+        }
+    } catch (e) {
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+    }
+}
+
+async function wipeAllMemories() {
+    if (!confirm("⚠️ คำเตือน: คุณต้องการล้างโหนดความจำสมอง (GraphRAG) ทั้งหมดจริงหรือไม่?\n\nคิระจะลืมข้อมูลความจำระยะยาวทั้งหมดของคุณและเริ่มต้นใหม่เหมือนวันแรก")) {
+        return;
+    }
+    try {
+        const res = await fetch(`/api/user/graph/all?username=${encodeURIComponent(currentUser)}`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            alert("ล้างโครงข่ายความจำของคิระเรียบร้อยแล้วค่ะ 🧠✨");
+        } else {
+            alert(data.message || "ล้างความจำไม่สำเร็จ");
+        }
+    } catch (e) {
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+    }
+}
+
+async function exportChatJson() {
+    try {
+        const res = await fetch(`/api/history/${encodeURIComponent(currentUser)}`);
+        const data = await res.json();
+        if (!data.history || data.history.length === 0) {
+            alert("ยังไม่มีประวัติการแชทให้ส่งออกค่ะ");
+            return;
+        }
+        const exportData = {
+            app: "Kira AI System 2.1 Next-Gen",
+            exported_at: new Date().toISOString(),
+            user: currentUser,
+            messages_count: data.history.length,
+            history: data.history
+        };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `kira_chat_history_${currentUser}_${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        alert("ส่งออกข้อมูลประวัติไม่สำเร็จ");
+    }
+}
+
+async function pingServerLatency() {
+    const pingBtn = document.getElementById('btn-ping-latency');
+    const resultTag = document.getElementById('latency-ping-result');
+    if (pingBtn) {
+        pingBtn.disabled = true;
+        pingBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังวัด...';
+    }
+    const t0 = performance.now();
+    try {
+        const res = await fetch('/api/health?t=' + Date.now());
+        const t1 = performance.now();
+        const latencyMs = Math.round(t1 - t0);
+        if (resultTag) {
+            resultTag.textContent = `${latencyMs} ms`;
+            resultTag.className = 'latency-tag good';
+        }
+    } catch (e) {
+        if (resultTag) {
+            resultTag.textContent = 'ขัดข้อง';
+            resultTag.className = 'latency-tag';
+        }
+    } finally {
+        if (pingBtn) {
+            pingBtn.disabled = false;
+            pingBtn.innerHTML = '<i class="fa-solid fa-network-wired"></i> ทดสอบ Ping';
+        }
+    }
+}
+
+// Attach All Event Listeners for Settings Modal
+function initSettingsModalEventListeners() {
+    const btnHeaderSettings = document.getElementById('btn-header-settings');
+    const btnSidebarSettings = document.getElementById('btn-sidebar-settings');
+    const btnCloseSettings = document.getElementById('btn-close-settings');
+    const btnCancelSettings = document.getElementById('btn-cancel-settings');
+    const btnSaveSettings = document.getElementById('btn-save-settings');
+    const settingsModal = document.getElementById('settings-modal');
+    
+    if (btnHeaderSettings) {
+        btnHeaderSettings.addEventListener('click', (e) => {
+            e.preventDefault();
+            openSettingsModal('general');
+        });
+    }
+    
+    if (btnSidebarSettings) {
+        btnSidebarSettings.addEventListener('click', (e) => {
+            e.preventDefault();
+            openSettingsModal('general');
+        });
+    }
+    
+    if (btnCloseSettings) {
+        btnCloseSettings.addEventListener('click', closeSettingsModal);
+    }
+    
+    if (btnCancelSettings) {
+        btnCancelSettings.addEventListener('click', closeSettingsModal);
+    }
+    
+    if (btnSaveSettings) {
+        btnSaveSettings.addEventListener('click', saveSettings);
+    }
+    
+    if (settingsModal) {
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                closeSettingsModal();
+            }
+        });
+    }
+    
+    // Tab switching
+    const tabBtns = document.querySelectorAll('.settings-tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchSettingsTab(btn.dataset.tab);
+        });
+    });
+    
+    // Theme radios live preview
+    const themeRadios = document.querySelectorAll('input[name="setting-theme"]');
+    themeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.checked) applyTheme(radio.value);
+        });
+    });
+    
+    // Font size select live preview
+    const fontSizeSelect = document.getElementById('setting-font-size');
+    if (fontSizeSelect) {
+        fontSizeSelect.addEventListener('change', () => {
+            applyFontSize(fontSizeSelect.value);
+        });
+    }
+    
+    // Speech rate slider live value update
+    const rateSlider = document.getElementById('setting-speech-rate');
+    const rateVal = document.getElementById('speech-rate-val');
+    if (rateSlider && rateVal) {
+        rateSlider.addEventListener('input', () => {
+            rateVal.textContent = `${parseFloat(rateSlider.value).toFixed(1)}x`;
+        });
+    }
+    
+    // Voice preview button
+    const btnPreviewVoice = document.getElementById('btn-preview-voice');
+    if (btnPreviewVoice) {
+        btnPreviewVoice.addEventListener('click', previewVoiceSample);
+    }
+    
+    // Password submit button
+    const btnChangePass = document.getElementById('btn-submit-change-pass');
+    if (btnChangePass) {
+        btnChangePass.addEventListener('click', submitChangePassword);
+    }
+    
+    // Danger Zone buttons
+    const btnClearChats = document.getElementById('btn-clear-all-chats');
+    if (btnClearChats) {
+        btnClearChats.addEventListener('click', clearAllChatHistory);
+    }
+    
+    const btnWipeMem = document.getElementById('btn-wipe-all-memories');
+    if (btnWipeMem) {
+        btnWipeMem.addEventListener('click', wipeAllMemories);
+    }
+    
+    // Pro Tools buttons
+    const btnExportJson = document.getElementById('btn-export-chat-json');
+    if (btnExportJson) {
+        btnExportJson.addEventListener('click', exportChatJson);
+    }
+    
+    const btnPing = document.getElementById('btn-ping-latency');
+    if (btnPing) {
+        btnPing.addEventListener('click', pingServerLatency);
+    }
+    
+    const btnRelaunchTour = document.getElementById('btn-relaunch-tour');
+    if (btnRelaunchTour) {
+        btnRelaunchTour.addEventListener('click', () => {
+            closeSettingsModal();
+            openOnboardingGuide(1);
+        });
+    }
+    
+    const btnOpenGraphSettings = document.getElementById('btn-open-graph-from-settings');
+    if (btnOpenGraphSettings) {
+        btnOpenGraphSettings.addEventListener('click', () => {
+            closeSettingsModal();
+            openKnowledgeGraph();
+        });
+    }
+
+    // Global Shortcut: Ctrl + , or Cmd + , to open Settings
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+            e.preventDefault();
+            if (settingsModal && settingsModal.style.display === 'flex') {
+                closeSettingsModal();
+            } else {
+                openSettingsModal('general');
+            }
+        } else if (e.key === 'Escape' && settingsModal && settingsModal.style.display === 'flex') {
+            closeSettingsModal();
+        }
+    });
+}
+
+// Initialize on DOM load
+initSettingsModalEventListeners();
+
+// Expose globally
+window.openSettingsModal = openSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.switchSettingsTab = switchSettingsTab;
+window.loadSettingsPreferences = loadSettingsPreferences;
+window.saveSettings = saveSettings;
+window.applyTheme = applyTheme;
+window.applyFontSize = applyFontSize;
 
 

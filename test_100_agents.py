@@ -7,6 +7,10 @@ import requests
 import sqlite3
 from datetime import datetime
 
+# Windows Terminal UTF-8 Encoding Fix
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)

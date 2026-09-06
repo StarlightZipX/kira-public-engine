@@ -307,6 +307,7 @@
                     </div>
                 </div>
                 <button class="settings-btn" id="btn-sidebar-guide" title="คู่มือการใช้งาน (Kira Guide)" style="margin-right: 4px; color: #38bdf8;"><i class="fa-solid fa-book-open"></i></button>
+                <button class="settings-btn" id="btn-sidebar-settings" title="ตั้งค่าระบบ (Settings) - Ctrl+," style="margin-right: 4px; color: #c084fc;"><i class="fa-solid fa-gear"></i></button>
                 <a href="/admin_boss" target="_blank" class="settings-btn" id="btn-admin-dashboard" title="แดชบอร์ดผู้สร้าง (God Mode)" style="display: none; color: #f59e0b; text-decoration: none; align-items: center; justify-content: center; margin-right: 6px;"><i class="fa-solid fa-shield-halved"></i></a>
                 <button class="settings-btn" id="btn-logout" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
@@ -348,7 +349,8 @@
                             <option value="1.3">Kira 1.3 Enterprise</option>
                         </optgroup>
                     </select>
-                    <button title="สลับโหมดกลางวัน/กลางคืน" id="btn-theme" style="margin-right: 15px;"><i class="fa-solid fa-moon"></i></button>
+                    <button title="สลับโหมดกลางวัน/กลางคืน" id="btn-theme" style="margin-right: 8px;"><i class="fa-solid fa-moon"></i></button>
+                    <button title="ตั้งค่าระบบ (Settings) - Ctrl+," id="btn-header-settings" class="header-action-btn" style="background: none; border: none; color: #c084fc; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-gear"></i></button>
                     <button title="เกี่ยวกับระบบ" id="btn-info"><i class="fa-solid fa-circle-info"></i></button>
                 </div>
             </header>
@@ -511,6 +513,474 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
                     <span>เวอร์ชัน: <strong>Kira 2.1 Next-Gen (Build 2026.8)</strong></span>
                     <span>ผู้สร้าง: <strong>Kira AI System Team</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⚙️ Full-Featured Glassmorphic Settings Modal -->
+    <div class="modal-overlay" id="settings-modal" style="display: none; z-index: 1090;">
+        <div class="settings-card glass-panel" id="settings-card">
+            <!-- Modal Header -->
+            <div class="settings-modal-header">
+                <div class="settings-title-group">
+                    <div class="settings-icon-bubble">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <div>
+                        <h2 class="settings-modal-title">การตั้งค่าระบบ <span class="settings-version-pill">Settings</span></h2>
+                        <p class="settings-modal-subtitle">ปรับแต่งประสบการณ์ใช้งาน Kira AI 2.1 ตามสไตล์ของคุณ</p>
+                    </div>
+                </div>
+                <button type="button" class="settings-modal-close" id="btn-close-settings" title="ปิดหน้าต่าง (Esc)">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Dual-Pane Layout -->
+            <div class="settings-dual-layout">
+                <!-- Sidebar Tabs Navigation -->
+                <nav class="settings-nav" id="settings-nav">
+                    <button type="button" class="settings-tab-btn active" data-tab="general">
+                        <i class="fa-solid fa-palette"></i>
+                        <span>ทั่วไป & การแสดงผล</span>
+                    </button>
+                    <button type="button" class="settings-tab-btn" data-tab="account">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>บัญชี & ความปลอดภัย</span>
+                    </button>
+                    <button type="button" class="settings-tab-btn" data-tab="ai">
+                        <i class="fa-solid fa-brain"></i>
+                        <span>โมเดล & คำสั่งกำหนดเอง</span>
+                    </button>
+                    <button type="button" class="settings-tab-btn" data-tab="voice">
+                        <i class="fa-solid fa-microphone-lines"></i>
+                        <span>เสียง & พากย์ AI</span>
+                    </button>
+                    <button type="button" class="settings-tab-btn" data-tab="data">
+                        <i class="fa-solid fa-database"></i>
+                        <span>ข้อมูล & โครงข่ายความจำ</span>
+                    </button>
+                    <button type="button" class="settings-tab-btn" data-tab="pro">
+                        <i class="fa-solid fa-flask-vial"></i>
+                        <span>Pro Tools & Labs</span>
+                    </button>
+                </nav>
+
+                <!-- Settings Content Area -->
+                <div class="settings-content-pane">
+                    
+                    <!-- TAB 1: General & UI -->
+                    <div class="settings-panel active" id="settings-panel-general">
+                        <h3 class="panel-section-title"><i class="fa-solid fa-palette text-purple"></i> ธีมและการแสดงผล (Appearance)</h3>
+                        
+                        <div class="settings-group">
+                            <label class="settings-label">ธีมของระบบ (Color Theme)</label>
+                            <div class="theme-options-grid">
+                                <label class="theme-card-option">
+                                    <input type="radio" name="setting-theme" value="dark" checked>
+                                    <div class="theme-card-preview dark-preview">
+                                        <div class="preview-header"></div>
+                                        <div class="preview-bubble"></div>
+                                    </div>
+                                    <span class="theme-label-text">Dark Nebula (ค่าเริ่มต้น)</span>
+                                </label>
+                                <label class="theme-card-option">
+                                    <input type="radio" name="setting-theme" value="light">
+                                    <div class="theme-card-preview light-preview">
+                                        <div class="preview-header"></div>
+                                        <div class="preview-bubble"></div>
+                                    </div>
+                                    <span class="theme-label-text">Light Stellar (สว่าง)</span>
+                                </label>
+                                <label class="theme-card-option">
+                                    <input type="radio" name="setting-theme" value="oled">
+                                    <div class="theme-card-preview oled-preview">
+                                        <div class="preview-header"></div>
+                                        <div class="preview-bubble"></div>
+                                    </div>
+                                    <span class="theme-label-text">OLED Pure Black (มืดสนิท)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">ขนาดตัวอักษรในแชท (Chat Font Size)</strong>
+                                    <p class="setting-desc">ปรับขนาดฟอนต์ของข้อความสนทนาเพื่อการอ่านที่สบายตา</p>
+                                </div>
+                                <select id="setting-font-size" class="settings-select">
+                                    <option value="small">กะทัดรัด (Small - 13.5px)</option>
+                                    <option value="medium" selected>มาตรฐาน (Medium - 14.5px)</option>
+                                    <option value="large">ตัวใหญ่ (Large - 16px)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">การกดปุ่มส่งข้อความ (Enter Key Action)</strong>
+                                    <p class="setting-desc">เลือกพฤติกรรมเมื่อกดปุ่ม Enter ในช่องแชท</p>
+                                </div>
+                                <select id="setting-enter-send" class="settings-select">
+                                    <option value="enter" selected>กด Enter ส่งข้อความ (Shift+Enter ขึ้นบรรทัดใหม่)</option>
+                                    <option value="shift_enter">กด Shift+Enter ส่งข้อความ (Enter ขึ้นบรรทัดใหม่)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">เสียงประกอบเอฟเฟกต์ (Sound Effects)</strong>
+                                    <p class="setting-desc">เล่นเสียงนุ่มนวลเมื่อส่งข้อความและรับข้อความใหม่</p>
+                                </div>
+                                <label class="kira-switch">
+                                    <input type="checkbox" id="setting-sound-effects" checked>
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">เปิด Live Canvas อัตโนมัติเมื่อตรวจพบโค้ดเว็บ</strong>
+                                    <p class="setting-desc">กางหน้าต่าง Interactive Preview ทันทีที่ AI ตอบโค้ด HTML/JS</p>
+                                </div>
+                                <label class="kira-switch">
+                                    <input type="checkbox" id="setting-auto-canvas" checked>
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Account & Security -->
+                    <div class="settings-panel" id="settings-panel-account">
+                        <h3 class="panel-section-title"><i class="fa-solid fa-id-card text-cyan"></i> ข้อมูลโปรไฟล์ & บัญชี (Profile & Quota)</h3>
+                        
+                        <div class="profile-summary-box">
+                            <div class="profile-avatar-large">
+                                <img id="settings-user-avatar" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="Avatar">
+                                <span class="profile-badge-active"><i class="fa-solid fa-shield-check"></i></span>
+                            </div>
+                            <div class="profile-summary-info">
+                                <div class="profile-name-row">
+                                    <h4 id="settings-username-display">User</h4>
+                                    <span class="role-pill" id="settings-user-role">Free Member</span>
+                                </div>
+                                <p class="profile-created-date" id="settings-user-created">สมาชิกตั้งแต่: 2026</p>
+                                <div class="quota-progress-container">
+                                    <div class="quota-labels">
+                                        <span><i class="fa-solid fa-bolt text-amber"></i> โควตาการใช้งานวันนี้:</span>
+                                        <strong id="settings-quota-count">0 / 150 ข้อความ</strong>
+                                    </div>
+                                    <div class="quota-track">
+                                        <div class="quota-bar-fill" id="settings-quota-bar" style="width: 10%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label" for="setting-preferred-name">ชื่อที่ต้องการให้คิระเรียกคุณ (Preferred Name)</label>
+                            <input type="text" id="setting-preferred-name" class="settings-input" placeholder="เช่น Boss, คุณบอส, พี่เป็ด, คุณหมอ">
+                            <span class="input-hint">Kira จะใช้ชื่อนี้เรียกขานคุณในการสนทนาและทักทายอย่างเป็นกันเอง</span>
+                        </div>
+
+                        <h3 class="panel-section-title" style="margin-top: 25px;"><i class="fa-solid fa-key text-amber"></i> เปลี่ยนรหัสผ่าน (Change Password)</h3>
+                        <div class="change-password-box">
+                            <div class="input-stacked">
+                                <label for="setting-current-pass">รหัสผ่านปัจจุบัน</label>
+                                <input type="password" id="setting-current-pass" class="settings-input" placeholder="รหัสผ่านปัจจุบัน">
+                            </div>
+                            <div class="input-stacked">
+                                <label for="setting-new-pass">รหัสผ่านใหม่ (อย่างน้อย 4 ตัวอักษร)</label>
+                                <input type="password" id="setting-new-pass" class="settings-input" placeholder="รหัสผ่านใหม่">
+                            </div>
+                            <div class="input-stacked">
+                                <label for="setting-confirm-pass">ยืนยันรหัสผ่านใหม่</label>
+                                <input type="password" id="setting-confirm-pass" class="settings-input" placeholder="ยืนยันรหัสผ่านใหม่อีกครั้ง">
+                            </div>
+                            <div id="settings-pass-error" class="settings-error-msg hidden"></div>
+                            <button type="button" class="btn-action-sm primary" id="btn-submit-change-pass">
+                                <i class="fa-solid fa-lock"></i> บันทึกรหัสผ่านใหม่
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: AI Models & Custom Instructions -->
+                    <div class="settings-panel" id="settings-panel-ai">
+                        <h3 class="panel-section-title"><i class="fa-solid fa-brain text-pink"></i> การตั้งค่าโมเดล & บุคลิกภาพ (Model & Persona)</h3>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">โมเดลเริ่มต้นเมื่อเปิดระบบ (Default AI Model)</strong>
+                                    <p class="setting-desc">เลือกโมเดลที่ต้องการให้ระบบเรียกใช้เป็นค่าเริ่มต้น</p>
+                                </div>
+                                <select id="setting-default-model" class="settings-select">
+                                    <option value="2.1-reasoning">👑 Kira 2.1 Reasoning (Deep Thinker)</option>
+                                    <option value="2.1-pro">🧠 Kira 2.1 Pro (Super-Agent)</option>
+                                    <option value="2.0-flash">⚡ Kira 2.0 Flash</option>
+                                    <option value="2.0-vision">📷 Kira 2.0 Vision</option>
+                                    <option value="1.0">⚡ Kira 1.0 Standard</option>
+                                    <option value="1.1">💻 Kira 1.1 Pioneer</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">บุคลิกและน้ำเสียงของคิระ (Persona)</strong>
+                                    <p class="setting-desc">ปรับรูปแบบการตอบสนองและอารมณ์ของ AI</p>
+                                </div>
+                                <select id="setting-persona" class="settings-select">
+                                    <option value="default">ปกติ (สุภาพ/ทางการ/อ่อนโยน)</option>
+                                    <option value="friend">เพื่อนสนิท (เป็นกันเอง/ใช้คำสบายๆ)</option>
+                                    <option value="manager">ผู้จัดการ (ดุดัน/เน้นผลงานและ Action)</option>
+                                    <option value="coder">Senior Tech Lead (เน้นโค้ด Clean/ตรรกะคม)</option>
+                                    <option value="researcher">นักวิจัยวิชาการ (อ้างอิงข้อมูล/เจาะลึก)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">พฤติกรรมกล่องกระบวนการคิด (Deep Thinking Accordion)</strong>
+                                    <p class="setting-desc">เลือกการเปิดหรือพับกล่อง Chain-of-Thought อัตโนมัติ</p>
+                                </div>
+                                <select id="setting-thinking-accordion" class="settings-select">
+                                    <option value="auto_collapse" selected>พับเก็บอัตโนมัติเมื่อคิดเสร็จ (แนะนำ)</option>
+                                    <option value="always_open">กางค้างไว้ตลอดเวลา</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <h3 class="panel-section-title" style="margin-top: 25px;"><i class="fa-solid fa-wand-magic-sparkles text-purple"></i> คำสั่งพิเศษประจำตัว (Custom Instructions)</h3>
+                        <p class="panel-section-desc">ช่วยให้ Kira รู้จักคุณดีขึ้นและตอบตรงใจคุณในทุกบทสนทนาโดยไม่ต้องบอกซ้ำ</p>
+
+                        <div class="settings-group">
+                            <label class="settings-label" for="setting-custom-about">สิ่งที่คุณอยากให้คิระรู้เกี่ยวกับตัวคุณ (About You):</label>
+                            <textarea id="setting-custom-about" class="settings-textarea" rows="3" placeholder="เช่น ฉันเป็น Full-Stack Developer ใช้ Python และ JavaScript, อยู่กรุงเทพฯ, ชอบคำอธิบายกระชับไม่อ้อมค้อม..."></textarea>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label" for="setting-custom-style">สิ่งที่คุณอยากให้คิระตอบสนอง (Response Style):</label>
+                            <textarea id="setting-custom-style" class="settings-textarea" rows="3" placeholder="เช่น ตอบภาษาไทยเป็นหลัก, แนบตัวอย่างโค้ดเสมอ, อธิบายด้วย Bullet points, ใส่ emoji เล็กน้อย..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: Voice & Audio -->
+                    <div class="settings-panel" id="settings-panel-voice">
+                        <h3 class="panel-section-title"><i class="fa-solid fa-microphone-lines text-cyan"></i> เสียงพากย์และการอ่านออกเสียง (Neural Voice Suite)</h3>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">อ่านออกเสียงคำตอบอัตโนมัติ (Auto-Speak)</strong>
+                                    <p class="setting-desc">เล่นเสียงพากย์ Neural ทันทีที่ AI ตอบเสร็จสมบูรณ์</p>
+                                </div>
+                                <label class="kira-switch">
+                                    <input type="checkbox" id="setting-auto-speak">
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">เลือกน้ำเสียง AI (Neural Voice Model)</label>
+                            <div class="voice-selector-row">
+                                <select id="setting-voice-name" class="settings-select" style="flex: 1;">
+                                    <option value="th-TH-PremwadeeNeural" selected>🌸 เปรมวดี (Premwadee) - หญิงไทย นุ่มนวล อบอุ่น</option>
+                                    <option value="th-TH-NiwatNeural">👔 นิวัต (Niwat) - ชายไทย สุภาพ น่าเชื่อถือ</option>
+                                    <option value="en-US-JennyNeural">✨ Jenny - หญิงอเมริกัน คล่องแคล่ว ทันสมัย</option>
+                                    <option value="en-US-GuyNeural">💼 Guy - ชายอเมริกัน มืออาชีพ อารมณ์ดี</option>
+                                </select>
+                                <button type="button" class="btn-action-sm secondary" id="btn-preview-voice" title="ทดสอบฟังเสียง">
+                                    <i class="fa-solid fa-play"></i> ทดลองฟัง
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">ความเร็วการพูด (Speech Rate): <span id="speech-rate-val" class="text-cyan">1.0x</span></strong>
+                                    <p class="setting-desc">ปรับสปีดการอ่านให้ช้าลงหรือเร็วขึ้นตามความต้องการ</p>
+                                </div>
+                            </div>
+                            <input type="range" id="setting-speech-rate" min="0.8" max="1.5" step="0.1" value="1.0" class="kira-range-slider">
+                            <div class="slider-marks">
+                                <span>0.8x (ช้า)</span>
+                                <span>1.0x (ปกติ)</span>
+                                <span>1.5x (เร็ว)</span>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">ภาษาสำหรับการสั่งงานด้วยเสียง (Voice Input STT)</strong>
+                                    <p class="setting-desc">ภาษาหลักที่ใช้ในการฟังเสียงพูดผ่านไมโครโฟน</p>
+                                </div>
+                                <select id="setting-stt-lang" class="settings-select">
+                                    <option value="th-TH" selected>ภาษาไทย (th-TH)</option>
+                                    <option value="en-US">English (en-US)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: Data & Memory -->
+                    <div class="settings-panel" id="settings-panel-data">
+                        <h3 class="panel-section-title"><i class="fa-solid fa-database text-purple"></i> ความจำระยะยาว & ข้อมูลการสนทนา (GraphRAG & Logs)</h3>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">เปิดใช้งานความจำระยะยาว (Long-Term Memory)</strong>
+                                    <p class="setting-desc">อนุญาตให้คิระบันทึกข้อเท็จจริงและความสนใจเพื่อใช้ต่อยอดในอนาคต</p>
+                                </div>
+                                <label class="kira-switch">
+                                    <input type="checkbox" id="setting-graph-memory" checked>
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">สำรวจโครงข่ายสมอง 2D Mind-Map</strong>
+                                    <p class="setting-desc">เปิดหน้าต่าง Interactive Knowledge Graph เพื่อส่องดูหรือแก้ไขข้อเท็จจริง</p>
+                                </div>
+                                <button type="button" class="btn-action-sm secondary" id="btn-open-graph-from-settings">
+                                    <i class="fa-solid fa-diagram-project"></i> เปิด Mind-Map
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">ส่งออกประวัติการแชท (Export Chat Data)</strong>
+                                    <p class="setting-desc">ดาวน์โหลดบันทึกการสนทนาทั้งหมดของคุณเป็นไฟล์ JSON</p>
+                                </div>
+                                <button type="button" class="btn-action-sm secondary" id="btn-export-chat-json">
+                                    <i class="fa-solid fa-download"></i> ดาวน์โหลด JSON
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="danger-zone-box">
+                            <div class="danger-zone-header">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span>โซนอันตราย (Danger Zone)</span>
+                            </div>
+                            <div class="danger-row">
+                                <div>
+                                    <strong>ล้างประวัติการแชททั้งหมด (Clear All Chat History)</strong>
+                                    <p>ลบข้อความสนทนาทั้งหมดในบัญชีของคุณ การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+                                </div>
+                                <button type="button" class="btn-danger-sm" id="btn-clear-all-chats">
+                                    <i class="fa-solid fa-trash-can"></i> ล้างประวัติแชท
+                                </button>
+                            </div>
+                            <div class="danger-row">
+                                <div>
+                                    <strong>ล้างความจำและโหนดสมองทั้งหมด (Wipe GraphRAG Memories)</strong>
+                                    <p>รีเซ็ตโครงข่ายความจำส่วนบุคคลทั้งหมด คิระจะเริ่มต้นเรียนรู้ใหม่เหมือนวันแรก</p>
+                                </div>
+                                <button type="button" class="btn-danger-sm" id="btn-wipe-all-memories">
+                                    <i class="fa-solid fa-eraser"></i> ล้างความจำสมอง
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 6: Pro Tools & Labs -->
+                    <div class="settings-panel" id="settings-panel-pro">
+                        <h3 class="panel-section-title"><i class="fa-solid fa-flask-vial text-rose"></i> เครื่องมือทดลอง & ระบบขั้นสูง (Labs & Diagnostics)</h3>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">ยืนยันก่อนรันโค้ด Python ใน Sandbox</strong>
+                                    <p class="setting-desc">แสดงหน้าต่างยืนยันความปลอดภัยก่อนอนุญาตให้เอเจนต์รันโค้ดคำนวณ</p>
+                                </div>
+                                <label class="kira-switch">
+                                    <input type="checkbox" id="setting-python-confirm" checked>
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">เปิดคู่มือแนะนำการใช้งานซ้ำ (Re-launch Onboarding Tour)</strong>
+                                    <p class="setting-desc">เปิดหน้าสไลด์แนะนำฟีเจอร์ 4 ขั้นตอนสำหรับผู้ใช้ใหม่อีกครั้ง</p>
+                                </div>
+                                <button type="button" class="btn-action-sm secondary" id="btn-relaunch-tour">
+                                    <i class="fa-solid fa-book-open"></i> เปิดคู่มือ 4 ขั้นตอน
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-row">
+                                <div>
+                                    <strong class="setting-title">วัดความเร็วการเชื่อมต่อเซิร์ฟเวอร์ (Latency Ping)</strong>
+                                    <p class="setting-desc">ตรวจวัดระยะเวลา Ping ไปยัง Cloud Neural Supercluster</p>
+                                </div>
+                                <div class="latency-test-wrapper">
+                                    <span id="latency-ping-result" class="latency-tag">ยังไม่ได้ทดสอบ</span>
+                                    <button type="button" class="btn-action-sm secondary" id="btn-ping-latency">
+                                        <i class="fa-solid fa-network-wired"></i> ทดสอบ Ping
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="system-specs-card">
+                            <div class="spec-item">
+                                <span class="spec-label">เวอร์ชันระบบ:</span>
+                                <span class="spec-val">Kira 2.1 Next-Gen (Build 2026.9)</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">โครงข่ายคลาวด์:</span>
+                                <span class="spec-val text-emerald">Cloud Swarm v2.1 Active</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">เอ็นจิ้นเหตุผล:</span>
+                                <span class="spec-val">Adaptive MoA + Chain-of-Thought</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">ฐานข้อมูลความจำ:</span>
+                                <span class="spec-val">SQLite 3 + ChromaDB Vector Graph</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="settings-modal-footer">
+                <div class="settings-footer-status" id="settings-save-status">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> พร้อมบันทึกการตั้งค่า
+                </div>
+                <div class="settings-footer-actions">
+                    <button type="button" class="settings-btn-cancel" id="btn-cancel-settings">ปิด</button>
+                    <button type="button" class="settings-btn-save" id="btn-save-settings">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า (Save)
+                    </button>
                 </div>
             </div>
         </div>
@@ -721,6 +1191,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=26"></script>
+    <script src="/static/script.js?v=27"></script>
 </body>
 </html>

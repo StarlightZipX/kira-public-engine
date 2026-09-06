@@ -14,7 +14,7 @@ from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from typing import Optional
+from typing import Optional, Union, Any, Dict, List
 from pydantic import BaseModel
 import secrets
 import httpx
@@ -388,6 +388,24 @@ def init_db():
                       confidence REAL DEFAULT 1.0,
                       timestamp TEXT)''')
         execute_query('''CREATE INDEX IF NOT EXISTS idx_kg_username ON user_knowledge_graph (username)''')
+
+        execute_query('''CREATE TABLE IF NOT EXISTS user_preferences
+                     (username TEXT PRIMARY KEY,
+                      preferred_name TEXT,
+                      custom_instructions TEXT,
+                      custom_response_style TEXT,
+                      default_model TEXT,
+                      persona TEXT,
+                      voice TEXT,
+                      voice_rate TEXT,
+                      theme TEXT,
+                      font_size TEXT,
+                      enter_action TEXT,
+                      auto_canvas INTEGER DEFAULT 1,
+                      auto_speak INTEGER DEFAULT 0,
+                      sound_effects INTEGER DEFAULT 1,
+                      memory_enabled INTEGER DEFAULT 1,
+                      updated_at TEXT)''')
         
         # Insert default prompts if not exists
         check_p1 = execute_query("SELECT id FROM system_settings WHERE key_name='prompt_1.0'", fetch='one')
@@ -1038,6 +1056,39 @@ class DictionaryRequest(BaseModel):
 class TTSRequest(BaseModel):
     text: str
     voice: Optional[str] = "th-TH-PremwadeeNeural"
+    rate: Optional[Union[float, str]] = "+0%"
+
+class UserSettingsRequest(BaseModel):
+    username: str
+    preferred_name: Optional[str] = None
+    custom_instructions: Optional[str] = None
+    custom_about: Optional[str] = None
+    custom_response_style: Optional[str] = None
+    custom_style: Optional[str] = None
+    default_model: Optional[str] = None
+    persona: Optional[str] = None
+    voice: Optional[str] = None
+    voice_name: Optional[str] = None
+    voice_rate: Optional[str] = None
+    speech_rate: Optional[Union[float, str]] = None
+    theme: Optional[str] = None
+    font_size: Optional[str] = None
+    chat_font_size: Optional[str] = None
+    enter_action: Optional[str] = None
+    enter_key_behavior: Optional[str] = None
+    auto_canvas: Optional[Union[int, bool]] = None
+    auto_speak: Optional[Union[int, bool]] = None
+    sound_effects: Optional[Union[int, bool]] = None
+    memory_enabled: Optional[Union[int, bool]] = None
+    long_term_memory: Optional[Union[int, bool]] = None
+    thinking_accordion: Optional[str] = None
+    token: Optional[str] = None
+
+class ChangePasswordRequest(BaseModel):
+    username: str
+    current_password: str
+    new_password: str
+    token: Optional[str] = None
 
 class MemoryCreateRequest(BaseModel):
     username: str
@@ -1651,6 +1702,233 @@ async def get_user_quota(username: str):
     except Exception as e:
         return {"status": "success", "is_boss": False, "used": 0, "remaining": 150, "limit": 150, "badge": "⚡ โควตาวันนี้: 150/150 ข้อความ"}
 
+# ==========================================
+# ⚙️ Kira Settings & User Preferences Endpoints
+# ==========================================
+@app.get("/api/user/settings/{username}")
+async def get_user_settings(username: str, token: Optional[str] = None):
+    """ดึงข้อมูลการตั้งค่าส่วนบุคคลและสถานะบัญชีของผู้ใช้"""
+    clean_user = (username or "").strip()
+    is_boss_user = _is_boss(clean_user)
+    
+    # 1. Fetch user basic info
+    user_row = execute_query(
+        "SELECT nickname, email, auth_provider, avatar_url, points FROM users WHERE username=?",
+        (clean_user,), fetch='one'
+    )
+    nickname = user_row[0] if user_row and user_row[0] else clean_user
+    email = user_row[1] if user_row and user_row[1] else ""
+    auth_provider = user_row[2] if user_row and user_row[2] else "local"
+    avatar_url = user_row[3] if user_row and user_row[3] else ""
+    points = user_row[4] if user_row and user_row[4] else 0
+
+    # 2. Fetch user preferences
+    pref_row = execute_query(
+        """SELECT preferred_name, custom_instructions, custom_response_style, 
+                  default_model, persona, voice, voice_rate, theme, font_size, 
+                  enter_action, auto_canvas, auto_speak, sound_effects, memory_enabled 
+           FROM user_preferences WHERE username=?""",
+        (clean_user,), fetch='one'
+    )
+    
+    prefs = {
+        "preferred_name": pref_row[0] if pref_row and pref_row[0] else nickname,
+        "custom_instructions": pref_row[1] if pref_row and pref_row[1] else "",
+        "custom_about": pref_row[1] if pref_row and pref_row[1] else "",
+        "custom_response_style": pref_row[2] if pref_row and pref_row[2] else "",
+        "custom_style": pref_row[2] if pref_row and pref_row[2] else "",
+        "default_model": pref_row[3] if pref_row and pref_row[3] else "2.1-reasoning",
+        "persona": pref_row[4] if pref_row and pref_row[4] else "default",
+        "voice": pref_row[5] if pref_row and pref_row[5] else "th-TH-PremwadeeNeural",
+        "voice_name": pref_row[5] if pref_row and pref_row[5] else "th-TH-PremwadeeNeural",
+        "voice_rate": pref_row[6] if pref_row and pref_row[6] else "+0%",
+        "speech_rate": float(pref_row[6]) if (pref_row and pref_row[6] and pref_row[6].replace('.','',1).isdigit()) else 1.0,
+        "theme": pref_row[7] if pref_row and pref_row[7] else "dark",
+        "font_size": pref_row[8] if pref_row and pref_row[8] else "medium",
+        "chat_font_size": pref_row[8] if pref_row and pref_row[8] else "medium",
+        "enter_action": pref_row[9] if pref_row and pref_row[9] else "enter",
+        "enter_key_behavior": pref_row[9] if pref_row and pref_row[9] else "enter",
+        "auto_canvas": bool(pref_row[10]) if pref_row and pref_row[10] is not None else True,
+        "auto_speak": bool(pref_row[11]) if pref_row and pref_row[11] is not None else False,
+        "sound_effects": bool(pref_row[12]) if pref_row and pref_row[12] is not None else True,
+        "memory_enabled": bool(pref_row[13]) if pref_row and pref_row[13] is not None else True,
+        "long_term_memory": bool(pref_row[13]) if pref_row and pref_row[13] is not None else True,
+    }
+
+    # 3. Quota stats
+    tz = timezone(timedelta(hours=7))
+    today_prefix = datetime.now(tz).strftime("%Y-%m-%d")
+    log_cnt = execute_query(
+        "SELECT COUNT(*) FROM logs WHERE username=? AND role='User' AND timestamp LIKE ?",
+        (clean_user, f"{today_prefix}%"), fetch='one'
+    )
+    used = log_cnt[0] if log_cnt else 0
+    limit = 9999 if is_boss_user else 150
+    remaining = max(0, limit - used)
+
+    # 4. Total chat logs & memories count
+    tot_logs = execute_query("SELECT COUNT(*) FROM logs WHERE username=?", (clean_user,), fetch='one')
+    tot_memories = execute_query("SELECT COUNT(*) FROM user_memories WHERE username=?", (clean_user,), fetch='one')
+
+    return {
+        "status": "success",
+        "username": clean_user,
+        "is_boss": is_boss_user,
+        "user": {
+            "username": clean_user,
+            "nickname": nickname,
+            "role": "admin" if is_boss_user else "user",
+            "email": email,
+            "avatar": avatar_url,
+            "created_at": "2026-08-01"
+        },
+        "email": email,
+        "auth_provider": auth_provider,
+        "avatar_url": avatar_url,
+        "points": points,
+        "quota": {
+            "used": used,
+            "remaining": remaining,
+            "limit": limit
+        },
+        "stats": {
+            "total_messages": tot_logs[0] if tot_logs else 0,
+            "total_memories": tot_memories[0] if tot_memories else 0
+        },
+        "preferences": prefs
+    }
+
+@app.post("/api/user/settings")
+async def save_user_settings(req: UserSettingsRequest):
+    """บันทึกการตั้งค่าส่วนบุคคลของผู้ใช้ลง Database"""
+    clean_user = (req.username or "").strip()
+    if not clean_user:
+        return {"status": "error", "message": "ไม่พบชื่อผู้ใช้"}
+    
+    tz = timezone(timedelta(hours=7))
+    updated_at = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    # Update nickname in users table if preferred_name is provided
+    if req.preferred_name:
+        execute_query("UPDATE users SET nickname=? WHERE username=?", (req.preferred_name.strip(), clean_user))
+
+    # Resolve aliases
+    instructions = req.custom_instructions or req.custom_about
+    resp_style = req.custom_response_style or req.custom_style
+    v_name = req.voice or req.voice_name or "th-TH-PremwadeeNeural"
+    v_rate = str(req.speech_rate) if req.speech_rate is not None else (req.voice_rate or "+0%")
+    f_size = req.font_size or req.chat_font_size or "medium"
+    e_action = req.enter_action or req.enter_key_behavior or "enter"
+    a_canvas = 1 if (req.auto_canvas is True or req.auto_canvas == 1 or req.auto_canvas is None) else 0
+    a_speak = 1 if (req.auto_speak is True or req.auto_speak == 1) else 0
+    s_effects = 1 if (req.sound_effects is True or req.sound_effects == 1 or req.sound_effects is None) else 0
+    m_enabled = 1 if (req.memory_enabled is True or req.memory_enabled == 1 or req.long_term_memory is True or req.long_term_memory == 1 or req.memory_enabled is None) else 0
+
+    # Upsert preferences
+    execute_query(
+        """INSERT INTO user_preferences 
+           (username, preferred_name, custom_instructions, custom_response_style, 
+            default_model, persona, voice, voice_rate, theme, font_size, 
+            enter_action, auto_canvas, auto_speak, sound_effects, memory_enabled, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(username) DO UPDATE SET
+            preferred_name=excluded.preferred_name,
+            custom_instructions=excluded.custom_instructions,
+            custom_response_style=excluded.custom_response_style,
+            default_model=excluded.default_model,
+            persona=excluded.persona,
+            voice=excluded.voice,
+            voice_rate=excluded.voice_rate,
+            theme=excluded.theme,
+            font_size=excluded.font_size,
+            enter_action=excluded.enter_action,
+            auto_canvas=excluded.auto_canvas,
+            auto_speak=excluded.auto_speak,
+            sound_effects=excluded.sound_effects,
+            memory_enabled=excluded.memory_enabled,
+            updated_at=excluded.updated_at""",
+        (
+            clean_user,
+            req.preferred_name.strip() if req.preferred_name else None,
+            instructions.strip() if instructions else None,
+            resp_style.strip() if resp_style else None,
+            req.default_model or "2.1-reasoning",
+            req.persona or "default",
+            v_name,
+            v_rate,
+            req.theme or "dark",
+            f_size,
+            e_action,
+            a_canvas,
+            a_speak,
+            s_effects,
+            m_enabled,
+            updated_at
+        )
+    )
+
+    # Refresh active user_sessions system prompt if user is in memory
+    if clean_user in user_sessions:
+        prompt_to_use = _get_full_system_prompt(clean_user)
+        if user_sessions[clean_user] and isinstance(user_sessions[clean_user][0], SystemMessage):
+            user_sessions[clean_user][0] = SystemMessage(content=prompt_to_use)
+
+    return {"status": "success", "message": "บันทึกการตั้งค่าเรียบร้อยแล้วค่ะ ✨"}
+
+@app.post("/api/user/change-password")
+async def change_password(req: ChangePasswordRequest):
+    """เปลี่ยนรหัสผ่านของผู้ใช้แบบปลอดภัย (รองรับ Salted SHA256)"""
+    clean_user = (req.username or "").strip()
+    curr_pass = (req.current_password or "").strip()
+    new_pass = (req.new_password or "").strip()
+
+    if not clean_user or not curr_pass or not new_pass:
+        return {"status": "error", "message": "กรุณากรอกข้อมูลให้ครบถ้วนค่ะ"}
+
+    if len(new_pass) < 6:
+        return {"status": "error", "message": "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษรค่ะ"}
+
+    # If Boss user
+    if _is_boss(clean_user):
+        boss_password = os.environ.get("BOSS_PASSWORD", "kira1234")
+        if curr_pass != boss_password:
+            return {"status": "error", "message": "รหัสผ่านปัจจุบันของท่านประธานไม่ถูกต้องค่ะ"}
+        return {"status": "success", "message": "ยืนยันความปลอดภัยระดับ Boss เรียบร้อยแล้วค่ะ"}
+
+    row = execute_query("SELECT password_hash FROM users WHERE username=?", (clean_user,), fetch='one')
+    if not row:
+        return {"status": "error", "message": "ไม่พบบัญชีผู้ใช้นี้ในระบบค่ะ"}
+
+    stored_hash = row[0]
+    if stored_hash != hash_password(curr_pass):
+        return {"status": "error", "message": "รหัสผ่านปัจจุบันไม่ถูกต้องค่ะ"}
+
+    new_hash = hash_password(new_pass)
+    execute_query("UPDATE users SET password_hash=? WHERE username=?", (new_hash, clean_user))
+    return {"status": "success", "message": "เปลี่ยนรหัสผ่านสำเร็จเรียบร้อยแล้วค่ะ 🔐"}
+
+@app.delete("/api/history/{username}/all")
+async def clear_all_history(username: str):
+    """ล้างประวัติการแชททั้งหมดของผู้ใช้"""
+    clean_user = (username or "").strip()
+    if not clean_user:
+        return {"status": "error", "message": "ไม่พบชื่อผู้ใช้"}
+    execute_query("DELETE FROM logs WHERE username=?", (clean_user,))
+    if clean_user in user_sessions:
+        prompt_to_use = _get_full_system_prompt(clean_user)
+        user_sessions[clean_user] = [SystemMessage(content=prompt_to_use)]
+    return {"status": "success", "message": "ล้างประวัติการแชททั้งหมดเรียบร้อยแล้วค่ะ"}
+
+@app.delete("/api/user/graph/all")
+async def wipe_all_memories(username: str):
+    """ล้างความจำและโครงข่าย GraphRAG ทั้งหมดของผู้ใช้"""
+    clean_user = (username or "").strip()
+    if not clean_user:
+        return {"status": "error", "message": "ไม่พบชื่อผู้ใช้"}
+    execute_query("DELETE FROM user_memories WHERE username=?", (clean_user,))
+    execute_query("DELETE FROM user_knowledge_graph WHERE username=?", (clean_user,))
+    return {"status": "success", "message": "ล้างความจำระยะยาวทั้งหมดเรียบร้อยแล้วค่ะ"}
+
 @app.get("/api/user/briefing/{username}")
 async def get_user_briefing(username: str, token: Optional[str] = None):
     """Kira 2.2 Proactive Heartbeat: Time-Aware Greeting, Context Briefing & GraphRAG Suggestions"""
@@ -1932,7 +2210,36 @@ def _get_full_system_prompt(username: str) -> str:
     
     reasoning_protocol = "\n\n[Kira 2.1 Deep Reasoning Protocol]:\nเมื่อได้รับคำถามที่ต้องใช้ตรรกะซับซ้อน, การคำนวณทางคณิตศาสตร์, การเขียนโปรแกรม/ดีบักโค้ด, หรือการวางแผนเชิงกลยุทธ์:\n- หากจำเป็น คุณสามารถเริ่มต้นด้วยการวิเคราะห์อย่างเป็นขั้นตอนในแท็ก <think>ขั้นตอนการคิดและการวางแผน...</think> ได้\n- เมื่อคิดและวางแผนเสร็จแล้ว ให้สรุปและส่งคำตอบที่สมบูรณ์ ชัดเจน สละสลวย และถูกต้อง 100% ให้กับผู้ใช้\n"
     
-    return base_prompt + image_instruction + reasoning_protocol + dict_context + memory_ctx
+    custom_instr_ctx = ""
+    try:
+        pref = execute_query(
+            "SELECT preferred_name, custom_instructions, custom_response_style, persona FROM user_preferences WHERE username=?",
+            (username,), fetch='one'
+        )
+        if pref:
+            pref_name, c_inst, c_style, c_persona = pref
+            parts = []
+            if pref_name:
+                parts.append(f"- ชื่อเรียกที่ผู้ใช้ต้องการให้คิระใช้เรียกทักทาย: '{pref_name}'")
+            if c_inst:
+                parts.append(f"- ข้อมูลและบริบทสำคัญที่ผู้ใช้ต้องการให้คิระจดจำเสมอ: {c_inst}")
+            if c_style:
+                parts.append(f"- สไตล์และรูปแบบการตอบที่ผู้ใช้ต้องการ: {c_style}")
+            if c_persona and c_persona != "default":
+                persona_map = {
+                    "friend": "ตอบแบบเพื่อนสนิท เป็นกันเอง น่ารัก ใช้คำแทนตัวว่าเค้า/ตัวเอง/แก",
+                    "manager": "ตอบแบบผู้บริหาร/โค้ช กระชับ ดุดัน ตรงประเด็น เน้น Actionable plan และผลลัพธ์",
+                    "coder": "ตอบแบบโปรแกรมเมอร์ซีเนียร์ เน้น Clean Architecture, Type safety, และ Best practices",
+                    "researcher": "ตอบแบบนักวิจัย/อาจารย์ อ้างอิงทฤษฎี ตรรกะเปรียบเทียบข้อดีข้อเสียอย่างรอบด้าน"
+                }
+                if c_persona in persona_map:
+                    parts.append(f"- บุคลิกภาพเฉพาะที่ได้รับมอบหมาย: {persona_map[c_persona]}")
+            if parts:
+                custom_instr_ctx = "\n\n[User Custom Instructions & Personal Persona]:\n" + "\n".join(parts) + "\n(คำสั่งสำคัญ: จงปรับการสนทนาและการตอบกลับตามความต้องการของผู้ใช้นี้อย่างเคร่งครัด)\n"
+    except Exception as e:
+        print("Custom instructions load error:", e)
+
+    return base_prompt + image_instruction + reasoning_protocol + dict_context + memory_ctx + custom_instr_ctx
 
 # ========== Self-Reflection Engine (Kira 2.0) ==========
 def _self_reflect(user_question: str, kira_response: str) -> str:
@@ -2631,9 +2938,26 @@ async def generate_tts(req: TTSRequest, request: Request):
         if len(clean_text) > 1500:
             clean_text = clean_text[:1500] + " ... และข้อมูลส่วนที่เหลือแสดงบนหน้าจอแล้วค่ะ"
             
-        voice = req.voice if req.voice in ["th-TH-PremwadeeNeural", "th-TH-NiwatNeural", "en-US-AriaNeural"] else "th-TH-PremwadeeNeural"
+        allowed_voices = ["th-TH-PremwadeeNeural", "th-TH-NiwatNeural", "en-US-JennyNeural", "en-US-GuyNeural", "en-US-AriaNeural"]
+        voice = req.voice if req.voice in allowed_voices else "th-TH-PremwadeeNeural"
+        raw_rate = getattr(req, "rate", "+0%") or "+0%"
+        if isinstance(raw_rate, (int, float)):
+            pct = int(round((float(raw_rate) - 1.0) * 100))
+            rate_val = f"{pct:+d}%"
+        elif isinstance(raw_rate, str):
+            clean_r = raw_rate.strip()
+            if clean_r.endswith("%"):
+                rate_val = clean_r
+            else:
+                try:
+                    pct = int(round((float(clean_r) - 1.0) * 100))
+                    rate_val = f"{pct:+d}%"
+                except ValueError:
+                    rate_val = "+0%"
+        else:
+            rate_val = "+0%"
         
-        communicate = edge_tts.Communicate(clean_text, voice)
+        communicate = edge_tts.Communicate(clean_text, voice, rate=rate_val)
         audio_buffer = io.BytesIO()
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":

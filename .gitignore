@@ -16,6 +16,8 @@ venv.bak/
 
 # Database and Memory Storage
 chat_logs.db
+kira.db
+*.db
 chroma_db/
 *.sqlite3
 
