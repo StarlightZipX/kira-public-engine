@@ -331,7 +331,14 @@
                     <button title="เปิด/ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak)" id="btn-autospeak" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-volume-xmark"></i></button>
                     <button title="บันทึกออก (Export PDF)" id="btn-export" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-file-export"></i></button>
                     <button title="คู่มือแนะนำการใช้งาน (Kira Interactive Guide)" id="btn-open-guide" class="header-action-btn" style="background: none; border: none; color: #38bdf8; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-book-open"></i></button>
+                    <button title="เปิดห้องประชุมจำลอง AI 4 ผู้บริหาร (Virtual Boardroom)" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn">
+                        <i class="fa-solid fa-users-viewfinder"></i>
+                        <span class="boardroom-btn-text">ห้องประชุม</span>
+                    </button>
                     <select id="model-select" class="model-select">
+                        <optgroup label="🏛️ สภาที่ปรึกษา AI (Virtual Boardroom)">
+                            <option value="boardroom">🏛️ Virtual Boardroom (ห้องประชุม 4 ผู้บริหาร)</option>
+                        </optgroup>
                         <optgroup label="🚀 โมเดลรุ่นล่าสุด (Kira 2.1 Next-Gen)">
                             <option value="2.1-reasoning" selected>👑 Kira 2.1 Reasoning (Deep Thinker)</option>
                             <option value="2.1-pro">🧠 Kira 2.1 Pro (Super-Agent)</option>
@@ -369,6 +376,58 @@
                     <input type="radio" name="sub-model-flavor" value="creative" style="display: none;">
                     <span style="color: #f472b6;"><i class="fa-solid fa-wand-magic-sparkles"></i> Generative Studio</span>
                 </label>
+            </div>
+
+            <!-- 🏛️ Kira Virtual Boardroom Active Chamber Banner -->
+            <div id="boardroom-active-banner" class="boardroom-banner" style="display: none;">
+                <div class="boardroom-banner-left">
+                    <div class="boardroom-chamber-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
+                    <div class="boardroom-chamber-text">
+                        <div class="boardroom-chamber-title">
+                            <span>Kira Virtual Boardroom</span>
+                            <span class="boardroom-badge-live"><span class="live-dot"></span> LIVE CHAMBER</span>
+                        </div>
+                        <div class="boardroom-chamber-subtitle">สภาที่ปรึกษาผู้บริหารระดับสูง 4 ด้าน (CEO, CFO, CPO, CTO)</div>
+                    </div>
+                </div>
+                <div class="boardroom-executives-chips">
+                    <div class="exec-avatar-chip exec-chip-ceo" title="คุณคิรินทร์: ประธานเจ้าหน้าที่บริหาร (CEO & Strategist)">
+                        <span class="exec-chip-icon">👔</span>
+                        <div class="exec-chip-details">
+                            <span class="exec-chip-role">CEO</span>
+                            <span class="exec-chip-sub">คุณคิรินทร์</span>
+                        </div>
+                    </div>
+                    <div class="exec-avatar-chip exec-chip-cfo" title="คุณเมธัส: ประธานเจ้าหน้าที่ฝ่ายการเงิน (CFO & Risk Lead)">
+                        <span class="exec-chip-icon">💰</span>
+                        <div class="exec-chip-details">
+                            <span class="exec-chip-role">CFO</span>
+                            <span class="exec-chip-sub">คุณเมธัส</span>
+                        </div>
+                    </div>
+                    <div class="exec-avatar-chip exec-chip-cpo" title="คุณรินดา: ประธานเจ้าหน้าที่ฝ่ายประสบการณ์ลูกค้า (CPO & UX)">
+                        <span class="exec-chip-icon">🎨</span>
+                        <div class="exec-chip-details">
+                            <span class="exec-chip-role">CPO</span>
+                            <span class="exec-chip-sub">คุณรินดา</span>
+                        </div>
+                    </div>
+                    <div class="exec-avatar-chip exec-chip-cto" title="คุณธนิน: ประธานเจ้าหน้าที่ฝ่ายเทคโนโลยี (CTO & Systems)">
+                        <span class="exec-chip-icon">🛡️</span>
+                        <div class="exec-chip-details">
+                            <span class="exec-chip-role">CTO</span>
+                            <span class="exec-chip-sub">คุณธนิน</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="boardroom-banner-actions">
+                    <button id="btn-boardroom-info" class="boardroom-action-btn" title="ทำความรู้จัก 4 ผู้บริหารประจำห้องประชุม">
+                        <i class="fa-solid fa-circle-question"></i> <span>ข้อมูลสภา</span>
+                    </button>
+                    <button id="btn-boardroom-exit" class="boardroom-action-btn exit-btn" title="ออกจากโหมดห้องประชุม">
+                        <i class="fa-solid fa-xmark"></i> <span>ปิดห้อง</span>
+                    </button>
+                </div>
             </div>
 
             <div class="messages-container" id="chat-box">
@@ -1186,11 +1245,110 @@
         </div>
     </div>
 
+    <!-- 🏛️ Kira Virtual Boardroom Information Modal -->
+    <div id="boardroom-info-modal" class="modal-overlay" style="display: none; z-index: 1090;">
+        <div class="boardroom-info-card glass-panel">
+            <div class="boardroom-info-header">
+                <div class="boardroom-info-title-group">
+                    <div class="boardroom-info-badge"><i class="fa-solid fa-users-viewfinder"></i> สภาที่ปรึกษาเสมือน</div>
+                    <h2>Kira Virtual Boardroom</h2>
+                    <p class="boardroom-info-desc">ระดมสมอง 4 ขุนพลผู้บริหารระดับสูง ร่วมวิเคราะห์ ถกเถียง หักล้าง และสังเคราะห์มติเอกฉันท์แบบ 360 องศา</p>
+                </div>
+                <button id="btn-close-boardroom-info" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="boardroom-executives-grid">
+                <!-- CEO Card -->
+                <div class="boardroom-exec-profile-card profile-ceo">
+                    <div class="exec-card-header">
+                        <span class="exec-portrait">👔</span>
+                        <div class="exec-meta">
+                            <span class="exec-role-tag role-gold">CEO • วิสัยทัศน์ & กลยุทธ์</span>
+                            <h4>คุณคิรินทร์</h4>
+                        </div>
+                    </div>
+                    <div class="exec-card-body">
+                        <p class="exec-focus"><strong>จุดเน้น:</strong> การครองส่วนแบ่งตลาด, ทิศทางการเติบโต 1-3 ปี, แบรนด์, และการสร้างความได้เปรียบทางธุรกิจ (Moat)</p>
+                        <blockquote class="exec-quote">"ความกลัวไม่เคยสร้างผู้นำตลาด เราต้องคิดใหญ่และลงมือทำให้เร็วที่สุด"</blockquote>
+                    </div>
+                </div>
+
+                <!-- CFO Card -->
+                <div class="boardroom-exec-profile-card profile-cfo">
+                    <div class="exec-card-header">
+                        <span class="exec-portrait">💰</span>
+                        <div class="exec-meta">
+                            <span class="exec-role-tag role-green">CFO • การเงิน & ความเสี่ยง</span>
+                            <h4>คุณเมธัส</h4>
+                        </div>
+                    </div>
+                    <div class="exec-card-body">
+                        <p class="exec-focus"><strong>จุดเน้น:</strong> กระแสเงินสด (Cash Flow), ต้นทุนแฝง, จุดคุ้มทุน (BEP), และความคุ้มค่าของการลงทุน (ROI)</p>
+                        <blockquote class="exec-quote">"ตัวเลขไม่เคยโกหก หากกระแสเงินสดติดลบ ต่อให้มีวิสัยทัศน์ดีแค่ไหนก็ล้มละลาย"</blockquote>
+                    </div>
+                </div>
+
+                <!-- CPO Card -->
+                <div class="boardroom-exec-profile-card profile-cpo">
+                    <div class="exec-card-header">
+                        <span class="exec-portrait">🎨</span>
+                        <div class="exec-meta">
+                            <span class="exec-role-tag role-pink">CPO • ประสบการณ์ผู้ใช้ & ตลาด</span>
+                            <h4>คุณรินดา</h4>
+                        </div>
+                    </div>
+                    <div class="exec-card-body">
+                        <p class="exec-focus"><strong>จุดเน้น:</strong> Customer Pain Points, ความเรียบง่าย (Simplicity), และอัตราการกลับมาใช้ซ้ำ (Retention)</p>
+                        <blockquote class="exec-quote">"โปรดักต์ที่ยอดเยี่ยมไม่ใช่ฟีเจอร์เยอะ แต่คือสิ่งที่ลูกค้าใช้แล้วชีวิตง่ายขึ้นทันที"</blockquote>
+                    </div>
+                </div>
+
+                <!-- CTO Card -->
+                <div class="boardroom-exec-profile-card profile-cto">
+                    <div class="exec-card-header">
+                        <span class="exec-portrait">🛡️</span>
+                        <div class="exec-meta">
+                            <span class="exec-role-tag role-cyan">CTO • สถาปัตยกรรม & เทคโนโลยี</span>
+                            <h4>คุณธนิน</h4>
+                        </div>
+                    </div>
+                    <div class="exec-card-body">
+                        <p class="exec-focus"><strong>จุดเน้น:</strong> ความเป็นไปได้จริง, ความมั่นคงปลอดภัย (Security), ความเสถียร, และ Scalability</p>
+                        <blockquote class="exec-quote">"สถาปัตยกรรมที่ดีต้องสร้างเสร็จได้จริง และไม่ทิ้งหนี้ทางเทคนิคไว้ให้ตามล้างตามเช็ด"</blockquote>
+                    </div>
+                </div>
+            </div>
+
+            <div class="boardroom-workflow-bar">
+                <div class="workflow-step">
+                    <span class="step-num">1</span>
+                    <span class="step-label">แถลงมุมมองเดี่ยว 4 ด้าน</span>
+                </div>
+                <div class="workflow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="workflow-step">
+                    <span class="step-num">2</span>
+                    <span class="step-label">การถกเถียง & หักล้างจุดอ่อน</span>
+                </div>
+                <div class="workflow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="workflow-step highlight">
+                    <span class="step-num">3</span>
+                    <span class="step-label">มติเอกฉันท์ & แผน 90 วัน</span>
+                </div>
+            </div>
+
+            <div class="boardroom-info-footer">
+                <button id="btn-start-boardroom-from-modal" class="boardroom-primary-btn">
+                    <i class="fa-solid fa-gavel"></i> เริ่มเปิดวาระการประชุมทันที
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=27"></script>
+    <script src="/static/script.js?v=28"></script>
 </body>
 </html>

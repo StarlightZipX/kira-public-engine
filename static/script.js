@@ -1331,11 +1331,21 @@ async function sendMessage() {
         const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.1-reasoning";
         const flavor = document.querySelector('input[name="sub-model-flavor"]:checked') ? document.querySelector('input[name="sub-model-flavor"]:checked').value : "fast";
         const persona = document.getElementById('persona-select') ? document.getElementById('persona-select').value : "default";
+        const isBoardroomActive = (localStorage.getItem('kira_boardroom_active') === 'true') || (modelVersion === 'boardroom');
 
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text || 'ช่วยวิเคราะห์และตรวจสอบภาพนี้อย่างละเอียด', username: currentUser, model_version: modelVersion, image_base64: imgBase64ToSend, session_id: currentSessionId, flavor: flavor, persona: persona })
+            body: JSON.stringify({
+                message: text || 'ช่วยวิเคราะห์และตรวจสอบภาพนี้อย่างละเอียด',
+                username: currentUser,
+                model_version: isBoardroomActive ? "boardroom" : modelVersion,
+                boardroom_mode: isBoardroomActive,
+                image_base64: imgBase64ToSend,
+                session_id: currentSessionId,
+                flavor: flavor,
+                persona: persona
+            })
         });
 
         hideTypingIndicator();
@@ -1349,12 +1359,27 @@ async function sendMessage() {
         const decoder = new TextDecoder("utf-8");
         const contentDiv = addMessage('', false);
         let fullText = '';
+        let gavelPlayed = false;
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             
             fullText += decoder.decode(value, { stream: true });
+
+            // --- 🏛️ Check for Virtual Boardroom Stream Tags ---
+            if (fullText.includes('[BOARDROOM_START]')) {
+                if (!gavelPlayed) {
+                    if (typeof playGavelSound === 'function') playGavelSound();
+                    gavelPlayed = true;
+                }
+                if (typeof renderBoardroomHTML === 'function') {
+                    contentDiv.innerHTML = renderBoardroomHTML(fullText);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+                continue;
+            }
+
             let displayTxt = fullText.replace(/^(✨ \*\*\[Kira.*?\]\*\*\n\n|🤖 \*\*\[Kira.*?\]\*\*\n\n|👁️ \*\*\[Kira.*?\]\*\*\n\n|🧠 \*\*\[Kira.*?\]\*\*\n\n|👑 \*\*\[Kira.*?\]\*\*\n\n|💼 \*\*\[Kira.*?\]\*\*\n\n)/i, "");
             
             // --- Parse Thinking Tags (<think> and [THINKING]) ---
@@ -3527,5 +3552,326 @@ window.loadSettingsPreferences = loadSettingsPreferences;
 window.saveSettings = saveSettings;
 window.applyTheme = applyTheme;
 window.applyFontSize = applyFontSize;
+
+// ====================================================================
+// 🏛️ KIRA VIRTUAL BOARDROOM: 4-EXECUTIVE CLIENT CONTROLLER
+// ====================================================================
+
+function playGavelSound() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        // 3 realistic wooden gavel taps with sharp transients
+        const tapTimes = [0, 0.2, 0.4];
+        tapTimes.forEach((t) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(145, audioCtx.currentTime + t);
+            osc.frequency.exponentialRampToValueAtTime(35, audioCtx.currentTime + t + 0.12);
+
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(350, audioCtx.currentTime + t);
+            filter.Q.setValueAtTime(3.5, audioCtx.currentTime + t);
+
+            gain.gain.setValueAtTime(0.45, audioCtx.currentTime + t);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + t + 0.14);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(audioCtx.currentTime + t);
+            osc.stop(audioCtx.currentTime + t + 0.15);
+        });
+    } catch (e) {
+        console.warn('Gavel sound FX audio context error:', e);
+    }
+}
+
+function renderBoardroomHTML(rawText) {
+    let html = '<div class="boardroom-session-wrapper">';
+    html += '<div class="boardroom-session-header-badge"><i class="fa-solid fa-users-viewfinder"></i> บันทึกการประชุมสภาที่ปรึกษาเสมือน (Chamber in Session)</div>';
+
+    // 1. Parse Speakers: [BOARDROOM_SPEAKER:ID:TITLE:THEME]...[/BOARDROOM_SPEAKER]
+    const speakerRegex = /\[BOARDROOM_SPEAKER:([A-Z]+):([^:]+):([a-z]+)\]([\s\S]*?)(?:\[\/BOARDROOM_SPEAKER\]|$)/g;
+    let spMatch;
+    const avatarMap = { 'CEO': '👔', 'CFO': '💰', 'CPO': '🎨', 'CTO': '🛡️' };
+
+    while ((spMatch = speakerRegex.exec(rawText)) !== null) {
+        const id = spMatch[1];
+        const title = spMatch[2];
+        const theme = spMatch[3] || 'gold';
+        const content = spMatch[4] ? spMatch[4].trim() : '';
+        const avatar = avatarMap[id] || '👔';
+
+        let parsedContent = '';
+        try {
+            parsedContent = content ? marked.parse(content) : '<span style="color: #94a3b8; font-style: italic;"><i class="fa-solid fa-spinner fa-spin"></i> กำลังแถลงมุมมอง...</span>';
+        } catch (e) {
+            parsedContent = `<div style="white-space: pre-wrap;">${content}</div>`;
+        }
+
+        html += `
+        <div class="executive-speech-card theme-${theme}">
+            <div class="exec-speech-top">
+                <div class="exec-identity">
+                    <div class="exec-speech-avatar">${avatar}</div>
+                    <div class="exec-speech-name">${title}</div>
+                </div>
+                <span class="exec-speech-tag">${id}</span>
+            </div>
+            <div class="exec-speech-content">
+                ${parsedContent}
+            </div>
+        </div>
+        `;
+    }
+
+    // 2. Parse Debate: [BOARDROOM_DEBATE:TITLE]...[/BOARDROOM_DEBATE]
+    const debateRegex = /\[BOARDROOM_DEBATE:?([^\]]*)\]([\s\S]*?)(?:\[\/BOARDROOM_DEBATE\]|$)/;
+    const debMatch = debateRegex.exec(rawText);
+    if (debMatch) {
+        const debTitle = debMatch[1] ? debMatch[1].trim() : 'การถกเถียงและประนีประนอมจุดอ่อน (Executive Debate)';
+        const debContent = debMatch[2] ? debMatch[2].trim() : '';
+        let parsedDebate = '';
+        try {
+            parsedDebate = debContent ? marked.parse(debContent) : '<span style="color: #c084fc; font-style: italic;"><i class="fa-solid fa-spinner fa-spin"></i> คณะกรรมการกำลังเริ่มถกเถียง...</span>';
+        } catch (e) {
+            parsedDebate = `<div style="white-space: pre-wrap;">${debContent}</div>`;
+        }
+        html += `
+        <div class="boardroom-debate-box">
+            <div class="boardroom-debate-title"><i class="fa-solid fa-bolt-lightning"></i> ${debTitle}</div>
+            <div class="boardroom-debate-body">${parsedDebate}</div>
+        </div>
+        `;
+    }
+
+    // 3. Parse Consensus: [BOARDROOM_CONSENSUS:TITLE]...[/BOARDROOM_CONSENSUS]
+    const consensusRegex = /\[BOARDROOM_CONSENSUS:?([^\]]*)\]([\s\S]*?)(?:\[\/BOARDROOM_CONSENSUS\]|$)/;
+    const conMatch = consensusRegex.exec(rawText);
+    if (conMatch) {
+        const conTitle = conMatch[1] ? conMatch[1].trim() : 'มติที่ประชุมและพิมพ์เขียวกลยุทธ์ (Strategic Blueprint)';
+        const conContent = conMatch[2] ? conMatch[2].trim() : '';
+        let parsedConsensus = '';
+        try {
+            parsedConsensus = conContent ? marked.parse(conContent) : '<span style="color: #fbbf24; font-style: italic;"><i class="fa-solid fa-spinner fa-spin"></i> คิระกำลังร่างมติเอกฉันท์...</span>';
+        } catch (e) {
+            parsedConsensus = `<div style="white-space: pre-wrap;">${conContent}</div>`;
+        }
+        html += `
+        <div class="boardroom-consensus-box">
+            <div class="boardroom-consensus-header">
+                <div class="boardroom-consensus-title"><i class="fa-solid fa-gavel"></i> ${conTitle}</div>
+                <div class="boardroom-consensus-actions">
+                    <button class="consensus-tool-btn" onclick="playBoardroomConsensusAudio(this)" title="ฟังเสียงอ่านสรุปมติที่ประชุม"><i class="fa-solid fa-volume-high"></i> ฟังเสียงมติ</button>
+                    <button class="consensus-tool-btn" onclick="downloadMeetingMinutes(this)" title="ดาวน์โหลดบันทึกการประชุม (.md)"><i class="fa-solid fa-file-arrow-down"></i> บันทึกรายงาน</button>
+                </div>
+            </div>
+            <div class="boardroom-consensus-body">${parsedConsensus}</div>
+        </div>
+        `;
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function downloadMeetingMinutes(btn) {
+    try {
+        const sessionWrapper = btn ? btn.closest('.boardroom-session-wrapper') : document.querySelector('.boardroom-session-wrapper');
+        let fullMeetingText = "# 🏛️ บันทึกการประชุมสภาที่ปรึกษาผู้บริหารเสมือน (Kira Virtual Boardroom Minutes)\n\n";
+        
+        const now = new Date();
+        fullMeetingText += `**วันและเวลาประชุม:** ${now.toLocaleString('th-TH')}\n\n`;
+        fullMeetingText += `**คณะกรรมการบริหารผู้เข้าร่วมประชุม:**\n`;
+        fullMeetingText += `- 👔 **คุณคิรินทร์**: ประธานเจ้าหน้าที่บริหาร (CEO & Strategist)\n`;
+        fullMeetingText += `- 💰 **คุณเมธัส**: ประธานเจ้าหน้าที่ฝ่ายการเงิน (CFO & Risk Lead)\n`;
+        fullMeetingText += `- 🎨 **คุณรินดา**: ประธานเจ้าหน้าที่ฝ่ายประสบการณ์ลูกค้า (CPO & UX)\n`;
+        fullMeetingText += `- 🛡️ **คุณธนิน**: ประธานเจ้าหน้าที่ฝ่ายเทคโนโลยี (CTO & Systems Architect)\n\n`;
+        fullMeetingText += `---\n\n`;
+
+        if (sessionWrapper) {
+            const speeches = sessionWrapper.querySelectorAll('.executive-speech-card');
+            speeches.forEach(card => {
+                const name = card.querySelector('.exec-speech-name')?.innerText || 'ผู้บริหาร';
+                const tag = card.querySelector('.exec-speech-tag')?.innerText || '';
+                const body = card.querySelector('.exec-speech-content')?.innerText || '';
+                fullMeetingText += `## ${name} (${tag})\n\n${body}\n\n---\n\n`;
+            });
+
+            const debate = sessionWrapper.querySelector('.boardroom-debate-body');
+            if (debate) {
+                fullMeetingText += `## ⚡ สรุปการถกเถียงและประนีประนอมจุดอ่อน (Executive Debate)\n\n${debate.innerText}\n\n---\n\n`;
+            }
+
+            const consensus = sessionWrapper.querySelector('.boardroom-consensus-body');
+            if (consensus) {
+                fullMeetingText += `## 🏛️ มติเอกฉันท์และพิมพ์เขียวกลยุทธ์ (Resolution Blueprint)\n\n${consensus.innerText}\n\n`;
+            }
+        }
+
+        const blob = new Blob([fullMeetingText], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+        a.href = url;
+        a.download = `Kira_Boardroom_Minutes_${dateStr}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error("Export meeting minutes error:", err);
+        alert("ไม่สามารถส่งออกบันทึกการประชุมได้ในขณะนี้ค่ะ");
+    }
+}
+
+async function playBoardroomConsensusAudio(btn) {
+    try {
+        const consensusBox = btn ? btn.closest('.boardroom-consensus-box') : null;
+        if (!consensusBox) return;
+        const textElement = consensusBox.querySelector('.boardroom-consensus-body');
+        if (!textElement) return;
+
+        // Extract verdict or first 500 characters
+        let rawText = textElement.innerText.slice(0, 600);
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเตรียมเสียง...';
+        btn.disabled = true;
+
+        if (typeof playKiraVoice === 'function') {
+            await playKiraVoice(rawText, 'th-TH-PremwadeeNeural', 1.05);
+        }
+
+        btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> กำลังอ่านมติที่ประชุม...';
+        setTimeout(() => {
+            btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียงมติ';
+            btn.disabled = false;
+        }, 6000);
+    } catch (e) {
+        console.error("Audio playback error:", e);
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียงมติ';
+            btn.disabled = false;
+        }
+    }
+}
+
+function toggleBoardroomMode(forceState) {
+    const btnToggle = document.getElementById('btn-boardroom-toggle');
+    const banner = document.getElementById('boardroom-active-banner');
+    const modelSelect = document.getElementById('model-select');
+    const userInput = document.getElementById('user-input');
+
+    const currentState = localStorage.getItem('kira_boardroom_active') === 'true';
+    const newState = (forceState !== undefined) ? forceState : !currentState;
+
+    localStorage.setItem('kira_boardroom_active', newState ? 'true' : 'false');
+
+    if (btnToggle) {
+        btnToggle.classList.toggle('active', newState);
+    }
+    if (banner) {
+        banner.style.display = newState ? 'flex' : 'none';
+    }
+
+    if (newState) {
+        if (modelSelect) {
+            modelSelect.value = 'boardroom';
+        }
+        if (userInput) {
+            userInput.placeholder = '🏛️ พิมพ์วาระการประชุมหรือโจทย์ธุรกิจที่ต้องการให้ 4 ผู้บริหารระดมสมอง...';
+        }
+        playGavelSound();
+    } else {
+        if (modelSelect && modelSelect.value === 'boardroom') {
+            modelSelect.value = localStorage.getItem('kira_default_model') || '2.1-reasoning';
+        }
+        if (userInput) {
+            userInput.placeholder = 'ถามอะไรก็ได้กับคิระ หรือพิมพ์โจทย์ของคุณ...';
+        }
+    }
+}
+
+function initBoardroomController() {
+    const btnToggle = document.getElementById('btn-boardroom-toggle');
+    const btnExit = document.getElementById('btn-boardroom-exit');
+    const btnInfo = document.getElementById('btn-boardroom-info');
+    const modalInfo = document.getElementById('boardroom-info-modal');
+    const btnCloseModal = document.getElementById('btn-close-boardroom-info');
+    const btnStartFromModal = document.getElementById('btn-start-boardroom-from-modal');
+    const modelSelect = document.getElementById('model-select');
+
+    if (btnToggle) {
+        btnToggle.addEventListener('click', () => toggleBoardroomMode());
+    }
+
+    if (btnExit) {
+        btnExit.addEventListener('click', () => toggleBoardroomMode(false));
+    }
+
+    if (btnInfo && modalInfo) {
+        btnInfo.addEventListener('click', () => {
+            modalInfo.style.display = 'flex';
+        });
+    }
+
+    if (btnCloseModal && modalInfo) {
+        btnCloseModal.addEventListener('click', () => {
+            modalInfo.style.display = 'none';
+        });
+    }
+
+    if (modalInfo) {
+        modalInfo.addEventListener('click', (e) => {
+            if (e.target === modalInfo) {
+                modalInfo.style.display = 'none';
+            }
+        });
+    }
+
+    if (btnStartFromModal && modalInfo) {
+        btnStartFromModal.addEventListener('click', () => {
+            modalInfo.style.display = 'none';
+            toggleBoardroomMode(true);
+            const userInput = document.getElementById('user-input');
+            if (userInput) userInput.focus();
+        });
+    }
+
+    if (modelSelect) {
+        modelSelect.addEventListener('change', () => {
+            if (modelSelect.value === 'boardroom') {
+                toggleBoardroomMode(true);
+            } else {
+                if (localStorage.getItem('kira_boardroom_active') === 'true') {
+                    toggleBoardroomMode(false);
+                }
+            }
+        });
+    }
+
+    // Restore boardroom state if previously active
+    if (localStorage.getItem('kira_boardroom_active') === 'true') {
+        toggleBoardroomMode(true);
+    }
+}
+
+// Initialize Boardroom on load
+initBoardroomController();
+
+// Expose globally
+window.playGavelSound = playGavelSound;
+window.renderBoardroomHTML = renderBoardroomHTML;
+window.downloadMeetingMinutes = downloadMeetingMinutes;
+window.playBoardroomConsensusAudio = playBoardroomConsensusAudio;
+window.toggleBoardroomMode = toggleBoardroomMode;
+
 
 

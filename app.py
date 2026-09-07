@@ -1038,6 +1038,7 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
     flavor: Optional[str] = "fast"
     persona: Optional[str] = "default"
+    boardroom_mode: Optional[bool] = False
 
 class FeedbackRequest(BaseModel):
     username: str
@@ -3130,8 +3131,275 @@ Keep it strictly factual and condensed. Preserve all important details so Kira n
         print("Rolling Memory compression notice:", e)
         # Fallback to standard slice if compression fails
         fallback_history = history[:1] + history[-14:]
-        user_sessions[session_key] = fallback_history
-        return fallback_history
+# ====================================================================
+# 🏛️ Kira Virtual Boardroom Engine (4-Executive Chamber)
+# ====================================================================
+
+@app.get("/api/boardroom/executives")
+async def get_boardroom_executives():
+    """ดึงข้อมูลประวัติและบทบาทของ 4 ผู้บริหารประจำ Kira Virtual Boardroom"""
+    return {
+        "status": "success",
+        "chamber": "Kira Virtual Boardroom 2.2",
+        "executives": [
+            {
+                "id": "CEO",
+                "name": "คุณคิรินทร์",
+                "title": "ประธานเจ้าหน้าที่บริหาร (CEO & Strategist)",
+                "avatar": "👔",
+                "color": "#f59e0b",
+                "theme": "gold",
+                "badge": "วิสัยทัศน์ & การเติบโต",
+                "focus": "การครองตลาด แบรนด์ วิสัยทัศน์ 1-3 ปี และการสร้างความแตกต่าง (Moat)",
+                "quote": "ความกลัวไม่เคยสร้างผู้นำตลาด เราต้องคิดใหญ่และลงมือทำให้เร็วที่สุด"
+            },
+            {
+                "id": "CFO",
+                "name": "คุณเมธัส",
+                "title": "ประธานเจ้าหน้าที่ฝ่ายการเงิน (CFO & Capital Risk)",
+                "avatar": "💰",
+                "color": "#10b981",
+                "theme": "green",
+                "badge": "การเงิน & ความเสี่ยง",
+                "focus": "กระแสเงินสด ต้นทุนแฝง จุดคุ้มทุน (BEP) และความคุ้มค่าของการลงทุน (ROI)",
+                "quote": "ตัวเลขไม่เคยโกหก หากกระแสเงินสดติดลบ ต่อให้มีวิสัยทัศน์ดีแค่ไหนก็ล้มละลาย"
+            },
+            {
+                "id": "CPO",
+                "name": "คุณรินดา",
+                "title": "ประธานเจ้าหน้าที่ฝ่ายประสบการณ์ผู้ใช้ (CPO & UX)",
+                "avatar": "🎨",
+                "color": "#ec4899",
+                "theme": "pink",
+                "badge": "ประสบการณ์ผู้ใช้ & ตลาด",
+                "focus": "Customer Pain Points ความเรียบง่าย (Simplicity) และอัตราการใช้ซ้ำ (Retention)",
+                "quote": "โปรดักต์ที่ยอดเยี่ยมไม่ใช่ฟีเจอร์เยอะ แต่คือสิ่งที่ลูกค้าใช้แล้วชีวิตง่ายขึ้นทันที"
+            },
+            {
+                "id": "CTO",
+                "name": "คุณธนิน",
+                "title": "ประธานเจ้าหน้าที่ฝ่ายเทคโนโลยี (CTO & Systems Architect)",
+                "avatar": "🛡️",
+                "color": "#06b6d4",
+                "theme": "cyan",
+                "badge": "สถาปัตยกรรม & ความเป็นไปได้",
+                "focus": "ความเป็นไปได้จริง ความปลอดภัย (Security) ความเสถียร และ Scalability",
+                "quote": "สถาปัตยกรรมที่ดีต้องสร้างเสร็จได้จริง และไม่ทิ้งหนี้ทางเทคนิคไว้ให้ตามล้างตามเช็ด"
+            }
+        ]
+    }
+
+async def _generate_virtual_boardroom_stream(user_input: str, uname: str, session_id: str, is_boss_user: bool):
+    """Kira Virtual Boardroom Stream: 3-Phase Multi-Executive Simulation Engine"""
+    import time as _time
+    start_time = _time.time()
+    full_boardroom_text = ""
+    tz = timezone(timedelta(hours=7))
+    timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    # 1. บันทึกคำถามเปิดวาระเข้าสู่ Log
+    execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
+                  (uname, session_id, timestamp, "User (Boardroom)", user_input))
+
+    # ส่งสัญญาณเริ่มเปิดการประชุมให้ Frontend ทราบเพื่อเคาะค้อน Gavel
+    start_signal = "[BOARDROOM_START]\n"
+    full_boardroom_text += start_signal
+    yield start_signal
+    await asyncio.sleep(0.05)
+
+    boardroom_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
+
+    # ----------------------------------------------------
+    # PHASE 1: แถลงการณ์มุมมองเฉพาะด้านของ 4 ผู้บริหาร
+    # ----------------------------------------------------
+    executives = [
+        {
+            "id": "CEO",
+            "name": "คุณคิรินทร์",
+            "title": "ประธานเจ้าหน้าที่บริหาร (CEO & Strategist)",
+            "theme": "gold",
+            "avatar": "👔",
+            "prompt": (
+                "คุณคือ 'คุณคิรินทร์' ประธานเจ้าหน้าที่บริหาร (CEO) ผู้มีวิสัยทัศน์กว้างไกล มุ่งเน้นการเติบโต การสร้างแบรนด์ การครองส่วนแบ่งตลาด และการเป็นเบอร์ 1 ในอุตสาหกรรม\n"
+                "จากโจทย์ที่ผู้ใช้เสนอมา จงแถลงมุมมองของ CEO อย่างคมชัด หนักแน่น ตรงประเด็น:\n"
+                "1. วิสัยทัศน์และโอกาสเชิงกลยุทธ์สูงสุดที่มองเห็น\n"
+                "2. ทิศทางการเติบโตและจุดสร้างความแตกต่าง (Moat)\n"
+                "3. คำแนะนำระดับผู้นำสำหรับก้าวแรก\n"
+                "(ตอบเป็นภาษาไทย ความยาว 120-180 คำ กระชับ มีพลัง ไม่เวิ่นเว้อ)"
+            )
+        },
+        {
+            "id": "CFO",
+            "name": "คุณเมธัส",
+            "title": "ประธานเจ้าหน้าที่ฝ่ายการเงิน (CFO & Risk / Capital)",
+            "theme": "green",
+            "avatar": "💰",
+            "prompt": (
+                "คุณคือ 'คุณเมธัส' ประธานเจ้าหน้าที่ฝ่ายการเงิน (CFO) ผู้รอบคอบ ช่างสังเกต มองตัวเลข กำไร-ขาดทุน กระแสเงินสด (Cash Flow) และความคุ้มค่าของการลงทุน (ROI)\n"
+                "จากโจทย์ที่ผู้ใช้เสนอมา จงแถลงมุมมองของ CFO อย่างตรงไปตรงมาและระมัดระวัง:\n"
+                "1. โครงสร้างต้นทุนที่ต้องระวัง (Fixed/Variable costs) และความเสี่ยงทางการเงิน\n"
+                "2. จุดคุ้มทุน (Breakeven) และโมเดลการสร้างรายได้ที่จับต้องได้\n"
+                "3. ข้อจำกัดและเกราะป้องกันความเสี่ยงด้านงบประมาณ\n"
+                "(ตอบเป็นภาษาไทย ความยาว 120-180 คำ ชัดเจนด้วยตรรกะตัวเลข ไม่โลกสวย)"
+            )
+        },
+        {
+            "id": "CPO",
+            "name": "คุณรินดา",
+            "title": "ประธานเจ้าหน้าที่ฝ่ายประสบการณ์และผลิตภัณฑ์ (CPO & UX)",
+            "theme": "pink",
+            "avatar": "🎨",
+            "prompt": (
+                "คุณคือ 'คุณรินดา' ประธานเจ้าหน้าที่ฝ่ายผลิตภัณฑ์และประสบการณ์ลูกค้า (CPO & UX Director) ผู้มีความเข้าอกเข้าใจผู้ใช้ (Empathy) สูงสุด มุ่งเน้นความเรียบง่ายและคุณค่าที่แท้จริง\n"
+                "จากโจทย์ที่ผู้ใช้เสนอมา จงแถลงมุมมองของ CPO ในแง่ของผู้ใช้งานและตลาด:\n"
+                "1. จุดเจ็บปวดที่แท้จริงของลูกค้า (Real Customer Pain Point)\n"
+                "2. ประสบการณ์ใช้งาน (User Experience) และความง่ายในการเข้าถึง\n"
+                "3. ปัจจัยที่จะทำให้ผู้ใช้หลงรักและกลับมาใช้ซ้ำ (Retention & Delight)\n"
+                "(ตอบเป็นภาษาไทย ความยาว 120-180 คำ เน้นความรู้สึกและพฤติกรรมมนุษย์)"
+            )
+        },
+        {
+            "id": "CTO",
+            "name": "คุณธนิน",
+            "title": "ประธานเจ้าหน้าที่ฝ่ายเทคโนโลยี (CTO & Systems Architect)",
+            "theme": "cyan",
+            "avatar": "🛡️",
+            "prompt": (
+                "คุณคือ 'คุณธนิน' ประธานเจ้าหน้าที่ฝ่ายเทคโนโลยีและสถาปัตยกรรม (CTO) วิศวกรสายเหตุผลและความเป็นไปได้จริง เน้นความเสถียร ความปลอดภัย (Security) และการขยายระบบ (Scalability)\n"
+                "จากโจทย์ที่ผู้ใช้เสนอมา จงแถลงมุมมองของ CTO ในแง่เทคนิคและการปฏิบัติการ:\n"
+                "1. ความเป็นไปได้ทางเทคนิค (Technical Feasibility) และระดับความยาก\n"
+                "2. สถาปัตยกรรมและเทคโนโลยีที่เหมาะสมในการเริ่มต้นแบบ Lean\n"
+                "3. กับดักทางเทคนิคและหนี้เทคโนโลยี (Tech Debt) ที่ต้องหลีกเลี่ยง\n"
+                "(ตอบเป็นภาษาไทย ความยาว 120-180 คำ ตรงไปตรงมา ชัดเจน เป็นมืออาชีพ)"
+            )
+        }
+    ]
+
+    statements = {}
+
+    for exec_info in executives:
+        exec_header = f"[BOARDROOM_SPEAKER:{exec_info['id']}:{exec_info['name']} - {exec_info['title']}:{exec_info['theme']}]\n"
+        full_boardroom_text += exec_header
+        yield exec_header
+        await asyncio.sleep(0.02)
+
+        prompt_messages = [
+            SystemMessage(content=exec_info["prompt"]),
+            HumanMessage(content=f"วาระการประชุมจากผู้ใช้: {user_input}")
+        ]
+        ok, chunks, _ = await _try_all_keys_and_models(prompt_messages, boardroom_model)
+        speech_text = "".join([getattr(c, "content", c) for c in chunks]) if ok else f"ผมขอสนับสนุนการวิเคราะห์ในมุมมองของ {exec_info['title']} เพื่อให้โครงการดำเนินไปด้วยความรัดกุมครับ"
+        statements[exec_info['id']] = speech_text
+
+        for c in chunks if ok else [speech_text]:
+            clean_c = scrub_sensitive_output(getattr(c, "content", c) if not isinstance(c, str) else c)
+            full_boardroom_text += clean_c
+            yield clean_c
+            await asyncio.sleep(0.01)
+
+        exec_footer = "\n[/BOARDROOM_SPEAKER]\n"
+        full_boardroom_text += exec_footer
+        yield exec_footer
+        await asyncio.sleep(0.04)
+
+    # ----------------------------------------------------
+    # PHASE 2: Cross-Examination & Executive Debate
+    # ----------------------------------------------------
+    debate_header = "[BOARDROOM_DEBATE:การถกเถียงและหักล้างจุดอ่อน (Executive Debate)]\n"
+    full_boardroom_text += debate_header
+    yield debate_header
+    await asyncio.sleep(0.02)
+
+    debate_prompt = [
+        SystemMessage(content=(
+            "คุณคือผู้สังเคราะห์การประชุมผู้บริหารระดับสูง (Executive Debate Facilitator)\n"
+            "ผู้บริหารทั้ง 4 ได้แถลงมุมมองของตนเองแล้วดังนี้:\n"
+            f"- CEO (คุณคิรินทร์): {statements.get('CEO', '')[:400]}\n"
+            f"- CFO (คุณเมธัส): {statements.get('CFO', '')[:400]}\n"
+            f"- CPO (คุณรินดา): {statements.get('CPO', '')[:400]}\n"
+            f"- CTO (คุณธนิน): {statements.get('CTO', '')[:400]}\n\n"
+            "หน้าที่ของคุณคือ: จำลองบทสนทนาการถกเถียงสด (Debate) ระหว่างผู้บริหารอย่างเฉียบคมและสมจริง โดยให้มีการท้าทายกัน เช่น:\n"
+            "- CFO ท้วงติงงบประมาณของ CEO และถามเรื่องกระแสเงินสด\n"
+            "- CTO ชี้ข้อจำกัดของระบบต่อฟีเจอร์ที่ CPO อยากได้ว่าอาจทำให้เลื่อนกำหนดการ\n"
+            "- CPO โต้แย้ง CTO เรื่องความง่ายของผู้ใช้ อย่าทำระบบซับซ้อนเกินไป\n"
+            "- CEO สรุปจุดประนีประนอมที่ลงตัวระหว่าง ความเร็ว ต้นทุน และประสบการณ์ลูกค้า\n"
+            "รูปแบบการตอบ: เขียนเป็นบทสนทนาโต้ตอบสลับกัน 4-5 ลำดับ โดยขึ้นต้นแต่ละคนด้วยไอคอนและชื่อชัดเจน เช่น:\n"
+            "💰 คุณเมธัส (CFO): ...\n"
+            "🎨 คุณรินดา (CPO): ...\n"
+            "🛡️ คุณธนิน (CTO): ...\n"
+            "👔 คุณคิรินทร์ (CEO): ...\n"
+            "ความยาวรวม 180-260 คำ กระชับ มีไหวพริบ และลื่นไหลเป็นธรรมชาติ"
+        )),
+        HumanMessage(content=f"วาระการประชุม: {user_input}")
+    ]
+    ok_deb, deb_chunks, _ = await _try_all_keys_and_models(debate_prompt, boardroom_model)
+    deb_text = "".join([getattr(c, "content", c) for c in deb_chunks]) if ok_deb else "ที่ประชุมได้ถกเถียงและชั่งน้ำหนักเรื่องงบประมาณและความเป็นไปได้ทางเทคนิคอย่างรอบคอบ"
+    for c in deb_chunks if ok_deb else [deb_text]:
+        clean_c = scrub_sensitive_output(getattr(c, "content", c) if not isinstance(c, str) else c)
+        full_boardroom_text += clean_c
+        yield clean_c
+        await asyncio.sleep(0.01)
+
+    debate_footer = "\n[/BOARDROOM_DEBATE]\n"
+    full_boardroom_text += debate_footer
+    yield debate_footer
+    await asyncio.sleep(0.04)
+
+    # ----------------------------------------------------
+    # PHASE 3: Consensus & Strategic Blueprint
+    # ----------------------------------------------------
+    consensus_header = "[BOARDROOM_CONSENSUS:มติที่ประชุมและพิมพ์เขียวกลยุทธ์ (Strategic Blueprint)]\n"
+    full_boardroom_text += consensus_header
+    yield consensus_header
+    await asyncio.sleep(0.02)
+
+    consensus_prompt = [
+        SystemMessage(content=(
+            "คุณคือ 'คิระ' เลขานุการคณะกรรมการบริหารระดับสูง สังเคราะห์มติเอกฉันท์ของที่ประชุม (Executive Board Resolution)\n"
+            "จากวาระการประชุมและมุมมองของ 4 ผู้บริหาร (CEO, CFO, CPO, CTO) รวมถึงการถกเถียงกันในห้องประชุม:\n\n"
+            "จงจัดทำ 'เอกสารสรุปมติที่ประชุมและพิมพ์เขียวกลยุทธ์' ให้ผู้ใช้โดยต้องมีหัวข้อครบถ้วนตามโครงสร้างนี้อย่างเคร่งครัด:\n\n"
+            "### 🏛️ 1. มติเอกฉันท์ของที่ประชุม (The Executive Verdict)\n"
+            "(ฟันธง 2-3 ประโยคชัดเจนว่าควรเดินหน้าอย่างไร โมเดลไหน และเป้าหมายหลักคืออะไร)\n\n"
+            "### ⚖️ 2. ตารางประเมิน 4 มิติ (4D Evaluation Matrix)\n"
+            "| มิติการพิจารณา | ผู้รับผิดชอบ | คะแนนความพร้อม (1-10) | ข้อสรุปและจุดชี้ขาด |\n"
+            "| :--- | :--- | :---: | :--- |\n"
+            "| **กลยุทธ์และการเติบโต** | 👔 CEO คุณคิรินทร์ | .../10 | ... |\n"
+            "| **การเงินและความคุ้มทุน** | 💰 CFO คุณเมธัส | .../10 | ... |\n"
+            "| **ประสบการณ์ผู้ใช้** | 🎨 CPO คุณรินดา | .../10 | ... |\n"
+            "| **สถาปัตยกรรมเทคนิค** | 🛡️ CTO คุณธนิน | .../10 | ... |\n\n"
+            "### 🚀 3. แผนปฏิบัติการ 3 ระยะ (3-Phase Action Roadmap)\n"
+            "- **เฟส 1 (Day 1 - 30): สิ่งที่ต้องทำทันที (Quick Wins & Validation)** - ...\n"
+            "- **เฟส 2 (Day 31 - 60): การสร้างและทดสอบตลาด (Build & Pilot Launch)** - ...\n"
+            "- **เฟส 3 (Day 61 - 90): การขยายผลและคืนทุน (Scale & Monetization)** - ...\n\n"
+            "### ⚠️ 4. เกราะป้องกันความเสี่ยงสูงสุด (Top 3 Risk Safeguards)\n"
+            "1. ...\n2. ...\n3. ...\n\n"
+            "### 💡 5. คำแนะนำส่งท้ายจากประธานคิรินทร์\n"
+            "(คำคมหรือข้อคิดปิดท้าย 1-2 ประโยคที่สร้างพลังและความมั่นใจ)"
+        )),
+        HumanMessage(content=f"วาระการประชุม: {user_input}\n\nบทวิเคราะห์ 4 ผู้บริหาร:\nCEO: {statements.get('CEO', '')[:300]}\nCFO: {statements.get('CFO', '')[:300]}\nCPO: {statements.get('CPO', '')[:300]}\nCTO: {statements.get('CTO', '')[:300]}")
+    ]
+    ok_con, con_chunks, _ = await _try_all_keys_and_models(consensus_prompt, boardroom_model)
+    con_text = "".join([getattr(c, "content", c) for c in con_chunks]) if ok_con else "มติที่ประชุมสรุปให้ดำเนินการตามแผนงานแบบค่อยเป็นค่อยไปเพื่อลดความเสี่ยงสูงสุดค่ะ"
+    for c in con_chunks if ok_con else [con_text]:
+        clean_c = scrub_sensitive_output(getattr(c, "content", c) if not isinstance(c, str) else c)
+        full_boardroom_text += clean_c
+        yield clean_c
+        await asyncio.sleep(0.01)
+
+    consensus_footer = "\n[/BOARDROOM_CONSENSUS]\n"
+    full_boardroom_text += consensus_footer
+    yield consensus_footer
+    await asyncio.sleep(0.02)
+
+    done_signal = "[BOARDROOM_DONE]\n"
+    full_boardroom_text += done_signal
+    yield done_signal
+
+    # 4. บันทึกประวัติและเพิ่มคะแนนโควตา
+    execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
+                  (uname, session_id, timestamp, "Boardroom", full_boardroom_text))
+    use_user_quota(uname)
+    execute_query("UPDATE users SET points = points + 2 WHERE username=?", (uname,))
 
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest, request: Request):
@@ -3214,6 +3482,14 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         )
 
     session_key = f"{uname}_{session_id}" if session_id else uname
+
+    # 🏛️ Kira Virtual Boardroom Interception (4-Executive Simulation)
+    is_boardroom = (getattr(req, "boardroom_mode", False) is True) or (model_version == "boardroom")
+    if is_boardroom:
+        return StreamingResponse(
+            _generate_virtual_boardroom_stream(user_input, uname, session_id, is_boss_user),
+            media_type="text/plain; charset=utf-8"
+        )
 
     # --- Image Generation Interception (Backend) ---
     import re as _re

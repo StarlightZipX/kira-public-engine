@@ -4544,4 +4544,714 @@ body.oled-theme .chat-input-wrapper {
         align-items: flex-start;
         gap: 10px;
     }
-}
+}
+
+/* ====================================================================
+   🏛️ KIRA VIRTUAL BOARDROOM: HIGH-TECH GLASSMORPHIC STYLES
+   ==================================================================== */
+
+/* Header Boardroom Toggle Button */
+.boardroom-toggle-btn {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(168, 85, 247, 0.2)) !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    color: #fbbf24 !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 0.45rem 0.85rem !important;
+    border-radius: 10px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+}
+
+.boardroom-toggle-btn:hover {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(168, 85, 247, 0.35)) !important;
+    border-color: #f59e0b !important;
+    color: #fff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+}
+
+.boardroom-toggle-btn.active {
+    background: linear-gradient(135deg, #f59e0b, #9333ea) !important;
+    border-color: #fbbf24 !important;
+    color: #fff !important;
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* Active Chamber Banner Above Chat */
+.boardroom-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: linear-gradient(135deg, rgba(26, 16, 60, 0.92), rgba(15, 23, 42, 0.96));
+    backdrop-filter: blur(16px);
+    border-bottom: 1.5px solid rgba(245, 158, 11, 0.35);
+    padding: 10px 20px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    animation: bannerSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bannerSlideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.boardroom-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 260px;
+}
+
+.boardroom-chamber-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.45);
+    flex-shrink: 0;
+}
+
+.boardroom-chamber-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.boardroom-badge-live {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #f87171;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ef4444;
+    animation: livePulse 1.2s infinite;
+}
+
+@keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.boardroom-chamber-subtitle {
+    font-size: 0.76rem;
+    color: #94a3b8;
+}
+
+/* Executive Chips */
+.boardroom-executives-chips {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.exec-avatar-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.exec-avatar-chip:hover {
+    transform: translateY(-1px);
+}
+
+.exec-chip-icon {
+    font-size: 1.1rem;
+}
+
+.exec-chip-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.exec-chip-role {
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.exec-chip-sub {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    line-height: 1.2;
+}
+
+.exec-chip-ceo {
+    border-color: rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.08);
+}
+.exec-chip-ceo .exec-chip-role { color: #fbbf24; }
+
+.exec-chip-cfo {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.08);
+}
+.exec-chip-cfo .exec-chip-role { color: #34d399; }
+
+.exec-chip-cpo {
+    border-color: rgba(236, 72, 153, 0.35);
+    background: rgba(236, 72, 153, 0.08);
+}
+.exec-chip-cpo .exec-chip-role { color: #f472b6; }
+
+.exec-chip-cto {
+    border-color: rgba(6, 182, 212, 0.35);
+    background: rgba(6, 182, 212, 0.08);
+}
+.exec-chip-cto .exec-chip-role { color: #22d3ee; }
+
+/* Banner Action Buttons */
+.boardroom-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.boardroom-action-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.boardroom-action-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.boardroom-action-btn.exit-btn {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+.boardroom-action-btn.exit-btn:hover {
+    background: rgba(239, 68, 68, 0.25);
+    color: #fff;
+}
+
+/* ====================================================================
+   BOARDROOM CHAT SPEECH CARDS & EXEC BUBBLES
+   ==================================================================== */
+
+.boardroom-session-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    margin: 8px 0;
+}
+
+.boardroom-session-header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(147, 51, 234, 0.25));
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+    align-self: flex-start;
+}
+
+/* Individual Executive Speech Card */
+.executive-speech-card {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 16px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    transition: all 0.25s ease;
+    animation: execCardFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes execCardFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.executive-speech-card.theme-gold {
+    border-left: 4px solid #f59e0b;
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.06), rgba(15, 23, 42, 0.85) 30%);
+}
+.executive-speech-card.theme-green {
+    border-left: 4px solid #10b981;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.06), rgba(15, 23, 42, 0.85) 30%);
+}
+.executive-speech-card.theme-pink {
+    border-left: 4px solid #ec4899;
+    background: linear-gradient(90deg, rgba(236, 72, 153, 0.06), rgba(15, 23, 42, 0.85) 30%);
+}
+.executive-speech-card.theme-cyan {
+    border-left: 4px solid #06b6d4;
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.06), rgba(15, 23, 42, 0.85) 30%);
+}
+
+.exec-speech-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.exec-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.exec-speech-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+}
+
+.exec-speech-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.exec-speech-tag {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+}
+
+.theme-gold .exec-speech-tag { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+.theme-green .exec-speech-tag { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+.theme-pink .exec-speech-tag { background: rgba(236, 72, 153, 0.2); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.4); }
+.theme-cyan .exec-speech-tag { background: rgba(6, 182, 212, 0.2); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.4); }
+
+.exec-speech-content {
+    color: #e2e8f0;
+    font-size: 0.94rem;
+    line-height: 1.65;
+}
+
+.exec-speech-content p {
+    margin: 0 0 8px 0;
+}
+.exec-speech-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* ====================================================================
+   DEBATE & CONSENSUS SPECIAL CARDS
+   ==================================================================== */
+
+.boardroom-debate-box {
+    background: linear-gradient(135deg, rgba(88, 28, 135, 0.25), rgba(15, 23, 42, 0.92));
+    border: 1.5px solid rgba(168, 85, 247, 0.4);
+    border-radius: 18px;
+    padding: 18px 22px;
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.15);
+    margin: 10px 0;
+}
+
+.boardroom-debate-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #c084fc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    letter-spacing: 0.02em;
+}
+
+.boardroom-debate-body {
+    color: #f1f5f9;
+    font-size: 0.93rem;
+    line-height: 1.7;
+}
+
+/* Grand Executive Consensus Card */
+.boardroom-consensus-box {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(99, 102, 241, 0.12), rgba(15, 23, 42, 0.96));
+    border: 1.5px solid rgba(245, 158, 11, 0.45);
+    border-radius: 20px;
+    padding: 24px 26px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 35px rgba(245, 158, 11, 0.18);
+    position: relative;
+    margin: 14px 0 6px 0;
+}
+
+.boardroom-consensus-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.boardroom-consensus-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #fbbf24;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.boardroom-consensus-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.consensus-tool-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #fde68a;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.consensus-tool-btn:hover {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fff;
+    border-color: #fbbf24;
+    transform: translateY(-1px);
+}
+
+.boardroom-consensus-body {
+    color: #f8fafc;
+    font-size: 0.94rem;
+    line-height: 1.7;
+}
+
+.boardroom-consensus-body h3 {
+    color: #fbbf24;
+    font-size: 1.02rem;
+    margin: 18px 0 10px 0;
+}
+
+.boardroom-consensus-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 0.88rem;
+}
+
+.boardroom-consensus-body th {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    font-weight: 700;
+    padding: 8px 12px;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.boardroom-consensus-body td {
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.boardroom-consensus-body tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* ====================================================================
+   BOARDROOM INFO MODAL
+   ==================================================================== */
+
+.boardroom-info-card {
+    max-width: 900px;
+    width: 94%;
+    max-height: 88vh;
+    overflow-y: auto;
+    border-radius: 22px;
+    padding: 28px 32px 32px 32px;
+    border: 1.5px solid rgba(245, 158, 11, 0.3);
+    background: linear-gradient(135deg, rgba(17, 24, 39, 0.98), rgba(15, 23, 42, 0.99));
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 40px rgba(245, 158, 11, 0.18);
+    margin: auto;
+}
+
+.boardroom-info-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 18px;
+}
+
+.boardroom-info-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #fbbf24;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.boardroom-info-title-group h2 {
+    font-size: 1.4rem;
+    color: #f8fafc;
+    margin: 0 0 6px 0;
+}
+
+.boardroom-info-desc {
+    color: #94a3b8;
+    font-size: 0.88rem;
+    margin: 0;
+    max-width: 650px;
+}
+
+.boardroom-executives-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.boardroom-exec-profile-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 18px;
+    transition: all 0.2s ease;
+}
+
+.boardroom-exec-profile-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.profile-ceo { border-top: 3px solid #f59e0b; }
+.profile-cfo { border-top: 3px solid #10b981; }
+.profile-cpo { border-top: 3px solid #ec4899; }
+.profile-cto { border-top: 3px solid #06b6d4; }
+
+.exec-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.exec-portrait {
+    font-size: 2rem;
+}
+
+.exec-role-tag {
+    font-size: 0.7rem;
+    font-weight: 800;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.role-gold { color: #fbbf24; }
+.role-green { color: #34d399; }
+.role-pink { color: #f472b6; }
+.role-cyan { color: #22d3ee; }
+
+.exec-meta h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #f8fafc;
+}
+
+.exec-focus {
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 0 0 10px 0;
+}
+
+.exec-quote {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    font-style: italic;
+    border-left: 2px solid rgba(255, 255, 255, 0.2);
+    padding-left: 8px;
+    margin: 0;
+}
+
+.boardroom-workflow-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-bottom: 22px;
+}
+
+.workflow-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.step-label {
+    font-size: 0.82rem;
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+.workflow-step.highlight .step-num {
+    background: #f59e0b;
+    color: #0f172a;
+}
+.workflow-step.highlight .step-label {
+    color: #fbbf24;
+}
+
+.workflow-arrow {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.boardroom-info-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.boardroom-primary-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 10px 22px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+    transition: all 0.2s ease;
+}
+
+.boardroom-primary-btn:hover {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    transform: translateY(-2px);
+    box-shadow: 0 0 28px rgba(245, 158, 11, 0.6);
+}
+
+/* Boardroom Mobile Responsiveness */
+@media (max-width: 768px) {
+    .boardroom-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px 14px;
+    }
+    .boardroom-executives-chips {
+        width: 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+    }
+    .boardroom-exec-profile-card {
+        padding: 14px;
+    }
+    .boardroom-executives-grid {
+        grid-template-columns: 1fr;
+    }
+    .boardroom-workflow-bar {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    .workflow-arrow {
+        display: none;
+    }
+    .boardroom-info-card {
+        padding: 20px 16px;
+    }
+    .boardroom-consensus-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
