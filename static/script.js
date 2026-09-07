@@ -144,15 +144,13 @@ function updateModelUI() {
     // Toggle Sub-model UI with Animation for all modern/advanced versions
     if (subModelContainer) {
         if (isAdvanced) {
-            subModelContainer.style.maxHeight = '50px';
+            subModelContainer.style.maxHeight = '36px';
             subModelContainer.style.opacity = '1';
-            subModelContainer.style.padding = '8px 15px';
-            subModelContainer.style.borderBottom = '1px solid #334155';
+            subModelContainer.style.padding = '4px 20px';
         } else {
             subModelContainer.style.maxHeight = '0';
             subModelContainer.style.opacity = '0';
-            subModelContainer.style.padding = '0 15px';
-            subModelContainer.style.borderBottom = '1px solid transparent';
+            subModelContainer.style.padding = '0 20px';
         }
     }
 }
@@ -228,19 +226,23 @@ async function loadUserProfile() {
 
 async function checkEngineStatus() {
     const badge = document.getElementById('engine-status-badge');
-    if (!badge) return;
+    const unifiedText = document.getElementById('unified-status-text');
+    const unifiedPill = document.getElementById('kira-unified-status');
     try {
         const res = await fetch('/api/ollama/status');
         const data = await res.json();
         if (data.status === 'online' && data.models && data.models.length > 0) {
-            badge.innerHTML = `<span class="pulse-dot local"></span><span class="engine-text">Local GPU (${data.models[0]})</span>`;
-            badge.title = `เชื่อมต่อกับ Local GPU สำเร็จ (Ollama: ${data.models.join(', ')})`;
+            if (badge) badge.innerHTML = `<span class="pulse-dot local"></span><span class="engine-text">Local GPU (${data.models[0]})</span>`;
+            if (unifiedText) unifiedText.textContent = `Local GPU (${data.models[0]})`;
+            if (unifiedPill) unifiedPill.title = `เชื่อมต่อกับ Local GPU สำเร็จ (Ollama: ${data.models.join(', ')}) • Heartbeat Active`;
         } else {
-            badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Swarm 2.1</span>`;
-            badge.title = "ประมวลผลผ่านโครงข่าย Supercluster Cloud Multi-Brain";
+            if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Swarm 2.1</span>`;
+            if (unifiedText) unifiedText.textContent = 'Cloud Swarm 2.1';
+            if (unifiedPill) unifiedPill.title = 'ระบบพร้อมใช้งาน 100% | Proactive Heartbeat ตื่นรู้ & Cloud Supercluster Multi-Brain';
         }
     } catch (e) {
-        badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Swarm 2.1</span>`;
+        if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Swarm 2.1</span>`;
+        if (unifiedText) unifiedText.textContent = 'Cloud Swarm 2.1';
     }
 }
 
@@ -674,6 +676,10 @@ async function loadProactiveBriefing() {
 }
 
 async function renderWelcomeHub() {
+    const qpWrapper = document.getElementById('quick-prompts-wrapper');
+    if (qpWrapper) {
+        qpWrapper.classList.remove('hidden-during-chat');
+    }
     chatBox.innerHTML = `
         <div class="welcome-hero-card">
             <div class="welcome-meta-bar">
@@ -1111,20 +1117,6 @@ async function loadHistory() {
         const data = await response.json();
         
         chatHistorySidebar.innerHTML = '<p class="history-title">ประวัติการแชท</p>';
-        
-        // Add "New Chat" button
-        const newChatDiv = document.createElement('div');
-        newChatDiv.className = 'history-item';
-        newChatDiv.style.border = '1px solid #3b82f6';
-        newChatDiv.style.color = '#60a5fa';
-        newChatDiv.innerHTML = `<i class="fa-solid fa-plus"></i> แชทใหม่ (New Chat)`;
-        newChatDiv.onclick = () => {
-            currentSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-            renderWelcomeHub();
-            document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
-            newChatDiv.classList.add('active');
-        };
-        chatHistorySidebar.appendChild(newChatDiv);
 
         if (data.sessions && data.sessions.length > 0) {
             data.sessions.forEach((session, idx) => {
@@ -1303,6 +1295,12 @@ async function sendMessage() {
 
     addMessage(text || 'ส่งรูปภาพเพื่อตรวจสอบ (Visual Diagnostic)', true, imgBase64ToSend);
     playKiraSound('send');
+
+    // Hide quick prompts bar during active chat for clean space
+    const qpWrapper = document.getElementById('quick-prompts-wrapper');
+    if (qpWrapper) {
+        qpWrapper.classList.add('hidden-during-chat');
+    }
 
     // Ensure sidebar has the active chat item if not already there
     if (!chatHistorySidebar.querySelector('.history-item.active')) {
@@ -1959,29 +1957,30 @@ let currentAudio = null;
 let currentSpeakingBtn = null;
 let isAutoSpeakEnabled = localStorage.getItem('kira_auto_speak') === 'true';
 
+function updateAutoSpeakUI() {
+    const btnAutoSpeak = document.getElementById('btn-autospeak');
+    const autoSpeakStatusText = document.getElementById('autospeak-status-text');
+    const autoSpeakIcon = document.getElementById('autospeak-icon');
+    if (btnAutoSpeak) {
+        btnAutoSpeak.classList.toggle('active', isAutoSpeakEnabled);
+        btnAutoSpeak.title = isAutoSpeakEnabled ? 'ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak Active)' : 'เปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak Off)';
+    }
+    if (autoSpeakIcon) {
+        autoSpeakIcon.className = isAutoSpeakEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+    }
+    if (autoSpeakStatusText) {
+        autoSpeakStatusText.textContent = isAutoSpeakEnabled ? 'สถานะ: เปิดใช้งานอยู่' : 'สถานะ: ปิดอยู่';
+    }
+}
+
 const btnAutoSpeak = document.getElementById('btn-autospeak');
 if (btnAutoSpeak) {
-    if (isAutoSpeakEnabled) {
-        btnAutoSpeak.classList.add('active');
-        btnAutoSpeak.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-        btnAutoSpeak.title = 'ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak Active)';
-    } else {
-        btnAutoSpeak.classList.remove('active');
-        btnAutoSpeak.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-        btnAutoSpeak.title = 'เปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak Off)';
-    }
-
+    updateAutoSpeakUI();
     btnAutoSpeak.addEventListener('click', () => {
         isAutoSpeakEnabled = !isAutoSpeakEnabled;
         localStorage.setItem('kira_auto_speak', isAutoSpeakEnabled);
-        if (isAutoSpeakEnabled) {
-            btnAutoSpeak.classList.add('active');
-            btnAutoSpeak.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-            btnAutoSpeak.title = 'ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak Active)';
-        } else {
-            btnAutoSpeak.classList.remove('active');
-            btnAutoSpeak.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-            btnAutoSpeak.title = 'เปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak Off)';
+        updateAutoSpeakUI();
+        if (!isAutoSpeakEnabled) {
             if (currentAudio) {
                 currentAudio.pause();
                 if (currentSpeakingBtn) {
@@ -3012,11 +3011,7 @@ async function loadSettingsPreferences() {
                     autoSpeakChk.checked = Boolean(prefs.auto_speak);
                     isAutoSpeakEnabled = Boolean(prefs.auto_speak);
                     localStorage.setItem('kira_auto_speak', isAutoSpeakEnabled);
-                    const btnAutoSpeak = document.getElementById('btn-autospeak');
-                    if (btnAutoSpeak) {
-                        btnAutoSpeak.classList.toggle('active', isAutoSpeakEnabled);
-                        btnAutoSpeak.innerHTML = isAutoSpeakEnabled ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
-                    }
+                    updateAutoSpeakUI();
                 }
                 
                 const memoryChk = document.getElementById('setting-graph-memory');
@@ -3079,11 +3074,7 @@ async function saveSettings() {
     localStorage.setItem('kira_python_confirm', pythonConfirm);
     
     isAutoSpeakEnabled = autoSpeak;
-    const btnAutoSpeak = document.getElementById('btn-autospeak');
-    if (btnAutoSpeak) {
-        btnAutoSpeak.classList.toggle('active', isAutoSpeakEnabled);
-        btnAutoSpeak.innerHTML = isAutoSpeakEnabled ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
-    }
+    updateAutoSpeakUI();
     
     const mainPersonaSelect = document.getElementById('persona-select');
     if (mainPersonaSelect) mainPersonaSelect.value = persona;
@@ -3866,12 +3857,49 @@ function initBoardroomController() {
 // Initialize Boardroom on load
 initBoardroomController();
 
+// --- 🧰 Tools Popover Dropdown Controller ---
+function initToolsDropdownController() {
+    const wrapper = document.getElementById('tools-dropdown-wrapper');
+    const triggerBtn = document.getElementById('btn-header-tools');
+    const dropdownMenu = document.getElementById('tools-dropdown-menu');
+
+    if (triggerBtn && wrapper) {
+        triggerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            wrapper.classList.toggle('open');
+        });
+    }
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+        if (wrapper && wrapper.classList.contains('open')) {
+            if (!wrapper.contains(e.target)) {
+                wrapper.classList.remove('open');
+            }
+        }
+    });
+
+    // Close dropdown when selecting a tool (except AutoSpeak toggle so user sees status)
+    if (dropdownMenu && wrapper) {
+        dropdownMenu.querySelectorAll('.tools-menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (item.id !== 'btn-autospeak') {
+                    wrapper.classList.remove('open');
+                }
+            });
+        });
+    }
+}
+
+initToolsDropdownController();
+
 // Expose globally
 window.playGavelSound = playGavelSound;
 window.renderBoardroomHTML = renderBoardroomHTML;
 window.downloadMeetingMinutes = downloadMeetingMinutes;
 window.playBoardroomConsensusAudio = playBoardroomConsensusAudio;
 window.toggleBoardroomMode = toggleBoardroomMode;
+
 
 
 

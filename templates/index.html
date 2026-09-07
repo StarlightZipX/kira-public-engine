@@ -315,66 +315,130 @@
 
         <!-- Main Chat Area -->
         <main class="chat-area">
-            <header class="chat-header">
-                <button id="toggle-sidebar" class="menu-btn"><i class="fa-solid fa-bars"></i></button>
-                <h3>Kira: Next-Gen Intelligence</h3>
-                <div class="header-actions">
-                    <div id="heartbeat-badge" class="heartbeat-badge" title="Kira Proactive Heartbeat: ระบบตื่นรู้และพร้อมสื่อสารเชิงรุก">
-                        <span class="heartbeat-pulse-dot"></span>
-                        <span class="heartbeat-text"><i class="fa-solid fa-heart-pulse"></i> Heartbeat Active</span>
+            <header class="chat-header zen-header">
+                <div class="header-left">
+                    <button id="toggle-sidebar" class="menu-btn" title="เปิด/ปิดแถบเมนูด้านข้าง"><i class="fa-solid fa-bars"></i></button>
+                    <div class="header-branding">
+                        <span class="brand-title">Kira AI</span>
+                        <div id="kira-unified-status" class="unified-status-pill" title="ระบบพร้อมใช้งาน 100% | Proactive Heartbeat ตื่นรู้ & Cloud Supercluster Multi-Brain">
+                            <span class="status-live-dot"></span>
+                            <span class="status-live-label" id="unified-status-text">Cloud Swarm 2.1</span>
+                            <!-- Hidden legacy hooks for JS compatibility -->
+                            <span id="heartbeat-badge" style="display:none;"><span class="heartbeat-pulse-dot"></span></span>
+                            <span id="engine-status-badge" style="display:none;"><span class="pulse-dot cloud"></span></span>
+                        </div>
                     </div>
-                    <div id="engine-status-badge" class="engine-badge" title="สถานะโครงข่ายประมวลผล: Cloud Supercluster Active">
-                        <span class="pulse-dot cloud"></span>
-                        <span class="engine-text">Cloud Swarm 2.1</span>
-                    </div>
-                    <button title="ส่องโครงข่ายความจำ (Knowledge Graph Mind-Map)" id="btn-graph" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-diagram-project"></i></button>
-                    <button title="เปิด/ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak)" id="btn-autospeak" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-volume-xmark"></i></button>
-                    <button title="บันทึกออก (Export PDF)" id="btn-export" style="background: none; border: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;"><i class="fa-solid fa-file-export"></i></button>
-                    <button title="คู่มือแนะนำการใช้งาน (Kira Interactive Guide)" id="btn-open-guide" class="header-action-btn" style="background: none; border: none; color: #38bdf8; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-book-open"></i></button>
-                    <button title="เปิดห้องประชุมจำลอง AI 4 ผู้บริหาร (Virtual Boardroom)" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn">
+                </div>
+
+                <div class="header-actions zen-actions">
+                    <!-- Virtual Boardroom Quick Toggle -->
+                    <button title="เปิดสภาที่ปรึกษาเสมือน AI 4 ผู้บริหาร (Virtual Boardroom)" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn">
                         <i class="fa-solid fa-users-viewfinder"></i>
                         <span class="boardroom-btn-text">ห้องประชุม</span>
                     </button>
-                    <select id="model-select" class="model-select">
-                        <optgroup label="🏛️ สภาที่ปรึกษา AI (Virtual Boardroom)">
-                            <option value="boardroom">🏛️ Virtual Boardroom (ห้องประชุม 4 ผู้บริหาร)</option>
-                        </optgroup>
-                        <optgroup label="🚀 โมเดลรุ่นล่าสุด (Kira 2.1 Next-Gen)">
-                            <option value="2.1-reasoning" selected>👑 Kira 2.1 Reasoning (Deep Thinker)</option>
-                            <option value="2.1-pro">🧠 Kira 2.1 Pro (Super-Agent)</option>
-                        </optgroup>
-                        <optgroup label="✨ โมเดล Kira 2.0">
-                            <option value="2.0-flash">Kira 2.0 Flash</option>
-                            <option value="2.0-vision">Kira 2.0 Vision</option>
-                            <option value="2.0-pro">Kira 2.0 Pro</option>
-                            <option value="2.0-ultra">Kira 2.0 Ultra</option>
-                        </optgroup>
-                        <optgroup label="🏛️ โมเดลรุ่นก่อนหน้า (Legacy)">
-                            <option value="1.0">Kira 1.0 Standard</option>
-                            <option value="1.1">Kira 1.1 Pioneer</option>
-                            <option value="1.2">Kira 1.2 Apex</option>
-                            <option value="1.3">Kira 1.3 Enterprise</option>
-                        </optgroup>
-                    </select>
-                    <button title="สลับโหมดกลางวัน/กลางคืน" id="btn-theme" style="margin-right: 8px;"><i class="fa-solid fa-moon"></i></button>
-                    <button title="ตั้งค่าระบบ (Settings) - Ctrl+," id="btn-header-settings" class="header-action-btn" style="background: none; border: none; color: #c084fc; font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;"><i class="fa-solid fa-gear"></i></button>
-                    <button title="เกี่ยวกับระบบ" id="btn-info"><i class="fa-solid fa-circle-info"></i></button>
+
+                    <!-- Model Select -->
+                    <div class="model-select-wrapper">
+                        <select id="model-select" class="model-select">
+                            <optgroup label="🏛️ สภาที่ปรึกษา AI (Virtual Boardroom)">
+                                <option value="boardroom">🏛️ Virtual Boardroom (ห้องประชุม 4 ผู้บริหาร)</option>
+                            </optgroup>
+                            <optgroup label="🚀 โมเดลแนะนำ (Kira 2.1 Next-Gen)">
+                                <option value="2.1-reasoning" selected>👑 Kira 2.1 Reasoning (Deep Thinker)</option>
+                                <option value="2.1-pro">🧠 Kira 2.1 Pro (Super-Agent)</option>
+                            </optgroup>
+                            <optgroup label="✨ โมเดล Kira 2.0">
+                                <option value="2.0-flash">Kira 2.0 Flash</option>
+                                <option value="2.0-vision">Kira 2.0 Vision</option>
+                                <option value="2.0-pro">Kira 2.0 Pro</option>
+                                <option value="2.0-ultra">Kira 2.0 Ultra</option>
+                            </optgroup>
+                            <optgroup label="🏛️ โมเดลรุ่นก่อนหน้า (Legacy)">
+                                <option value="1.0">Kira 1.0 Standard</option>
+                                <option value="1.1">Kira 1.1 Pioneer</option>
+                                <option value="1.2">Kira 1.2 Apex</option>
+                                <option value="1.3">Kira 1.3 Enterprise</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- 🧰 All Secondary Tools Unified in One Beautiful Dropdown -->
+                    <div class="tools-dropdown-wrapper" id="tools-dropdown-wrapper">
+                        <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" title="เครื่องมือเพิ่มเติม (Tools)">
+                            <i class="fa-solid fa-toolbox"></i>
+                            <span class="tools-btn-text">เครื่องมือ</span>
+                            <i class="fa-solid fa-chevron-down tools-caret"></i>
+                        </button>
+                        <div class="tools-dropdown-menu" id="tools-dropdown-menu">
+                            <div class="tools-dropdown-header">
+                                <i class="fa-solid fa-sliders"></i> เครื่องมือและฟังก์ชันเสริม
+                            </div>
+                            
+                            <button class="tools-menu-item" id="btn-graph" title="ส่องโครงข่ายความจำ (Knowledge Graph Mind-Map)">
+                                <span class="tool-item-icon icon-purple"><i class="fa-solid fa-diagram-project"></i></span>
+                                <div class="tool-item-info">
+                                    <span class="tool-item-title">โครงข่ายความจำ (GraphRAG)</span>
+                                    <span class="tool-item-desc">ส่องแผนผังความจำ 2D Physics ของคุณ</span>
+                                </div>
+                            </button>
+
+                            <button class="tools-menu-item" id="btn-autospeak" title="เปิด/ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak)">
+                                <span class="tool-item-icon icon-green"><i class="fa-solid fa-volume-high" id="autospeak-icon"></i></span>
+                                <div class="tool-item-info">
+                                    <span class="tool-item-title">อ่านออกเสียงอัตโนมัติ (TTS)</span>
+                                    <span class="tool-item-desc" id="autospeak-status-text">สถานะ: ปิดอยู่</span>
+                                </div>
+                            </button>
+
+                            <button class="tools-menu-item" id="btn-export" title="บันทึกออกการสนทนา (Export)">
+                                <span class="tool-item-icon icon-blue"><i class="fa-solid fa-file-export"></i></span>
+                                <div class="tool-item-info">
+                                    <span class="tool-item-title">ส่งออกแชท (Export Chat)</span>
+                                    <span class="tool-item-desc">บันทึกเป็น PDF หรือพิมพ์รายงาน</span>
+                                </div>
+                            </button>
+
+                            <button class="tools-menu-item" id="btn-open-guide" title="คู่มือแนะนำการใช้งาน (Kira Interactive Guide)">
+                                <span class="tool-item-icon icon-amber"><i class="fa-solid fa-book-open"></i></span>
+                                <div class="tool-item-info">
+                                    <span class="tool-item-title">คู่มือแนะนำการใช้งาน</span>
+                                    <span class="tool-item-desc">ทัวร์ระบบและฟีเจอร์เด่น 4 ขั้นตอน</span>
+                                </div>
+                            </button>
+
+                            <div class="tools-dropdown-divider"></div>
+
+                            <button class="tools-menu-item" id="btn-info" title="เกี่ยวกับระบบ Kira">
+                                <span class="tool-item-icon icon-slate"><i class="fa-solid fa-circle-info"></i></span>
+                                <div class="tool-item-info">
+                                    <span class="tool-item-title">เกี่ยวกับระบบ (About Kira)</span>
+                                    <span class="tool-item-desc">ข้อมูลสถาปัตยกรรมและเวอร์ชัน</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <button title="สลับโหมดกลางวัน/กลางคืน" id="btn-theme" class="header-action-btn icon-only-btn"><i class="fa-solid fa-moon"></i></button>
+                    
+                    <!-- Settings -->
+                    <button title="ตั้งค่าระบบ (Settings) - Ctrl+," id="btn-header-settings" class="header-action-btn icon-only-btn settings-glow-btn"><i class="fa-solid fa-gear"></i></button>
                 </div>
             </header>
 
-            <div id="sub-model-container" style="max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid transparent; display: flex; gap: 10px; justify-content: center; align-items: center; font-size: 0.85rem;">
-                <span style="color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; margin-left: 10px;"><i class="fa-solid fa-microchip"></i> สถาปัตยกรรมประมวลผล:</span>
-                <label class="flavor-label" data-flavor="fast" title="Instant Turbo: ตอบสนองความเร็วสูงพิเศษ (Low-Latency) สำหรับการสนทนาและงานทั่วไป">
+            <div id="sub-model-container" class="sub-model-zen-bar" style="max-height: 0; overflow: hidden; opacity: 0; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
+                <span class="flavor-header-text"><i class="fa-solid fa-microchip"></i> สถาปัตยกรรม:</span>
+                <label class="flavor-label" data-flavor="fast" title="Instant Turbo: ตอบสนองความเร็วสูงพิเศษ (Low-Latency)">
                     <input type="radio" name="sub-model-flavor" value="fast" checked style="display: none;">
-                    <span style="color: #34d399;"><i class="fa-solid fa-bolt-lightning"></i> Instant Turbo</span>
+                    <span class="flavor-chip chip-fast"><i class="fa-solid fa-bolt-lightning"></i> Turbo</span>
                 </label>
-                <label class="flavor-label" data-flavor="reasoning" title="Cognitive Reasoning: ระบบคิดวิเคราะห์เชิงลึก (Chain-of-Thought) สำหรับโจทย์ซับซ้อน งานวิจัย และตรรกะ">
+                <label class="flavor-label" data-flavor="reasoning" title="Cognitive Reasoning: วิเคราะห์เชิงลึก (Chain-of-Thought)">
                     <input type="radio" name="sub-model-flavor" value="reasoning" style="display: none;">
-                    <span style="color: #60a5fa;"><i class="fa-solid fa-brain"></i> Cognitive Reasoning</span>
+                    <span class="flavor-chip chip-reasoning"><i class="fa-solid fa-brain"></i> Reasoning</span>
                 </label>
-                <label class="flavor-label" data-flavor="creative" title="Generative Studio: สังเคราะห์เนื้อหา งานเขียนสร้างสรรค์ และวางกลยุทธ์ไอเดีย">
+                <label class="flavor-label" data-flavor="creative" title="Generative Studio: สังเคราะห์เนื้อหาและงานเขียนสร้างสรรค์">
                     <input type="radio" name="sub-model-flavor" value="creative" style="display: none;">
-                    <span style="color: #f472b6;"><i class="fa-solid fa-wand-magic-sparkles"></i> Generative Studio</span>
+                    <span class="flavor-chip chip-creative"><i class="fa-solid fa-wand-magic-sparkles"></i> Studio</span>
                 </label>
             </div>
 
@@ -434,7 +498,7 @@
                 <!-- Messages will be injected here -->
             </div>
             
-            <div class="quick-prompts-wrapper">
+            <div class="quick-prompts-wrapper" id="quick-prompts-wrapper">
                 <div class="quick-prompts-container" id="quick-prompts">
                     <!-- Set 1 -->
                     <button class="quick-prompt-btn" data-prompt="📝 สรุปข้อความนี้ให้หน่อย: "><i class="fa-solid fa-file-lines"></i> สรุปข้อความ</button>
@@ -1349,6 +1413,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=28"></script>
+    <script src="/static/script.js?v=29"></script>
 </body>
 </html>
