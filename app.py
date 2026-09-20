@@ -433,12 +433,13 @@ def log_chat(username: str, role: str, content: str, session_id: str = None):
 
 # ========== โมเดลที่ปลอดภัยของ Groq & Multi-Provider ==========
 ALL_MODEL_CANDIDATES = [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b",
     "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
     "llama3-70b-8192",
-    "llama3-8b-8192",
-    "mixtral-8x7b-32768",
-    "gemma2-9b-it"
+    "llama3-8b-8192"
 ]
 
 # ========== Multi-Brain Profiles (Kira 2.1) ==========
@@ -876,8 +877,8 @@ for key_idx, api_key in enumerate(API_KEYS):
         print(f"  ❌ Key#{key_idx+1} → Exception: {str(e)[:80]}")
 
 if groq_available_models:
-    # Filter out whisper audio, prompt-guards, and low-token experimental models for chat generation
-    chat_models = [m for m in groq_available_models if not any(bad in m.lower() for bad in ["whisper", "guard", "orpheus", "allam", "safeguard"])]
+    # Filter out whisper audio, prompt-guards, low-token experimental, and deprecated/decommissioned models (compound)
+    chat_models = [m for m in groq_available_models if not any(bad in m.lower() for bad in ["whisper", "guard", "orpheus", "allam", "safeguard", "compound"])]
     if not chat_models:
         chat_models = groq_available_models
 
@@ -885,21 +886,21 @@ if groq_available_models:
     ALL_MODEL_CANDIDATES.clear()
     ALL_MODEL_CANDIDATES.extend(chat_models)
     
-    # Auto-assign Pro (120b / compound / qwen)
-    pro_c = [m for m in chat_models if any(k in m.lower() for k in ["120b", "qwen", "compound", "70b"])]
+    # Auto-assign Pro (120b / qwen / 70b)
+    pro_c = [m for m in chat_models if any(k in m.lower() for k in ["120b", "qwen", "70b"])]
     PREFERRED_PRO = pro_c[0] if pro_c else chat_models[0]
     
-    # Auto-assign Flash (20b / compound-mini / mini / 8b)
-    flash_c = [m for m in chat_models if any(k in m.lower() for k in ["20b", "compound-mini", "mini", "8b"])]
+    # Auto-assign Flash (20b / mini / 8b)
+    flash_c = [m for m in chat_models if any(k in m.lower() for k in ["20b", "mini", "8b"])]
     PREFERRED_FLASH = flash_c[0] if flash_c else chat_models[-1]
 
     # Update default brain profiles for Groq
     BRAIN_PROFILES["logic"]["model"] = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in chat_models else PREFERRED_PRO
-    BRAIN_PROFILES["reasoning"]["model"] = "qwen/qwen3.6-27b" if "qwen/qwen3.6-27b" in chat_models else PREFERRED_PRO
+    BRAIN_PROFILES["reasoning"]["model"] = "qwen/qwen3.8-27b" if "qwen/qwen3.8-27b" in chat_models else PREFERRED_PRO
     BRAIN_PROFILES["code"]["model"] = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in chat_models else PREFERRED_PRO
-    BRAIN_PROFILES["creative"]["model"] = "groq/compound" if "groq/compound" in chat_models else PREFERRED_PRO
-    BRAIN_PROFILES["translate"]["model"] = PREFERRED_FLASH
-    BRAIN_PROFILES["chat"]["model"] = PREFERRED_FLASH
+    BRAIN_PROFILES["creative"]["model"] = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in chat_models else PREFERRED_PRO
+    BRAIN_PROFILES["translate"]["model"] = "openai/gpt-oss-20b" if "openai/gpt-oss-20b" in chat_models else PREFERRED_FLASH
+    BRAIN_PROFILES["chat"]["model"] = "openai/gpt-oss-20b" if "openai/gpt-oss-20b" in chat_models else PREFERRED_FLASH
 else:
     print("⚠️ ไม่พบโมเดลจาก Groq (อาจคีย์เสียหรือจำกัดสิทธิ์) จะพยายาม Fallback...")
 
