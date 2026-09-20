@@ -326,7 +326,6 @@
                             <!-- Hidden legacy hooks for JS compatibility -->
                             <span id="heartbeat-badge" style="display:none;"><span class="heartbeat-pulse-dot"></span></span>
                             <span id="engine-status-badge" style="display:none;"><span class="pulse-dot cloud"></span></span>
-                        </div>
                     </div>
                 </div>
 
@@ -335,6 +334,13 @@
                     <button title="เปิดสภาที่ปรึกษาเสมือน AI 4 ผู้บริหาร (Virtual Boardroom)" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn">
                         <i class="fa-solid fa-users-viewfinder"></i>
                         <span class="boardroom-btn-text">ห้องประชุม</span>
+                    </button>
+
+                    <!-- 📋 Kira Omni-Task & Matrix Button -->
+                    <button title="เปิดกระดานภารกิจและเมทริกซ์ 4 มิติ (Task Matrix & Auto-Exec)" id="btn-task-matrix-toggle" class="header-action-btn task-matrix-btn">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span class="task-matrix-btn-text">กระดานงาน</span>
+                        <span id="task-matrix-badge" class="task-matrix-badge" style="display: none;">0</span>
                     </button>
 
                     <!-- Model Select -->
@@ -1405,6 +1411,200 @@
                     <i class="fa-solid fa-gavel"></i> เริ่มเปิดวาระการประชุมทันที
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- 📋 Kira Omni-Task & Autonomous Execution Suite Modal -->
+    <div id="task-matrix-modal" class="modal-overlay task-matrix-modal-overlay" style="display: none; z-index: 1095;">
+        <div class="task-matrix-card glass-panel">
+            <!-- Modal Header -->
+            <div class="task-matrix-header">
+                <div class="task-matrix-title-group">
+                    <div class="task-matrix-badge"><i class="fa-solid fa-list-check"></i> Kira Omni-Task Suite</div>
+                    <h2>กระดานงานและเมทริกซ์ 4 มิติ (Task Matrix)</h2>
+                    <p class="task-matrix-subtitle">ระบบปฏิบัติการงานอัจฉริยะ: ร่างชิ้นงานจริง (Auto-Deliverable) & วิเคราะห์ความคุ้มค่า/ความเสี่ยงโดยสภา 4 ผู้บริหาร</p>
+                </div>
+                <div class="task-matrix-header-actions">
+                    <button id="btn-quick-new-task" class="action-btn primary-action-btn" title="สร้างภารกิจใหม่"><i class="fa-solid fa-plus"></i> เพิ่มงานใหม่</button>
+                    <button id="btn-close-task-matrix" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs & Filters -->
+            <div class="task-matrix-nav-bar">
+                <div class="task-matrix-tabs">
+                    <button class="matrix-tab-btn active" data-tab="matrix"><i class="fa-solid fa-table-cells-large"></i> Eisenhower Matrix (4 ช่อง)</button>
+                    <button class="matrix-tab-btn" data-tab="kanban"><i class="fa-solid fa-bars-staggered"></i> Kanban Board</button>
+                    <button class="matrix-tab-btn" data-tab="new-task"><i class="fa-solid fa-circle-plus"></i> ฟอร์มสร้างงาน</button>
+                    <button class="matrix-tab-btn" data-tab="intake-link"><i class="fa-solid fa-share-nodes"></i> ลิงก์ฟอร์มภายนอก (/intake)</button>
+                </div>
+                <div class="task-matrix-meta-stats">
+                    <span id="task-stat-total">ทั้งหมด: 0</span>
+                    <span id="task-stat-drafted">⚡ ร่างงานแล้ว: 0</span>
+                    <span id="task-stat-evaluated">🏛️ สภาประเมิน: 0</span>
+                </div>
+            </div>
+
+            <!-- Tab 1: Eisenhower Priority Matrix (2x2 Grid) -->
+            <div id="tab-pane-matrix" class="task-tab-pane active">
+                <div class="eisenhower-grid">
+                    <!-- Quadrant 1: Urgent & Important -->
+                    <div class="eisenhower-quadrant q-urgent-important">
+                        <div class="quadrant-header">
+                            <div class="q-title"><i class="fa-solid fa-fire"></i> 1. ด่วนมาก & สำคัญมาก (Do First)</div>
+                            <span class="q-count" id="count-q1">0</span>
+                        </div>
+                        <div class="q-tasks-container" id="container-q1">
+                            <div class="empty-task-placeholder">ยังไม่มีงานในส่วนนี้</div>
+                        </div>
+                    </div>
+
+                    <!-- Quadrant 2: Important, Not Urgent -->
+                    <div class="eisenhower-quadrant q-important">
+                        <div class="quadrant-header">
+                            <div class="q-title"><i class="fa-solid fa-bullseye"></i> 2. สำคัญแต่วางแผนได้ (Schedule)</div>
+                            <span class="q-count" id="count-q2">0</span>
+                        </div>
+                        <div class="q-tasks-container" id="container-q2">
+                            <div class="empty-task-placeholder">ยังไม่มีงานในส่วนนี้</div>
+                        </div>
+                    </div>
+
+                    <!-- Quadrant 3: Urgent, Not Important -->
+                    <div class="eisenhower-quadrant q-urgent">
+                        <div class="quadrant-header">
+                            <div class="q-title"><i class="fa-solid fa-user-clock"></i> 3. ด่วนแต่สำคัญน้อย (Delegate)</div>
+                            <span class="q-count" id="count-q3">0</span>
+                        </div>
+                        <div class="q-tasks-container" id="container-q3">
+                            <div class="empty-task-placeholder">ยังไม่มีงานในส่วนนี้</div>
+                        </div>
+                    </div>
+
+                    <!-- Quadrant 4: Not Urgent, Not Important -->
+                    <div class="eisenhower-quadrant q-review">
+                        <div class="quadrant-header">
+                            <div class="q-title"><i class="fa-solid fa-box-archive"></i> 4. ไม่ด่วน & ไม่สำคัญ (Review / Drop)</div>
+                            <span class="q-count" id="count-q4">0</span>
+                        </div>
+                        <div class="q-tasks-container" id="container-q4">
+                            <div class="empty-task-placeholder">ยังไม่มีงานในส่วนนี้</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Kanban View (Backlog, In Progress, Completed) -->
+            <div id="tab-pane-kanban" class="task-tab-pane">
+                <div class="kanban-grid">
+                    <div class="kanban-column col-backlog">
+                        <div class="kanban-col-header">
+                            <div class="col-title"><i class="fa-solid fa-inbox"></i> รอดำเนินการ (Backlog)</div>
+                            <span class="col-badge" id="kanban-count-backlog">0</span>
+                        </div>
+                        <div class="kanban-cards-container" id="kanban-container-backlog"></div>
+                    </div>
+
+                    <div class="kanban-column col-progress">
+                        <div class="kanban-col-header">
+                            <div class="col-title"><i class="fa-solid fa-spinner fa-spin"></i> กำลังดำเนินการ (In Progress)</div>
+                            <span class="col-badge" id="kanban-count-progress">0</span>
+                        </div>
+                        <div class="kanban-cards-container" id="kanban-container-progress"></div>
+                    </div>
+
+                    <div class="kanban-column col-completed">
+                        <div class="kanban-col-header">
+                            <div class="col-title"><i class="fa-solid fa-circle-check"></i> เสร็จสมบูรณ์ (Completed)</div>
+                            <span class="col-badge" id="kanban-count-completed">0</span>
+                        </div>
+                        <div class="kanban-cards-container" id="kanban-container-completed"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Create New Task Form -->
+            <div id="tab-pane-new-task" class="task-tab-pane">
+                <div class="new-task-form-wrapper">
+                    <!-- Voice Input Banner -->
+                    <div class="voice-intake-bar">
+                        <button type="button" id="btn-task-voice-record" class="task-voice-btn">
+                            <i class="fa-solid fa-microphone"></i>
+                            <span id="voice-record-label">กดเพื่อพูดสั่งงานด้วยเสียง (Thai Voice-to-Task)</span>
+                            <span class="voice-pulse-ring"></span>
+                        </button>
+                    </div>
+
+                    <form id="create-task-form" class="task-internal-form">
+                        <div class="form-group">
+                            <label for="task-form-title">ชื่องาน / ภารกิจ <span class="required">*</span></label>
+                            <input type="text" id="task-form-title" class="input-control" placeholder="เช่น ร่างแผนงานงบประมาณประจำปี หรือ เตรียมสไลด์นำเสนอบอร์ด" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-form-desc">รายละเอียดหรือโจทย์ของงาน</label>
+                            <textarea id="task-form-desc" class="input-control" rows="3" placeholder="ระบุสิ่งที่ต้องการ วัตถุประสงค์ หรือแนวทางเบื้องต้น..."></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="task-form-priority">ระดับความสำคัญเบื้องต้น</label>
+                                <select id="task-form-priority" class="input-control">
+                                    <option value="urgent_important">🔥 ด่วนมาก & สำคัญมาก (Do First)</option>
+                                    <option value="important_not_urgent" selected>🎯 สำคัญแต่วางแผนได้ (Schedule)</option>
+                                    <option value="urgent_not_important">⚡ ด่วนแต่สำคัญน้อย (Delegate)</option>
+                                    <option value="not_urgent_not_important">📦 ไม่ด่วนและไม่สำคัญ (Review)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="task-form-requester">ผู้มอบหมาย / แหล่งที่มา</label>
+                                <input type="text" id="task-form-requester" class="input-control" placeholder="เช่น บอส, ลูกค้า, หรือสั่งเอง">
+                            </div>
+                        </div>
+                        
+                        <div class="task-switches-group">
+                            <label class="switch-checkbox">
+                                <input type="checkbox" id="task-switch-autodraft" checked>
+                                <span class="switch-slider"></span>
+                                <span class="switch-text"><i class="fa-solid fa-bolt-lightning" style="color: #38bdf8;"></i> <strong>สั่ง AI ลงมือสร้างชิ้นงานแรกให้ทันที (Instant Deliverable First-Draft)</strong></span>
+                            </label>
+                            <label class="switch-checkbox">
+                                <input type="checkbox" id="task-switch-boardroom" checked>
+                                <span class="switch-slider"></span>
+                                <span class="switch-text"><i class="fa-solid fa-users-viewfinder" style="color: #f59e0b;"></i> <strong>ส่งเข้าสภา 4 ผู้บริหาร (CEO, CFO, CPO, CTO) ช่วยประเมินความคุ้มค่า/ความเสี่ยง</strong></span>
+                            </label>
+                        </div>
+
+                        <div class="form-actions" style="margin-top: 20px;">
+                            <button type="submit" id="btn-submit-task" class="btn-primary-action">
+                                <i class="fa-solid fa-paper-plane"></i> บันทึกและเริ่มปฏิบัติการภารกิจ
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab 4: Public Intake Form Link & Webhook -->
+            <div id="tab-pane-intake-link" class="task-tab-pane">
+                <div class="intake-share-panel">
+                    <div class="share-icon-banner">
+                        <i class="fa-solid fa-globe"></i>
+                    </div>
+                    <h3>Public Service Intake Portal</h3>
+                    <p class="share-desc">แชร์ลิงก์นี้ให้กับบุคคลภายนอก (ลูกค้า, เพื่อนร่วมงาน, แผนกอื่น) เพื่อส่งคำขอเข้ามายังระบบ Kira ของคุณโดยตรง โดยคนส่งไม่ต้องล็อกอินเข้าสู่ระบบ</p>
+                    
+                    <div class="share-url-box">
+                        <input type="text" id="public-intake-url-input" class="input-control" readonly value="">
+                        <button id="btn-copy-intake-url" class="btn-copy-url"><i class="fa-regular fa-copy"></i> คัดลอกลิงก์</button>
+                        <a id="btn-visit-intake-url" href="/intake" target="_blank" class="btn-visit-url"><i class="fa-solid fa-arrow-up-right-from-square"></i> เปิดหน้าเว็บ</a>
+                    </div>
+
+                    <div class="intake-features-list">
+                        <div class="feat-row"><i class="fa-solid fa-check" style="color: #10b981;"></i> <span>คำขอที่ส่งเข้ามาจะถูกบันทึกเป็น Ticket บนกระดานงานของบอสทันที</span></div>
+                        <div class="feat-row"><i class="fa-solid fa-check" style="color: #10b981;"></i> <span>Kira จะสร้าง Deliverable ร่างแรกและประเมินระดับความสำคัญให้อัตโนมัติ</span></div>
+                        <div class="feat-row"><i class="fa-solid fa-check" style="color: #10b981;"></i> <span>รองรับ Webhook Integration สำหรับเชื่อมต่อ LINE Notify หรือระบบภายนอก</span></div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 

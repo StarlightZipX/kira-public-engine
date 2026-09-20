@@ -406,6 +406,25 @@ def init_db():
                       sound_effects INTEGER DEFAULT 1,
                       memory_enabled INTEGER DEFAULT 1,
                       updated_at TEXT)''')
+
+        execute_query('''CREATE TABLE IF NOT EXISTS tasks
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      task_id TEXT UNIQUE,
+                      username TEXT,
+                      title TEXT,
+                      description TEXT,
+                      source TEXT DEFAULT 'manual',
+                      priority TEXT DEFAULT 'important_not_urgent',
+                      priority_score INTEGER DEFAULT 50,
+                      status TEXT DEFAULT 'backlog',
+                      boardroom_review TEXT,
+                      deliverable TEXT,
+                      deliverable_type TEXT DEFAULT 'document',
+                      requester TEXT,
+                      created_at TEXT,
+                      updated_at TEXT)''')
+        execute_query('''CREATE INDEX IF NOT EXISTS idx_tasks_username ON tasks (username)''')
+        execute_query('''CREATE INDEX IF NOT EXISTS idx_tasks_task_id ON tasks (task_id)''')
         
         # Insert default prompts if not exists
         check_p1 = execute_query("SELECT id FROM system_settings WHERE key_name='prompt_1.0'", fetch='one')
@@ -1099,6 +1118,37 @@ class MemoryCreateRequest(BaseModel):
     subject: Optional[str] = None
     predicate: Optional[str] = None
     object: Optional[str] = None
+
+# --- 📋 Kira Omni-Task Suite Pydantic Models ---
+class TaskCreateRequest(BaseModel):
+    username: str
+    title: str
+    description: Optional[str] = ""
+    source: Optional[str] = "manual"  # "voice", "manual", "chat", "intake"
+    priority: Optional[str] = "important_not_urgent"
+    requester: Optional[str] = None
+    auto_draft: Optional[bool] = True
+    evaluate_boardroom: Optional[bool] = False
+
+class TaskStatusUpdateRequest(BaseModel):
+    username: str
+    status: str  # "backlog", "in_progress", "completed"
+
+class TaskBoardroomEvaluateRequest(BaseModel):
+    username: str
+
+class TaskAutoDraftRequest(BaseModel):
+    username: str
+    custom_instruction: Optional[str] = None
+
+class ExternalIntakeRequest(BaseModel):
+    title: str
+    description: str
+    requester_name: str
+    requester_email: Optional[str] = ""
+    department: Optional[str] = ""
+    urgency: Optional[str] = "normal"
+    attachment_url: Optional[str] = ""
 
 # --- Endpoints ---
 @app.get("/api/health")
@@ -3931,6 +3981,344 @@ async def clear_chat(req: ChatRequest):
     prompt_to_use = _get_full_system_prompt(uname)
     user_sessions[session_key] = [SystemMessage(content=prompt_to_use)]
     return {"status": "success", "message": "Cleared"}
+
+# ====================================================================
+# 📋 Kira Omni-Task & Autonomous Execution Suite Engine
+# ====================================================================
+
+def _generate_task_deliverable(title: str, description: str, instruction: str = None) -> dict:
+    """Agentic Deliverable Generator: ลงมือร่างชิ้นงานแรกให้ผู้ใช้ทันทีก่อนลงมือทำจริง"""
+    try:
+        task_prompt = [
+            {"role": "system", "content": """คุณคือ "Kira Autonomous Execution Agent" ปัญญาประดิษฐ์ระดับปฏิบัติการ
+ภารกิจ: คุณไม่ใช่แค่ระบบจดงานหรือ To-Do List ทั่วไป แต่คุณมีหน้าที่ "ลงมือสร้างชิ้นงานแรก (Instant First-Draft Deliverable) ให้พร้อมนำไปใช้ทันที"
+
+จงวิเคราะห์ชื่องานและรายละเอียด แล้วสร้างชิ้นงานฉบับสมบูรณ์ (Deliverable First Draft) ตามหลักวิชาชีพ:
+1. หากเป็นงานวางแผน/กลยุทธ์: เขียนโครงสร้างแผนงาน, วัตถุประสงค์, ตารางขั้นตอน, งบประมาณ, และ Action Steps
+2. หากเป็นงานประชุม/สัมมนา: เขียนวาระการประชุม (Agenda), รายชื่อผู้เข้าร่วม, เวลาแต่ละหัวข้อ, และแบบฟอร์มบันทึกมติ
+3. หากเป็นงานโค้ด/ระบบ: เขียนโค้ดจริงที่สมบูรณ์ มีโครงสร้างโฟลเดอร์ คำอธิบายวิธีรัน และ Error handling
+4. หากเป็นเอกสาร/อีเมล/ประกาศ: เขียนร่างเนื้อหาฉบับสมบูรณ์ที่สละสลวย เป็นทางการ และระบุข้อมูลที่ต้องกรอกเพิ่มด้วย [วงเล็บ]
+5. หากเป็นงานประสานงาน/จัดซื้อ: ทำ Checklist รายการที่ต้องตรวจรับ และตารางเปรียบเทียบ
+
+รูปแบบผลลัพธ์:
+- ใช้ Markdown ที่จัดระเบียบสวยงาม มีหัวข้อชัดเจน และตาราง (Table) เมื่อมีข้อมูลเปรียบเทียบ
+- เขียนเป็นภาษาไทยอย่างมืออาชีพ ทันสมัย ชัดเจน และนำไปใช้งานจริงได้ทันที 100%"""},
+            {"role": "user", "content": f"ชื่องาน: {title}\nรายละเอียด: {description or 'ไม่มีรายละเอียดเพิ่มเติม'}\n{f'คำสั่งพิเศษเพิ่มเติม: {instruction}' if instruction else ''}"}
+        ]
+        
+        try:
+            llm = _create_llm(PREFERRED_PRO, API_KEYS[0])
+            result = llm.invoke(task_prompt).content.strip()
+        except Exception:
+            llm = _create_llm(PREFERRED_FLASH, API_KEYS[0])
+            result = llm.invoke(task_prompt).content.strip()
+            
+        deliv_type = "document"
+        res_lower = result.lower()
+        if "```python" in res_lower or "```javascript" in res_lower or "```html" in res_lower or "```json" in res_lower:
+            deliv_type = "code"
+        elif "เรียน" in result or "subject:" in res_lower or "อีเมล" in title.lower():
+            deliv_type = "email"
+        elif "วาระ" in title.lower() or "ประชุม" in title.lower() or "แผน" in title.lower():
+            deliv_type = "plan"
+            
+        return {
+            "deliverable": result,
+            "deliverable_type": deliv_type
+        }
+    except Exception as e:
+        print("Deliverable generation error:", e)
+        return {
+            "deliverable": f"### 📋 ร่างแผนงานเบื้องต้นสำหรับ: {title}\n\n- [ ] ศึกษาและรวบรวมข้อมูลโจทย์งาน\n- [ ] ร่างเอกสารและประสานงานผู้เกี่ยวข้อง\n- [ ] ตรวจสอบความถูกต้องและส่งมอบงาน\n\n*(ระบบเกิดข้อผิดพลาดในการเจนเนอเรตร่างฉบับเต็ม: {str(e)})*",
+            "deliverable_type": "plan"
+        }
+
+def _evaluate_task_with_boardroom(title: str, description: str) -> dict:
+    """Virtual Boardroom Priority & Risk Matrix: 4 ผู้บริหารร่วมประเมินความสำคัญ"""
+    try:
+        eval_prompt = [
+            {"role": "system", "content": """คุณคือ "สภา 4 ผู้บริหารเสมือนของ Kira AI" (CEO คุณคิรินทร์, CFO คุณเมธัส, CPO คุณรินดา, CTO คุณธนิน)
+ภารกิจ: ประเมินงานที่ได้รับมอบหมายตาม Eisenhower Matrix และความเสี่ยงทางธุรกิจ 360 องศา
+
+จงส่งผลลัพธ์เป็น JSON ล้วนๆ (ห้ามมีข้อความอื่นนอก JSON) ในรูปแบบดังนี้:
+{
+  "priority_score": 85,
+  "eisenhower_quadrant": "urgent_important",
+  "recommendation": "ข้อสรุปแนวทางการตัดสินใจและข้อแนะนำหลัก 1 ประโยค",
+  "reviews": {
+    "CEO": "ความเห็นสั้นๆ จากคุณคิรินทร์ (วิสัยทัศน์/การเติบโต)",
+    "CFO": "ความเห็นสั้นๆ จากคุณเมธัส (ต้นทุน/เวลา/ROI)",
+    "CPO": "ความเห็นสั้นๆ จากคุณรินดา (คุณค่าต่อลูกค้า/ความเรียบง่าย)",
+    "CTO": "ความเห็นสั้นๆ จากคุณธนิน (ความเป็นไปได้/ความเสถียร)"
+  }
+}
+หมายเหตุ: eisenhower_quadrant ต้องเป็น 1 ใน 4 ค่านี้เท่านั้น:
+- "urgent_important" (ด่วนมากและสำคัญมาก - ต้องทำทันที)
+- "important_not_urgent" (สำคัญแต่ไม่ด่วน - วางแผนทำอย่างรอบคอบ)
+- "urgent_not_important" (ด่วนแต่สำคัญน้อย - ควรมอบหมายคนอื่น)
+- "not_urgent_not_important" (ไม่ด่วนและไม่สำคัญ - ทบทวนหรือตัดทิ้ง)"""},
+            {"role": "user", "content": f"ชื่องาน: {title}\nรายละเอียด: {description or 'ไม่มีรายละเอียดเพิ่มเติม'}"}
+        ]
+        
+        try:
+            llm = _create_llm(PREFERRED_PRO, API_KEYS[0])
+            raw_res = llm.invoke(eval_prompt).content.strip()
+        except Exception:
+            llm = _create_llm(PREFERRED_FLASH, API_KEYS[0])
+            raw_res = llm.invoke(eval_prompt).content.strip()
+        
+        import json as _json, re as _re
+        json_match = _re.search(r'\{.*\}', raw_res, _re.DOTALL)
+        if json_match:
+            data = _json.loads(json_match.group(0))
+            return data
+        else:
+            return {
+                "priority_score": 75,
+                "eisenhower_quadrant": "important_not_urgent",
+                "recommendation": "เป็นงานที่มีความสำคัญ ควรกำหนดเวลาและดำเนินการให้รอบคอบ",
+                "reviews": {
+                    "CEO": "สนับสนุนให้เดินหน้าเพื่อเสริมสร้างความพร้อมของทีม",
+                    "CFO": "ควรควบคุมการใช้เวลาและทรัพยากรให้คุ้มค่า",
+                    "CPO": "เน้นผลลัพธ์ที่ใช้งานได้จริงและเข้าใจง่าย",
+                    "CTO": "ขั้นตอนการทำมีความเป็นไปได้สูงและปลอดภัย"
+                }
+            }
+    except Exception as e:
+        print("Boardroom task evaluation notice:", e)
+        return {
+            "priority_score": 70,
+            "eisenhower_quadrant": "important_not_urgent",
+            "recommendation": "งานนี้มีความสำคัญ ควรจัดสรรเวลาทำตามลำดับ",
+            "reviews": {
+                "CEO": "เป็นงานที่ควรทำเพื่อเป้าหมายระยะยาว",
+                "CFO": "ประเมินแล้วความเสี่ยงด้านงบประมาณอยู่ในเกณฑ์ต่ำ",
+                "CPO": "ช่วยอำนวยความสะดวกให้กระบวนการทำงานราบรื่น",
+                "CTO": "สามารถประยุกต์ใช้เครื่องมือที่มีอยู่ได้ทันที"
+            }
+        }
+
+@app.post("/api/tasks")
+async def create_task(req: TaskCreateRequest):
+    """สร้างงานใหม่ในระบบ Kira Omni-Task พร้อมออปชัน Auto-Draft & Boardroom Review"""
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    task_id = f"task_{secrets.token_hex(6)}"
+    
+    deliverable = ""
+    deliverable_type = "document"
+    if req.auto_draft:
+        deliv_res = await asyncio.to_thread(_generate_task_deliverable, req.title, req.description)
+        deliverable = deliv_res.get("deliverable", "")
+        deliverable_type = deliv_res.get("deliverable_type", "document")
+        
+    boardroom_review_str = None
+    priority = req.priority or "important_not_urgent"
+    priority_score = 50
+    if req.evaluate_boardroom:
+        eval_res = await asyncio.to_thread(_evaluate_task_with_boardroom, req.title, req.description)
+        import json as _json
+        boardroom_review_str = _json.dumps(eval_res, ensure_ascii=False)
+        priority = eval_res.get("eisenhower_quadrant", priority)
+        priority_score = eval_res.get("priority_score", 50)
+        
+    execute_query("""
+        INSERT INTO tasks (task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (task_id, req.username, req.title, req.description, req.source, priority, priority_score, "backlog", boardroom_review_str, deliverable, deliverable_type, req.requester, now_str, now_str))
+    
+    return {
+        "status": "success",
+        "task_id": task_id,
+        "title": req.title,
+        "priority": priority,
+        "priority_score": priority_score,
+        "deliverable_type": deliverable_type,
+        "has_deliverable": bool(deliverable),
+        "message": "สร้างภารกิจในระบบสำเร็จเรียบร้อยค่ะ"
+    }
+
+@app.get("/api/tasks")
+async def list_tasks(username: str, status: Optional[str] = None):
+    """ดึงรายการภารกิจทั้งหมดของผู้ใช้ พร้อมคะแนนและมุมมอง Matrix"""
+    import json as _json
+    if status:
+        rows = execute_query("SELECT task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at FROM tasks WHERE username=? AND status=? ORDER BY priority_score DESC, id DESC", (username, status), fetch='all')
+    else:
+        rows = execute_query("SELECT task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at FROM tasks WHERE username=? ORDER BY priority_score DESC, id DESC", (username,), fetch='all')
+        
+    tasks = []
+    if rows:
+        for r in rows:
+            b_review = None
+            if r[8]:
+                try:
+                    b_review = _json.loads(r[8])
+                except Exception:
+                    b_review = None
+            tasks.append({
+                "task_id": r[0],
+                "username": r[1],
+                "title": r[2],
+                "description": r[3],
+                "source": r[4],
+                "priority": r[5],
+                "priority_score": r[6],
+                "status": r[7],
+                "boardroom_review": b_review,
+                "deliverable": r[9],
+                "deliverable_type": r[10],
+                "requester": r[11],
+                "created_at": r[12],
+                "updated_at": r[13]
+            })
+            
+    return {
+        "status": "success",
+        "total": len(tasks),
+        "tasks": tasks
+    }
+
+@app.get("/api/tasks/{task_id}")
+async def get_task_detail(task_id: str):
+    """ดึงรายละเอียดงานรายชิ้น"""
+    import json as _json
+    row = execute_query("SELECT task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at FROM tasks WHERE task_id=?", (task_id,), fetch='one')
+    if not row:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    b_review = None
+    if row[8]:
+        try:
+            b_review = _json.loads(row[8])
+        except Exception:
+            pass
+            
+    return {
+        "status": "success",
+        "task": {
+            "task_id": row[0],
+            "username": row[1],
+            "title": row[2],
+            "description": row[3],
+            "source": row[4],
+            "priority": row[5],
+            "priority_score": row[6],
+            "status": row[7],
+            "boardroom_review": b_review,
+            "deliverable": row[9],
+            "deliverable_type": row[10],
+            "requester": row[11],
+            "created_at": row[12],
+            "updated_at": row[13]
+        }
+    }
+
+@app.patch("/api/tasks/{task_id}/status")
+async def update_task_status(task_id: str, req: TaskStatusUpdateRequest):
+    """อัปเดตสถานะงาน (backlog, in_progress, completed)"""
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    execute_query("UPDATE tasks SET status=?, updated_at=? WHERE task_id=?", (req.status, now_str, task_id))
+    return {"status": "success", "task_id": task_id, "new_status": req.status}
+
+@app.post("/api/tasks/{task_id}/auto-draft")
+async def trigger_task_auto_draft(task_id: str, req: TaskAutoDraftRequest):
+    """สั่ง AI Agent ร่างชิ้นงานจริง (First Draft Deliverable) ตามคำขอ"""
+    row = execute_query("SELECT title, description FROM tasks WHERE task_id=?", (task_id,), fetch='one')
+    if not row:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    title, desc = row[0], row[1]
+    res = await asyncio.to_thread(_generate_task_deliverable, title, desc, req.custom_instruction)
+    
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    execute_query("UPDATE tasks SET deliverable=?, deliverable_type=?, updated_at=? WHERE task_id=?", 
+                  (res["deliverable"], res["deliverable_type"], now_str, task_id))
+                  
+    return {
+        "status": "success",
+        "task_id": task_id,
+        "deliverable": res["deliverable"],
+        "deliverable_type": res["deliverable_type"],
+        "message": "AI ร่างชิ้นงานฉบับสมบูรณ์เรียบร้อยแล้วค่ะ"
+    }
+
+@app.post("/api/tasks/{task_id}/evaluate-boardroom")
+async def trigger_task_boardroom_eval(task_id: str, req: TaskBoardroomEvaluateRequest):
+    """ส่งภารกิจเข้าประเมินในสภา 4 ผู้บริหาร (CEO, CFO, CPO, CTO)"""
+    row = execute_query("SELECT title, description FROM tasks WHERE task_id=?", (task_id,), fetch='one')
+    if not row:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    title, desc = row[0], row[1]
+    eval_res = await asyncio.to_thread(_evaluate_task_with_boardroom, title, desc)
+    
+    import json as _json
+    review_json = _json.dumps(eval_res, ensure_ascii=False)
+    priority = eval_res.get("eisenhower_quadrant", "important_not_urgent")
+    score = eval_res.get("priority_score", 70)
+    
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    execute_query("UPDATE tasks SET boardroom_review=?, priority=?, priority_score=?, updated_at=? WHERE task_id=?",
+                  (review_json, priority, score, now_str, task_id))
+                  
+    return {
+        "status": "success",
+        "task_id": task_id,
+        "priority": priority,
+        "priority_score": score,
+        "boardroom_review": eval_res,
+        "message": "สภา 4 ผู้บริหารประเมินความสำคัญและวิเคราะห์เสร็จสมบูรณ์ค่ะ"
+    }
+
+@app.delete("/api/tasks/{task_id}")
+async def delete_task(task_id: str):
+    """ลบภารกิจออกจากระบบ"""
+    execute_query("DELETE FROM tasks WHERE task_id=?", (task_id,))
+    return {"status": "success", "message": "ลบภารกิจสำเร็จค่ะ"}
+
+@app.post("/api/tasks/external-intake")
+async def external_task_intake(req: ExternalIntakeRequest):
+    """Public Service Intake: รับคำของานจากภายนอก (ลูกค้า, ทีมงาน, หรือ Webhook)"""
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    task_id = f"task_{secrets.token_hex(6)}"
+    
+    full_desc = f"{req.description}\n\n[ข้อมูลผู้ส่ง]: {req.requester_name} ({req.requester_email or 'ไม่มีอีเมล'})\n[หน่วยงาน]: {req.department or 'ไม่ระบุ'}\n[ระดับความด่วนที่ระบุ]: {req.urgency}"
+    if req.attachment_url:
+        full_desc += f"\n[ลิงก์แนบ]: {req.attachment_url}"
+        
+    # เจน First Draft และส่งเข้าบอร์ดรูมทันที
+    deliv_res = await asyncio.to_thread(_generate_task_deliverable, req.title, full_desc)
+    eval_res = await asyncio.to_thread(_evaluate_task_with_boardroom, req.title, full_desc)
+    
+    import json as _json
+    review_json = _json.dumps(eval_res, ensure_ascii=False)
+    priority = eval_res.get("eisenhower_quadrant", "urgent_important" if req.urgency == "urgent" else "important_not_urgent")
+    score = eval_res.get("priority_score", 80 if req.urgency == "urgent" else 65)
+    
+    # บันทึกงานโดยมอบหมายให้ Boss / Admin ของระบบเป็นผู้ดูแล
+    target_user = "👑 Boss (Owner)"
+    
+    execute_query("""
+        INSERT INTO tasks (task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (task_id, target_user, req.title, full_desc, "external_intake", priority, score, "backlog", review_json, deliv_res["deliverable"], deliv_res["deliverable_type"], req.requester_name, now_str, now_str))
+    
+    return {
+        "status": "success",
+        "task_id": task_id,
+        "title": req.title,
+        "message": f"Kira ได้รับคำของาน '{req.title}' เข้าสู่ระบบเรียบร้อยแล้วค่ะ! AI ได้ร่างชิ้นงานและเตรียมแผนงานให้ทีมแล้ว"
+    }
+
+@app.get("/intake", response_class=HTMLResponse)
+async def public_intake_page(request: Request):
+    """หน้าเว็บรับงานภายนอกแบบ Standalone (Public Service Intake Portal)"""
+    return templates.TemplateResponse(request=request, name="intake.html", context={"request": request})
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8000))

@@ -3900,6 +3900,611 @@ window.downloadMeetingMinutes = downloadMeetingMinutes;
 window.playBoardroomConsensusAudio = playBoardroomConsensusAudio;
 window.toggleBoardroomMode = toggleBoardroomMode;
 
+// ====================================================================
+// 🎙️ Kira Web Speech Recognition Controller (Thai & Multi-Language)
+// ====================================================================
+let speechRecognition = null;
+let isListening = false;
+
+function initSpeechRecognition() {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const micBtn = document.getElementById('mic-btn');
+    const taskVoiceBtn = document.getElementById('btn-task-voice-record');
+
+    if (!SpeechRec) {
+        if (micBtn) {
+            micBtn.title = "เบราว์เซอร์นี้ไม่รองรับ Web Speech API (แนะนำให้ใช้ Chrome หรือ Edge ค่ะ)";
+        }
+        return;
+    }
+
+    try {
+        speechRecognition = new SpeechRec();
+        speechRecognition.lang = 'th-TH';
+        speechRecognition.continuous = false;
+        speechRecognition.interimResults = false;
+
+        let activeTarget = 'chat'; // 'chat' or 'task'
+
+        speechRecognition.onstart = () => {
+            isListening = true;
+            if (activeTarget === 'chat' && micBtn) {
+                micBtn.classList.add('listening');
+                micBtn.innerHTML = '<i class="fa-solid fa-microphone-lines fa-fade" style="color: #f43f5e;"></i>';
+            } else if (activeTarget === 'task' && taskVoiceBtn) {
+                taskVoiceBtn.classList.add('listening');
+                const label = document.getElementById('voice-record-label');
+                if (label) label.textContent = 'กำลังฟังเสียงของคุณ... (พูดคำสั่งงานได้เลย)';
+            }
+        };
+
+        speechRecognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            if (activeTarget === 'chat') {
+                const uInput = document.getElementById('user-input');
+                if (uInput) {
+                    uInput.value = (uInput.value ? uInput.value + ' ' : '') + transcript;
+                    uInput.focus();
+                }
+            } else if (activeTarget === 'task') {
+                const titleInput = document.getElementById('task-form-title');
+                const descInput = document.getElementById('task-form-desc');
+                if (titleInput) {
+                    if (!titleInput.value) {
+                        titleInput.value = transcript;
+                    } else if (descInput) {
+                        descInput.value = (descInput.value ? descInput.value + ' ' : '') + transcript;
+                    }
+                }
+            }
+        };
+
+        speechRecognition.onerror = (event) => {
+            console.warn("Speech recognition error:", event.error);
+        };
+
+        speechRecognition.onend = () => {
+            isListening = false;
+            if (micBtn) {
+                micBtn.classList.remove('listening');
+                micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+            }
+            if (taskVoiceBtn) {
+                taskVoiceBtn.classList.remove('listening');
+                const label = document.getElementById('voice-record-label');
+                if (label) label.textContent = 'กดเพื่อพูดสั่งงานด้วยเสียง (Thai Voice-to-Task)';
+            }
+        };
+
+        if (micBtn) {
+            micBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (isListening) {
+                    speechRecognition.stop();
+                } else {
+                    activeTarget = 'chat';
+                    speechRecognition.start();
+                }
+            });
+        }
+
+        if (taskVoiceBtn) {
+            taskVoiceBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (isListening) {
+                    speechRecognition.stop();
+                } else {
+                    activeTarget = 'task';
+                    speechRecognition.start();
+                }
+            });
+        }
+    } catch (err) {
+        console.warn("Could not init speech recognition:", err);
+    }
+}
+
+// ====================================================================
+// 💻 Live Canvas Drawer Controller (Artifacts Viewer)
+// ====================================================================
+function openInLiveCanvas(title, content, type = 'document') {
+    const drawer = document.getElementById('artifacts-drawer');
+    const nameEl = document.getElementById('artifacts-name');
+    const iframe = document.getElementById('artifacts-iframe');
+    if (!drawer || !iframe) return;
+
+    if (nameEl) {
+        nameEl.textContent = title || 'Live Deliverable Canvas';
+    }
+
+    drawer.classList.add('open');
+
+    // Format content for display
+    let htmlContent = '';
+    if (type === 'code' && content.includes('<!DOCTYPE html>')) {
+        htmlContent = content;
+    } else {
+        const renderedMd = (typeof marked !== 'undefined' && marked.parse) ? marked.parse(content) : content;
+        htmlContent = `
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title || 'Deliverable'}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: 'Outfit', 'Prompt', sans-serif;
+            padding: 30px;
+            line-height: 1.7;
+        }
+        h1, h2, h3, h4 { color: #38bdf8; margin-top: 20px; margin-bottom: 10px; }
+        h1 { border-bottom: 2px solid rgba(56, 189, 248, 0.3); padding-bottom: 8px; }
+        p { margin-bottom: 14px; color: #cbd5e1; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; background: rgba(30, 41, 59, 0.5); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px 14px; border: 1px solid rgba(255, 255, 255, 0.08); text-align: left; }
+        th { background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 600; }
+        ul, ol { padding-left: 24px; margin-bottom: 14px; color: #cbd5e1; }
+        li { margin-bottom: 6px; }
+        pre { background: #070b14; padding: 16px; border-radius: 8px; overflow-x: auto; border: 1px solid rgba(255, 255, 255, 0.1); color: #38bdf8; }
+        code { font-family: monospace; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 4px; }
+        blockquote { border-left: 4px solid #38bdf8; padding-left: 16px; color: #94a3b8; font-style: italic; margin: 16px 0; }
+    </style>
+</head>
+<body>
+    ${renderedMd}
+</body>
+</html>`;
+    }
+
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+}
+
+function initLiveCanvasController() {
+    const btnClose = document.getElementById('btn-close-artifact');
+    const drawer = document.getElementById('artifacts-drawer');
+    const btnDesktop = document.getElementById('btn-viewport-desktop');
+    const btnMobile = document.getElementById('btn-viewport-mobile');
+    const iframe = document.getElementById('artifacts-iframe');
+
+    if (btnClose && drawer) {
+        btnClose.addEventListener('click', () => {
+            drawer.classList.remove('open');
+        });
+    }
+
+    if (btnDesktop && btnMobile && iframe) {
+        btnDesktop.addEventListener('click', () => {
+            btnDesktop.classList.add('active');
+            btnMobile.classList.remove('active');
+            iframe.style.maxWidth = '100%';
+        });
+
+        btnMobile.addEventListener('click', () => {
+            btnMobile.classList.add('active');
+            btnDesktop.classList.remove('active');
+            iframe.style.maxWidth = '375px';
+            iframe.style.margin = '0 auto';
+            iframe.style.display = 'block';
+        });
+    }
+}
+
+// ====================================================================
+// 📋 Kira Omni-Task Suite & Matrix Controller
+// ====================================================================
+let currentTasksList = [];
+
+async function loadOmniTasks() {
+    const user = currentUser || localStorage.getItem('kira_username') || 'guest';
+    try {
+        const res = await fetch(`/api/tasks?username=${encodeURIComponent(user)}`);
+        const data = await res.json();
+        if (data.status === 'success') {
+            currentTasksList = data.tasks || [];
+            renderOmniTasks(currentTasksList);
+        }
+    } catch (err) {
+        console.warn("Failed to load tasks:", err);
+    }
+}
+
+function renderOmniTasks(tasks) {
+    const cQ1 = document.getElementById('container-q1');
+    const cQ2 = document.getElementById('container-q2');
+    const cQ3 = document.getElementById('container-q3');
+    const cQ4 = document.getElementById('container-q4');
+
+    const kBacklog = document.getElementById('kanban-container-backlog');
+    const kProgress = document.getElementById('kanban-container-progress');
+    const kCompleted = document.getElementById('kanban-container-completed');
+
+    let q1Count = 0, q2Count = 0, q3Count = 0, q4Count = 0;
+    let bCount = 0, pCount = 0, cCount = 0;
+    let draftedCount = 0, evaluatedCount = 0;
+
+    if (cQ1) cQ1.innerHTML = '';
+    if (cQ2) cQ2.innerHTML = '';
+    if (cQ3) cQ3.innerHTML = '';
+    if (cQ4) cQ4.innerHTML = '';
+    if (kBacklog) kBacklog.innerHTML = '';
+    if (kProgress) kProgress.innerHTML = '';
+    if (kCompleted) kCompleted.innerHTML = '';
+
+    tasks.forEach(task => {
+        if (task.deliverable) draftedCount++;
+        if (task.boardroom_review) evaluatedCount++;
+
+        const cardHtml = createTaskCardHTML(task);
+
+        const prio = task.priority || 'important_not_urgent';
+        if (prio === 'urgent_important') {
+            q1Count++;
+            if (cQ1) cQ1.insertAdjacentHTML('beforeend', cardHtml);
+        } else if (prio === 'important_not_urgent' || prio === 'important') {
+            q2Count++;
+            if (cQ2) cQ2.insertAdjacentHTML('beforeend', cardHtml);
+        } else if (prio === 'urgent_not_important' || prio === 'urgent') {
+            q3Count++;
+            if (cQ3) cQ3.insertAdjacentHTML('beforeend', cardHtml);
+        } else {
+            q4Count++;
+            if (cQ4) cQ4.insertAdjacentHTML('beforeend', cardHtml);
+        }
+
+        const st = task.status || 'backlog';
+        if (st === 'backlog') {
+            bCount++;
+            if (kBacklog) kBacklog.insertAdjacentHTML('beforeend', cardHtml);
+        } else if (st === 'in_progress') {
+            pCount++;
+            if (kProgress) kProgress.insertAdjacentHTML('beforeend', cardHtml);
+        } else if (st === 'completed') {
+            cCount++;
+            if (kCompleted) kCompleted.insertAdjacentHTML('beforeend', cardHtml);
+        }
+    });
+
+    const emptyPlaceholder = '<div class="empty-task-placeholder">ไม่มีงานในหมวดนี้</div>';
+    if (cQ1 && !q1Count) cQ1.innerHTML = emptyPlaceholder;
+    if (cQ2 && !q2Count) cQ2.innerHTML = emptyPlaceholder;
+    if (cQ3 && !q3Count) cQ3.innerHTML = emptyPlaceholder;
+    if (cQ4 && !q4Count) cQ4.innerHTML = emptyPlaceholder;
+    if (kBacklog && !bCount) kBacklog.innerHTML = emptyPlaceholder;
+    if (kProgress && !pCount) kProgress.innerHTML = emptyPlaceholder;
+    if (kCompleted && !cCount) kCompleted.innerHTML = emptyPlaceholder;
+
+    const elQ1 = document.getElementById('count-q1'); if (elQ1) elQ1.textContent = q1Count;
+    const elQ2 = document.getElementById('count-q2'); if (elQ2) elQ2.textContent = q2Count;
+    const elQ3 = document.getElementById('count-q3'); if (elQ3) elQ3.textContent = q3Count;
+    const elQ4 = document.getElementById('count-q4'); if (elQ4) elQ4.textContent = q4Count;
+
+    const elKB = document.getElementById('kanban-count-backlog'); if (elKB) elKB.textContent = bCount;
+    const elKP = document.getElementById('kanban-count-progress'); if (elKP) elKP.textContent = pCount;
+    const elKC = document.getElementById('kanban-count-completed'); if (elKC) elKC.textContent = cCount;
+
+    const elTotal = document.getElementById('task-stat-total'); if (elTotal) elTotal.textContent = `ทั้งหมด: ${tasks.length}`;
+    const elDrafted = document.getElementById('task-stat-drafted'); if (elDrafted) elDrafted.textContent = `⚡ ร่างงานแล้ว: ${draftedCount}`;
+    const elEval = document.getElementById('task-stat-evaluated'); if (elEval) elEval.textContent = `🏛️ สภาประเมิน: ${evaluatedCount}`;
+
+    const headerBadge = document.getElementById('task-matrix-badge');
+    if (headerBadge) {
+        if (tasks.length > 0) {
+            headerBadge.style.display = 'inline-flex';
+            headerBadge.textContent = tasks.length;
+        } else {
+            headerBadge.style.display = 'none';
+        }
+    }
+}
+
+function createTaskCardHTML(task) {
+    const hasDeliverable = Boolean(task.deliverable);
+    const hasBoardroom = Boolean(task.boardroom_review);
+    const score = task.priority_score || 50;
+    
+    let statusBadge = '<span class="task-status-pill pill-backlog">รอดำเนินการ</span>';
+    if (task.status === 'in_progress') statusBadge = '<span class="task-status-pill pill-progress">กำลังทำ</span>';
+    if (task.status === 'completed') statusBadge = '<span class="task-status-pill pill-completed">เสร็จแล้ว</span>';
+
+    let sourceIcon = '<i class="fa-solid fa-pen-to-square" title="เพิ่มด้วยตัวเอง"></i>';
+    if (task.source === 'voice') sourceIcon = '<i class="fa-solid fa-microphone" style="color: #f43f5e;" title="สั่งด้วยเสียง AI"></i>';
+    if (task.source === 'external_intake') sourceIcon = '<i class="fa-solid fa-globe" style="color: #38bdf8;" title="รับผ่านหน้าเว็บภายนอก"></i>';
+
+    let boardroomHtml = '';
+    if (hasBoardroom && task.boardroom_review) {
+        const br = task.boardroom_review;
+        const rec = br.recommendation || '';
+        const revs = br.reviews || {};
+        boardroomHtml = `
+            <div class="task-boardroom-brief">
+                <div class="br-header-chip"><i class="fa-solid fa-users-viewfinder"></i> สภามติ: ${rec}</div>
+                <div class="br-exec-micro-opinions">
+                    ${revs.CEO ? `<span title="CEO: ${escapeHTML(revs.CEO)}">👔 CEO</span>` : ''}
+                    ${revs.CFO ? `<span title="CFO: ${escapeHTML(revs.CFO)}">💰 CFO</span>` : ''}
+                    ${revs.CPO ? `<span title="CPO: ${escapeHTML(revs.CPO)}">🎨 CPO</span>` : ''}
+                    ${revs.CTO ? `<span title="CTO: ${escapeHTML(revs.CTO)}">🛡️ CTO</span>` : ''}
+                </div>
+            </div>`;
+    }
+
+    return `
+    <div class="task-card ${task.status === 'completed' ? 'is-done' : ''}" data-task-id="${task.task_id}">
+        <div class="task-card-top">
+            <div class="task-source-meta">${sourceIcon} <span>${task.requester ? escapeHTML(task.requester) : 'บอส'}</span></div>
+            <div class="task-score-badge ${score >= 80 ? 'high-score' : ''}">Score: ${score}/100</div>
+        </div>
+        <h4 class="task-card-title">${escapeHTML(task.title)}</h4>
+        ${task.description ? `<p class="task-card-desc">${escapeHTML(task.description)}</p>` : ''}
+        
+        ${boardroomHtml}
+
+        <div class="task-card-footer">
+            <div class="task-meta-left">
+                ${statusBadge}
+                ${hasDeliverable ? '<span class="deliverable-ready-badge" title="มีชิ้นงาน First-Draft พร้อมใช้"><i class="fa-solid fa-bolt"></i> ร่างงานพร้อม</span>' : ''}
+            </div>
+            <div class="task-card-actions">
+                ${hasDeliverable ? `
+                    <button class="btn-card-action btn-open-canvas" onclick="window.viewTaskDeliverable('${task.task_id}')" title="เปิดชิ้นงานบน Live Canvas">
+                        <i class="fa-solid fa-laptop-code"></i> Canvas
+                    </button>
+                ` : `
+                    <button class="btn-card-action btn-draft-now" onclick="window.draftTaskNow('${task.task_id}', this)" title="สั่ง AI เจนชิ้นงานร่างแรกทันที">
+                        <i class="fa-solid fa-bolt-lightning"></i> ร่างงาน
+                    </button>
+                `}
+                
+                ${!hasBoardroom ? `
+                    <button class="btn-card-action btn-eval-now" onclick="window.evaluateTaskNow('${task.task_id}', this)" title="ส่งสภา 4 ผู้บริหารประเมิน">
+                        <i class="fa-solid fa-gavel"></i> ประเมิน
+                    </button>
+                ` : ''}
+
+                <button class="btn-card-action btn-toggle-status" onclick="window.toggleTaskStatus('${task.task_id}', '${task.status}')" title="สลับสถานะงาน">
+                    <i class="fa-solid ${task.status === 'completed' ? 'fa-rotate-left' : 'fa-check'}"></i>
+                </button>
+
+                <button class="btn-card-action btn-delete-task" onclick="window.deleteTaskItem('${task.task_id}')" title="ลบงานนี้">
+                    <i class="fa-regular fa-trash-can"></i>
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+}
+
+window.viewTaskDeliverable = function(taskId) {
+    const task = currentTasksList.find(t => t.task_id === taskId);
+    if (!task || !task.deliverable) return;
+    openInLiveCanvas(task.title, task.deliverable, task.deliverable_type);
+};
+
+window.draftTaskNow = async function(taskId, btn) {
+    const user = currentUser || localStorage.getItem('kira_username') || 'guest';
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+
+    try {
+        const res = await fetch(`/api/tasks/${taskId}/auto-draft`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            await loadOmniTasks();
+            openInLiveCanvas(data.title || 'ชิ้นงานร่างแรก', data.deliverable, data.deliverable_type);
+        } else {
+            alert('เกิดข้อผิดพลาดในการร่างงาน: ' + (data.detail || data.message));
+        }
+    } catch (err) {
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+};
+
+window.evaluateTaskNow = async function(taskId, btn) {
+    const user = currentUser || localStorage.getItem('kira_username') || 'guest';
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+
+    try {
+        const res = await fetch(`/api/tasks/${taskId}/evaluate-boardroom`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            await loadOmniTasks();
+        } else {
+            alert('เกิดข้อผิดพลาดในการประเมิน: ' + (data.detail || data.message));
+        }
+    } catch (err) {
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+};
+
+window.toggleTaskStatus = async function(taskId, currentStatus) {
+    const nextStatus = currentStatus === 'completed' ? 'backlog' : (currentStatus === 'backlog' ? 'in_progress' : 'completed');
+    const user = currentUser || localStorage.getItem('kira_username') || 'guest';
+
+    try {
+        const res = await fetch(`/api/tasks/${taskId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user, status: nextStatus })
+        });
+        if (res.ok) {
+            await loadOmniTasks();
+        }
+    } catch (err) {
+        console.warn("Failed to update status:", err);
+    }
+};
+
+window.deleteTaskItem = async function(taskId) {
+    if (!confirm('ต้องการลบภารกิจนี้ใช่หรือไม่?')) return;
+    try {
+        const res = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+        if (res.ok) {
+            await loadOmniTasks();
+        }
+    } catch (err) {
+        console.warn("Failed to delete task:", err);
+    }
+};
+
+function initTaskMatrixController() {
+    const btnToggle = document.getElementById('btn-task-matrix-toggle');
+    const modal = document.getElementById('task-matrix-modal');
+    const btnClose = document.getElementById('btn-close-task-matrix');
+    const btnQuickNew = document.getElementById('btn-quick-new-task');
+    const tabBtns = document.querySelectorAll('.matrix-tab-btn');
+    const createTaskForm = document.getElementById('create-task-form');
+    const publicUrlInput = document.getElementById('public-intake-url-input');
+    const btnCopyUrl = document.getElementById('btn-copy-intake-url');
+
+    if (publicUrlInput) {
+        publicUrlInput.value = window.location.origin + '/intake';
+    }
+
+    if (btnCopyUrl && publicUrlInput) {
+        btnCopyUrl.addEventListener('click', () => {
+            navigator.clipboard.writeText(publicUrlInput.value).then(() => {
+                const orig = btnCopyUrl.innerHTML;
+                btnCopyUrl.innerHTML = '<i class="fa-solid fa-check"></i> คัดลอกแล้ว!';
+                btnCopyUrl.style.color = '#10b981';
+                setTimeout(() => {
+                    btnCopyUrl.innerHTML = orig;
+                    btnCopyUrl.style.color = '';
+                }, 2000);
+            });
+        });
+    }
+
+    if (btnToggle && modal) {
+        btnToggle.addEventListener('click', () => {
+            modal.style.display = 'flex';
+            loadOmniTasks();
+        });
+    }
+
+    if (btnClose && modal) {
+        btnClose.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.style.display = 'none';
+        });
+    }
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const targetTab = btn.getAttribute('data-tab');
+            document.querySelectorAll('.task-tab-pane').forEach(p => p.classList.remove('active'));
+            const activePane = document.getElementById(`tab-pane-${targetTab}`);
+            if (activePane) activePane.classList.add('active');
+        });
+    });
+
+    if (btnQuickNew) {
+        btnQuickNew.addEventListener('click', () => {
+            tabBtns.forEach(b => {
+                if (b.getAttribute('data-tab') === 'new-task') {
+                    b.click();
+                }
+            });
+            const tInput = document.getElementById('task-form-title');
+            if (tInput) tInput.focus();
+        });
+    }
+
+    if (createTaskForm) {
+        createTaskForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('btn-submit-task');
+            const origHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> กำลังสร้างและวิเคราะห์ภารกิจ...';
+
+            const user = currentUser || localStorage.getItem('kira_username') || 'guest';
+            const payload = {
+                username: user,
+                title: document.getElementById('task-form-title').value.trim(),
+                description: document.getElementById('task-form-desc').value.trim(),
+                priority: document.getElementById('task-form-priority').value,
+                requester: document.getElementById('task-form-requester').value.trim() || user,
+                auto_draft: document.getElementById('task-switch-autodraft').checked,
+                evaluate_boardroom: document.getElementById('task-switch-boardroom').checked
+            };
+
+            try {
+                const res = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    createTaskForm.reset();
+                    document.getElementById('task-switch-autodraft').checked = true;
+                    document.getElementById('task-switch-boardroom').checked = true;
+                    await loadOmniTasks();
+
+                    tabBtns.forEach(b => {
+                        if (b.getAttribute('data-tab') === 'matrix') b.click();
+                    });
+
+                    if (data.has_deliverable) {
+                        window.viewTaskDeliverable(data.task_id);
+                    }
+                } else {
+                    alert('ไม่สามารถสร้างงานได้: ' + (data.detail || data.message));
+                }
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = origHtml;
+            }
+        });
+    }
+
+    loadOmniTasks();
+}
+
+// Auto-run controllers on load
+initSpeechRecognition();
+initLiveCanvasController();
+initTaskMatrixController();
+
 
 
 
