@@ -91,6 +91,13 @@ def run_tests():
     ext_task_id = ext_data.get("task_id")
     print(f"  ✅ External task received and auto-processed: {ext_task_id}")
 
+    # Verify Boss can see external intake task
+    r_ext_list = requests.get(f"{BASE_URL}/api/tasks?username=boss", timeout=5)
+    assert r_ext_list.status_code == 200
+    ext_tasks = r_ext_list.json().get("tasks", [])
+    assert any(t["task_id"] == ext_task_id for t in ext_tasks), f"External intake task {ext_task_id} not visible to Boss"
+    print(f"  ✅ Verified Boss can see external intake task in matrix!")
+
     # 7. Cleanup Test Tasks
     print("\n[7/7] Cleaning up test tasks...")
     requests.delete(f"{BASE_URL}/api/tasks/{task_id}", timeout=5)

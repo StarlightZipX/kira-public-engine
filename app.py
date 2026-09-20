@@ -4142,10 +4142,26 @@ async def create_task(req: TaskCreateRequest):
 async def list_tasks(username: str, status: Optional[str] = None):
     """ดึงรายการภารกิจทั้งหมดของผู้ใช้ พร้อมคะแนนและมุมมอง Matrix"""
     import json as _json
-    if status:
-        rows = execute_query("SELECT task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at FROM tasks WHERE username=? AND status=? ORDER BY priority_score DESC, id DESC", (username, status), fetch='all')
+    if is_boss(username):
+        if status:
+            rows = execute_query("""
+                SELECT task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at 
+                FROM tasks 
+                WHERE (username=? OR username='👑 Boss (Owner)' OR source='external_intake') AND status=? 
+                ORDER BY priority_score DESC, id DESC
+            """, (username, status), fetch='all')
+        else:
+            rows = execute_query("""
+                SELECT task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at 
+                FROM tasks 
+                WHERE (username=? OR username='👑 Boss (Owner)' OR source='external_intake') 
+                ORDER BY priority_score DESC, id DESC
+            """, (username,), fetch='all')
     else:
-        rows = execute_query("SELECT task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at FROM tasks WHERE username=? ORDER BY priority_score DESC, id DESC", (username,), fetch='all')
+        if status:
+            rows = execute_query("SELECT task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at FROM tasks WHERE username=? AND status=? ORDER BY priority_score DESC, id DESC", (username, status), fetch='all')
+        else:
+            rows = execute_query("SELECT task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at FROM tasks WHERE username=? ORDER BY priority_score DESC, id DESC", (username,), fetch='all')
         
     tasks = []
     if rows:

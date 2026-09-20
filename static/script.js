@@ -185,6 +185,9 @@ function checkAuth() {
         loadHistory();
         loadUserProfile();
         loadSettingsPreferences();
+        if (typeof loadOmniTasks === 'function') {
+            loadOmniTasks();
+        }
         if (typeof checkAndTriggerOnboarding === 'function') {
             checkAndTriggerOnboarding();
         }
