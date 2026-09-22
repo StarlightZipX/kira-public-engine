@@ -302,12 +302,18 @@
                         <img id="profile-pic" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
                         <span id="profile-name">User</span>
                     </div>
-                    <div id="user-quota-badge" style="font-size: 0.72rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); padding: 2px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; width: fit-content; margin-left: 2px;">
-                        <i class="fa-solid fa-bolt-lightning"></i> <span id="quota-text">โควตาวันนี้: กำลังโหลด...</span>
+                    <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                        <div id="user-quota-badge" style="font-size: 0.72rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); padding: 2px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; width: fit-content;">
+                            <i class="fa-solid fa-bolt-lightning"></i> <span id="quota-text">โควตาวันนี้: กำลังโหลด...</span>
+                        </div>
+                        <div id="user-plan-badge" class="user-plan-badge" style="font-size: 0.72rem; color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; width: fit-content; cursor: pointer;" title="คลิกเพื่อดูรายละเอียดแพ็กเกจสมาชิก">
+                            <i class="fa-solid fa-crown"></i> <span id="plan-badge-text">Free</span>
+                        </div>
                     </div>
                 </div>
                 <button class="settings-btn" id="btn-sidebar-guide" title="คู่มือการใช้งาน (Kira Guide)" style="margin-right: 4px; color: #38bdf8;"><i class="fa-solid fa-book-open"></i></button>
                 <button class="settings-btn" id="btn-sidebar-settings" title="ตั้งค่าระบบ (Settings) - Ctrl+," style="margin-right: 4px; color: #c084fc;"><i class="fa-solid fa-gear"></i></button>
+                <button class="settings-btn" id="btn-admin-orders" title="ตรวจสลิปและอนุมัติสมาชิก (Pending Orders)" style="display: none; color: #10b981; position: relative; margin-right: 4px;"><i class="fa-solid fa-receipt"></i><span id="admin-orders-badge" class="admin-orders-badge" style="display: none;">0</span></button>
                 <a href="/admin_boss" target="_blank" class="settings-btn" id="btn-admin-dashboard" title="แดชบอร์ดผู้สร้าง (God Mode)" style="display: none; color: #f59e0b; text-decoration: none; align-items: center; justify-content: center; margin-right: 6px;"><i class="fa-solid fa-shield-halved"></i></a>
                 <button class="settings-btn" id="btn-logout" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
@@ -330,6 +336,13 @@
                 </div>
 
                 <div class="header-actions zen-actions">
+                    <!-- 👑 Kira Pro Subscription Button -->
+                    <button title="อัปเกรดเป็น Kira Pro / Founder Pass" id="btn-upgrade-pro" class="header-action-btn upgrade-pro-btn">
+                        <i class="fa-solid fa-crown text-amber"></i>
+                        <span class="upgrade-btn-text">อัปเกรด Pro</span>
+                        <span class="pro-sparkle-dot"></span>
+                    </button>
+
                     <!-- Virtual Boardroom Quick Toggle -->
                     <button title="เปิดสภาที่ปรึกษาเสมือน AI 4 ผู้บริหาร (Virtual Boardroom)" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn">
                         <i class="fa-solid fa-users-viewfinder"></i>
@@ -1605,6 +1618,314 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- 👑 Kira Subscription & Monetization Engine Modal -->
+    <div id="subscription-modal" class="modal-overlay subscription-modal-overlay" style="display: none; z-index: 1100;">
+        <div class="subscription-modal-card glass-panel">
+            <!-- Modal Header -->
+            <div class="subscription-header">
+                <div class="subscription-title-group">
+                    <div class="subscription-badge"><i class="fa-solid fa-crown"></i> Kira Premium Supercluster</div>
+                    <h2>ยกระดับสู่พลังเต็มขีดจำกัดกับ Kira Pro</h2>
+                    <p class="subscription-subtitle">เลือกแพ็กเกจที่เหมาะกับคุณ ปลดล็อกสภา 4 ผู้บริหาร (Boardroom) และตัวช่วยร่างเอกสารงานจริงแบบไม่จำกัด</p>
+                </div>
+                <button id="btn-close-subscription" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Current User Membership Ribbon -->
+            <div class="membership-status-banner" id="membership-status-banner">
+                <div class="status-left">
+                    <span class="status-label">สถานะบัญชีปัจจุบัน:</span>
+                    <span id="sub-modal-current-plan" class="status-badge-chip">🥉 Standard Free</span>
+                    <span id="sub-modal-expiry-info" class="status-expiry-text">• โควตา 15 ข้อความ/วัน</span>
+                </div>
+                <div class="status-right">
+                    <span id="sub-modal-badge-hint" class="status-hint">อัปเกรดเพื่อรับ 500 ข้อความ/วัน และฟีเจอร์พรีเมียมทั้งหมด</span>
+                </div>
+            </div>
+
+            <!-- Modal Content Views -->
+            <div class="subscription-views-container">
+                <!-- VIEW 1: Pricing Table Selection -->
+                <div id="sub-view-plans" class="sub-view active">
+                    <div class="pricing-grid">
+                        <!-- Card 1: Trial Pass -->
+                        <div class="pricing-card plan-trial" data-plan="trial">
+                            <div class="plan-card-header">
+                                <div class="plan-tier-badge tier-trial">🥉 งานด่วน 7 วัน</div>
+                                <h3 class="plan-title">Trial Pass</h3>
+                                <p class="plan-desc">เหมาะสำหรับช่วงโปรเจกต์เร่งด่วน หรือสัปดาห์สอบ</p>
+                                <div class="plan-price-box">
+                                    <span class="currency">฿</span>
+                                    <span class="amount">39</span>
+                                    <span class="period">/ 7 วัน</span>
+                                </div>
+                            </div>
+                            <div class="plan-divider"></div>
+                            <ul class="plan-features-list">
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>500 ข้อความ/วัน</strong> (ปกติฟรี 15 ข้อความ)</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Virtual Boardroom</strong> สภา 4 ผู้บริหาร</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Auto-Draft Deliverable</strong> ร่างเอกสารงานจริง</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>Cloud Supercluster Turbo Speed</span></li>
+                            </ul>
+                            <button type="button" class="btn-select-plan" data-plan="trial">
+                                <span>เลือกแพ็กเกจ Trial (39.-)</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+
+                        <!-- Card 2: Kira Pro Monthly (Featured) -->
+                        <div class="pricing-card plan-pro featured" data-plan="pro">
+                            <div class="popular-ribbon">🔥 แนะนำยอดนิยม • BEST VALUE</div>
+                            <div class="plan-card-header">
+                                <div class="plan-tier-badge tier-pro">🥈 ยอดนิยมสูงสุด</div>
+                                <h3 class="plan-title">Kira Pro Monthly</h3>
+                                <p class="plan-desc">สำหรับคนทำงาน นักศึกษา และฟรีแลนซ์ที่ต้องการ AI คู่หู</p>
+                                <div class="plan-price-box">
+                                    <span class="currency">฿</span>
+                                    <span class="amount">129</span>
+                                    <span class="period">/ เดือน</span>
+                                </div>
+                                <div class="price-daily-subtext">เฉลี่ยเพียงวันละ 4.30 บาทเท่านั้น!</div>
+                            </div>
+                            <div class="plan-divider"></div>
+                            <ul class="plan-features-list">
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>500 ข้อความ/วัน</strong> สำหรับงานทุกประเภท</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Virtual Boardroom</strong> ถกเถียง 4 ขุนพลไม่จำกัด</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Deliverable Auto-Exec</strong> งานเสร็จในคลิกเดียว</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>เข้าถึง <strong>Kira 2.1 Reasoning</strong> เต็มประสิทธิภาพ</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>Long-term Memory & Knowledge Graph</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>Priority High-Bandwidth Cloud Queue</span></li>
+                            </ul>
+                            <button type="button" class="btn-select-plan primary-gradient" data-plan="pro">
+                                <span>สมัครสมาชิก Kira Pro (129.-)</span>
+                                <i class="fa-solid fa-bolt-lightning"></i>
+                            </button>
+                        </div>
+
+                        <!-- Card 3: Founder's 1-Year Pass -->
+                        <div class="pricing-card plan-founder" data-plan="founder">
+                            <div class="plan-card-header">
+                                <div class="plan-tier-badge tier-founder">🥇 จำกัด 100 สิทธิ์แรก</div>
+                                <h3 class="plan-title">Founder's 1-Year</h3>
+                                <p class="plan-desc">สำหรับผู้ร่วมสนับสนุนสร้าง Kira ให้เติบโตอย่างยั่งยืน</p>
+                                <div class="plan-price-box">
+                                    <span class="currency">฿</span>
+                                    <span class="amount">499</span>
+                                    <span class="period">/ ปี</span>
+                                </div>
+                                <div class="price-daily-subtext">ตกเดือนละ ~41 บาท • ประหยัดกว่า 68%!</div>
+                            </div>
+                            <div class="plan-divider"></div>
+                            <ul class="plan-features-list">
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>สิทธิประโยชน์ระดับ Pro ตลอด 365 วัน</strong></span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>ปลดล็อกตราสัญลักษณ์ <strong>👑 Founder VIP</strong></span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>สิทธิ์ทดสอบโมเดลและฟีเจอร์ใหม่ก่อนใครตลอดปี</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>Direct Priority Support กับผู้พัฒนา</span></li>
+                            </ul>
+                            <button type="button" class="btn-select-plan founder-gradient" data-plan="founder">
+                                <span>ครอบครองสิทธิ์ Founder (499.-)</span>
+                                <i class="fa-solid fa-gem"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Trust & Guarantee Footer -->
+                    <div class="subscription-trust-bar">
+                        <div class="trust-item"><i class="fa-solid fa-shield-halved"></i> <span>ชำระผ่าน PromptPay QR สะดวก ปลอดภัย ไร้ค่าธรรมเนียมบัตร</span></div>
+                        <div class="trust-item"><i class="fa-solid fa-bolt"></i> <span>ตรวจสอบและเปิดสิทธิ์รวดเร็วภายในไม่กี่นาที</span></div>
+                        <div class="trust-item"><i class="fa-solid fa-heart"></i> <span>รายได้ทั้งหมดนำไปเป็นค่าเซิร์ฟเวอร์และพัฒนาฟีเจอร์ใหม่ต่อเนื่อง</span></div>
+                    </div>
+                </div>
+
+                <!-- VIEW 2: Checkout & PromptPay Slip Upload -->
+                <div id="sub-view-checkout" class="sub-view" style="display: none;">
+                    <div class="checkout-layout">
+                        <!-- Left: Order Summary & QR Code -->
+                        <div class="checkout-qr-column glass-panel">
+                            <div class="checkout-step-label"><i class="fa-solid fa-qrcode"></i> ขั้นตอนที่ 1: สแกนชำระเงินผ่านแอปธนาคาร</div>
+                            
+                            <div class="selected-plan-summary-badge">
+                                <div>
+                                    <span class="sum-label">แพ็กเกจที่เลือก:</span>
+                                    <h4 id="checkout-plan-title">Kira Pro Monthly (30 วัน)</h4>
+                                </div>
+                                <div class="sum-price">
+                                    <span id="checkout-plan-price">129.00</span> ฿
+                                </div>
+                            </div>
+
+                            <!-- High-Contrast PromptPay QR Display -->
+                            <div class="promptpay-qr-wrapper">
+                                <div class="promptpay-logo-badge">
+                                    <i class="fa-solid fa-qrcode"></i> Thai PromptPay
+                                </div>
+                                <div class="qr-canvas-container" id="qr-canvas-container">
+                                    <img id="promptpay-qr-image" src="" alt="PromptPay QR" class="promptpay-qr-img">
+                                </div>
+                                <div class="qr-scan-hint">ใช้แอปธนาคารใดก็ได้ สแกน QR เพื่อโอนเงิน</div>
+                            </div>
+
+                            <!-- Transfer Details -->
+                            <div class="transfer-details-box">
+                                <div class="detail-row">
+                                    <span class="detail-label">หมายเลขพร้อมเพย์:</span>
+                                    <span class="detail-val font-mono" id="pp-number-text">081-234-5678</span>
+                                    <button type="button" id="btn-copy-pp-number" class="btn-copy-mini" title="คัดลอก"><i class="fa-regular fa-copy"></i> คัดลอก</button>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">ชื่อบัญชี:</span>
+                                    <span class="detail-val" id="pp-name-text">Kira AI Official (ระบบชำระเงิน)</span>
+                                </div>
+                                <div class="detail-row highlight-amount">
+                                    <span class="detail-label">ยอดที่ต้องชำระ:</span>
+                                    <span class="detail-val text-amber font-bold" id="pp-amount-text">129.00 บาท</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Slip Upload & Submission -->
+                        <div class="checkout-upload-column glass-panel">
+                            <div class="checkout-step-label"><i class="fa-solid fa-receipt"></i> ขั้นตอนที่ 2: แนบหลักฐานสลิปการโอนเงิน</div>
+                            
+                            <!-- Dropzone -->
+                            <div class="slip-dropzone" id="slip-dropzone">
+                                <input type="file" id="slip-file-input" accept="image/png, image/jpeg, image/jpg, image/webp" style="display: none;">
+                                <div class="dropzone-idle" id="dropzone-idle">
+                                    <div class="dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                    <h4>ลากสลิปมาวางที่นี่ หรือ <span class="browse-text">คลิกเพื่อเลือกไฟล์</span></h4>
+                                    <p class="dropzone-hint">รองรับไฟล์ภาพ JPG, PNG, WEBP (ขนาดไม่เกิน 10MB)</p>
+                                </div>
+                                <!-- Slip Preview -->
+                                <div class="dropzone-preview" id="dropzone-preview" style="display: none;">
+                                    <img id="slip-preview-img" src="" alt="Slip Preview" class="slip-thumbnail">
+                                    <div class="preview-actions">
+                                        <span id="slip-filename" class="slip-filename">slip.jpg</span>
+                                        <button type="button" id="btn-remove-slip" class="btn-remove-slip" title="ลบรูป"><i class="fa-solid fa-trash"></i> เปลี่ยนรูป</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Optional Transfer Notes -->
+                            <div class="form-group" style="margin-top: 16px;">
+                                <label for="slip-note-input" class="input-label"><i class="fa-regular fa-comment-dots"></i> บันทึกช่วยจำ / เวลาที่โอน (ระบุหรือไม่ก็ได้):</label>
+                                <input type="text" id="slip-note-input" class="input-control" placeholder="เช่น โอนจากธนาคารกสิกร เวลา 15:42 น.">
+                            </div>
+
+                            <!-- Order Reference Hidden -->
+                            <input type="hidden" id="active-order-id" value="">
+
+                            <!-- Checkout Action Buttons -->
+                            <div class="checkout-actions">
+                                <button type="button" id="btn-back-to-plans" class="btn-checkout-secondary">
+                                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
+                                </button>
+                                <button type="button" id="btn-submit-order-slip" class="btn-checkout-primary" disabled>
+                                    <i class="fa-solid fa-paper-plane"></i> ยืนยันการชำระเงินและส่งสลิป
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 3: Success & Verification Pending Screen -->
+                <div id="sub-view-success" class="sub-view" style="display: none;">
+                    <div class="verification-pending-card">
+                        <div class="pending-icon-pulse">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                        </div>
+                        <h3>ส่งหลักฐานการชำระเงินเรียบร้อยแล้ว!</h3>
+                        <p class="pending-desc">ระบบได้รับสลิปของท่านเรียบร้อยแล้ว รหัสคำสั่งซื้อ: <span id="confirmed-order-id" class="font-mono text-amber">#ORD-XXXX</span></p>
+                        
+                        <div class="verification-steps-box">
+                            <div class="vstep-item active">
+                                <div class="vstep-icon"><i class="fa-solid fa-check"></i></div>
+                                <div class="vstep-text">
+                                    <strong>สร้างคำสั่งซื้อและส่งสลิป</strong>
+                                    <span>ข้อมูลบันทึกในฐานข้อมูลเรียบร้อย</span>
+                                </div>
+                            </div>
+                            <div class="vstep-item active pulse-border">
+                                <div class="vstep-icon spinner"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                                <div class="vstep-text">
+                                    <strong>ผู้ดูแลระบบกำลังตรวจสอบสลิป</strong>
+                                    <span>บอสจะทำการตรวจสอบและอนุมัติการใช้งานโดยเร็วที่สุด (ปกติภายใน 5-15 นาที)</span>
+                                </div>
+                            </div>
+                            <div class="vstep-item">
+                                <div class="vstep-icon"><i class="fa-solid fa-crown"></i></div>
+                                <div class="vstep-text">
+                                    <strong>เปิดสิทธิ์ Kira Pro ทันที</strong>
+                                    <span>เมื่อได้รับอนุมัติ ระบบจะปรับโควตาเป็น 500 ข้อความ/วัน พร้อมปลดล็อกทุกฟีเจอร์</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pending-actions">
+                            <button type="button" id="btn-refresh-order-status" class="btn-action-sm primary">
+                                <i class="fa-solid fa-arrows-rotate"></i> ตรวจสอบสถานะการอนุมัติ
+                            </button>
+                            <button type="button" id="btn-close-sub-done" class="btn-action-sm secondary">
+                                ปิดหน้าต่างและกลับสู่แชท
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🛡️ In-App Admin Orders Review Modal (For Boss) -->
+    <div id="admin-orders-modal" class="modal-overlay" style="display: none; z-index: 1110;">
+        <div class="admin-orders-card glass-panel">
+            <div class="admin-orders-header">
+                <div class="admin-orders-title-group">
+                    <div class="admin-orders-badge"><i class="fa-solid fa-shield-halved"></i> God Mode Admin</div>
+                    <h2>ระบบตรวจสอบสลิปและอนุมัติสมาชิก (Subscription Orders)</h2>
+                    <p class="admin-orders-subtitle">ตรวจสอบสลิปโอนเงิน PromptPay ของผู้ใช้งาน และอนุมัติปรับสถานะ VIP ได้ใน 1 คลิก</p>
+                </div>
+                <button id="btn-close-admin-orders" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Filter & Stats Bar -->
+            <div class="admin-orders-stats-row">
+                <div class="stat-pill"><span class="stat-label">รอตรวจสอบ:</span> <strong id="admin-stat-pending" class="text-amber">0</strong></div>
+                <div class="stat-pill"><span class="stat-label">อนุมัติแล้ว:</span> <strong id="admin-stat-approved" class="text-emerald">0</strong></div>
+                <div class="stat-pill"><span class="stat-label">ยอดเงินรวม:</span> <strong id="admin-stat-revenue" class="text-cyan">0 ฿</strong></div>
+                <button type="button" id="btn-reload-admin-orders" class="btn-reload-orders"><i class="fa-solid fa-arrows-rotate"></i> รีเฟรช</button>
+            </div>
+
+            <!-- Orders Table Container -->
+            <div class="admin-orders-table-wrapper">
+                <table class="admin-orders-table">
+                    <thead>
+                        <tr>
+                            <th>รหัสคำสั่งซื้อ / เวลา</th>
+                            <th>ผู้ใช้งาน</th>
+                            <th>แพ็กเกจ</th>
+                            <th>ยอดเงิน</th>
+                            <th>สลิปโอนเงิน</th>
+                            <th>สถานะ</th>
+                            <th>การจัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-orders-table-body">
+                        <tr>
+                            <td colspan="7" class="empty-orders-text">กำลังโหลดรายการคำสั่งซื้อ...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zoom Slip Lightbox Modal -->
+    <div id="slip-lightbox-modal" class="modal-overlay" style="display: none; z-index: 1120;">
+        <div class="slip-lightbox-content">
+            <button id="btn-close-slip-lightbox" class="lightbox-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            <img id="slip-lightbox-img" src="" alt="Slip Zoom">
         </div>
     </div>
 

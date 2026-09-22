@@ -333,6 +333,36 @@ def init_db():
             execute_query("ALTER TABLE users ADD COLUMN avatar_url TEXT")
         except:
             pass
+        # สำหรับระบบ Subscription & Monetization Engine
+        try:
+            execute_query("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'")
+        except:
+            pass
+        try:
+            execute_query("ALTER TABLE users ADD COLUMN plan_expire_date TEXT")
+        except:
+            pass
+        try:
+            execute_query("ALTER TABLE users ADD COLUMN subscription_status TEXT DEFAULT 'inactive'")
+        except:
+            pass
+
+        execute_query('''CREATE TABLE IF NOT EXISTS subscription_orders
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      order_id TEXT UNIQUE,
+                      username TEXT,
+                      plan_type TEXT,
+                      plan_title TEXT,
+                      amount INTEGER,
+                      duration_days INTEGER,
+                      slip_image TEXT,
+                      status TEXT DEFAULT 'pending',
+                      rejection_reason TEXT,
+                      created_at TEXT,
+                      reviewed_at TEXT)''')
+        execute_query('''CREATE INDEX IF NOT EXISTS idx_sub_orders_username ON subscription_orders (username)''')
+        execute_query('''CREATE INDEX IF NOT EXISTS idx_sub_orders_order_id ON subscription_orders (order_id)''')
+
         execute_query('''CREATE TABLE IF NOT EXISTS logs
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
                       username TEXT,
@@ -931,6 +961,183 @@ print(f"🤖 Kira 1.1 (Next-Gen) = {PREFERRED_PRO}")
 print(f"🤖 API Keys = {len(API_KEYS)} ดอก")
 print(f"🤖 ========================================")
 
+# ========== 💎 Kira Subscription & Monetization Engine ==========
+SUBSCRIPTION_PLANS = {
+    "trial": {
+        "id": "trial",
+        "plan_id": "trial",
+        "name": "Trial Pass (ตั๋วทดลอง 7 วัน)",
+        "price": 39,
+        "duration_days": 7,
+        "days": 7,
+        "badge": "✨ Trial Pass",
+        "tag": "ทดลองใช้",
+        "popular": False,
+        "description": "เหมาะสำหรับทดลองใช้ทุกฟีเจอร์พรีเมียม 7 วันเต็ม หรือใช้ปั่นงานด่วน",
+        "features": [
+            "แชทไม่จำกัดรอบ พร้อมโหมด Thinking Reasoning",
+            "เข้าประชุม Virtual Boardroom 4 ผู้บริหาร",
+            "Autonomous Deliverable ร่างงานจริง 5,000+ ตัวอักษร",
+            "สั่งงานด้วยเสียงภาษาไทย (Speech-to-Task)"
+        ]
+    },
+    "pro": {
+        "id": "pro",
+        "plan_id": "pro",
+        "name": "Kira Pro (แพ็กเกจรายเดือน)",
+        "price": 129,
+        "duration_days": 30,
+        "days": 30,
+        "badge": "⭐ Kira Pro",
+        "tag": "ยอดนิยม ⭐",
+        "popular": True,
+        "description": "ผู้ช่วย AI ประจำตัวระดับผู้บริหาร สำหรับคนทำงาน ฟรีแลนซ์ และนักศึกษา",
+        "features": [
+            "ทุกอย่างใน Trial Pass ตลอด 30 วันเต็ม",
+            "Virtual Boardroom สภา 4 ผู้บริหารไม่จำกัดครั้ง",
+            "Auto-Deliverable เจนเนอเรตชิ้นงานจริงไม่จำกัด",
+            "พรีวิว Live Canvas และคัดลอกชิ้นงานส่งต่อทันที",
+            "ระบบจำแนกและวิเคราะห์ความสำคัญ Eisenhower Matrix"
+        ]
+    },
+    "founder": {
+        "id": "founder",
+        "plan_id": "founder",
+        "name": "Founder's 1-Year Pass (ผู้ร่วมบุกเบิก)",
+        "price": 499,
+        "duration_days": 365,
+        "days": 365,
+        "badge": "👑 Founder Pass",
+        "tag": "คุ้มค่าที่สุด 👑",
+        "popular": False,
+        "description": "ร่วมเป็นผู้บุกเบิกสนับสนุนนักศึกษาผู้พัฒนา จ่ายครั้งเดียวใช้ยาว 1 ปี (ตกเดือนละ 41 บาท)",
+        "features": [
+            "สิทธิ์การใช้งานระดับ Pro นาน 365 วันเต็ม (1 ปี)",
+            "เหรียญตราพิเศษ 👑 Founder Crown หน้าโปรไฟล์",
+            "สิทธิ์ใช้งานฟีเจอร์ใหม่ก่อนใครตลอดปี 2026-2027",
+            "ช่องทางซัพพอร์ตและปรึกษาโดยตรงกับผู้พัฒนาคิระ"
+        ]
+    }
+}
+
+# Aliases for flexible matching
+SUBSCRIPTION_PLANS["pro_monthly"] = SUBSCRIPTION_PLANS["pro"]
+SUBSCRIPTION_PLANS["founder_yearly"] = SUBSCRIPTION_PLANS["founder"]
+
+PROMPTPAY_NUMBER = os.environ.get("PROMPTPAY_NUMBER", "081-234-5678")
+PROMPTPAY_NAME = os.environ.get("PROMPTPAY_NAME", "นายธนกฤต (ผู้พัฒนาคิระ / Kira AI System)")
+
+def get_user_plan_status(uname: str) -> dict:
+    clean_user = (uname or "").strip()
+    if is_boss(clean_user):
+        return {
+            "plan": "founder",
+            "plan_name": "Founder (Owner VIP)",
+            "badge": "👑 Founder (Owner)",
+            "is_active": True,
+            "is_active_pro": True,
+            "is_boss": True,
+            "daily_quota": 999999,
+            "can_access_boardroom": True,
+            "can_auto_draft": True,
+            "days_left": 9999,
+            "expire_date": "Unlimited",
+            "subscription_status": "active",
+            "features": {
+                "unlimited_chat": True,
+                "reasoning_mode": True,
+                "virtual_boardroom": True,
+                "auto_deliverable": True,
+                "speech_to_task": True,
+                "public_intake": True
+            }
+        }
+        
+    row = execute_query("SELECT plan, plan_expire_date, subscription_status FROM users WHERE username=?", (clean_user,), fetch='one')
+    if not row:
+        return {
+            "plan": "free",
+            "plan_name": "Free Member",
+            "badge": "Free",
+            "is_active": False,
+            "is_active_pro": False,
+            "is_boss": False,
+            "daily_quota": 15,
+            "can_access_boardroom": False,
+            "can_auto_draft": False,
+            "days_left": 0,
+            "expire_date": None,
+            "subscription_status": "inactive",
+            "features": {
+                "unlimited_chat": False,
+                "reasoning_mode": False,
+                "virtual_boardroom": False,
+                "auto_deliverable": False,
+                "speech_to_task": True,
+                "public_intake": False
+            }
+        }
+        
+    plan, expire_str, status = row[0] or "free", row[1], row[2] or "inactive"
+    tz = timezone(timedelta(hours=7))
+    now = datetime.now(tz)
+    
+    is_active = False
+    days_left = 0
+    if expire_str:
+        try:
+            exp_dt = datetime.strptime(expire_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=tz)
+            if exp_dt > now:
+                is_active = True
+                days_left = (exp_dt - now).days + 1
+            else:
+                is_active = False
+                plan = "free"
+        except Exception:
+            is_active = False
+            plan = "free"
+    else:
+        if plan in ("pro", "founder", "trial"):
+            is_active = True
+            days_left = 30
+        else:
+            plan = "free"
+            is_active = False
+            
+    badge = "Free"
+    if plan == "founder":
+        badge = "👑 Founder"
+    elif plan == "pro":
+        badge = "⭐ Pro"
+    elif plan == "trial":
+        badge = "✨ Trial"
+        
+    plan_info = SUBSCRIPTION_PLANS.get(plan) or SUBSCRIPTION_PLANS.get(f"{plan}_monthly") or {}
+    daily_quota = 500 if is_active else 15
+    
+    return {
+        "plan": plan,
+        "plan_name": plan_info.get("name", "Free Member" if plan == "free" else plan.capitalize()),
+        "badge": badge,
+        "is_active": is_active,
+        "is_active_pro": is_active,
+        "is_boss": False,
+        "daily_quota": daily_quota,
+        "can_access_boardroom": is_active,
+        "can_auto_draft": is_active,
+        "days_left": days_left,
+        "expire_date": expire_str,
+        "subscription_status": status,
+        "features": {
+            "unlimited_chat": is_active,
+            "reasoning_mode": is_active,
+            "virtual_boardroom": is_active,
+            "auto_deliverable": is_active,
+            "speech_to_task": True,
+            "public_intake": is_active
+        }
+    }
+
 # ========== Boss & Quota ==========
 def is_boss(uname: str) -> bool:
     if not uname: return False
@@ -943,12 +1150,15 @@ user_daily_count = {}
 def check_user_quota(uname: str) -> tuple:
     if is_boss(uname):
         return True, 999999
+    plan_status = get_user_plan_status(uname)
+    is_pro = plan_status.get("is_active", False)
+    limit = 500 if is_pro else 15  # สมาชิกฟรี 15 ข้อความต่อวัน, สมาชิกพรีเมียม 500 ข้อความ
     today = date.today().isoformat()
     if uname not in user_daily_count:
         user_daily_count[uname] = {"date": today, "count": 0}
     if user_daily_count[uname]["date"] != today:
         user_daily_count[uname] = {"date": today, "count": 0}
-    remaining = USER_DAILY_LIMIT - user_daily_count[uname]["count"]
+    remaining = limit - user_daily_count[uname]["count"]
     return (True, remaining) if remaining > 0 else (False, 0)
 
 def use_user_quota(uname: str):
@@ -1149,6 +1359,29 @@ class ExternalIntakeRequest(BaseModel):
     department: Optional[str] = ""
     urgency: Optional[str] = "normal"
     attachment_url: Optional[str] = ""
+
+# --- 💎 Kira Subscription & Monetization Engine Models ---
+class SubscriptionOrderCreateRequest(BaseModel):
+    username: str
+    plan_type: Optional[str] = None
+    plan_id: Optional[str] = None
+
+class SubscriptionSlipUploadRequest(BaseModel):
+    order_id: str
+    username: Optional[str] = None
+    slip_image: Optional[str] = None
+    slip_image_base64: Optional[str] = None
+    transfer_note: Optional[str] = ""
+
+class SubscriptionApproveRequest(BaseModel):
+    order_id: str
+    admin_username: Optional[str] = "boss"
+    note: Optional[str] = ""
+
+class SubscriptionRejectRequest(BaseModel):
+    order_id: str
+    admin_username: Optional[str] = "boss"
+    reason: Optional[str] = "สลิปไม่ถูกต้องหรือยอดเงินไม่ตรง"
 
 # --- Endpoints ---
 @app.get("/api/health")
@@ -1724,35 +1957,67 @@ async def login(req: AuthRequest):
 
 @app.get("/api/user/profile/{username}")
 async def get_user_profile(username: str):
+    sub_status = get_user_plan_status(username)
     row = execute_query("SELECT points FROM users WHERE username=?", (username,), fetch='one')
-    if row:
-        return {"status": "success", "points": row[0]}
-    return {"status": "error", "message": "User not found"}
+    points = row[0] if row else 0
+    return {
+        "status": "success",
+        "points": points,
+        "plan": sub_status.get("plan", "free"),
+        "plan_name": sub_status.get("plan_name", "Free Member"),
+        "badge": sub_status.get("badge", "Free"),
+        "is_active": sub_status.get("is_active", False),
+        "days_left": sub_status.get("days_left", 0),
+        "expire_date": sub_status.get("expire_date")
+    }
 
 @app.get("/api/user/quota/{username}")
 async def get_user_quota(username: str):
-    """ส่งคืนสถานะโควตาการใช้งานรายวันของผู้ใช้"""
+    """ส่งคืนสถานะโควตาการใช้งานรายวันของผู้ใช้ พร้อมระดับสมาชิก"""
     try:
-        is_boss = _is_boss(username)
-        if is_boss:
-            return {"status": "success", "is_boss": True, "used": 0, "remaining": 9999, "limit": 9999, "badge": "👑 Unlimited Boss Pass"}
+        sub_status = get_user_plan_status(username)
+        is_boss_user = _is_boss(username)
         
+        if is_boss_user:
+            return {
+                "status": "success", 
+                "is_boss": True, 
+                "plan": "founder",
+                "used": 0, 
+                "remaining": 9999, 
+                "limit": 9999, 
+                "badge": "👑 Founder (Unlimited Pass)"
+            }
+            
         tz = timezone(timedelta(hours=7))
         today_prefix = datetime.now(tz).strftime("%Y-%m-%d")
         row = execute_query("SELECT COUNT(*) FROM logs WHERE username=? AND role='User' AND timestamp LIKE ?", (username, f"{today_prefix}%"), fetch='one')
         used = row[0] if row else 0
-        limit = 150
+        
+        plan = sub_status.get("plan", "free")
+        is_pro = sub_status.get("is_active", False)
+        
+        if is_pro:
+            limit = 500
+            days_str = f"{sub_status.get('days_left', 0)} วัน" if sub_status.get('days_left') else "ไม่จำกัด"
+            badge = f"{sub_status.get('badge', '⭐ Pro')} ({days_str}): {max(0, limit - used)}/{limit}"
+        else:
+            limit = 15  # สมาชิกฟรีจำกัด 15 ข้อความต่อวัน
+            badge = f"Free Plan: {max(0, limit - used)}/{limit} ข้อความ (อัปเกรดเพื่อปลดล็อก)"
+            
         remaining = max(0, limit - used)
         return {
             "status": "success",
             "is_boss": False,
+            "plan": plan,
+            "is_pro": is_pro,
             "used": used,
             "remaining": remaining,
             "limit": limit,
-            "badge": f"⚡ โควตาวันนี้: {remaining}/{limit} ข้อความ"
+            "badge": badge
         }
     except Exception as e:
-        return {"status": "success", "is_boss": False, "used": 0, "remaining": 150, "limit": 150, "badge": "⚡ โควตาวันนี้: 150/150 ข้อความ"}
+        return {"status": "success", "is_boss": False, "used": 0, "remaining": 15, "limit": 15, "badge": "Free Plan: 15/15 ข้อความ"}
 
 # ==========================================
 # ⚙️ Kira Settings & User Preferences Endpoints
@@ -3528,8 +3793,8 @@ async def chat_endpoint(req: ChatRequest, request: Request):
 
     if not allowed:
         return StreamingResponse(
-            iter(["🤖 **[Kira 1.0]**\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้!** โควตาการใช้งานของคุณวันนี้หมดแล้วค่ะ (จำกัด 150 ข้อความ/วัน) กรุณากลับมาใหม่พรุ่งนี้นะคะ 🙏"]),
-            media_type="text/plain"
+            iter(["💎 **[แจ้งเตือนโควตาการใช้งาน]**\n\n⚠️ **โควตาฟรีประจำวันของคุณครบ 15 ข้อความแล้วค่ะ**\n\nหากคุณต้องการใช้งานต่อเนื่องแบบไม่จำกัด พร้อมปลดล็อกฟีเจอร์ระดับเทพ (Virtual Boardroom, Auto-Deliverable ร่างงานจริง 5,000+ คำ, และ Voice-to-Task) กรุณาคลิกปุ่ม **'⭐ อัปเกรด Pro'** ที่แถบด้านบน ในราคาเริ่มต้นเพียง **39 บาท/สัปดาห์** หรือ **129 บาท/เดือน** ค่ะ ✨"]),
+            media_type="text/plain; charset=utf-8"
         )
 
     session_key = f"{uname}_{session_id}" if session_id else uname
@@ -3537,6 +3802,13 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     # 🏛️ Kira Virtual Boardroom Interception (4-Executive Simulation)
     is_boardroom = (getattr(req, "boardroom_mode", False) is True) or (model_version == "boardroom")
     if is_boardroom:
+        if not is_boss_user:
+            plan_status = get_user_plan_status(uname)
+            if not plan_status.get("is_active", False):
+                return StreamingResponse(
+                    iter(["🔒 **[สิทธิพิเศษเฉพาะสมาชิก Kira Pro]**\n\n🏛️ **Virtual Boardroom (สภา 4 ผู้บริหารเสมือน)** เป็นฟังก์ชันวิเคราะห์เชิงลึกระดับสูงสำหรับสมาชิก Pro / Founder เท่านั้นค่ะ\n\n✨ สมาชิก Pro สามารถเปิดประชุมถกเถียงกับ CEO, CFO, CPO, CTO ได้ไม่จำกัดครั้ง\n👉 กรุณาคลิกปุ่ม **'⭐ อัปเกรด Pro'** ที่ด้านบนเพื่อปลดล็อกสิทธิ์ใช้งานได้ทันทีค่ะ!"]),
+                    media_type="text/plain; charset=utf-8"
+                )
         return StreamingResponse(
             _generate_virtual_boardroom_stream(user_input, uname, session_id, is_boss_user),
             media_type="text/plain; charset=utf-8"
@@ -4105,6 +4377,20 @@ async def create_task(req: TaskCreateRequest):
     now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
     task_id = f"task_{secrets.token_hex(6)}"
     
+    # Subscription Quota Guard: ฟรี 2 งานแรกสำหรับ Free Plan
+    plan_status = get_user_plan_status(req.username)
+    is_pro = plan_status.get("is_active", False)
+    upgrade_prompt = ""
+    
+    if not is_pro and not is_boss(req.username):
+        draft_row = execute_query("SELECT COUNT(*) FROM tasks WHERE username=? AND deliverable != ''", (req.username,), fetch='one')
+        used_drafts = draft_row[0] if draft_row else 0
+        if used_drafts >= 2:
+            if req.auto_draft or req.evaluate_boardroom:
+                req.auto_draft = False
+                req.evaluate_boardroom = False
+                upgrade_prompt = " (คุณใช้สิทธิ์ทดลองร่างงานและประเมินครบ 2 ครั้งแล้วค่ะ กรุณาอัปเกรดเป็น Pro เพื่อใช้งานไม่จำกัด)"
+    
     deliverable = ""
     deliverable_type = "document"
     if req.auto_draft:
@@ -4135,7 +4421,7 @@ async def create_task(req: TaskCreateRequest):
         "priority_score": priority_score,
         "deliverable_type": deliverable_type,
         "has_deliverable": bool(deliverable),
-        "message": "สร้างภารกิจในระบบสำเร็จเรียบร้อยค่ะ"
+        "message": f"สร้างภารกิจในระบบสำเร็จเรียบร้อยค่ะ{upgrade_prompt}"
     }
 
 @app.get("/api/tasks")
@@ -4335,6 +4621,238 @@ async def external_task_intake(req: ExternalIntakeRequest):
 async def public_intake_page(request: Request):
     """หน้าเว็บรับงานภายนอกแบบ Standalone (Public Service Intake Portal)"""
     return templates.TemplateResponse(request=request, name="intake.html", context={"request": request})
+
+# ====================================================================
+# 💎 Kira Subscription & Monetization Engine Endpoints
+# ====================================================================
+
+@app.get("/api/subscription/plans")
+async def get_subscription_plans():
+    """ดึงรายการแพ็กเกจและข้อมูลการชำระเงิน"""
+    plans = [
+        SUBSCRIPTION_PLANS["trial"],
+        SUBSCRIPTION_PLANS["pro"],
+        SUBSCRIPTION_PLANS["founder"]
+    ]
+    return {
+        "status": "success",
+        "plans": plans,
+        "promptpay_number": PROMPTPAY_NUMBER,
+        "promptpay_name": PROMPTPAY_NAME,
+        "promptpay": {
+            "number": PROMPTPAY_NUMBER,
+            "name": PROMPTPAY_NAME
+        }
+    }
+
+@app.get("/api/subscription/status/{username}")
+async def get_subscription_status(username: str):
+    """ตรวจสอบสถานะสมาชิกปัจจุบันของผู้ใช้ พร้อมประวัติคำสั่งซื้อล่าสุด"""
+    status = get_user_plan_status(username)
+    clean_user = (username or "").strip()
+    
+    # ดึงคำสั่งซื้อล่าสุดที่รอการอนุมัติ (ถ้ามี)
+    recent_order = execute_query(
+        "SELECT order_id, plan_type, plan_title, amount, status, created_at, rejection_reason FROM subscription_orders WHERE username=? ORDER BY id DESC LIMIT 1",
+        (clean_user,), fetch='one'
+    )
+    order_data = None
+    if recent_order:
+        order_data = {
+            "order_id": recent_order[0],
+            "plan_type": recent_order[1],
+            "plan_title": recent_order[2],
+            "amount": recent_order[3],
+            "status": recent_order[4],
+            "created_at": recent_order[5],
+            "rejection_reason": recent_order[6]
+        }
+        
+    return {
+        "status": "success",
+        "subscription": status,
+        "recent_order": order_data
+    }
+
+@app.post("/api/subscription/create-order")
+async def create_subscription_order(req: SubscriptionOrderCreateRequest):
+    """สร้างคำสั่งซื้อแพ็กเกจสมาชิกใหม่และออกรหัส Order พร้อมข้อมูล PromptPay QR"""
+    clean_user = req.username.strip()
+    target_key = req.plan_type or req.plan_id or "pro"
+    if target_key in ("pro", "pro_monthly"):
+        target_key = "pro_monthly"
+    elif target_key in ("founder", "founder_yearly"):
+        target_key = "founder_yearly"
+    elif target_key == "trial":
+        target_key = "trial"
+
+    plan_info = SUBSCRIPTION_PLANS.get(target_key)
+    if not plan_info:
+        raise HTTPException(status_code=400, detail="ไม่พบแพ็กเกจที่ระบุ")
+        
+    order_id = f"ORD-KIRA-{secrets.token_hex(4).upper()}"
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    
+    execute_query("""
+        INSERT INTO subscription_orders (order_id, username, plan_type, plan_title, amount, duration_days, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)
+    """, (order_id, clean_user, plan_info["id"], plan_info["name"], plan_info["price"], plan_info["duration_days"], now_str))
+    
+    # PromptPay QR Code URL (พร้อมเพย์มาตรฐานตามยอดเงิน)
+    clean_num = PROMPTPAY_NUMBER.replace("-", "").strip()
+    qr_url = f"https://promptpay.io/{clean_num}/{plan_info['price']}.png"
+    
+    return {
+        "status": "success",
+        "order_id": order_id,
+        "plan": plan_info,
+        "plan_name": plan_info["name"],
+        "days": plan_info["duration_days"],
+        "amount": plan_info["price"],
+        "promptpay_number": PROMPTPAY_NUMBER,
+        "promptpay_name": PROMPTPAY_NAME,
+        "promptpay_qr_url": qr_url,
+        "qr_url": qr_url,
+        "message": f"สร้างคำสั่งซื้อ {order_id} สำหรับแพ็กเกจ {plan_info['name']} เรียบร้อยค่ะ กรุณาสแกน QR และแนบสลิปเพื่อยืนยัน"
+    }
+
+@app.post("/api/subscription/upload-slip")
+async def upload_subscription_slip(req: SubscriptionSlipUploadRequest):
+    """อัปโหลดสลิปหลักฐานการโอนเงินเพื่อส่งให้ผู้ดูแลระบบตรวจสอบ"""
+    order = execute_query("SELECT id, username, plan_type, amount, status FROM subscription_orders WHERE order_id=?", (req.order_id,), fetch='one')
+    if not order:
+        raise HTTPException(status_code=404, detail="ไม่พบคำสั่งซื้อนี้")
+        
+    slip_data = req.slip_image or req.slip_image_base64
+    if not slip_data:
+        raise HTTPException(status_code=400, detail="กรุณาแนบรูปภาพสลิปการโอนเงินค่ะ")
+        
+    username = req.username or order[1]
+    execute_query("UPDATE subscription_orders SET slip_image=?, status='pending' WHERE order_id=?", (slip_data, req.order_id))
+    execute_query("UPDATE users SET subscription_status='pending_slip' WHERE username=?", (username,))
+    
+    return {
+        "status": "success",
+        "order_id": req.order_id,
+        "order_status": "pending",
+        "message": "อัปโหลดสลิปเรียบร้อยแล้วค่ะ! ทีมงานจะดำเนินการตรวจสอบและอนุมัติสิทธิ์ให้คุณภายใน 5-15 นาทีค่ะ"
+    }
+
+@app.get("/api/admin/subscription/orders")
+async def list_admin_subscription_orders(admin_username: Optional[str] = "boss"):
+    """แดชบอร์ดแอดมิน: ดึงรายการสลิปและคำสั่งซื้อทั้งหมดที่รอการตรวจสอบ"""
+    if admin_username and not _is_boss(admin_username):
+        raise HTTPException(status_code=403, detail="ต้องใช้สิทธิ์ผู้สร้าง (Boss) ในการเข้าถึง")
+        
+    rows = execute_query(
+        "SELECT id, order_id, username, plan_type, plan_title, amount, duration_days, slip_image, status, rejection_reason, created_at, reviewed_at FROM subscription_orders ORDER BY id DESC LIMIT 100",
+        fetch='all'
+    )
+    orders = []
+    if rows:
+        for r in rows:
+            orders.append({
+                "id": r[0],
+                "order_id": r[1],
+                "username": r[2],
+                "plan_type": r[3],
+                "plan_title": r[4],
+                "amount": r[5],
+                "duration_days": r[6],
+                "has_slip": bool(r[7]),
+                "slip_image": r[7],
+                "status": r[8],
+                "rejection_reason": r[9],
+                "created_at": r[10],
+                "reviewed_at": r[11]
+            })
+            
+    return {
+        "status": "success",
+        "total": len(orders),
+        "pending_count": sum(1 for o in orders if o["status"] in ("pending", "pending_review")),
+        "orders": orders
+    }
+
+@app.post("/api/admin/subscription/approve")
+async def approve_subscription_order(req: SubscriptionApproveRequest):
+    """บอสกดอนุมัติสลิป: อัปเกรด User เป็น Pro/Founder ทันทีและคำนวณวันหมดอายุ"""
+    if req.admin_username and not _is_boss(req.admin_username):
+        raise HTTPException(status_code=403, detail="ต้องใช้สิทธิ์ผู้สร้าง (Boss) ในการอนุมัติ")
+        
+    order = execute_query("SELECT username, plan_type, duration_days FROM subscription_orders WHERE order_id=?", (req.order_id,), fetch='one')
+    if not order:
+        raise HTTPException(status_code=404, detail="ไม่พบคำสั่งซื้อนี้")
+        
+    username, plan_type, duration_days = order[0], order[1], order[2]
+    
+    # กำหนด plan ให้ถูกต้อง: trial, pro, founder
+    target_plan = "pro"
+    if "founder" in plan_type:
+        target_plan = "founder"
+    elif "trial" in plan_type:
+        target_plan = "trial"
+        
+    tz = timezone(timedelta(hours=7))
+    now = datetime.now(tz)
+    
+    # ตรวจสอบว่าผู้ใช้มีวันหมดอายุเดิมที่ยังไม่หมดหรือไม่ ถ้ามีให้บวกเพิ่ม
+    cur_exp = execute_query("SELECT plan_expire_date FROM users WHERE username=?", (username,), fetch='one')
+    start_dt = now
+    if cur_exp and cur_exp[0]:
+        try:
+            prev_dt = datetime.strptime(cur_exp[0], "%Y-%m-%d %H:%M:%S").replace(tzinfo=tz)
+            if prev_dt > now:
+                start_dt = prev_dt
+        except Exception:
+            start_dt = now
+            
+    new_expire_dt = start_dt + timedelta(days=duration_days)
+    new_expire_str = new_expire_dt.strftime("%Y-%m-%d %H:%M:%S")
+    now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Upsert user record
+    user_row = execute_query("SELECT id FROM users WHERE username=?", (username,), fetch='one')
+    if user_row:
+        execute_query("UPDATE users SET plan=?, plan_expire_date=?, subscription_status='active' WHERE username=?", (target_plan, new_expire_str, username))
+    else:
+        execute_query("INSERT INTO users (username, plan, plan_expire_date, subscription_status, points) VALUES (?, ?, ?, 'active', 0)", (username, target_plan, new_expire_str))
+        
+    execute_query("UPDATE subscription_orders SET status='approved', reviewed_at=? WHERE order_id=?", (now_str, req.order_id))
+    
+    return {
+        "status": "success",
+        "order_id": req.order_id,
+        "username": username,
+        "plan": target_plan,
+        "expire_date": new_expire_str,
+        "message": f"อนุมัติสิทธิ์ {target_plan.upper()} ให้กับ {username} สำเร็จเรียบร้อยค่ะ หมดอายุวันที่ {new_expire_str}"
+    }
+
+@app.post("/api/admin/subscription/reject")
+async def reject_subscription_order(req: SubscriptionRejectRequest):
+    """บอสปฏิเสธสลิปพร้อมระบุเหตุผล"""
+    if req.admin_username and not _is_boss(req.admin_username):
+        raise HTTPException(status_code=403, detail="ต้องใช้สิทธิ์ผู้สร้าง (Boss) ในการปฏิเสธ")
+        
+    order = execute_query("SELECT username FROM subscription_orders WHERE order_id=?", (req.order_id,), fetch='one')
+    if not order:
+        raise HTTPException(status_code=404, detail="ไม่พบคำสั่งซื้อนี้")
+        
+    username = order[0]
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    
+    execute_query("UPDATE subscription_orders SET status='rejected', rejection_reason=?, reviewed_at=? WHERE order_id=?", (req.reason, now_str, req.order_id))
+    execute_query("UPDATE users SET subscription_status='inactive' WHERE username=?", (username,))
+    
+    return {
+        "status": "success",
+        "order_id": req.order_id,
+        "order_status": "rejected",
+        "message": f"ปฏิเสธคำสั่งซื้อ {req.order_id} เรียบร้อยแล้วค่ะ"
+    }
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8000))

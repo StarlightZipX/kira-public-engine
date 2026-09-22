@@ -220,7 +220,13 @@ async function loadUserProfile() {
                 quotaBadge.style.borderColor = 'rgba(245, 158, 11, 0.35)';
                 const adminBtn = document.getElementById('btn-admin-dashboard');
                 if (adminBtn) adminBtn.style.display = 'inline-flex';
+                const adminOrdersBtn = document.getElementById('btn-admin-orders');
+                if (adminOrdersBtn) adminOrdersBtn.style.display = 'inline-flex';
             }
+        }
+
+        if (typeof window.refreshSubscriptionStatus === 'function') {
+            window.refreshSubscriptionStatus();
         }
     } catch (e) {
         console.error("Profile fetch error:", e);
@@ -4507,6 +4513,606 @@ function initTaskMatrixController() {
 initSpeechRecognition();
 initLiveCanvasController();
 initTaskMatrixController();
+initSubscriptionController();
+
+// ====================================================================
+// 👑 Kira Subscription & Monetization Engine Controller
+// ====================================================================
+function initSubscriptionController() {
+    const subModal = document.getElementById('subscription-modal');
+    const btnUpgradePro = document.getElementById('btn-upgrade-pro');
+    const btnCloseSub = document.getElementById('btn-close-subscription');
+    const btnCloseSubDone = document.getElementById('btn-close-sub-done');
+    const userPlanBadge = document.getElementById('user-plan-badge');
+    const planBadgeText = document.getElementById('plan-badge-text');
+
+    const subViewPlans = document.getElementById('sub-view-plans');
+    const subViewCheckout = document.getElementById('sub-view-checkout');
+    const subViewSuccess = document.getElementById('sub-view-success');
+
+    const subCurrentPlan = document.getElementById('sub-modal-current-plan');
+    const subExpiryInfo = document.getElementById('sub-modal-expiry-info');
+    const subBadgeHint = document.getElementById('sub-modal-badge-hint');
+
+    const checkoutPlanTitle = document.getElementById('checkout-plan-title');
+    const checkoutPlanPrice = document.getElementById('checkout-plan-price');
+    const ppQrImg = document.getElementById('promptpay-qr-image');
+    const ppNumberText = document.getElementById('pp-number-text');
+    const ppNameText = document.getElementById('pp-name-text');
+    const ppAmountText = document.getElementById('pp-amount-text');
+    const btnCopyPpNumber = document.getElementById('btn-copy-pp-number');
+
+    const slipDropzone = document.getElementById('slip-dropzone');
+    const slipFileInput = document.getElementById('slip-file-input');
+    const dropzoneIdle = document.getElementById('dropzone-idle');
+    const dropzonePreview = document.getElementById('dropzone-preview');
+    const slipPreviewImg = document.getElementById('slip-preview-img');
+    const slipFilename = document.getElementById('slip-filename');
+    const btnRemoveSlip = document.getElementById('btn-remove-slip');
+    const slipNoteInput = document.getElementById('slip-note-input');
+    const activeOrderIdInput = document.getElementById('active-order-id');
+    const btnBackToPlans = document.getElementById('btn-back-to-plans');
+    const btnSubmitSlip = document.getElementById('btn-submit-order-slip');
+
+    const confirmedOrderId = document.getElementById('confirmed-order-id');
+    const btnRefreshOrderStatus = document.getElementById('btn-refresh-order-status');
+
+    // Admin in-app orders
+    const btnAdminOrders = document.getElementById('btn-admin-orders');
+    const adminOrdersBadge = document.getElementById('admin-orders-badge');
+    const adminOrdersModal = document.getElementById('admin-orders-modal');
+    const btnCloseAdminOrders = document.getElementById('btn-close-admin-orders');
+    const btnReloadAdminOrders = document.getElementById('btn-reload-admin-orders');
+    const adminOrdersTableBody = document.getElementById('admin-orders-table-body');
+    const adminStatPending = document.getElementById('admin-stat-pending');
+    const adminStatApproved = document.getElementById('admin-stat-approved');
+    const adminStatRevenue = document.getElementById('admin-stat-revenue');
+
+    // Lightbox
+    const slipLightboxModal = document.getElementById('slip-lightbox-modal');
+    const slipLightboxImg = document.getElementById('slip-lightbox-img');
+    const btnCloseSlipLightbox = document.getElementById('btn-close-slip-lightbox');
+
+    let currentSlipBase64 = null;
+    let statusPollingTimer = null;
+
+    // Open/Close Modal
+    function openSubModal(targetPlan = null) {
+        if (!subModal) return;
+        subModal.style.display = 'flex';
+        switchSubView('plans');
+        refreshSubscriptionStatus();
+        if (targetPlan) {
+            selectPlan(targetPlan);
+        }
+    }
+
+    function closeSubModal() {
+        if (!subModal) return;
+        subModal.style.display = 'none';
+        if (statusPollingTimer) {
+            clearInterval(statusPollingTimer);
+            statusPollingTimer = null;
+        }
+    }
+
+    function switchSubView(viewName) {
+        if (subViewPlans) subViewPlans.style.display = viewName === 'plans' ? 'block' : 'none';
+        if (subViewCheckout) subViewCheckout.style.display = viewName === 'checkout' ? 'block' : 'none';
+        if (subViewSuccess) subViewSuccess.style.display = viewName === 'success' ? 'block' : 'none';
+    }
+
+    if (btnUpgradePro) btnUpgradePro.addEventListener('click', () => openSubModal());
+    if (userPlanBadge) userPlanBadge.addEventListener('click', () => openSubModal());
+    if (btnCloseSub) btnCloseSub.addEventListener('click', closeSubModal);
+    if (btnCloseSubDone) btnCloseSubDone.addEventListener('click', closeSubModal);
+    if (subModal) {
+        subModal.addEventListener('click', (e) => {
+            if (e.target === subModal) closeSubModal();
+        });
+    }
+
+    // Refresh user's subscription status
+    async function refreshSubscriptionStatus() {
+        const user = currentUser || localStorage.getItem('kira_username');
+        if (!user) return;
+        try {
+            const res = await fetch(`/api/subscription/status/${encodeURIComponent(user)}`);
+            const data = await res.json();
+            if (data.status === 'success') {
+                const sub = data.subscription;
+                if (planBadgeText) {
+                    planBadgeText.textContent = sub.badge;
+                }
+                if (userPlanBadge) {
+                    if (sub.plan === 'founder' || sub.is_boss) {
+                        userPlanBadge.style.color = '#c084fc';
+                        userPlanBadge.style.background = 'rgba(168, 85, 247, 0.15)';
+                        userPlanBadge.style.borderColor = 'rgba(168, 85, 247, 0.4)';
+                    } else if (sub.plan === 'pro') {
+                        userPlanBadge.style.color = '#fbbf24';
+                        userPlanBadge.style.background = 'rgba(245, 158, 11, 0.18)';
+                        userPlanBadge.style.borderColor = 'rgba(245, 158, 11, 0.45)';
+                    } else if (sub.plan === 'trial') {
+                        userPlanBadge.style.color = '#38bdf8';
+                        userPlanBadge.style.background = 'rgba(56, 189, 248, 0.15)';
+                        userPlanBadge.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+                    } else {
+                        userPlanBadge.style.color = '#94a3b8';
+                        userPlanBadge.style.background = 'rgba(148, 163, 184, 0.12)';
+                        userPlanBadge.style.borderColor = 'rgba(148, 163, 184, 0.25)';
+                    }
+                }
+
+                if (subCurrentPlan) {
+                    subCurrentPlan.textContent = sub.badge;
+                }
+                if (subExpiryInfo) {
+                    if (sub.is_boss) {
+                        subExpiryInfo.textContent = '• Boss God Mode (สิทธิ์ไม่จำกัดตลอดชีพ)';
+                    } else if (sub.expire_date) {
+                        subExpiryInfo.textContent = `• หมดอายุ: ${sub.expire_date.split('T')[0]}`;
+                    } else {
+                        subExpiryInfo.textContent = '• โควตา 15 ข้อความ/วัน';
+                    }
+                }
+                if (subBadgeHint) {
+                    if (sub.is_active_pro) {
+                        subBadgeHint.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> คุณกำลังใช้งานสิทธิ์ Pro / VIP เต็มรูปแบบ';
+                    } else {
+                        subBadgeHint.textContent = 'อัปเกรดเพื่อรับ 500 ข้อความ/วัน และฟีเจอร์พรีเมียมทั้งหมด';
+                    }
+                }
+            }
+
+            // Check if user is Boss to show Admin Orders button
+            if (isBoss(user)) {
+                if (btnAdminOrders) btnAdminOrders.style.display = 'inline-flex';
+                checkAdminPendingCount();
+            }
+        } catch (e) {
+            console.error("Subscription status fetch error:", e);
+        }
+    }
+    window.refreshSubscriptionStatus = refreshSubscriptionStatus;
+
+    // Plan selection & Order creation
+    async function selectPlan(planId) {
+        const user = currentUser || localStorage.getItem('kira_username');
+        if (!user) {
+            alert('กรุณาเข้าสู่ระบบก่อนทำการสั่งซื้อค่ะ');
+            return;
+        }
+
+        const selectBtns = document.querySelectorAll(`.btn-select-plan[data-plan="${planId}"]`);
+        selectBtns.forEach(b => {
+            b.disabled = true;
+            b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้างคำสั่งซื้อ...';
+        });
+
+        try {
+            const res = await fetch('/api/subscription/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, plan_id: planId })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                if (activeOrderIdInput) activeOrderIdInput.value = data.order_id;
+                if (checkoutPlanTitle) checkoutPlanTitle.textContent = `${data.plan_name} (${data.days} วัน)`;
+                if (checkoutPlanPrice) checkoutPlanPrice.textContent = Number(data.amount).toFixed(2);
+                if (ppAmountText) ppAmountText.textContent = `${Number(data.amount).toFixed(2)} บาท`;
+                if (ppNumberText) ppNumberText.textContent = data.promptpay_number;
+                if (ppNameText) ppNameText.textContent = data.promptpay_name;
+
+                // Set QR Image URL (PromptPay QR via promptpay.io or QRServer fallback)
+                const cleanPhone = (data.promptpay_number || '0812345678').replace(/[^0-9]/g, '');
+                const qrUrl = data.qr_url || `https://promptpay.io/${cleanPhone}/${data.amount}.png`;
+                if (ppQrImg) {
+                    ppQrImg.src = qrUrl;
+                    ppQrImg.onerror = () => {
+                        ppQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PromptPay:${cleanPhone}:Amount:${data.amount}`;
+                    };
+                }
+
+                // Reset dropzone
+                resetSlipDropzone();
+                switchSubView('checkout');
+            } else {
+                alert('ไม่สามารถสร้างคำสั่งซื้อได้: ' + (data.detail || data.message));
+            }
+        } catch (e) {
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + e.message);
+        } finally {
+            selectBtns.forEach(b => {
+                b.disabled = false;
+                if (planId === 'trial') b.innerHTML = '<span>เลือกแพ็กเกจ Trial (39.-)</span> <i class="fa-solid fa-arrow-right"></i>';
+                else if (planId === 'pro') b.innerHTML = '<span>สมัครสมาชิก Kira Pro (129.-)</span> <i class="fa-solid fa-bolt-lightning"></i>';
+                else b.innerHTML = '<span>ครอบครองสิทธิ์ Founder (499.-)</span> <i class="fa-solid fa-gem"></i>';
+            });
+        }
+    }
+
+    // Bind Plan buttons
+    document.querySelectorAll('.btn-select-plan').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const plan = btn.getAttribute('data-plan');
+            selectPlan(plan);
+        });
+    });
+
+    if (btnBackToPlans) {
+        btnBackToPlans.addEventListener('click', () => {
+            switchSubView('plans');
+        });
+    }
+
+    // Copy PromptPay Number
+    if (btnCopyPpNumber && ppNumberText) {
+        btnCopyPpNumber.addEventListener('click', () => {
+            const num = ppNumberText.textContent.trim();
+            navigator.clipboard.writeText(num).then(() => {
+                const orig = btnCopyPpNumber.innerHTML;
+                btnCopyPpNumber.innerHTML = '<i class="fa-solid fa-check text-emerald"></i> คัดลอกแล้ว!';
+                setTimeout(() => { btnCopyPpNumber.innerHTML = orig; }, 2000);
+            }).catch(() => {
+                alert('คัดลอกหมายเลข: ' + num);
+            });
+        });
+    }
+
+    // Slip Upload Handling
+    function resetSlipDropzone() {
+        currentSlipBase64 = null;
+        if (slipFileInput) slipFileInput.value = '';
+        if (dropzoneIdle) dropzoneIdle.style.display = 'block';
+        if (dropzonePreview) dropzonePreview.style.display = 'none';
+        if (btnSubmitSlip) btnSubmitSlip.disabled = true;
+        if (slipNoteInput) slipNoteInput.value = '';
+    }
+
+    if (slipDropzone) {
+        slipDropzone.addEventListener('click', (e) => {
+            if (e.target.closest('#btn-remove-slip')) return;
+            if (slipFileInput) slipFileInput.click();
+        });
+
+        slipDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            slipDropzone.classList.add('dragover');
+        });
+
+        slipDropzone.addEventListener('dragleave', () => {
+            slipDropzone.classList.remove('dragover');
+        });
+
+        slipDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            slipDropzone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                processSlipFile(e.dataTransfer.files[0]);
+            }
+        });
+    }
+
+    if (slipFileInput) {
+        slipFileInput.addEventListener('change', () => {
+            if (slipFileInput.files && slipFileInput.files.length > 0) {
+                processSlipFile(slipFileInput.files[0]);
+            }
+        });
+    }
+
+    if (btnRemoveSlip) {
+        btnRemoveSlip.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetSlipDropzone();
+        });
+    }
+
+    function processSlipFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('กรุณาเลือกไฟล์รูปภาพเท่านั้นค่ะ (JPG, PNG, WEBP)');
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            alert('ขนาดไฟล์เกิน 10MB กรุณาเลือกรูปภาพที่มีขนาดเล็กลงค่ะ');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            currentSlipBase64 = e.target.result;
+            if (slipPreviewImg) slipPreviewImg.src = currentSlipBase64;
+            if (slipFilename) slipFilename.textContent = file.name;
+            if (dropzoneIdle) dropzoneIdle.style.display = 'none';
+            if (dropzonePreview) dropzonePreview.style.display = 'flex';
+            if (btnSubmitSlip) btnSubmitSlip.disabled = false;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Submit Slip
+    if (btnSubmitSlip) {
+        btnSubmitSlip.addEventListener('click', async () => {
+            const orderId = activeOrderIdInput ? activeOrderIdInput.value : '';
+            if (!orderId || !currentSlipBase64) {
+                alert('กรุณาแนบรูปภาพสลิปโอนเงินก่อนทำการส่งค่ะ');
+                return;
+            }
+
+            const origHtml = btnSubmitSlip.innerHTML;
+            btnSubmitSlip.disabled = true;
+            btnSubmitSlip.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปโหลดสลิป...';
+
+            try {
+                const note = slipNoteInput ? slipNoteInput.value.trim() : '';
+                const res = await fetch('/api/subscription/upload-slip', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        order_id: orderId,
+                        slip_image_base64: currentSlipBase64,
+                        transfer_note: note
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    if (confirmedOrderId) confirmedOrderId.textContent = `#${orderId}`;
+                    switchSubView('success');
+
+                    // Start auto polling for approval
+                    startOrderStatusPolling(orderId);
+                } else {
+                    alert('ส่งสลิปไม่สำเร็จ: ' + (data.detail || data.message));
+                }
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            } finally {
+                btnSubmitSlip.disabled = false;
+                btnSubmitSlip.innerHTML = origHtml;
+            }
+        });
+    }
+
+    // Poll Order Status
+    function startOrderStatusPolling(orderId) {
+        if (statusPollingTimer) clearInterval(statusPollingTimer);
+        statusPollingTimer = setInterval(async () => {
+            await checkOrderStatus(orderId, false);
+        }, 8000);
+    }
+
+    async function checkOrderStatus(orderId, alertIfPending = true) {
+        const user = currentUser || localStorage.getItem('kira_username');
+        if (!user) return;
+        try {
+            const res = await fetch(`/api/subscription/status/${encodeURIComponent(user)}`);
+            const data = await res.json();
+            if (data.status === 'success') {
+                const sub = data.subscription;
+                if (sub.is_active_pro) {
+                    if (statusPollingTimer) {
+                        clearInterval(statusPollingTimer);
+                        statusPollingTimer = null;
+                    }
+                    alert('🎉 ยินดีด้วยค่ะ! บัญชีของคุณได้รับการอนุมัติเป็น ' + sub.badge + ' เรียบร้อยแล้ว!');
+                    closeSubModal();
+                    loadUserProfile();
+                } else if (alertIfPending) {
+                    alert('คำสั่งซื้อ #' + orderId + ' อยู่ในระหว่างการตรวจสอบสลิป กรุณารอสักครู่ค่ะ');
+                }
+            }
+        } catch (e) {
+            console.error("Order status check error:", e);
+        }
+    }
+
+    if (btnRefreshOrderStatus) {
+        btnRefreshOrderStatus.addEventListener('click', () => {
+            const orderId = (confirmedOrderId ? confirmedOrderId.textContent : '').replace('#', '');
+            checkOrderStatus(orderId, true);
+        });
+    }
+
+    // ==========================================
+    // 🛡️ In-App Admin Orders Management for Boss
+    // ==========================================
+    let cachedAdminOrders = [];
+
+    async function checkAdminPendingCount() {
+        try {
+            const res = await fetch('/api/admin/subscription/orders');
+            const data = await res.json();
+            if (data.status === 'success' && data.orders) {
+                const pending = data.orders.filter(o => o.status === 'pending').length;
+                if (adminOrdersBadge) {
+                    adminOrdersBadge.textContent = pending;
+                    adminOrdersBadge.style.display = pending > 0 ? 'inline-block' : 'none';
+                }
+            }
+        } catch (e) {}
+    }
+
+    async function loadAdminOrdersInApp() {
+        if (!adminOrdersTableBody) return;
+        adminOrdersTableBody.innerHTML = '<tr><td colspan="7" class="empty-orders-text"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดรายการคำสั่งซื้อ...</td></tr>';
+        
+        try {
+            const res = await fetch('/api/admin/subscription/orders');
+            const data = await res.json();
+            if (data.status !== 'success') {
+                adminOrdersTableBody.innerHTML = `<tr><td colspan="7" class="empty-orders-text text-red-400">เกิดข้อผิดพลาด: ${data.detail || data.message}</td></tr>`;
+                return;
+            }
+
+            cachedAdminOrders = data.orders || [];
+            let pendingCount = 0;
+            let approvedCount = 0;
+            let totalRevenue = 0;
+
+            if (cachedAdminOrders.length === 0) {
+                adminOrdersTableBody.innerHTML = '<tr><td colspan="7" class="empty-orders-text">ยังไม่มีคำสั่งซื้อในระบบ</td></tr>';
+            } else {
+                let html = '';
+                cachedAdminOrders.forEach(o => {
+                    if (o.status === 'pending') pendingCount++;
+                    if (o.status === 'approved') {
+                        approvedCount++;
+                        totalRevenue += (o.amount || 0);
+                    }
+
+                    let statusPill = '';
+                    if (o.status === 'pending') {
+                        statusPill = '<span class="status-badge-chip" style="background:rgba(245,158,11,0.2);color:#fbbf24;border-color:rgba(245,158,11,0.4);">รอตรวจสอบ</span>';
+                    } else if (o.status === 'approved') {
+                        statusPill = '<span class="status-badge-chip" style="background:rgba(16,185,129,0.2);color:#34d399;border-color:rgba(16,185,129,0.4);">อนุมัติแล้ว</span>';
+                    } else {
+                        statusPill = '<span class="status-badge-chip" style="background:rgba(239,68,68,0.2);color:#f87171;border-color:rgba(239,68,68,0.4);">ปฏิเสธ</span>';
+                    }
+
+                    let slipPreview = '<span style="color:#64748b;font-size:0.75rem;">ไม่มีสลิป</span>';
+                    if (o.slip_image) {
+                        slipPreview = `<img src="${o.slip_image}" alt="Slip" class="slip-thumb-mini" onclick="window.zoomSlipInApp('${o.order_id}')" title="คลิกเพื่อดูภาพขยาย">`;
+                    }
+
+                    let actions = '';
+                    if (o.status === 'pending') {
+                        actions = `
+                            <div style="display:flex;gap:6px;">
+                                <button type="button" class="btn-action-sm primary" onclick="window.approveOrderInApp('${o.order_id}')" style="background:#059669;padding:4px 10px;font-size:0.75rem;">
+                                    <i class="fa-solid fa-check"></i> อนุมัติ
+                                </button>
+                                <button type="button" class="btn-action-sm secondary" onclick="window.rejectOrderInApp('${o.order_id}')" style="background:#dc2626;padding:4px 10px;font-size:0.75rem;">
+                                    <i class="fa-solid fa-xmark"></i> ปฏิเสธ
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        actions = '<span style="color:#64748b;font-size:0.75rem;">ดำเนินการแล้ว</span>';
+                    }
+
+                    html += `
+                        <tr>
+                            <td>
+                                <strong style="font-family:monospace;color:#fbbf24;display:block;">${o.order_id}</strong>
+                                <span style="font-size:0.72rem;color:#64748b;">${o.created_at || '-'}</span>
+                            </td>
+                            <td>
+                                <strong style="color:#38bdf8;">@${o.username}</strong>
+                            </td>
+                            <td>
+                                <span style="background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:6px;font-size:0.75rem;">${o.plan_name || o.plan_id}</span>
+                            </td>
+                            <td>
+                                <strong style="color:#fbbf24;">฿${Number(o.amount).toFixed(2)}</strong>
+                            </td>
+                            <td>${slipPreview}</td>
+                            <td>${statusPill}</td>
+                            <td>${actions}</td>
+                        </tr>
+                    `;
+                });
+                adminOrdersTableBody.innerHTML = html;
+            }
+
+            if (adminStatPending) adminStatPending.textContent = `${pendingCount} รายการ`;
+            if (adminStatApproved) adminStatApproved.textContent = `${approvedCount} รายการ`;
+            if (adminStatRevenue) adminStatRevenue.textContent = `${totalRevenue.toLocaleString('th-TH')} ฿`;
+            if (adminOrdersBadge) {
+                adminOrdersBadge.textContent = pendingCount;
+                adminOrdersBadge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+            }
+        } catch (e) {
+            console.error("Admin orders load error:", e);
+        }
+    }
+
+    if (btnAdminOrders) {
+        btnAdminOrders.addEventListener('click', () => {
+            if (adminOrdersModal) adminOrdersModal.style.display = 'flex';
+            loadAdminOrdersInApp();
+        });
+    }
+
+    if (btnCloseAdminOrders && adminOrdersModal) {
+        btnCloseAdminOrders.addEventListener('click', () => {
+            adminOrdersModal.style.display = 'none';
+        });
+        adminOrdersModal.addEventListener('click', (e) => {
+            if (e.target === adminOrdersModal) adminOrdersModal.style.display = 'none';
+        });
+    }
+
+    if (btnReloadAdminOrders) {
+        btnReloadAdminOrders.addEventListener('click', loadAdminOrdersInApp);
+    }
+
+    // Global in-app actions for Admin Table
+    window.zoomSlipInApp = function(orderId) {
+        const ord = cachedAdminOrders.find(x => x.order_id === orderId);
+        if (!ord || !ord.slip_image) return;
+        if (slipLightboxImg && slipLightboxModal) {
+            slipLightboxImg.src = ord.slip_image;
+            slipLightboxModal.style.display = 'flex';
+        }
+    };
+
+    if (btnCloseSlipLightbox && slipLightboxModal) {
+        btnCloseSlipLightbox.addEventListener('click', () => {
+            slipLightboxModal.style.display = 'none';
+        });
+        slipLightboxModal.addEventListener('click', (e) => {
+            if (e.target === slipLightboxModal) slipLightboxModal.style.display = 'none';
+        });
+    }
+
+    window.approveOrderInApp = async function(orderId) {
+        if (!confirm(`ยืนยันการอนุมัติคำสั่งซื้อ #${orderId} และเปิดสถานะสมาชิกให้ผู้ใช้งานทันที?`)) return;
+        try {
+            const res = await fetch('/api/admin/subscription/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId, note: 'Approved via in-app dashboard' })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                alert('อนุมัติคำสั่งซื้อเรียบร้อยแล้ว!');
+                loadAdminOrdersInApp();
+                checkAdminPendingCount();
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + (data.detail || data.message));
+            }
+        } catch (e) {
+            alert('เกิดข้อผิดพลาด: ' + e.message);
+        }
+    };
+
+    window.rejectOrderInApp = async function(orderId) {
+        const reason = prompt('ระบุเหตุผลในการปฏิเสธคำสั่งซื้อ:', 'สลิปไม่ถูกต้อง หรือยอดโอนไม่ตรง');
+        if (reason === null) return;
+        try {
+            const res = await fetch('/api/admin/subscription/reject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId, reason: reason })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                alert('ปฏิเสธคำสั่งซื้อเรียบร้อยแล้ว');
+                loadAdminOrdersInApp();
+                checkAdminPendingCount();
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + (data.detail || data.message));
+            }
+        } catch (e) {
+            alert('เกิดข้อผิดพลาด: ' + e.message);
+        }
+    };
+
+    // Initial check
+    setTimeout(refreshSubscriptionStatus, 1500);
+}
 
 
 

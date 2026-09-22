@@ -110,6 +110,10 @@
             <button onclick="switchTab('prompts')" id="tab-btn-prompts" class="whitespace-nowrap px-4 py-2 font-semibold text-slate-400 border-b-2 border-transparent hover:text-blue-300 transition-all">Live Prompt Editor</button>
             <button onclick="switchTab('dictionary')" id="tab-btn-dictionary" class="whitespace-nowrap px-4 py-2 font-semibold text-slate-400 border-b-2 border-transparent hover:text-blue-300 transition-all">Factory Dictionary</button>
             <button onclick="switchTab('feedbacks')" id="tab-btn-feedbacks" class="whitespace-nowrap px-4 py-2 font-semibold text-slate-400 border-b-2 border-transparent hover:text-blue-300 transition-all">User Feedbacks (รีวิว)</button>
+            <button onclick="switchTab('orders')" id="tab-btn-orders" class="whitespace-nowrap px-4 py-2 font-semibold text-slate-400 border-b-2 border-transparent hover:text-amber-300 transition-all flex items-center gap-2">
+                <span>👑</span> Subscription Orders
+                <span id="tab-pending-count" class="bg-amber-500/20 text-amber-300 text-xs px-2 py-0.5 rounded-full border border-amber-500/30">0</span>
+            </button>
         </div>
 
         <!-- Tab Content 1: Dashboard -->
@@ -305,6 +309,81 @@
             </div>
         </div>
 
+        <!-- Tab Content 5: Subscription Orders -->
+        <div id="tab-orders" class="tab-content hidden">
+            <div class="glass-panel rounded-2xl p-6 mb-6 border border-slate-700/50">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            <span class="text-amber-400">👑</span> รายการสั่งซื้อและสลิปสมาชิก (Subscription Orders)
+                        </h3>
+                        <p class="text-sm text-slate-400">ตรวจสอบหลักฐานการโอนเงิน PromptPay และอนุมัติเปิดใช้งาน VIP ได้ทันที</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="loadAdminOrders()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            รีเฟรชข้อมูล
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-amber-950/20 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-amber-300 uppercase font-semibold">รอตรวจสอบ (Pending)</span>
+                            <h4 id="stat-pending-orders" class="text-2xl font-bold text-amber-400 mt-1">0 รายการ</h4>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-950/20 border border-emerald-500/30 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-emerald-300 uppercase font-semibold">อนุมัติแล้ว (Approved)</span>
+                            <h4 id="stat-approved-orders" class="text-2xl font-bold text-emerald-400 mt-1">0 รายการ</h4>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                    </div>
+                    <div class="bg-cyan-950/20 border border-cyan-500/30 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-cyan-300 uppercase font-semibold">ยอดเงินรายได้รวม</span>
+                            <h4 id="stat-total-revenue" class="text-2xl font-bold text-cyan-400 mt-1">0 บาท</h4>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="overflow-x-auto rounded-xl border border-slate-700/60">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/70 text-slate-300 text-xs uppercase tracking-wider">
+                                <th class="py-3 px-4">Order ID / วันเวลา</th>
+                                <th class="py-3 px-4">ผู้ใช้งาน</th>
+                                <th class="py-3 px-4">แพ็กเกจ</th>
+                                <th class="py-3 px-4">ยอดเงิน</th>
+                                <th class="py-3 px-4">สลิปโอนเงิน</th>
+                                <th class="py-3 px-4">สถานะ</th>
+                                <th class="py-3 px-4 text-center">การจัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin_orders_tbody" class="text-sm text-slate-200 divide-y divide-slate-800">
+                            <tr>
+                                <td colspan="7" class="py-8 text-center text-slate-500 italic">
+                                    กำลังโหลดรายการคำสั่งซื้อ...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -325,6 +404,7 @@
             
             if(tabName === 'prompts') loadPrompts();
             if(tabName === 'dictionary') loadDictionary();
+            if(tabName === 'orders') loadAdminOrders();
         }
 
         async function loadPrompts() {
@@ -394,6 +474,172 @@
                 loadDictionary();
             }
         }
+
+        // ==========================================
+        // 👑 Subscription Orders Review Functions
+        // ==========================================
+        let adminOrdersCache = [];
+
+        async function loadAdminOrders() {
+            try {
+                const res = await fetch('/api/admin/subscription/orders');
+                const data = await res.json();
+                if(data.status !== 'success') return;
+
+                adminOrdersCache = data.orders || [];
+                const tbody = document.getElementById('admin_orders_tbody');
+                if(!tbody) return;
+
+                let pendingCount = 0;
+                let approvedCount = 0;
+                let totalRev = 0;
+
+                if(adminOrdersCache.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="py-8 text-center text-slate-500 italic">
+                                ยังไม่มีรายการสั่งซื้อสมาชิกในระบบ
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    let html = '';
+                    adminOrdersCache.forEach(o => {
+                        if(o.status === 'pending') pendingCount++;
+                        if(o.status === 'approved') {
+                            approvedCount++;
+                            totalRev += (o.amount || 0);
+                        }
+
+                        let statusBadge = '';
+                        if(o.status === 'pending') {
+                            statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">รอตรวจสอบ</span>`;
+                        } else if(o.status === 'approved') {
+                            statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">อนุมัติแล้ว</span>`;
+                        } else {
+                            statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-300 border border-red-500/40">ปฏิเสธ</span>`;
+                        }
+
+                        let slipPreview = '<span class="text-xs text-slate-500">ไม่มีสลิป</span>';
+                        if(o.slip_image) {
+                            slipPreview = `
+                                <img src="${o.slip_image}" alt="Slip" onclick="zoomSlipModal('${o.order_id}')" 
+                                     class="w-12 h-12 object-cover rounded-lg border border-slate-600 cursor-pointer hover:scale-110 transition-transform shadow">
+                            `;
+                        }
+
+                        let actions = '';
+                        if(o.status === 'pending') {
+                            actions = `
+                                <div class="flex items-center justify-center gap-2">
+                                    <button onclick="approveOrder('${o.order_id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        อนุมัติ
+                                    </button>
+                                    <button onclick="rejectOrder('${o.order_id}')" class="bg-red-600/80 hover:bg-red-600 text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        ปฏิเสธ
+                                    </button>
+                                </div>
+                            `;
+                        } else {
+                            actions = `<span class="text-xs text-slate-500 text-center block">-</span>`;
+                        }
+
+                        html += `
+                            <tr class="hover:bg-slate-800/40 transition">
+                                <td class="py-3 px-4">
+                                    <span class="font-mono text-xs text-amber-300 font-semibold block">${o.order_id}</span>
+                                    <span class="text-xs text-slate-400">${o.created_at || '-'}</span>
+                                </td>
+                                <td class="py-3 px-4 font-semibold text-slate-200">
+                                    <span class="text-blue-400">@${o.username}</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">${o.plan_name || o.plan_id}</span>
+                                </td>
+                                <td class="py-3 px-4 font-bold text-amber-400">
+                                    ฿${o.amount}
+                                </td>
+                                <td class="py-3 px-4">
+                                    ${slipPreview}
+                                </td>
+                                <td class="py-3 px-4">
+                                    ${statusBadge}
+                                </td>
+                                <td class="py-3 px-4">
+                                    ${actions}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                }
+
+                // Update Stats
+                document.getElementById('stat-pending-orders').innerText = pendingCount + ' รายการ';
+                document.getElementById('stat-approved-orders').innerText = approvedCount + ' รายการ';
+                document.getElementById('stat-total-revenue').innerText = totalRev.toLocaleString('th-TH') + ' บาท';
+                const tabBadge = document.getElementById('tab-pending-count');
+                if(tabBadge) {
+                    tabBadge.innerText = pendingCount;
+                    tabBadge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+                }
+            } catch(e) {
+                console.error("Failed to load admin orders:", e);
+            }
+        }
+
+        async function approveOrder(orderId) {
+            if(!confirm(`ยืนยันการอนุมัติคำสั่งซื้อ ${orderId} หรือไม่? ระบบจะปรับระดับสมาชิกเป็น VIP ทันที`)) return;
+            try {
+                const res = await fetch('/api/admin/subscription/approve', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({order_id: orderId, note: 'Approved by Boss'})
+                });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    alert('อนุมัติคำสั่งซื้อเรียบร้อยแล้ว!');
+                    loadAdminOrders();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (data.message || data.detail));
+                }
+            } catch(e) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + e);
+            }
+        }
+
+        async function rejectOrder(orderId) {
+            const reason = prompt('ระบุเหตุผลในการปฏิเสธ (เช่น สลิปไม่ชัดเจน หรือยอดเงินไม่ตรง):', 'สลิปไม่ถูกต้องหรือไม่มียอดโอนจริง');
+            if(reason === null) return;
+            try {
+                const res = await fetch('/api/admin/subscription/reject', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({order_id: orderId, reason: reason})
+                });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    alert('ปฏิเสธคำสั่งซื้อเรียบร้อยแล้ว');
+                    loadAdminOrders();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (data.message || data.detail));
+                }
+            } catch(e) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + e);
+            }
+        }
+
+        function zoomSlipModal(orderId) {
+            const ord = adminOrdersCache.find(x => x.order_id === orderId);
+            if(!ord || !ord.slip_image) return;
+            const w = window.open("");
+            w.document.write(`<title>Slip Zoom - ${orderId}</title><body style="margin:0;background:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${ord.slip_image}" style="max-width:95vw;max-height:95vh;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.8);"></body>`);
+        }
+
+        // Auto-check orders count on initial load
+        setTimeout(loadAdminOrders, 1000);
     </script>
     {% endif %}
 </body>
