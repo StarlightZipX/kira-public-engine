@@ -519,14 +519,14 @@ BRAIN_PROFILES = {
         "description": "สถาปัตยกรรมวิศวกรรมซอฟต์แวร์ (Software Engineering Engine)"
     },
     "creative": {
-        "model": "mixtral-8x7b-32768",
+        "model": "llama-3.3-70b-versatile",
         "keywords": ["เขียน", "แต่ง", "นิยาย", "บทกวี", "เรื่องสั้น", "ไอเดีย", "ครีเอทีฟ", "จินตนาการ",
                      "write", "story", "creative", "poem", "idea", "brainstorm", "สร้างสรรค์",
                      "ชื่อ", "ตั้งชื่อ", "สโลแกน", "โฆษณา", "caption", "คอนเทนต์", "content"],
         "description": "สถาปัตยกรรมสังเคราะห์ความคิดสร้างสรรค์ (Generative Studio Engine)"
     },
     "translate": {
-        "model": "gemma2-9b-it",
+        "model": "llama-3.1-8b-instant",
         "keywords": ["แปล", "translate", "ภาษาอังกฤษ", "ภาษาจีน", "ภาษาเกาหลี", "ภาษาญี่ปุ่น",
                      "english", "chinese", "korean", "japanese", "translation", "/แปลภาษา"],
         "description": "สถาปัตยกรรมภาษาศาสตร์สากล (Global Linguistic Engine)"
@@ -604,7 +604,8 @@ def _route_brain(user_input: str = "", model_version: str = "2.1-reasoning", fla
         profile = BRAIN_PROFILES["reasoning"]
         return profile["model"], "reasoning", "🧠 Cognitive Reasoning (Deep Logic & Analysis)"
     elif flavor == "creative":
-        return "mixtral-8x7b-32768", "creative", "✨ Generative Studio (Content & Idea Synthesis)"
+        profile = BRAIN_PROFILES["creative"]
+        return profile["model"], "creative", "✨ Generative Studio (Content & Idea Synthesis)"
     
     # 2. การจัดสรรตามโมเดล Kira 2.1 (Next-Gen Series)
     if model_version == "2.1-reasoning":
@@ -1138,13 +1139,6 @@ def get_user_plan_status(uname: str) -> dict:
         }
     }
 
-# ========== Boss & Quota ==========
-def is_boss(uname: str) -> bool:
-    if not uname: return False
-    u = uname.lower()
-    return "boss" in u or "บอส" in u or "admin" in u or uname == "👑 Boss (Owner)"
-
-USER_DAILY_LIMIT = 150
 user_daily_count = {}
 
 def check_user_quota(uname: str) -> tuple:
@@ -1789,6 +1783,11 @@ async def github_callback(
             
     except Exception as e:
         return RedirectResponse(f"/?auth_error={urllib.parse.quote(str(e)[:100])}")
+
+@app.get("/admin")
+async def admin_redirect():
+    """Redirect /admin to /admin_boss to prevent 404 confusion"""
+    return RedirectResponse(url="/admin_boss", status_code=302)
 
 @app.get("/admin_boss", response_class=HTMLResponse)
 async def admin_dashboard_get(
@@ -4247,8 +4246,8 @@ async def clear_chat(req: ChatRequest):
     
     if session_id:
         execute_query("DELETE FROM logs WHERE username=? AND session_id=?", (uname, session_id))
-    else:
-        execute_query("DELETE FROM logs WHERE username=?", (uname,))
+    # Note: If session_id is not specified, do NOT wipe all logs!
+    # Full history clearing is exclusively handled by DELETE /api/history/{username}/all
     
     prompt_to_use = _get_full_system_prompt(uname)
     user_sessions[session_key] = [SystemMessage(content=prompt_to_use)]

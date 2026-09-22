@@ -222,6 +222,11 @@ async function loadUserProfile() {
                 if (adminBtn) adminBtn.style.display = 'inline-flex';
                 const adminOrdersBtn = document.getElementById('btn-admin-orders');
                 if (adminOrdersBtn) adminOrdersBtn.style.display = 'inline-flex';
+            } else {
+                const adminBtn = document.getElementById('btn-admin-dashboard');
+                if (adminBtn) adminBtn.style.display = 'none';
+                const adminOrdersBtn = document.getElementById('btn-admin-orders');
+                if (adminOrdersBtn) adminOrdersBtn.style.display = 'none';
             }
         }
 
@@ -1539,15 +1544,10 @@ async function sendMessage() {
 }
 
 // --- Event Listeners ---
-newChatBtn.addEventListener('click', async () => {
-    try {
-        await fetch('/api/clear_chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: "", username: currentUser })
-        });
-    } catch(e) { console.error(e); }
+newChatBtn.addEventListener('click', () => {
+    // Generate new unique session ID without wiping historical chat logs
     currentSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+    document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
     renderWelcomeHub();
     userInput.focus();
 });
@@ -1870,11 +1870,6 @@ const docInput = document.getElementById('doc-input');
 
 if (attachToggleBtn && attachmentMenu) {
     attachToggleBtn.addEventListener('click', () => {
-        const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "1.0";
-        if (modelVersion === "1.0") {
-            alert("ฟีเจอร์แนบไฟล์และวิเคราะห์รูปภาพรองรับใน Kira 1.1 ขึ้นไปค่ะ กรุณาเลือกเวอร์ชันด้านบนนะคะ ✨");
-            return;
-        }
         attachmentMenu.style.display = attachmentMenu.style.display === 'none' ? 'flex' : 'none';
     });
 
