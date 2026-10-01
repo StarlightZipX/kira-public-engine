@@ -35,7 +35,7 @@ print(f"  • OpenRouter Deep-Brain Keys: {len(or_keys)} ดอก ({'พร้�
 print(f"  • Local Ollama GPU: {'เปิดใช้งาน ✅ (' + ollama_url + ')' if enable_ollama else 'ปิดการใช้งาน (Cloud Mode) ☁️'}")
 
 # 2. Test Groq Multi-Keys Cluster
-print("\n⚡ [2/5] ทดสอบการเชื่อมต่อ Groq Supercluster...")
+print("\n⚡ [2/5] ทดสอบการเชื่อมต่อ Groq Multi-Brain Cluster...")
 if groq_keys:
     for idx, key in enumerate(groq_keys, 1):
         masked_key = key[:6] + "..." + key[-4:] if len(key) > 10 else "***"

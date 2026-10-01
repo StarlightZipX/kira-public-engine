@@ -250,17 +250,17 @@ async function checkEngineStatus() {
             if (unifiedText) unifiedText.textContent = `Local GPU (${data.models[0]})`;
             if (unifiedPill) unifiedPill.title = `เชื่อมต่อกับ Local GPU สำเร็จ (Ollama: ${data.models.join(', ')}) • Heartbeat Active`;
         } else {
-            if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Swarm 2.1</span>`;
-            if (unifiedText) unifiedText.textContent = 'Cloud Swarm 2.1';
-            if (unifiedPill) unifiedPill.title = 'ระบบพร้อมใช้งาน 100% | Proactive Heartbeat ตื่นรู้ & Cloud Supercluster Multi-Brain';
+            if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Engine 2.1</span>`;
+            if (unifiedText) unifiedText.textContent = 'Cloud Engine 2.1';
+            if (unifiedPill) unifiedPill.title = 'ระบบพร้อมใช้งาน 100% | Cloud Multi-Brain Engine พร้อมทำงาน';
         }
     } catch (e) {
-        if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Swarm 2.1</span>`;
-        if (unifiedText) unifiedText.textContent = 'Cloud Swarm 2.1';
+        if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Engine 2.1</span>`;
+        if (unifiedText) unifiedText.textContent = 'Cloud Engine 2.1';
     }
 }
 
-// --- Neural Core Connection & Cold-Start Supervisor ---
+// --- AI Core Connection & Cold-Start Supervisor ---
 let isCoreWaking = false;
 
 function showConnectionToast(text, type = 'waking') {
@@ -287,7 +287,7 @@ async function checkNeuralCoreHealth(isInitial = false) {
     if (isInitial) {
         showTimer = setTimeout(() => {
             isCoreWaking = true;
-            showConnectionToast('⚡ กำลังเชื่อมต่อ Kira Neural Core บน Cloud... (กำลังปลุกระบบ 5-10s)', 'waking');
+            showConnectionToast('กำลังเชื่อมต่อ Kira AI Engine...', 'waking');
         }, 1800);
     }
     
@@ -301,7 +301,7 @@ async function checkNeuralCoreHealth(isInitial = false) {
         if (res.ok) {
             const data = await res.json();
             if (isCoreWaking || (Date.now() - startTime > 2000)) {
-                showConnectionToast('✨ Kira Neural Core เชื่อมต่อสำเร็จ พร้อมใช้งาน!', 'ready');
+                showConnectionToast('Kira AI Engine เชื่อมต่อสำเร็จ พร้อมใช้งาน', 'ready');
                 hideConnectionToast(2500);
                 isCoreWaking = false;
             }
@@ -497,8 +497,8 @@ if (btnLogin) {
         btnLogin.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเข้าสู่ระบบ...';
 
         const coldStartTimer = setTimeout(() => {
-            btnLogin.innerHTML = '<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> กำลังปลุกระบบ Cloud...';
-            showConnectionToast('⚡ เซิร์ฟเวอร์กำลังตื่นจากการหลับ (Cold Start) กรุณารอสักครู่...', 'waking');
+            btnLogin.innerHTML = '<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> กำลังเชื่อมต่อเซิร์ฟเวอร์...';
+            showConnectionToast('เซิร์ฟเวอร์กำลังเตรียมพร้อมการทำงาน กรุณารอสักครู่...', 'waking');
         }, 2200);
 
         try {
@@ -582,8 +582,8 @@ if (btnRegister) {
         btnRegister.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้างบัญชี...';
 
         const coldStartTimer = setTimeout(() => {
-            btnRegister.innerHTML = '<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> กำลังปลุกระบบ Cloud...';
-            showConnectionToast('⚡ เซิร์ฟเวอร์กำลังตื่นจากการหลับ (Cold Start) กรุณารอสักครู่...', 'waking');
+            btnRegister.innerHTML = '<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> กำลังเชื่อมต่อเซิร์ฟเวอร์...';
+            showConnectionToast('เซิร์ฟเวอร์กำลังเตรียมพร้อมการทำงาน กรุณารอสักครู่...', 'waking');
         }, 2200);
 
         try {
@@ -602,7 +602,7 @@ if (btnRegister) {
 
             if (data.status === 'success') {
                 regError.style.color = '#34d399';
-                regError.textContent = "✨ สมัครสมาชิกสำเร็จ! กำลังพากลับไปหน้าเข้าสู่ระบบ...";
+                regError.textContent = "สมัครสมาชิกสำเร็จ กำลังกลับสู่หน้าเข้าสู่ระบบ...";
                 hideConnectionToast(500);
                 setTimeout(() => {
                     switchAuthTab('login');
@@ -697,15 +697,15 @@ async function renderWelcomeHub() {
     chatBox.innerHTML = `
         <div class="welcome-hero-card">
             <div class="welcome-meta-bar">
-                <span class="welcome-time-tag" style="border-color: rgba(244,63,94,0.3); color:#fda4af;">
-                    <i class="fa-solid fa-heart-pulse heartbeat-icon" style="color:#f43f5e;"></i> Kira Proactive Heartbeat
+                <span class="welcome-time-tag" style="border-color: rgba(6,182,212,0.3); color:#67e8f9;">
+                    <i class="fa-solid fa-sparkles text-cyan"></i> Kira Smart Greeting
                 </span>
             </div>
             <div class="welcome-header">
                 <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo">
                 <div style="flex: 1;">
-                    <h3 class="welcome-title">สวัสดีค่ะคุณ ${escapeHtml(currentUser || 'ผู้ใช้')}! 🌸</h3>
-                    <p class="welcome-subtitle">กำลังประมวลผลบริบทและสังเคราะห์คำทักทายเชิงรุก...</p>
+                    <h3 class="welcome-title">สวัสดีค่ะคุณ ${escapeHtml(currentUser || 'ผู้ใช้')}</h3>
+                    <p class="welcome-subtitle">คิระกำลังเตรียมพร้อมระบบและประมวลผลบริบทการทำงานของคุณอยู่นะคะ...</p>
                 </div>
             </div>
         </div>
@@ -713,16 +713,18 @@ async function renderWelcomeHub() {
 
     const briefing = await loadProactiveBriefing();
     const data = briefing || {
-        greeting_title: `สวัสดีค่ะคุณ ${currentUser || 'ผู้ใช้'}! 🌸`,
-        greeting_subtitle: `หนูคือ Kira AI 2.1 ผู้ช่วยอัจฉริยะส่วนตัวของคุณ พร้อมช่วยงานทุกด้านแล้วค่ะ`,
+        greeting_title: `สวัสดีค่ะคุณ ${currentUser || 'ผู้ใช้'}`,
+        greeting_subtitle: `ระบบประมวลผล Kira 2.1 พร้อมช่วยงาน คิดวิเคราะห์ และจัดการภารกิจของคุณแล้วค่ะ`,
         time_str: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
         date_thai: 'วันนี้',
         is_boss: currentUser && (currentUser.includes('Boss') || currentUser.toLowerCase().includes('admin')),
         proactive_suggestions: [
-            { title: "พรีวิวโค้ดสด (Live Canvas)", desc: "สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที", prompt: "ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บร้านกาแฟสวยๆ พร้อม Tailwind CSS และ Interactive Elements", icon: "fa-solid fa-code", tag: "LIVE CANVAS" },
-            { title: "วาดผังงาน (Mermaid)", desc: "สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ", prompt: "ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานของระบบสั่งอาหาร Delivery", icon: "fa-solid fa-project-diagram", tag: "DIAGRAM" },
-            { title: "คิดวิเคราะห์เชิงลึก (Reasoning)", desc: "สกัดตรรกะ วิจัย วางแผนกลยุทธ์ และคำนวณซับซ้อน", prompt: "ช่วยวิเคราะห์จุดเด่นจุดด้อยและกลยุทธ์การนำ AI มาใช้ในองค์กรยุค 2026", icon: "fa-solid fa-brain", tag: "REASONING" },
-            { title: "ค้นหาเว็บสด (Web Search)", desc: "สืบค้นข่าวสาร ข้อมูลสด และราคาสินทรัพย์แบบเรียลไทม์", prompt: "สรุปข่าวเทคโนโลยี AI และแนวโน้มสำคัญล่าสุดของวันนี้ให้ฟังหน่อย", icon: "fa-solid fa-globe", tag: "LIVE WEB" }
+            { title: "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: "ย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: "ADVISOR", category: "advisor" },
+            { title: "สร้างดราฟต์แรกของงานเขียน (First-Draft Machine)", desc: "ร่างอีเมลธุรกิจ บทความ โพสต์โซเชียล หรือโครงสร้างรายงานทันที", prompt: "ช่วยร่างโครงสร้างและเขียนดราฟต์แรกของเนื้อหาอย่างมืออาชีพ ปรับภาษาให้อ่านง่ายและน่าเชื่อถือให้หน่อยนะคะ", icon: "fa-solid fa-pen-nib", tag: "FIRST DRAFT", category: "draft" },
+            { title: "ตรวจทานและเกลาภาษา (Quality & Tone Reviewer)", desc: "ตรวจความถูกต้อง ปรับระดับภาษาให้สุภาพและน่าเชื่อถือ", prompt: "ช่วยตรวจทานความถูกต้องและเกลาข้อความต่อไปนี้ให้สุภาพ กระชับ เป็นมืออาชีพ และไม่มีคำผิดให้หน่อยค่ะ", icon: "fa-solid fa-magnifying-glass-chart", tag: "REVIEW", category: "review" },
+            { title: "ย่อยเรื่องยากให้เข้าใจง่าย (Fast Concept Explainer)", desc: "สรุปสาระสำคัญใน 3 นาที พร้อมยกตัวอย่างให้เห็นภาพชัดเจน", prompt: "ช่วยสรุปและอธิบายเรื่องนี้ให้เข้าใจง่ายใน 3 นาที แบบที่คนไม่มีพื้นฐานก็เข้าใจได้ทันทีให้หน่อยนะคะ", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
+            { title: "พรีวิวโค้ดสด (Live Code Canvas)", desc: "สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที", prompt: "ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บ Landing Page สวยๆ พร้อม Tailwind CSS และ Interactive Elements ให้หน่อยค่ะ", icon: "fa-solid fa-code", tag: "CANVAS", category: "tech" },
+            { title: "วาดผังงาน (Mermaid Flowchart)", desc: "สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ", prompt: "ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานและกระบวนการอย่างเป็นลำดับให้หน่อยค่ะ", icon: "fa-solid fa-project-diagram", tag: "DIAGRAM", category: "tech" }
         ]
     };
 
@@ -731,10 +733,10 @@ async function renderWelcomeHub() {
         continueHtml = `
             <div class="welcome-continue-card" onclick="loadSession('${escapeHtml(data.last_session_id)}')" title="คลิกเพื่อสนทนาต่อจากหัวข้อเดิม">
                 <div class="welcome-continue-info">
-                    <span class="welcome-continue-label"><i class="fa-solid fa-arrow-rotate-left"></i> คุยต่อจากที่ค้างไว้ล่าสุด</span>
+                    <span class="welcome-continue-label"><i class="fa-solid fa-arrow-rotate-left"></i> คุยค้างไว้จากครั้งก่อน ต้องการให้คิระช่วยต่อไหมคะ?</span>
                     <span class="welcome-continue-topic">"${escapeHtml(data.last_topic)}"</span>
                 </div>
-                <button type="button" class="welcome-continue-btn"><i class="fa-solid fa-play"></i> เปิดแชทนี้</button>
+                <button type="button" class="welcome-continue-btn"><i class="fa-solid fa-play"></i> สนทนาต่อเลยค่ะ</button>
             </div>
         `;
     }
@@ -745,7 +747,7 @@ async function renderWelcomeHub() {
             const escapedFact = escapeHtml(fact);
             const safeParam = escapedFact.replace(/'/g, "\\'");
             return `
-                <span class="welcome-memory-pill" onclick="sendQuickPrompt('ช่วยเล่าหรือทบทวนความจำเรื่อง: ${safeParam}')" title="คลิกเพื่อคุยเรื่องนี้ต่อ">
+                <span class="welcome-memory-pill" onclick="sendQuickPrompt('ช่วยวิเคราะห์หรือต่อยอดจากข้อมูลเรื่อง: ${safeParam} ให้หน่อยนะคะ')" title="คลิกเพื่อให้คิระช่วยเรื่องนี้ต่อ">
                     <i class="fa-solid fa-lightbulb"></i> ${escapedFact}
                 </span>
             `;
@@ -754,7 +756,7 @@ async function renderWelcomeHub() {
         memoryHtml = `
             <div class="welcome-memory-container">
                 <div class="welcome-memory-header">
-                    <i class="fa-solid fa-brain" style="color: #c084fc;"></i> ความจำล่าสุดที่คิระจดจำเกี่ยวกับคุณ (GraphRAG):
+                    <i class="fa-solid fa-brain" style="color: #c084fc;"></i> สิ่งที่คิระจดจำเกี่ยวกับคุณและงานของคุณได้ (Knowledge Graph Memory):
                 </div>
                 <div class="welcome-memory-pills">
                     ${memoryPills}
@@ -766,26 +768,43 @@ async function renderWelcomeHub() {
     const suggestions = data.proactive_suggestions && data.proactive_suggestions.length > 0
         ? data.proactive_suggestions
         : [
-            { title: "พรีวิวโค้ดสด (Live Canvas)", desc: "สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที", prompt: "ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บร้านกาแฟสวยๆ พร้อม Tailwind CSS และ Interactive Elements", icon: "fa-solid fa-code", tag: "LIVE CANVAS" },
-            { title: "วาดผังงาน (Mermaid)", desc: "สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ", prompt: "ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานของระบบสั่งอาหาร Delivery", icon: "fa-solid fa-project-diagram", tag: "DIAGRAM" },
-            { title: "คิดวิเคราะห์เชิงลึก (Reasoning)", desc: "สกัดตรรกะ วิจัย วางแผนกลยุทธ์ และคำนวณซับซ้อน", prompt: "ช่วยวิเคราะห์จุดเด่นจุดด้อยและกลยุทธ์การนำ AI มาใช้ในองค์กรยุค 2026", icon: "fa-solid fa-brain", tag: "REASONING" },
-            { title: "ค้นหาเว็บสด (Web Search)", desc: "สืบค้นข่าวสาร ข้อมูลสด และราคาสินทรัพย์แบบเรียลไทม์", prompt: "สรุปข่าวเทคโนโลยี AI และแนวโน้มสำคัญล่าสุดของวันนี้ให้ฟังหน่อย", icon: "fa-solid fa-globe", tag: "LIVE WEB" }
+            { title: "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: "ย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: "ADVISOR", category: "advisor" },
+            { title: "สร้างดราฟต์แรกของงานเขียน (First-Draft Machine)", desc: "ร่างอีเมลธุรกิจ บทความ โพสต์โซเชียล หรือโครงสร้างรายงานทันที", prompt: "ช่วยร่างโครงสร้างและเขียนดราฟต์แรกของเนื้อหาอย่างมืออาชีพ ปรับภาษาให้อ่านง่ายและน่าเชื่อถือให้หน่อยนะคะ", icon: "fa-solid fa-pen-nib", tag: "FIRST DRAFT", category: "draft" },
+            { title: "ตรวจทานและเกลาภาษา (Quality & Tone Reviewer)", desc: "ตรวจความถูกต้อง ปรับระดับภาษาให้สุภาพและน่าเชื่อถือ", prompt: "ช่วยตรวจทานความถูกต้องและเกลาข้อความต่อไปนี้ให้สุภาพ กระชับ เป็นมืออาชีพ และไม่มีคำผิดให้หน่อยค่ะ", icon: "fa-solid fa-magnifying-glass-chart", tag: "REVIEW", category: "review" },
+            { title: "ย่อยเรื่องยากให้เข้าใจง่าย (Fast Concept Explainer)", desc: "สรุปสาระสำคัญใน 3 นาที พร้อมยกตัวอย่างให้เห็นภาพชัดเจน", prompt: "ช่วยสรุปและอธิบายเรื่องนี้ให้เข้าใจง่ายใน 3 นาที แบบที่คนไม่มีพื้นฐานก็เข้าใจได้ทันทีให้หน่อยนะคะ", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
+            { title: "พรีวิวโค้ดสด (Live Code Canvas)", desc: "สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที", prompt: "ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บ Landing Page สวยๆ พร้อม Tailwind CSS และ Interactive Elements ให้หน่อยค่ะ", icon: "fa-solid fa-code", tag: "CANVAS", category: "tech" },
+            { title: "วาดผังงาน (Mermaid Flowchart)", desc: "สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ", prompt: "ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานและกระบวนการอย่างเป็นลำดับให้หน่อยค่ะ", icon: "fa-solid fa-project-diagram", tag: "DIAGRAM", category: "tech" }
         ];
+
+    function getCatBadge(cat) {
+        switch(cat) {
+            case 'advisor': return '<i class="fa-solid fa-compass"></i> ที่ปรึกษา';
+            case 'draft': return '<i class="fa-solid fa-pen-nib"></i> ดราฟต์แรก';
+            case 'review': return '<i class="fa-solid fa-magnifying-glass-chart"></i> ตรวจทาน';
+            case 'learning': return '<i class="fa-solid fa-lightbulb"></i> ย่อยเรื่องยาก';
+            case 'tech': return '<i class="fa-solid fa-code"></i> โค้ด/ผัง';
+            default: return '<i class="fa-solid fa-sparkles"></i> แนะนำ';
+        }
+    }
 
     const suggestionsHtml = suggestions.map(s => {
         const safePrompt = escapeHtml(s.prompt).replace(/'/g, "\\'");
+        const cat = s.category || 'advisor';
         return `
-            <div class="welcome-pill" onclick="sendQuickPrompt('${safePrompt}')">
-                ${s.tag ? `<span class="welcome-pill-badge">${escapeHtml(s.tag)}</span>` : ''}
+            <div class="welcome-pill" data-category="${escapeHtml(cat)}" onclick="sendQuickPrompt('${safePrompt}')">
+                <div class="welcome-pill-top">
+                    ${s.tag ? `<span class="welcome-pill-badge">${escapeHtml(s.tag)}</span>` : ''}
+                    <span class="welcome-pill-category-badge">${getCatBadge(cat)}</span>
+                </div>
                 <span class="welcome-pill-title"><i class="${s.icon || 'fa-solid fa-bolt'}"></i> ${escapeHtml(s.title)}</span>
                 <span class="welcome-pill-desc">${escapeHtml(s.desc)}</span>
             </div>
         `;
     }).join('');
 
-    const bossBadge = data.is_boss ? `<span class="welcome-boss-tag"><i class="fa-solid fa-crown"></i> ฐานบัญชาการผู้สร้าง</span>` : '';
+    const bossBadge = data.is_boss ? `<span class="welcome-boss-tag"><i class="fa-solid fa-crown"></i> สิทธิ์ผู้ดูแลระบบ (Boss Admin)</span>` : '';
     const timeTag = `<span class="welcome-time-tag"><i class="fa-regular fa-clock"></i> ${escapeHtml(data.date_thai || '')} • ${escapeHtml(data.time_str || '')}</span>`;
-    const heartbeatTag = `<span class="welcome-time-tag" style="border-color: rgba(244,63,94,0.3); color:#fda4af;"><i class="fa-solid fa-heart-pulse heartbeat-icon" style="color:#f43f5e;"></i> Heartbeat ตื่นรู้</span>`;
+    const heartbeatTag = `<span class="welcome-time-tag" style="border-color: rgba(56,189,248,0.3); color:#7dd3fc;"><i class="fa-solid fa-heart-pulse heartbeat-icon" style="color:#38bdf8;"></i> AI Engine ออนไลน์</span>`;
 
     chatBox.innerHTML = `
         <div class="welcome-hero-card">
@@ -803,11 +822,34 @@ async function renderWelcomeHub() {
             </div>
             ${continueHtml}
             ${memoryHtml}
+            <div class="welcome-category-bar">
+                <button type="button" class="welcome-cat-btn active" onclick="filterWelcomeCategory('all', this)"><i class="fa-solid fa-sparkles"></i> ทั้งหมด</button>
+                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('advisor', this)"><i class="fa-solid fa-compass"></i> ที่ปรึกษา & วางแผน</button>
+                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('draft', this)"><i class="fa-solid fa-pen-nib"></i> ร่างดราฟต์แรก</button>
+                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('review', this)"><i class="fa-solid fa-magnifying-glass-chart"></i> ตรวจทานงาน</button>
+                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('learning', this)"><i class="fa-solid fa-lightbulb"></i> ย่อยเรื่องยาก</button>
+                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('tech', this)"><i class="fa-solid fa-code"></i> โค้ด & ผังงาน</button>
+            </div>
             <div class="welcome-grid">
                 ${suggestionsHtml}
             </div>
         </div>
     `;
+
+    window.filterWelcomeCategory = function(cat, btn) {
+        document.querySelectorAll('.welcome-cat-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        
+        const pills = document.querySelectorAll('.welcome-pill');
+        pills.forEach(p => {
+            const itemCat = p.getAttribute('data-category');
+            if (cat === 'all' || itemCat === cat) {
+                p.style.display = 'flex';
+            } else {
+                p.style.display = 'none';
+            }
+        });
+    };
 }
 
 // --- Proactive Ambient Heartbeat & Idle Care Loop ---
@@ -890,7 +932,7 @@ function initProactiveHeartbeat() {
                 if (userInput) {
                     userInput.focus();
                     if (!userInput.value) {
-                        userInput.placeholder = "มีอะไรให้คิระช่วยบอกได้เลยนะคะ 🌸";
+                        userInput.placeholder = "พิมพ์ข้อความหรือคำถามถึง Kira 2.1...";
                     }
                 }
             }
@@ -939,9 +981,9 @@ function initProactiveHeartbeat() {
             if (toastTime) toastTime.textContent = tzTime;
             if (toastMsg) {
                 const msgs = [
-                    "ทำงานต่อเนื่องมาสักพักแล้ว อย่าลืมพักสายตาและดื่มน้ำหน่อยนะคะ 🌸",
-                    "คิระยังอยู่ตรงนี้เสมอ หากมีไอเดียใหม่หรือต้องการให้ช่วยสรุปงาน เรียกได้ทันทีนะคะ ✨",
-                    "หากต้องการให้ค้นหาข้อมูลหรือเขียนโค้ดเพิ่ม บอกคิระได้เลยนะคะ 💻"
+                    "ทำงานต่อเนื่องมาสักพักแล้ว อย่าลืมพักสายตาและดื่มน้ำหน่อยนะคะ",
+                    "คิระพร้อมช่วยเหลือเสมอ หากมีไอเดียใหม่หรือต้องการให้ช่วยสรุปงาน เรียกได้ทันทีนะคะ",
+                    "หากต้องการค้นหาข้อมูล เขียนโค้ด หรือวางแผนงาน สามารถสั่งการได้ตลอดเวลาค่ะ"
                 ];
                 toastMsg.textContent = msgs[Math.floor(Math.random() * msgs.length)];
             }
@@ -982,7 +1024,7 @@ function initLiveScreenInspector() {
                 if (!artifactsIframe) return;
                 const iframeDoc = artifactsIframe.contentDocument || (artifactsIframe.contentWindow ? artifactsIframe.contentWindow.document : null);
                 if (!iframeDoc || !iframeDoc.body || !iframeDoc.body.innerText.trim()) {
-                    alert('ไม่พบเนื้อหาใน Live Canvas สำหรับตรวจสอบครับ กรุณารันโค้ดก่อน');
+                    alert('ไม่พบเนื้อหาใน Live Canvas สำหรับตรวจสอบค่ะ กรุณารันโค้ดก่อนนะคะ');
                     return;
                 }
 
@@ -1039,7 +1081,7 @@ function initLiveScreenInspector() {
         });
     }
 
-    // 2. Drag & Drop Vision Diagnostics
+    // 2. Drag & Drop Image Attachment
     if (chatArea && dragOverlay) {
         let dragCounter = 0;
 
@@ -1078,11 +1120,11 @@ function initLiveScreenInspector() {
             if (files && files.length > 0) {
                 const file = files[0];
                 if (!file.type.startsWith('image/')) {
-                    alert('กรุณาวางไฟล์รูปภาพ (JPG, PNG, WebP) เท่านั้นครับ');
+                    alert('กรุณาวางไฟล์รูปภาพ (JPG, PNG, WebP) เท่านั้นค่ะ');
                     return;
                 }
                 if (file.size > 5 * 1024 * 1024) {
-                    alert('ขนาดรูปภาพต้องไม่เกิน 5MB ครับ');
+                    alert('ขนาดรูปภาพต้องไม่เกิน 5MB ค่ะ');
                     return;
                 }
 
@@ -1461,7 +1503,7 @@ async function sendMessage() {
         
         const speakerBtn = document.createElement('button');
         speakerBtn.className = 'btn-speaker';
-        speakerBtn.title = 'ฟังเสียงคิระพากย์คำตอบนี้ (Free Neural Voice)';
+        speakerBtn.title = 'ฟังเสียงคิระอ่านคำตอบนี้ (Natural Voice)';
         speakerBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
         speakerBtn.onclick = () => playKiraVoice(finalMarkdown || fullText, speakerBtn);
 
@@ -1599,9 +1641,9 @@ if (btnExport) {
             const txt = clone.innerText.trim();
             
             if (isUser) {
-                mdContent += `### 👤 คุณ (${currentUser}):\n${txt}\n\n`;
+                mdContent += `### คุณ (${currentUser}):\n${txt}\n\n`;
             } else {
-                mdContent += `### 🤖 Kira AI:\n${txt}\n\n`;
+                mdContent += `### Kira 2.1:\n${txt}\n\n`;
             }
         });
         
@@ -1724,7 +1766,7 @@ if (micBtn) {
         recognition.onerror = function(event) {
             console.warn("Speech recognition notice:", event.error);
             if (event.error === 'not-allowed') {
-                alert("กรุณาอนุญาตการเข้าถึงไมโครโฟนในเบราว์เซอร์เพื่อใช้งานระบบเสียงครับ");
+                alert("กรุณาอนุญาตการเข้าถึงไมโครโฟนในเบราว์เซอร์เพื่อใช้งานระบบเสียงนะคะ");
             }
         };
 
@@ -1749,7 +1791,7 @@ if (micBtn) {
         });
     } else {
         micBtn.addEventListener('click', () => {
-            alert("เบราว์เซอร์ของคุณไม่รองรับระบบสั่งงานด้วยเสียง กรุณาเปิดใช้งานผ่าน Google Chrome หรือ Microsoft Edge ครับ");
+            alert("เบราว์เซอร์ของคุณไม่รองรับระบบสั่งงานด้วยเสียง กรุณาเปิดใช้งานผ่าน Google Chrome หรือ Microsoft Edge บน PC นะคะ");
         });
     }
 }
@@ -1849,7 +1891,7 @@ if (btnSubmitFeedback) {
         const rating = document.getElementById('feedback-rating').value;
         submitFeedback(rating, botMsg, text);
         document.getElementById('feedback-modal').style.display = 'none';
-        alert("Kira ได้รับรีวิวของคุณแล้ว ขอบคุณมากค่ะ! ✨");
+        alert("Kira ได้รับรีวิวของคุณแล้ว ขอบคุณมากค่ะ");
     });
 }
 
@@ -1897,7 +1939,7 @@ if (attachToggleBtn && attachmentMenu) {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
-                alert("ขนาดรูปภาพต้องไม่เกิน 5MB ครับ");
+                alert("ขนาดรูปภาพต้องไม่เกิน 5MB ค่ะ");
                 return;
             }
             const reader = new FileReader();
@@ -2477,13 +2519,13 @@ function showNodeDetails(node) {
     
     let info = '';
     if (node.group === 'user') {
-        info = `👤 โหนดศูนย์กลางผู้ใช้งาน: <strong>${node.label}</strong> (คุณ)`;
+        info = `โหนดศูนย์กลางผู้ใช้งาน: <strong>${node.label}</strong>`;
     } else if (node.group === 'ai') {
-        info = `🤖 โหนดปัญญาประดิษฐ์: <strong>Kira AI System 2.1</strong> (ผู้ช่วยอัจฉริยะ)`;
+        info = `โหนดปัญญาประดิษฐ์: <strong>Kira AI System 2.1</strong>`;
     } else if (node.full_fact) {
-        info = `📝 ข้อเท็จจริงที่จดจำ: "${node.full_fact}"`;
+        info = `ข้อเท็จจริงที่จดจำ: "${node.full_fact}"`;
     } else {
-        info = `🏷️ โครงข่ายความสัมพันธ์: หมวดหมู่ [${node.group || 'ความจำ'}]`;
+        info = `โครงข่ายความสัมพันธ์: หมวดหมู่ [${node.group || 'ความจำ'}]`;
     }
     
     detailNodeDesc.innerHTML = info;
@@ -2937,12 +2979,12 @@ async function loadSettingsPreferences() {
                 const userRole = document.getElementById('settings-user-role');
                 if (userRole) {
                     if (data.user.role === 'admin' || isBoss(currentUser)) {
-                        userRole.textContent = '👑 Admin / Boss';
+                        userRole.textContent = 'Admin / Boss';
                         userRole.style.color = '#f59e0b';
                         userRole.style.background = 'rgba(245, 158, 11, 0.15)';
                         userRole.style.borderColor = 'rgba(245, 158, 11, 0.35)';
                     } else {
-                        userRole.textContent = '⚡ Free Member';
+                        userRole.textContent = 'Free Member';
                     }
                 }
                 
@@ -3113,7 +3155,7 @@ async function saveSettings() {
         if (data.status === 'success') {
             if (statusText) {
                 statusText.className = 'settings-footer-status saved';
-                statusText.innerHTML = '<i class="fa-solid fa-circle-check"></i> บันทึกการตั้งค่าเรียบร้อยแล้ว ✨';
+                statusText.innerHTML = '<i class="fa-solid fa-circle-check"></i> บันทึกการตั้งค่าเรียบร้อยแล้ว';
             }
             playKiraSound('receive');
             setTimeout(() => {
@@ -3277,7 +3319,7 @@ async function submitChangePassword() {
         const data = await res.json();
         
         if (data.status === 'success') {
-            showSuccess("เปลี่ยนรหัสผ่านสำเร็จเรียบร้อยแล้ว ✨");
+            showSuccess("เปลี่ยนรหัสผ่านสำเร็จเรียบร้อยแล้ว");
             document.getElementById('setting-current-pass').value = '';
             document.getElementById('setting-new-pass').value = '';
             document.getElementById('setting-confirm-pass').value = '';
@@ -3295,19 +3337,21 @@ async function submitChangePassword() {
 }
 
 async function clearAllChatHistory() {
-    if (!confirm("⚠️ คำเตือน: คุณต้องการลบประวัติการสนทนาทั้งหมดจริงหรือไม่?\n\nการกระทำนี้จะล้างประวัติแชททั้งหมดในฐานข้อมูลและไม่สามารถกู้คืนได้")) {
+    if (!confirm("คำเตือน: คุณต้องการลบประวัติการสนทนาทั้งหมดจริงหรือไม่?\n\nการกระทำนี้จะล้างประวัติแชททั้งหมดในฐานข้อมูลและไม่สามารถกู้คืนได้")) {
         return;
     }
     try {
-        const res = await fetch(`/api/history/${encodeURIComponent(currentUser)}/all`, {
-            method: 'DELETE'
+        const token = localStorage.getItem('kira_auth_token') || '';
+        const res = await fetch(`/api/history/${encodeURIComponent(currentUser)}/all${token ? `?token=${encodeURIComponent(token)}` : ''}`, {
+            method: 'DELETE',
+            headers: token ? { 'X-Auth-Token': token } : {}
         });
         const data = await res.json();
         if (data.status === 'success') {
             chatBox.innerHTML = '';
             chatHistorySidebar.innerHTML = '<p class="history-title">ยังไม่มีประวัติการแชท</p>';
             renderWelcomeHub();
-            alert("ล้างประวัติการสนทนาทั้งหมดเรียบร้อยแล้วค่ะ ✨");
+            alert("ล้างประวัติการสนทนาทั้งหมดเรียบร้อยแล้วค่ะ");
             closeSettingsModal();
         } else {
             alert(data.message || "ล้างประวัติแชทไม่สำเร็จ");
@@ -3318,16 +3362,18 @@ async function clearAllChatHistory() {
 }
 
 async function wipeAllMemories() {
-    if (!confirm("⚠️ คำเตือน: คุณต้องการล้างโหนดความจำสมอง (GraphRAG) ทั้งหมดจริงหรือไม่?\n\nคิระจะลืมข้อมูลความจำระยะยาวทั้งหมดของคุณและเริ่มต้นใหม่เหมือนวันแรก")) {
+    if (!confirm("คำเตือน: คุณต้องการล้างโหนดความจำสมอง (Knowledge Graph Memory) ทั้งหมดจริงหรือไม่?\n\nคิระจะลืมข้อมูลความจำระยะยาวทั้งหมดของคุณและเริ่มต้นใหม่เหมือนวันแรก")) {
         return;
     }
     try {
-        const res = await fetch(`/api/user/graph/all?username=${encodeURIComponent(currentUser)}`, {
-            method: 'DELETE'
+        const token = localStorage.getItem('kira_auth_token') || '';
+        const res = await fetch(`/api/user/graph/all?username=${encodeURIComponent(currentUser)}${token ? `&token=${encodeURIComponent(token)}` : ''}`, {
+            method: 'DELETE',
+            headers: token ? { 'X-Auth-Token': token } : {}
         });
         const data = await res.json();
         if (data.status === 'success') {
-            alert("ล้างโครงข่ายความจำของคิระเรียบร้อยแล้วค่ะ 🧠✨");
+            alert("ล้างโครงข่ายความจำของคิระเรียบร้อยแล้วค่ะ");
         } else {
             alert(data.message || "ล้างความจำไม่สำเร็จ");
         }
@@ -3703,12 +3749,12 @@ function downloadMeetingMinutes(btn) {
 
             const debate = sessionWrapper.querySelector('.boardroom-debate-body');
             if (debate) {
-                fullMeetingText += `## ⚡ สรุปการถกเถียงและประนีประนอมจุดอ่อน (Executive Debate)\n\n${debate.innerText}\n\n---\n\n`;
+                fullMeetingText += `## สรุปการถกเถียงและประนีประนอมจุดอ่อน (Executive Debate)\n\n${debate.innerText}\n\n---\n\n`;
             }
 
             const consensus = sessionWrapper.querySelector('.boardroom-consensus-body');
             if (consensus) {
-                fullMeetingText += `## 🏛️ มติเอกฉันท์และพิมพ์เขียวกลยุทธ์ (Resolution Blueprint)\n\n${consensus.innerText}\n\n`;
+                fullMeetingText += `## มติเอกฉันท์และพิมพ์เขียวกลยุทธ์ (Resolution Blueprint)\n\n${consensus.innerText}\n\n`;
             }
         }
 
@@ -4195,8 +4241,8 @@ function renderOmniTasks(tasks) {
     const elKC = document.getElementById('kanban-count-completed'); if (elKC) elKC.textContent = cCount;
 
     const elTotal = document.getElementById('task-stat-total'); if (elTotal) elTotal.textContent = `ทั้งหมด: ${tasks.length}`;
-    const elDrafted = document.getElementById('task-stat-drafted'); if (elDrafted) elDrafted.textContent = `⚡ ร่างงานแล้ว: ${draftedCount}`;
-    const elEval = document.getElementById('task-stat-evaluated'); if (elEval) elEval.textContent = `🏛️ สภาประเมิน: ${evaluatedCount}`;
+    const elDrafted = document.getElementById('task-stat-drafted'); if (elDrafted) elDrafted.textContent = `ร่างงานแล้ว: ${draftedCount}`;
+    const elEval = document.getElementById('task-stat-evaluated'); if (elEval) elEval.textContent = `สภาประเมิน: ${evaluatedCount}`;
 
     const headerBadge = document.getElementById('task-matrix-badge');
     if (headerBadge) {
@@ -4644,18 +4690,19 @@ function initSubscriptionController() {
                 }
                 if (subExpiryInfo) {
                     if (sub.is_boss) {
-                        subExpiryInfo.textContent = '• Boss God Mode (สิทธิ์ไม่จำกัดตลอดชีพ)';
+                        subExpiryInfo.textContent = '• บัญชีผู้ดูแลระบบ / Boss Admin (สิทธิ์ไม่จำกัดตลอดชีพ)';
                     } else if (sub.expire_date) {
-                        subExpiryInfo.textContent = `• หมดอายุ: ${sub.expire_date.split('T')[0]}`;
+                        const expStr = sub.expire_date.includes(' ') ? sub.expire_date.split(' ')[0] : sub.expire_date.split('T')[0];
+                        subExpiryInfo.textContent = `• ใช้งานได้ถึง: ${expStr} (โควตา ${sub.daily_quota || 500} ข้อความ/วัน)`;
                     } else {
-                        subExpiryInfo.textContent = '• โควตา 15 ข้อความ/วัน';
+                        subExpiryInfo.textContent = '• โควตาฟรี 15 ข้อความ/วัน';
                     }
                 }
                 if (subBadgeHint) {
                     if (sub.is_active_pro) {
-                        subBadgeHint.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> คุณกำลังใช้งานสิทธิ์ Pro / VIP เต็มรูปแบบ';
+                        subBadgeHint.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> กำลังใช้งาน ${sub.badge} (โควตา ${sub.daily_quota || 500} ข้อความ/วัน)`;
                     } else {
-                        subBadgeHint.textContent = 'อัปเกรดเพื่อรับ 500 ข้อความ/วัน และฟีเจอร์พรีเมียมทั้งหมด';
+                        subBadgeHint.textContent = 'อัปเกรดเพื่อรับโควตาสูงสุด 1,000 ข้อความ/วัน พร้อมปลดล็อกทุกฟีเจอร์';
                     }
                 }
             }
@@ -4670,6 +4717,7 @@ function initSubscriptionController() {
         }
     }
     window.refreshSubscriptionStatus = refreshSubscriptionStatus;
+    window.openSubModal = openSubModal;
 
     // Plan selection & Order creation
     async function selectPlan(planId) {
@@ -4700,14 +4748,17 @@ function initSubscriptionController() {
                 if (ppNumberText) ppNumberText.textContent = data.promptpay_number;
                 if (ppNameText) ppNameText.textContent = data.promptpay_name;
 
-                // Set QR Image URL (PromptPay QR via promptpay.io or QRServer fallback)
-                const cleanPhone = (data.promptpay_number || '0812345678').replace(/[^0-9]/g, '');
-                const qrUrl = data.qr_url || `https://promptpay.io/${cleanPhone}/${data.amount}.png`;
+                // Set QR Image URL: Use verified local PromptPay card asset of Boss, fallback to QR
+                const promptpayCardUrl = data.promptpay_qr_url || data.qr_url || '/static/images/boss_promptpay_card.png';
                 if (ppQrImg) {
-                    ppQrImg.src = qrUrl;
+                    ppQrImg.src = promptpayCardUrl;
                     ppQrImg.onerror = () => {
-                        ppQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PromptPay:${cleanPhone}:Amount:${data.amount}`;
+                        ppQrImg.src = '/static/images/boss_promptpay_qr.png';
                     };
+                }
+                const ppBankText = document.getElementById('pp-bank-text');
+                if (ppBankText && data.promptpay_bank) {
+                    ppBankText.textContent = `${data.promptpay_bank} • บัญชี ${data.promptpay_account || 'xxx-x-x7759-x'}`;
                 }
 
                 // Reset dropzone
@@ -4742,7 +4793,24 @@ function initSubscriptionController() {
         });
     }
 
-    // Copy PromptPay Number
+    // Save QR Image to device for banking app scan
+    const btnSaveQrImage = document.getElementById('btn-save-qr-image');
+    if (btnSaveQrImage && ppQrImg) {
+        btnSaveQrImage.addEventListener('click', () => {
+            const imgSrc = ppQrImg.src || '/static/images/boss_promptpay_card.png';
+            const link = document.createElement('a');
+            link.href = imgSrc;
+            link.download = 'Kira_PromptPay_QR.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            const origHtml = btnSaveQrImage.innerHTML;
+            btnSaveQrImage.innerHTML = '<i class="fa-solid fa-check text-emerald"></i> บันทึกภาพแล้ว! เปิดแอปธนาคารสแกนได้เลยค่ะ';
+            setTimeout(() => { btnSaveQrImage.innerHTML = origHtml; }, 3000);
+        });
+    }
+
     if (btnCopyPpNumber && ppNumberText) {
         btnCopyPpNumber.addEventListener('click', () => {
             const num = ppNumberText.textContent.trim();
@@ -4842,22 +4910,36 @@ function initSubscriptionController() {
 
             try {
                 const note = slipNoteInput ? slipNoteInput.value.trim() : '';
+                const uName = currentUser || localStorage.getItem('kira_username') || '';
                 const res = await fetch('/api/subscription/upload-slip', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         order_id: orderId,
                         slip_image_base64: currentSlipBase64,
-                        transfer_note: note
+                        transfer_note: note,
+                        username: uName
                     })
                 });
                 const data = await res.json();
                 if (res.ok && data.status === 'success') {
                     if (confirmedOrderId) confirmedOrderId.textContent = `#${orderId}`;
+                    const subSuccessPlanInfo = document.getElementById('sub-success-plan-info');
+                    if (subSuccessPlanInfo && data.badge) {
+                        subSuccessPlanInfo.textContent = `เปิดใช้งาน ${data.badge} เรียบร้อย (โควตา ${data.daily_quota || 500} ข้อความ/วัน ถึง ${data.expire_display || ''})`;
+                    }
                     switchSubView('success');
 
-                    // Start auto polling for approval
-                    startOrderStatusPolling(orderId);
+                    // Instant auto activation: refresh profile & subscription status immediately
+                    if (typeof refreshSubscriptionStatus === 'function') refreshSubscriptionStatus();
+                    if (typeof loadUserProfile === 'function') loadUserProfile();
+
+                    // If Kira returned a tailored welcome message, append it directly to the chat!
+                    if (data.welcome_message && typeof addMessage === 'function') {
+                        setTimeout(() => {
+                            addMessage(data.welcome_message, false);
+                        }, 500);
+                    }
                 } else {
                     alert('ส่งสลิปไม่สำเร็จ: ' + (data.detail || data.message));
                 }

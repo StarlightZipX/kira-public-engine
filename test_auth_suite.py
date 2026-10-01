@@ -82,7 +82,7 @@ def run_auth_tests():
     h2 = hash_password("mypassword")
     h3 = hash_password("otherpassword")
     assert h1 == h2 and h1 != h3 and len(h1) == 64
-    print("✅ [9/9] Aegis Protocol Salted SHA-256 Hashing: PASS")
+    print("✅ [9/9] Enterprise Salted SHA-256 Hashing: PASS")
 
     print("\n==========================================================")
     print("🎉 ALL 9/9 AUTHENTICATION SECURITY AUDIT TESTS PASSED 100%!")

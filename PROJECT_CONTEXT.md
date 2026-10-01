@@ -12,15 +12,17 @@
 * **สไตล์การสื่อสารที่ต้องรักษา (Communication Style):**
   * สุภาพ ให้เกียรติ กระตือรือร้น จริงใจ เป็นกันเอง และภักดี
   * สื่อสารอย่างตรงไปตรงมา ชัดเจน กระชับ ทรงพลัง ไม่เยิ่นเย้อ
-  * ทำหน้าที่เป็น **"มันสมองและวิศวกรคู่คิด"** ที่คิดข้ามช็อต คาดการณ์ล่วงหน้า และเสนอทางเลือกที่ดีที่สุดเสมอ
+* **กฎเหล็กเรื่องการ Deploy (Mandatory Continuous Deployment to Render):**
+  * ทุกครั้งที่พัฒนาฟีเจอร์ แก้ไขบั๊ก หรือปรับปรุงหน้าตา UI เสร็จสมบูรณ์แล้ว **ต้องทำ `git add`, `git commit` และ `git push origin main` เสมอ ห้ามลืมเด็ดขาด!** เพราะ Render ผูกกับ GitHub `origin main` ในการ Auto-Deploy สู่ Production ให้ผู้ใช้งานจริง
+  * ห้ามจบงานเพียงแค่การรันเทสต์หรือทดสอบในเครื่อง Local ต้องผลักดันโค้ดขึ้น GitHub / Render ให้เรียบร้อยในรอบการทำงานเสมอ
 
 ---
 
 ## 🏛️ 2. สถาปัตยกรรมหลัก 5 เสาหลักเดิมที่ติดตั้งสมบูรณ์แล้ว
 
-1. **🎙️ Full Neural Voice Suite:** Edge-TTS (`th-TH-PremwadeeNeural`) + Web Speech API STT รองรับ Interim Streaming สด + Auto-Speak
-2. **⚡ Adaptive MoA Swarm Router:** ตัดเข้า 0.2s Fast Direct Mode สำหรับคำทักทาย และเปิด Swarm 3 สมอง (Qwen 72B + Llama 70B) สำหรับโจทย์ลึก
-3. **🧠 GraphRAG & Interactive Brain Editing:** Mind-Map 2D Force Physics พร้อมปุ่มเพิ่ม/ลบความจำ (`POST/DELETE /api/user/graph/memory`)
+1. **🎙️ Natural Voice Suite:** Edge-TTS (`th-TH-PremwadeeNeural`) + Web Speech API STT รองรับ Interim Streaming สด + Auto-Speak
+2. **⚡ Multi-Model Consensus & Peer Review Router:** ตัดเข้า 0.2s Fast Direct Mode สำหรับคำทักทาย และเปิดกระบวนการ 2-Phase Draft+Review (Qwen 72B + Llama 70B) สำหรับโจทย์ลึก
+3. **🧠 Knowledge Graph Memory & Interactive Brain Editing:** Mind-Map 2D Force Physics พร้อมปุ่มเพิ่ม/ลบความจำ (`POST/DELETE /api/user/graph/memory`)
 4. **🎨 Live Code Canvas & Version History:** พรีวิวเว็บแบบเรียลไทม์ พร้อมระบบแท็บประวัติโค้ด `v1`, `v2`, `v3`... และ Versioned Download
 5. **📚 Rolling Memory & Token Compression:** บีบอัดและม้วนความจำอัตโนมัติ (`_compress_and_roll_history`) คุยได้ไม่จำกัดข้อความ
 
@@ -49,14 +51,15 @@ graph TD
     Kira --> P4[4. Emotional Full-Duplex]
 ```
 
-### 💓 เสาหลักที่ 1: Kira Proactive Heartbeat (ระบบตื่นรู้และสื่อสารเชิงรุก)
-* **เป้าหมาย:** เปลี่ยนคิระจากผู้ช่วยที่ "นั่งรอรับคำสั่ง" ให้เป็นผู้ช่วยที่ "ตื่นตัวและทักทายเชิงรุก"
-* **ฟังก์ชันที่จะสร้าง:**
-  * **Time-Aware Greeting & Briefing:** เมื่อผู้ใช้เปิดหน้าเว็บ คิระจะทักทายตามช่วงเวลาจริง (เช้า/บ่าย/ดึก) พร้อมสรุปสภาพแวดล้อมสั้นๆ หรือสิ่งที่ทำค้างไว้
-  * **Proactive Memory Suggestion:** แจ้งเตือนข้อเท็จจริงหรือโปรเจกต์ที่น่าสนใจจาก GraphRAG ที่เกี่ยวข้องกับงานปัจจุบัน
-* **ไฟล์ที่ต้องพัฒนา:**
-  * `app.py`: เพิ่มเอนด์พอยต์ `GET /api/user/briefing/{username}` สังเคราะห์ข้อมูลทักทาย
-  * `static/script.js`: เช็กสถานะเมื่อเข้าหน้าเว็บ หากไม่มีข้อความใหม่ให้ดึง Briefing มาแสดงเป็นข้อความต้อนรับอย่างมีชีวิตชีวา
+### 💓 เสาหลักที่ 1: Kira Smart Greeting & Proactive Briefing Hub [✅ สำเร็จสมบูรณ์ & ทดสอบผ่าน 100%]
+* **เป้าหมาย:** เปลี่ยนคิระจากผู้ช่วยที่ "นั่งรอรับคำสั่ง" ให้เป็น "เพื่อนร่วมงานอัจฉริยะและที่ปรึกษาที่ตื่นตัว พร้อมช่วยงานทันที"
+* **ฟังก์ชันที่สร้างสำเร็จ:**
+  * **100% Female Identity & Warm Tone:** คิระคงอัตลักษณ์หญิงแท้ 100% สุภาพ นุ่มนวล เฉลียวฉลาด แทนตัวเองว่า "หนู/คิระ" ลงท้ายด้วย "ค่ะ/นะคะ" เสมอ ไร้คำลงท้ายเพศชาย
+  * **Time-Aware Greeting & Briefing:** ทักทายตามช่วงเวลาจริง (เช้า/บ่าย/เย็น/ดึก) พร้อมประโยคเปิดการสนทนาที่สร้างพลังบวก
+  * **Context Continuity:** ดึงหัวข้อที่คุยค้างไว้ล่าสุดขึ้นมาแสดง พร้อมปุ่ม "สนทนาต่อเลยค่ะ" ใน 1 คลิก
+  * **Knowledge Graph Memory Highlights:** แสดงสิ่งที่คิระจดจำเกี่ยวกับผู้ใช้และงานของผู้ใช้ได้อย่างชาญฉลาด
+  * **5-Category Smart Advisor Suite:** แผงการ์ดที่ปรึกษาและงานด่วน 5 หมวดหมู่ (💼 ที่ปรึกษา & วางแผน, ✍️ ร่างดราฟต์แรก, 🔍 ตรวจทานงาน, 💡 ย่อยเรื่องยาก, 💻 โค้ด & ผังงาน) พร้อมปุ่มฟิลเตอร์หมวดหมู่แบบ Interactive ทันที
+* **การทดสอบยืนยัน:** `test_pillar_1_smart_greeting.py` ผ่าน 4/4 การทดสอบ (100% PASSED)
 
 ### 🔌 เสาหลักที่ 2: Model Context Protocol (MCP) Integration Hub
 * **เป้าหมาย:** ติดตั้งมาตรฐาน "USB-C แห่งโลก AI" เพื่อให้คิระเชื่อมต่อเครื่องมือภายนอกได้อย่างไร้รอยต่อ
@@ -67,7 +70,7 @@ graph TD
   * `app.py`: สร้างโมดูล `mcp_client.py` หรือคลาส `MCPRegistry` เพื่อจัดการการเรียก Tools
   * `PROJECT_CONTEXT.md`: บันทึกพอร์ตและการตั้งค่าของ MCP Servers ที่รองรับ
 
-### 👁️ เสาหลักที่ 3: Live Screen & Vision Inspector (ดวงตาอัจฉริยะของคิระ)
+### 👁️ เสาหลักที่ 3: Live Screen & Vision Inspector (ระบบวิเคราะห์หน้าจอและรูปภาพด้วย Multimodal Vision)
 * **เป้าหมาย:** ให้คิระสามารถ "มองเห็น" หน้าจอและไฟล์รูปภาพเพื่อช่วยตรวจงานและตรวจโค้ด
 * **ฟังก์ชันที่จะสร้าง:**
   * **Screen / Canvas Snapshot:** เพิ่มปุ่มแคปเจอร์หน้าเว็บใน Live Code Canvas ส่งให้คิระวิเคราะห์

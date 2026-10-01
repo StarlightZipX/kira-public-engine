@@ -35,7 +35,9 @@ def run_tests():
     assert plans["pro"]["price"] == 129
     assert plans["founder"]["price"] == 499
     print(f"  ✅ Plans validated: Trial (39฿), Pro (129฿), Founder (499฿)")
-    print(f"  PromptPay: {data.get('promptpay_number')} ({data.get('promptpay_name')})")
+    assert data.get('promptpay_name') == "นาย ศิวัช รอสวัสดิ์", f"Expected Boss name, got {data.get('promptpay_name')}"
+    assert data.get('promptpay_number') == "004999252517585", f"Expected Boss PromptPay number, got {data.get('promptpay_number')}"
+    print(f"  PromptPay Real Account Verified: {data.get('promptpay_number')} ({data.get('promptpay_name')}) - {data.get('promptpay_bank')}")
 
     # 3. Test Subscription Status for Normal Free User & Boss
     print("\n[3/10] Testing GET /api/subscription/status for free user and boss...")
@@ -54,7 +56,7 @@ def run_tests():
     assert sub_boss["is_active_pro"] is True
     assert sub_boss["can_access_boardroom"] is True
     assert sub_boss["can_auto_draft"] is True
-    print(f"  ✅ Boss status: {sub_boss['badge']} (God Mode VIP Unlimited)")
+    print(f"  ✅ Boss status: {sub_boss['badge']} (Executive Admin VIP Unlimited)")
 
     # 4. Create Order for Pro Plan
     print("\n[4/10] Testing POST /api/subscription/create-order for 'sub_alice' (Pro Plan)...")
@@ -69,21 +71,23 @@ def run_tests():
     order_id = order_data["order_id"]
     assert order_data["amount"] == 129
     assert order_data["days"] == 30
-    print(f"  ✅ Order created successfully: {order_id} (129฿ / 30 Days)")
+    assert order_data["promptpay_name"] == "นาย ศิวัช รอสวัสดิ์"
+    print(f"  ✅ Order created successfully: {order_id} (129฿ / 30 Days) -> QR target: {order_data['promptpay_name']}")
 
-    # 5. Upload Slip
-    print(f"\n[5/10] Testing POST /api/subscription/upload-slip for Order {order_id}...")
+    # 5. Upload Slip (Instant Auto-Activation)
+    print(f"\n[5/10] Testing POST /api/subscription/upload-slip with Instant Auto-Activation for Order {order_id}...")
     slip_payload = {
         "order_id": order_id,
         "slip_image_base64": DUMMY_SLIP,
-        "transfer_note": "โอนจาก SCB เวลา 14:30 น."
+        "transfer_note": "โอนจาก KBANK เวลา 14:30 น."
     }
     r_slip = requests.post(f"{BASE_URL}/api/subscription/upload-slip", json=slip_payload, timeout=5)
     assert r_slip.status_code == 200, f"Slip upload failed: {r_slip.text}"
     slip_data = r_slip.json()
     assert slip_data.get("status") == "success"
-    assert slip_data.get("order_status") == "pending"
-    print(f"  ✅ Slip uploaded and pending Boss approval: {order_id}")
+    assert slip_data.get("order_status") == "approved", f"Expected auto-approved, got {slip_data.get('order_status')}"
+    assert "ยินดีต้อนรับสู่" in slip_data.get("welcome_message", "")
+    print(f"  ✅ Slip uploaded & INSTANTLY ACTIVATED without waiting for manual approval: {order_id} (Plan: {slip_data.get('plan')})")
 
     # 6. Admin Listing of Orders
     print("\n[6/10] Testing GET /api/admin/subscription/orders...")
@@ -94,17 +98,17 @@ def run_tests():
     orders_list = admin_data.get("orders", [])
     matched = [o for o in orders_list if o["order_id"] == order_id]
     assert len(matched) == 1, f"Order {order_id} not found in admin orders"
-    assert matched[0]["status"] == "pending"
+    assert matched[0]["status"] == "approved"
     assert matched[0]["amount"] == 129
-    print(f"  ✅ Admin surveillance verified order {order_id} is in pending queue")
+    print(f"  ✅ Admin dashboard logged order {order_id} with approved status and audit slip preserved")
 
-    # 7. Admin Approves Order
+    # 7. Admin Manual Re-Approval / Confirmation
     print(f"\n[7/10] Testing POST /api/admin/subscription/approve for Order {order_id}...")
-    r_approve = requests.post(f"{BASE_URL}/api/admin/subscription/approve", json={"order_id": order_id, "note": "Approved by boss test"}, timeout=5)
+    r_approve = requests.post(f"{BASE_URL}/api/admin/subscription/approve", json={"order_id": order_id, "note": "Verified by boss audit"}, timeout=5)
     assert r_approve.status_code == 200, f"Approval failed: {r_approve.text}"
     appr_data = r_approve.json()
     assert appr_data.get("status") == "success"
-    print(f"  ✅ Order approved: new plan={appr_data.get('plan')}, expires={appr_data.get('expire_date')}")
+    print(f"  ✅ Order audit approved: new plan={appr_data.get('plan')}, expires={appr_data.get('expire_date')}")
 
     # 8. Verify User Plan & Quota Upgrade
     print("\n[8/10] Verifying 'sub_alice' user status and quota after approval...")

@@ -19,11 +19,11 @@
 </head>
 <body>
 
-    <!-- Neural Core Live Status / Cold-Start Wakeup Toast -->
+    <!-- AI Engine Live Status / Cold-Start Wakeup Toast -->
     <div id="kira-connection-toast" class="kira-connection-toast hidden">
         <div class="toast-content">
             <span class="toast-pulse-icon"><i class="fa-solid fa-bolt"></i></span>
-            <span class="toast-text" id="kira-toast-text">กำลังเชื่อมต่อ Neural Core...</span>
+            <span class="toast-text" id="kira-toast-text">กำลังเชื่อมต่อเซิร์ฟเวอร์คิระ...</span>
         </div>
     </div>
 
@@ -36,7 +36,7 @@
             </div>
             <div class="proactive-toast-body">
                 <div class="proactive-toast-header">
-                    <span class="proactive-toast-name">Kira Proactive 🌸</span>
+                    <span class="proactive-toast-name">Kira Assistant</span>
                     <span class="proactive-toast-time" id="proactive-toast-time">เมื่อสักครู่</span>
                 </div>
                 <p class="proactive-toast-msg" id="proactive-toast-msg">ทำงานต่อเนื่องมาสักพักแล้ว อย่าลืมพักสายตาและดื่มน้ำหน่อยนะคะ</p>
@@ -78,10 +78,10 @@
                     </div>
                 </div>
                 <h1 class="auth-brand-title">Kira AI <span class="brand-version-badge">2.1</span></h1>
-                <p class="auth-brand-subtitle">Autonomous Multi-Brain Intelligence & Supercluster</p>
+                <p class="auth-brand-subtitle">High-Speed Multi-Brain Cloud Engine</p>
                 <div class="auth-live-badge">
                     <span class="live-dot-pulse"></span>
-                    <span>Cloud Swarm 2.1 Active • ใช้งานฟรี 150 ข้อความ/วัน</span>
+                    <span>Cloud Engine 2.1 Active • ใช้งานฟรี 150 ข้อความ/วัน</span>
                 </div>
             </div>
 
@@ -273,7 +273,7 @@
                     <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover; box-shadow: 0 0 10px rgba(56,189,248,0.3);"> 
                     Kira AI
                 </h2>
-                <button id="close-sidebar" class="mobile-only"><i class="fa-solid fa-xmark"></i></button>
+                <button id="close-sidebar" class="mobile-only close-btn" title="ปิดแถบด้านข้าง"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
             <button class="new-chat-btn">
@@ -287,35 +287,39 @@
             
             <div class="sidebar-menu" style="padding: 10px 15px; border-top: 1px solid rgba(255,255,255,0.05);">
                 <div class="persona-selector">
-                    <label for="persona-select" style="font-size: 0.85rem; color: #94a3b8;"><i class="fa-solid fa-user-astronaut"></i> นิสัยของ Kira:</label>
+                    <label for="persona-select" style="font-size: 0.85rem; color: #94a3b8;"><i class="fa-solid fa-sliders"></i> สไตล์การตอบ:</label>
                     <select id="persona-select" class="model-select" style="width: 100%; margin-top: 5px; background: rgba(0,0,0,0.2);">
-                        <option value="default">ปกติ (สุภาพ/เป็นทางการ)</option>
-                        <option value="friend">เพื่อนสนิท (เป็นกันเอง)</option>
-                        <option value="manager">ผู้จัดการ (ดุดัน/เน้นผลงาน)</option>
+                        <option value="default">ทางการ สุภาพ</option>
+                        <option value="friend">เป็นกันเอง สบายๆ</option>
+                        <option value="manager">มุ่งเน้นผลลัพธ์ ตรงประเด็น</option>
                     </select>
                 </div>
             </div>
 
             <div class="sidebar-footer">
-                <div class="user-profile-wrapper" style="display: flex; flex-direction: column; gap: 4px; overflow: hidden; flex: 1;">
+                <div class="user-profile-wrapper">
                     <div class="user-profile">
                         <img id="profile-pic" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
-                        <span id="profile-name">User</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
-                        <div id="user-quota-badge" style="font-size: 0.72rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); padding: 2px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; width: fit-content;">
-                            <i class="fa-solid fa-bolt-lightning"></i> <span id="quota-text">โควตาวันนี้: กำลังโหลด...</span>
-                        </div>
-                        <div id="user-plan-badge" class="user-plan-badge" style="font-size: 0.72rem; color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; width: fit-content; cursor: pointer;" title="คลิกเพื่อดูรายละเอียดแพ็กเกจสมาชิก">
-                            <i class="fa-solid fa-crown"></i> <span id="plan-badge-text">Free</span>
+                        <div class="user-profile-meta">
+                            <span id="profile-name">User</span>
+                            <div class="user-profile-badges">
+                                <span id="user-plan-badge" class="user-plan-badge" title="คลิกเพื่อดูรายละเอียดแพ็กเกจสมาชิก">
+                                    <i class="fa-solid fa-crown"></i> <span id="plan-badge-text">Free</span>
+                                </span>
+                                <span id="user-quota-badge" class="user-quota-badge">
+                                    <i class="fa-solid fa-bolt-lightning"></i> <span id="quota-text">15/15</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <button class="settings-btn" id="btn-sidebar-guide" title="คู่มือการใช้งาน (Kira Guide)" style="margin-right: 4px; color: #38bdf8;"><i class="fa-solid fa-book-open"></i></button>
-                <button class="settings-btn" id="btn-sidebar-settings" title="ตั้งค่าระบบ (Settings) - Ctrl+," style="margin-right: 4px; color: #c084fc;"><i class="fa-solid fa-gear"></i></button>
-                <button class="settings-btn" id="btn-admin-orders" title="ตรวจสลิปและอนุมัติสมาชิก (Pending Orders)" style="display: none; color: #10b981; position: relative; margin-right: 4px;"><i class="fa-solid fa-receipt"></i><span id="admin-orders-badge" class="admin-orders-badge" style="display: none;">0</span></button>
-                <a href="/admin_boss" target="_blank" class="settings-btn" id="btn-admin-dashboard" title="แดชบอร์ดผู้สร้าง (God Mode)" style="display: none; color: #f59e0b; text-decoration: none; align-items: center; justify-content: center; margin-right: 6px;"><i class="fa-solid fa-shield-halved"></i></a>
-                <button class="settings-btn" id="btn-logout" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <div class="sidebar-actions-compact">
+                    <button class="settings-btn" id="btn-sidebar-guide" title="คู่มือการใช้งาน (Kira Guide)"><i class="fa-solid fa-book-open"></i></button>
+                    <button class="settings-btn" id="btn-sidebar-settings" title="ตั้งค่าระบบ (Settings)"><i class="fa-solid fa-gear"></i></button>
+                    <button class="settings-btn" id="btn-admin-orders" title="ตรวจสลิป (Pending Orders)" style="display: none;"><i class="fa-solid fa-receipt"></i><span id="admin-orders-badge" class="admin-orders-badge" style="display: none;">0</span></button>
+                    <a href="/admin_boss" target="_blank" class="settings-btn" id="btn-admin-dashboard" title="แดชบอร์ดผู้ดูแลระบบ" style="display: none;"><i class="fa-solid fa-shield-halved"></i></a>
+                    <button class="settings-btn" id="btn-logout" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
             </div>
         </aside>
 
@@ -326,100 +330,101 @@
                     <button id="toggle-sidebar" class="menu-btn" title="เปิด/ปิดแถบเมนูด้านข้าง"><i class="fa-solid fa-bars"></i></button>
                     <div class="header-branding">
                         <span class="brand-title">Kira AI</span>
-                        <div id="kira-unified-status" class="unified-status-pill" title="ระบบพร้อมใช้งาน 100% | Proactive Heartbeat ตื่นรู้ & Cloud Supercluster Multi-Brain">
+                        <div id="kira-unified-status" class="unified-status-pill" title="ระบบพร้อมใช้งาน 100% | Cloud Multi-Brain Engine พร้อมทำงาน">
                             <span class="status-live-dot"></span>
-                            <span class="status-live-label" id="unified-status-text">Cloud Swarm 2.1</span>
+                            <span class="status-live-label" id="unified-status-text">Cloud Engine 2.1</span>
                             <!-- Hidden legacy hooks for JS compatibility -->
                             <span id="heartbeat-badge" style="display:none;"><span class="heartbeat-pulse-dot"></span></span>
                             <span id="engine-status-badge" style="display:none;"><span class="pulse-dot cloud"></span></span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="header-actions zen-actions">
-                    <!-- 👑 Kira Pro Subscription Button -->
+                    <!-- 👑 Kira Pro Subscription Button (Compact) -->
                     <button title="อัปเกรดเป็น Kira Pro / Founder Pass" id="btn-upgrade-pro" class="header-action-btn upgrade-pro-btn">
                         <i class="fa-solid fa-crown text-amber"></i>
-                        <span class="upgrade-btn-text">อัปเกรด Pro</span>
+                        <span class="upgrade-btn-text">Pro</span>
                         <span class="pro-sparkle-dot"></span>
                     </button>
 
-                    <!-- Virtual Boardroom Quick Toggle -->
-                    <button title="เปิดสภาที่ปรึกษาเสมือน AI 4 ผู้บริหาร (Virtual Boardroom)" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn">
+                    <!-- Virtual Boardroom Quick Toggle (Compact) -->
+                    <button title="เปิดสภาที่ปรึกษาเสมือน Kira 2.1 Boardroom" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn">
                         <i class="fa-solid fa-users-viewfinder"></i>
-                        <span class="boardroom-btn-text">ห้องประชุม</span>
+                        <span class="boardroom-btn-text">สภา</span>
                     </button>
 
-                    <!-- 📋 Kira Omni-Task & Matrix Button -->
-                    <button title="เปิดกระดานภารกิจและเมทริกซ์ 4 มิติ (Task Matrix & Auto-Exec)" id="btn-task-matrix-toggle" class="header-action-btn task-matrix-btn">
+                    <!-- 📋 Kira Omni-Task & Matrix Button (Compact) -->
+                    <button title="เปิดกระดานจัดการภารกิจและร่างชิ้นงาน" id="btn-task-matrix-toggle" class="header-action-btn task-matrix-btn">
                         <i class="fa-solid fa-list-check"></i>
-                        <span class="task-matrix-btn-text">กระดานงาน</span>
+                        <span class="task-matrix-btn-text">งาน</span>
                         <span id="task-matrix-badge" class="task-matrix-badge" style="display: none;">0</span>
                     </button>
 
                     <!-- Model Select -->
                     <div class="model-select-wrapper">
                         <select id="model-select" class="model-select">
-                            <optgroup label="👑 Kira 2.1 Next-Gen Engines">
-                                <option value="2.1-reasoning" selected>👑 Kira 2.1 Reasoning (Deep Thinker)</option>
-                                <option value="2.1-pro">🧠 Kira 2.1 Pro (Super-Agent & Code)</option>
-                                <option value="2.0-flash">⚡ Kira 2.1 Flash Turbo (Instant Speed)</option>
+                            <optgroup label="Kira 2.1 Brain Engines">
+                                <option value="2.1-reasoning" selected>Kira 2.1 Reasoning</option>
+                                <option value="2.1-pro">Kira 2.1 Pro</option>
+                                <option value="2.0-flash">Kira 2.1 Flash</option>
                             </optgroup>
-                            <optgroup label="🏛️ สภาที่ปรึกษาเสมือน (Virtual Boardroom)">
-                                <option value="boardroom">🏛️ Virtual Boardroom (ห้องประชุม 4 ผู้บริหาร)</option>
+                            <optgroup label="Executive Simulation">
+                                <option value="boardroom">Kira 2.1 Boardroom</option>
                             </optgroup>
                         </select>
                     </div>
 
-                    <!-- 🧰 All Secondary Tools Unified in One Beautiful Dropdown -->
+                    <!-- All Secondary Tools Unified in One Beautiful Dropdown -->
                     <div class="tools-dropdown-wrapper" id="tools-dropdown-wrapper">
-                        <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" title="เครื่องมือเพิ่มเติม (Tools)">
+                        <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" title="เครื่องมือเพิ่มเติม">
                             <i class="fa-solid fa-toolbox"></i>
                             <span class="tools-btn-text">เครื่องมือ</span>
                             <i class="fa-solid fa-chevron-down tools-caret"></i>
                         </button>
                         <div class="tools-dropdown-menu" id="tools-dropdown-menu">
                             <div class="tools-dropdown-header">
-                                <i class="fa-solid fa-sliders"></i> เครื่องมือและฟังก์ชันเสริม
+                                <i class="fa-solid fa-sliders"></i> เครื่องมือเสริม
                             </div>
                             
-                            <button class="tools-menu-item" id="btn-graph" title="ส่องโครงข่ายความจำ (Knowledge Graph Mind-Map)">
+                            <button class="tools-menu-item" id="btn-graph" title="ผังความจำ">
                                 <span class="tool-item-icon icon-purple"><i class="fa-solid fa-diagram-project"></i></span>
                                 <div class="tool-item-info">
-                                    <span class="tool-item-title">โครงข่ายความจำ (GraphRAG)</span>
-                                    <span class="tool-item-desc">ส่องแผนผังความจำ 2D Physics ของคุณ</span>
+                                    <span class="tool-item-title">ผังความจำ</span>
+                                    <span class="tool-item-desc">ส่องแผนผังความจำส่วนบุคคล</span>
                                 </div>
                             </button>
 
-                            <button class="tools-menu-item" id="btn-autospeak" title="เปิด/ปิดการอ่านออกเสียงอัตโนมัติ (Auto-Speak)">
+                            <button class="tools-menu-item" id="btn-autospeak" title="อ่านออกเสียงอัตโนมัติ">
                                 <span class="tool-item-icon icon-green"><i class="fa-solid fa-volume-high" id="autospeak-icon"></i></span>
                                 <div class="tool-item-info">
-                                    <span class="tool-item-title">อ่านออกเสียงอัตโนมัติ (TTS)</span>
+                                    <span class="tool-item-title">อ่านออกเสียงอัตโนมัติ</span>
                                     <span class="tool-item-desc" id="autospeak-status-text">สถานะ: ปิดอยู่</span>
                                 </div>
                             </button>
 
-                            <button class="tools-menu-item" id="btn-export" title="บันทึกออกการสนทนา (Export)">
+                            <button class="tools-menu-item" id="btn-export" title="ส่งออกบทสนทนา">
                                 <span class="tool-item-icon icon-blue"><i class="fa-solid fa-file-export"></i></span>
                                 <div class="tool-item-info">
-                                    <span class="tool-item-title">ส่งออกแชท (Export Chat)</span>
+                                    <span class="tool-item-title">ส่งออกบทสนทนา</span>
                                     <span class="tool-item-desc">บันทึกเป็น PDF หรือพิมพ์รายงาน</span>
                                 </div>
                             </button>
 
-                            <button class="tools-menu-item" id="btn-open-guide" title="คู่มือแนะนำการใช้งาน (Kira Interactive Guide)">
+                            <button class="tools-menu-item" id="btn-open-guide" title="คู่มือการใช้งาน">
                                 <span class="tool-item-icon icon-amber"><i class="fa-solid fa-book-open"></i></span>
                                 <div class="tool-item-info">
-                                    <span class="tool-item-title">คู่มือแนะนำการใช้งาน</span>
-                                    <span class="tool-item-desc">ทัวร์ระบบและฟีเจอร์เด่น 4 ขั้นตอน</span>
+                                    <span class="tool-item-title">คู่มือการใช้งาน</span>
+                                    <span class="tool-item-desc">ทัวร์ระบบและฟีเจอร์เด่น</span>
                                 </div>
                             </button>
 
                             <div class="tools-dropdown-divider"></div>
 
-                            <button class="tools-menu-item" id="btn-info" title="เกี่ยวกับระบบ Kira">
+                            <button class="tools-menu-item" id="btn-info" title="เกี่ยวกับ Kira 2.1">
                                 <span class="tool-item-icon icon-slate"><i class="fa-solid fa-circle-info"></i></span>
                                 <div class="tool-item-info">
-                                    <span class="tool-item-title">เกี่ยวกับระบบ (About Kira)</span>
+                                    <span class="tool-item-title">เกี่ยวกับ Kira 2.1</span>
                                     <span class="tool-item-desc">ข้อมูลสถาปัตยกรรมและเวอร์ชัน</span>
                                 </div>
                             </button>
@@ -509,26 +514,26 @@
             <div class="quick-prompts-wrapper" id="quick-prompts-wrapper">
                 <div class="quick-prompts-container" id="quick-prompts">
                     <!-- Set 1 -->
-                    <button class="quick-prompt-btn" data-prompt="📝 สรุปข้อความนี้ให้หน่อย: "><i class="fa-solid fa-file-lines"></i> สรุปข้อความ</button>
-                    <button class="quick-prompt-btn" data-prompt="🌐 แปลภาษาอังกฤษให้หน่อย: "><i class="fa-solid fa-language"></i> แปลภาษา</button>
-                    <button class="quick-prompt-btn" data-prompt="📧 ช่วยเขียนอีเมลลางานให้หน่อย"><i class="fa-solid fa-envelope"></i> เขียนอีเมลลางาน</button>
-                    <button class="quick-prompt-btn" data-prompt="💻 ช่วยเขียนโค้ด Python เกมงูสั้นๆ ให้หน่อย"><i class="fa-brands fa-python"></i> โค้ด Python</button>
-                    <button class="quick-prompt-btn" data-prompt="/image วาดรูปแมวอวกาศขี่จรวด"><i class="fa-solid fa-image"></i> วาดรูปแมวอวกาศ</button>
-                    <button class="quick-prompt-btn" data-prompt="📊 ช่วยวางแผนการเงินรายเดือน"><i class="fa-solid fa-chart-pie"></i> วางแผนการเงิน</button>
-                    <button class="quick-prompt-btn" data-prompt="💡 ขอไอเดียคอนเทนต์ลง TikTok"><i class="fa-brands fa-tiktok"></i> ไอเดีย TikTok</button>
-                    <button class="quick-prompt-btn" data-prompt="🍳 แนะนำเมนูอาหารเย็นจากของในตู้เย็น"><i class="fa-solid fa-utensils"></i> เมนูอาหารเย็น</button>
-                    <button class="quick-prompt-btn" data-prompt="✈️ วางแผนเที่ยวญี่ปุ่น 5 วัน"><i class="fa-solid fa-plane"></i> แผนเที่ยวญี่ปุ่น</button>
+                    <button class="quick-prompt-btn" data-prompt="สรุปข้อความนี้ให้หน่อย: "><i class="fa-solid fa-file-lines"></i> สรุปข้อความ</button>
+                    <button class="quick-prompt-btn" data-prompt="แปลข้อความนี้เป็นภาษาอังกฤษ: "><i class="fa-solid fa-language"></i> แปลภาษา</button>
+                    <button class="quick-prompt-btn" data-prompt="ช่วยเขียนอีเมลติดต่อประสานงานอย่างเป็นทางการ"><i class="fa-solid fa-envelope"></i> เขียนอีเมลทางการ</button>
+                    <button class="quick-prompt-btn" data-prompt="ช่วยเขียนโค้ด Python เกมงูสั้นๆ ให้หน่อย"><i class="fa-brands fa-python"></i> โค้ด Python</button>
+                    <button class="quick-prompt-btn" data-prompt="/image วาดรูปแมวอวกาศขี่จรวด"><i class="fa-solid fa-image"></i> วาดรูปภาพ AI</button>
+                    <button class="quick-prompt-btn" data-prompt="ช่วยวางแผนการเงินและงบประมาณรายเดือน"><i class="fa-solid fa-chart-pie"></i> วางแผนการเงิน</button>
+                    <button class="quick-prompt-btn" data-prompt="ขอไอเดียสร้างสรรค์เนื้อหาสำหรับคอนเทนต์"><i class="fa-solid fa-lightbulb"></i> ไอเดียคอนเทนต์</button>
+                    <button class="quick-prompt-btn" data-prompt="แนะนำเมนูอาหารเย็นสุขภาพจากของในตู้เย็น"><i class="fa-solid fa-utensils"></i> เมนูอาหารเย็น</button>
+                    <button class="quick-prompt-btn" data-prompt="ช่วยวางแผนกำหนดการท่องเที่ยว 5 วัน"><i class="fa-solid fa-plane"></i> แผนท่องเที่ยว</button>
                     
                     <!-- Set 2 (Duplicated for seamless infinite loop) -->
-                    <button class="quick-prompt-btn" data-prompt="📝 สรุปข้อความนี้ให้หน่อย: "><i class="fa-solid fa-file-lines"></i> สรุปข้อความ</button>
-                    <button class="quick-prompt-btn" data-prompt="🌐 แปลภาษาอังกฤษให้หน่อย: "><i class="fa-solid fa-language"></i> แปลภาษา</button>
-                    <button class="quick-prompt-btn" data-prompt="📧 ช่วยเขียนอีเมลลางานให้หน่อย"><i class="fa-solid fa-envelope"></i> เขียนอีเมลลางาน</button>
-                    <button class="quick-prompt-btn" data-prompt="💻 ช่วยเขียนโค้ด Python เกมงูสั้นๆ ให้หน่อย"><i class="fa-brands fa-python"></i> โค้ด Python</button>
-                    <button class="quick-prompt-btn" data-prompt="/image วาดรูปแมวอวกาศขี่จรวด"><i class="fa-solid fa-image"></i> วาดรูปแมวอวกาศ</button>
-                    <button class="quick-prompt-btn" data-prompt="📊 ช่วยวางแผนการเงินรายเดือน"><i class="fa-solid fa-chart-pie"></i> วางแผนการเงิน</button>
-                    <button class="quick-prompt-btn" data-prompt="💡 ขอไอเดียคอนเทนต์ลง TikTok"><i class="fa-brands fa-tiktok"></i> ไอเดีย TikTok</button>
-                    <button class="quick-prompt-btn" data-prompt="🍳 แนะนำเมนูอาหารเย็นจากของในตู้เย็น"><i class="fa-solid fa-utensils"></i> เมนูอาหารเย็น</button>
-                    <button class="quick-prompt-btn" data-prompt="✈️ วางแผนเที่ยวญี่ปุ่น 5 วัน"><i class="fa-solid fa-plane"></i> แผนเที่ยวญี่ปุ่น</button>
+                    <button class="quick-prompt-btn" data-prompt="สรุปข้อความนี้ให้หน่อย: "><i class="fa-solid fa-file-lines"></i> สรุปข้อความ</button>
+                    <button class="quick-prompt-btn" data-prompt="แปลข้อความนี้เป็นภาษาอังกฤษ: "><i class="fa-solid fa-language"></i> แปลภาษา</button>
+                    <button class="quick-prompt-btn" data-prompt="ช่วยเขียนอีเมลติดต่อประสานงานอย่างเป็นทางการ"><i class="fa-solid fa-envelope"></i> เขียนอีเมลทางการ</button>
+                    <button class="quick-prompt-btn" data-prompt="ช่วยเขียนโค้ด Python เกมงูสั้นๆ ให้หน่อย"><i class="fa-brands fa-python"></i> โค้ด Python</button>
+                    <button class="quick-prompt-btn" data-prompt="/image วาดรูปแมวอวกาศขี่จรวด"><i class="fa-solid fa-image"></i> วาดรูปภาพ AI</button>
+                    <button class="quick-prompt-btn" data-prompt="ช่วยวางแผนการเงินและงบประมาณรายเดือน"><i class="fa-solid fa-chart-pie"></i> วางแผนการเงิน</button>
+                    <button class="quick-prompt-btn" data-prompt="ขอไอเดียสร้างสรรค์เนื้อหาสำหรับคอนเทนต์"><i class="fa-solid fa-lightbulb"></i> ไอเดียคอนเทนต์</button>
+                    <button class="quick-prompt-btn" data-prompt="แนะนำเมนูอาหารเย็นสุขภาพจากของในตู้เย็น"><i class="fa-solid fa-utensils"></i> เมนูอาหารเย็น</button>
+                    <button class="quick-prompt-btn" data-prompt="ช่วยวางแผนกำหนดการท่องเที่ยว 5 วัน"><i class="fa-solid fa-plane"></i> แผนท่องเที่ยว</button>
                 </div>
             </div>
 
@@ -539,14 +544,14 @@
                 </div>
                 <div class="input-wrapper" style="position: relative;">
                     <div id="attachment-menu" class="attachment-popup" style="display: none;">
-                        <button id="menu-img-btn" class="popup-item"><i class="fa-regular fa-image"></i> รูปภาพ (Image)</button>
-                        <button id="menu-doc-btn" class="popup-item"><i class="fa-regular fa-file-pdf"></i> เอกสาร (Document)</button>
+                        <button id="menu-img-btn" class="popup-item"><i class="fa-regular fa-image"></i> รูปภาพ</button>
+                        <button id="menu-doc-btn" class="popup-item"><i class="fa-regular fa-file-pdf"></i> ไฟล์เอกสาร</button>
                     </div>
-                    <button class="attach-btn" id="mic-btn" title="พูดด้วยเสียง (Web Speech API)"><i class="fa-solid fa-microphone"></i></button>
-                    <button class="attach-btn" id="attach-toggle-btn" title="แนบไฟล์ (Kira 1.1 Pro)"><i class="fa-solid fa-paperclip"></i></button>
+                    <button class="attach-btn" id="mic-btn" title="พิมพ์ด้วยเสียง"><i class="fa-solid fa-microphone"></i></button>
+                    <button class="attach-btn" id="attach-toggle-btn" title="แนบไฟล์หรือรูปภาพ"><i class="fa-solid fa-paperclip"></i></button>
                     <input type="file" id="img-input" accept="image/*" style="display: none;">
                     <input type="file" id="doc-input" accept=".pdf,.docx,.txt,.csv" style="display: none;">
-                    <textarea id="user-input" placeholder="พิมพ์ข้อความหา Kira..." rows="1"></textarea>
+                    <textarea id="user-input" placeholder="พิมพ์ข้อความหรือคำถามถึง Kira 2.1..." rows="1"></textarea>
                     <button class="send-btn" id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
                 <p class="disclaimer">Kira อาจให้ข้อมูลที่ไม่ถูกต้องได้ กรุณาตรวจสอบก่อนนำไปใช้งาน</p>
@@ -590,14 +595,14 @@
     <div id="graph-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content graph-modal-content">
             <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h3><i class="fa-solid fa-diagram-project"></i> โครงข่ายความจำอัจฉริยะ (Kira 2.1 GraphRAG)</h3>
+                <h3><i class="fa-solid fa-diagram-project"></i> โครงข่ายความจำอัจฉริยะ (Knowledge Graph Memory)</h3>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <button id="btn-add-memory" class="action-btn" style="background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; color: #93c5fd; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer;" title="เพิ่มความจำหรือความสัมพันธ์ใหม่"><i class="fa-solid fa-plus"></i> เพิ่มความจำ</button>
                     <button id="close-graph-modal" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
             <div class="modal-body graph-modal-body">
-                <p class="graph-hint">💡 คลิกโหนดเพื่อดูรายละเอียด แก้ไข หรือลบความจำ และลากเพื่อปรับโครงข่ายสมองของคิระ</p>
+                <p class="graph-hint">คลิกโหนดเพื่อดูรายละเอียด แก้ไข หรือลบความจำ และลากเพื่อปรับโครงข่ายสมองของคิระ</p>
                 <div id="graph-canvas-container" class="graph-canvas-container">
                     <canvas id="graph-canvas"></canvas>
                 </div>
@@ -609,7 +614,7 @@
                         </div>
                         <div id="detail-node-actions" style="display: flex; gap: 8px;">
                             <button id="btn-delete-node" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;"><i class="fa-solid fa-trash-can"></i> ลบความจำนี้</button>
-                            <button id="btn-close-detail" style="background: transparent; border: 1px solid #475569; color: #94a3b8; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                            <button id="btn-close-detail" class="close-btn" title="ปิด"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                     </div>
                 </div>
@@ -624,21 +629,21 @@
                 <h3 style="margin: 0; display: flex; align-items: center; gap: 8px; color: #38bdf8;">
                     <i class="fa-solid fa-circle-info"></i> เกี่ยวกับ Kira AI System 2.1
                 </h3>
-                <button id="close-info-modal" style="background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <button id="close-info-modal" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
                 <div>
-                    <strong style="color: #f8fafc;">✨ นวัตกรรมระบบ:</strong>
-                    <p style="margin: 4px 0 0 0; color: #94a3b8;">Kira AI สถาปัตยกรรมอัจฉริยะแบบ Hybrid Cognitive Engine ผสานโมเดลระดับท็อป (Qwen 72B, DeepSeek-R1, Llama 70B, Mixtral) พร้อมระบบความจำระยะยาว GraphRAG และ Live Canvas</p>
+                    <strong style="color: #f8fafc;">สถาปัตยกรรมระบบ:</strong>
+                    <p style="margin: 4px 0 0 0; color: #94a3b8;">Kira AI สถาปัตยกรรมอัจฉริยะแบบ Hybrid Cognitive Engine ผสานโมเดลระดับท็อป (Qwen 72B, DeepSeek-R1, Llama 70B, Gemini) พร้อมระบบความจำระยะยาว Knowledge Graph Memory และ Live Canvas</p>
                 </div>
                 <div style="background: rgba(255,255,255,0.03); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                    <strong style="color: #38bdf8;"><i class="fa-solid fa-star"></i> ไฮไลต์ฟีเจอร์เด่น:</strong>
+                    <strong style="color: #38bdf8;"><i class="fa-solid fa-layer-group"></i> ไฮไลต์ฟีเจอร์เด่น:</strong>
                     <ul style="margin: 6px 0 0 16px; padding: 0; color: #94a3b8; font-size: 0.85rem;">
-                        <li>👑 <strong>Kira 2.1 Reasoning:</strong> คิดวิเคราะห์ตรรกะและแผนงานเชิงลึก</li>
-                        <li>📊 <strong>Mermaid Flowchart:</strong> วาดผังงานและไดอะแกรมอัตโนมัติ</li>
-                        <li>🎨 <strong>Live Code Canvas:</strong> พรีวิวหน้าเว็บ HTML/JS สดแบบ interactive</li>
-                        <li>🕸️ <strong>Knowledge Mind-Map:</strong> ส่องและแก้ไขโครงข่ายความจำของสมอง AI</li>
-                        <li>🎙️ <strong>Neural Voice:</strong> สั่งงานด้วยเสียงและฟังเสียงอ่านภาษาไทยที่เป็นธรรมชาติ</li>
+                        <li><strong>Kira 2.1 Reasoning:</strong> คิดวิเคราะห์ตรรกะและแผนงานเชิงลึก</li>
+                        <li><strong>Interactive Diagram:</strong> ผังงานและไดอะแกรมสถาปัตยกรรมอัตโนมัติ</li>
+                        <li><strong>Live Code Canvas:</strong> พรีวิวหน้าเว็บและโค้ดแบบ Interactive</li>
+                        <li><strong>Knowledge Graph:</strong> ผังโครงข่ายความจำระยะยาว</li>
+                        <li><strong>Natural Voice:</strong> สั่งงานและฟังเสียงอ่านภาษาไทยสมจริง (Edge-TTS)</li>
                     </ul>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
@@ -854,12 +859,10 @@
                                     <p class="setting-desc">เลือกโมเดลที่ต้องการให้ระบบเรียกใช้เป็นค่าเริ่มต้น</p>
                                 </div>
                                 <select id="setting-default-model" class="settings-select">
-                                    <option value="2.1-reasoning">👑 Kira 2.1 Reasoning (Deep Thinker)</option>
-                                    <option value="2.1-pro">🧠 Kira 2.1 Pro (Super-Agent)</option>
-                                    <option value="2.0-flash">⚡ Kira 2.0 Flash</option>
-                                    <option value="2.0-vision">📷 Kira 2.0 Vision</option>
-                                    <option value="1.0">⚡ Kira 1.0 Standard</option>
-                                    <option value="1.1">💻 Kira 1.1 Pioneer</option>
+                                    <option value="2.1-reasoning">Kira 2.1 Reasoning</option>
+                                    <option value="2.1-pro">Kira 2.1 Pro</option>
+                                    <option value="2.0-flash">Kira 2.1 Flash</option>
+                                    <option value="2.0-vision">Kira 2.0 Vision</option>
                                 </select>
                             </div>
                         </div>
@@ -871,11 +874,11 @@
                                     <p class="setting-desc">ปรับรูปแบบการตอบสนองและอารมณ์ของ AI</p>
                                 </div>
                                 <select id="setting-persona" class="settings-select">
-                                    <option value="default">ปกติ (สุภาพ/ทางการ/อ่อนโยน)</option>
-                                    <option value="friend">เพื่อนสนิท (เป็นกันเอง/ใช้คำสบายๆ)</option>
-                                    <option value="manager">ผู้จัดการ (ดุดัน/เน้นผลงานและ Action)</option>
-                                    <option value="coder">Senior Tech Lead (เน้นโค้ด Clean/ตรรกะคม)</option>
-                                    <option value="researcher">นักวิจัยวิชาการ (อ้างอิงข้อมูล/เจาะลึก)</option>
+                                    <option value="default">ทางการ สุภาพ</option>
+                                    <option value="friend">เป็นกันเอง สบายๆ</option>
+                                    <option value="manager">มุ่งเน้นผลลัพธ์ ตรงประเด็น</option>
+                                    <option value="coder">วิศวกรซอฟต์แวร์ เน้นโค้ดและตรรกะ</option>
+                                    <option value="researcher">นักวิจัยวิชาการ เจาะลึกและอ้างอิง</option>
                                 </select>
                             </div>
                         </div>
@@ -909,13 +912,13 @@
 
                     <!-- TAB 4: Voice & Audio -->
                     <div class="settings-panel" id="settings-panel-voice">
-                        <h3 class="panel-section-title"><i class="fa-solid fa-microphone-lines text-cyan"></i> เสียงพากย์และการอ่านออกเสียง (Neural Voice Suite)</h3>
+                        <h3 class="panel-section-title"><i class="fa-solid fa-microphone-lines text-cyan"></i> เสียงพากย์และการอ่านออกเสียง (Natural Voice Suite)</h3>
 
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
                                     <strong class="setting-title">อ่านออกเสียงคำตอบอัตโนมัติ (Auto-Speak)</strong>
-                                    <p class="setting-desc">เล่นเสียงพากย์ Neural ทันทีที่ AI ตอบเสร็จสมบูรณ์</p>
+                                    <p class="setting-desc">เล่นเสียงพากย์อัตโนมัติทันทีที่ AI ตอบเสร็จสมบูรณ์</p>
                                 </div>
                                 <label class="kira-switch">
                                     <input type="checkbox" id="setting-auto-speak">
@@ -925,13 +928,13 @@
                         </div>
 
                         <div class="settings-group">
-                            <label class="settings-label">เลือกน้ำเสียง AI (Neural Voice Model)</label>
+                            <label class="settings-label">เลือกน้ำเสียง AI (Natural Voice Engine)</label>
                             <div class="voice-selector-row">
                                 <select id="setting-voice-name" class="settings-select" style="flex: 1;">
-                                    <option value="th-TH-PremwadeeNeural" selected>🌸 เปรมวดี (Premwadee) - หญิงไทย นุ่มนวล อบอุ่น</option>
-                                    <option value="th-TH-NiwatNeural">👔 นิวัต (Niwat) - ชายไทย สุภาพ น่าเชื่อถือ</option>
-                                    <option value="en-US-JennyNeural">✨ Jenny - หญิงอเมริกัน คล่องแคล่ว ทันสมัย</option>
-                                    <option value="en-US-GuyNeural">💼 Guy - ชายอเมริกัน มืออาชีพ อารมณ์ดี</option>
+                                    <option value="th-TH-PremwadeeNeural" selected>เปรมวดี (Premwadee) - หญิงไทย น้ำเสียงนุ่มนวล</option>
+                                    <option value="th-TH-NiwatNeural">นิวัต (Niwat) - ชายไทย สุภาพ น่าเชื่อถือ</option>
+                                    <option value="en-US-JennyNeural">Jenny - หญิงอเมริกัน คล่องแคล่ว ทันสมัย</option>
+                                    <option value="en-US-GuyNeural">Guy - ชายอเมริกัน สุภาพ มืออาชีพ</option>
                                 </select>
                                 <button type="button" class="btn-action-sm secondary" id="btn-preview-voice" title="ทดสอบฟังเสียง">
                                     <i class="fa-solid fa-play"></i> ทดลองฟัง
@@ -970,7 +973,7 @@
 
                     <!-- TAB 5: Data & Memory -->
                     <div class="settings-panel" id="settings-panel-data">
-                        <h3 class="panel-section-title"><i class="fa-solid fa-database text-purple"></i> ความจำระยะยาว & ข้อมูลการสนทนา (GraphRAG & Logs)</h3>
+                        <h3 class="panel-section-title"><i class="fa-solid fa-database text-purple"></i> ความจำระยะยาว & โครงข่ายความสัมพันธ์ (Knowledge Graph & Logs)</h3>
 
                         <div class="settings-group">
                             <div class="settings-row">
@@ -1025,7 +1028,7 @@
                             </div>
                             <div class="danger-row">
                                 <div>
-                                    <strong>ล้างความจำและโหนดสมองทั้งหมด (Wipe GraphRAG Memories)</strong>
+                                    <strong>ล้างความจำและโหนดสมองทั้งหมด (Wipe Knowledge Graph Memories)</strong>
                                     <p>รีเซ็ตโครงข่ายความจำส่วนบุคคลทั้งหมด คิระจะเริ่มต้นเรียนรู้ใหม่เหมือนวันแรก</p>
                                 </div>
                                 <button type="button" class="btn-danger-sm" id="btn-wipe-all-memories">
@@ -1068,7 +1071,7 @@
                             <div class="settings-row">
                                 <div>
                                     <strong class="setting-title">วัดความเร็วการเชื่อมต่อเซิร์ฟเวอร์ (Latency Ping)</strong>
-                                    <p class="setting-desc">ตรวจวัดระยะเวลา Ping ไปยัง Cloud Neural Supercluster</p>
+                                    <p class="setting-desc">ตรวจวัดระยะเวลา Ping ไปยังเซิร์ฟเวอร์คลาวด์ (Server Latency Ping)</p>
                                 </div>
                                 <div class="latency-test-wrapper">
                                     <span id="latency-ping-result" class="latency-tag">ยังไม่ได้ทดสอบ</span>
@@ -1086,15 +1089,15 @@
                             </div>
                             <div class="spec-item">
                                 <span class="spec-label">โครงข่ายคลาวด์:</span>
-                                <span class="spec-val text-emerald">Cloud Swarm v2.1 Active</span>
+                                <span class="spec-val text-emerald">Cloud Engine v2.1 Active</span>
                             </div>
                             <div class="spec-item">
                                 <span class="spec-label">เอ็นจิ้นเหตุผล:</span>
-                                <span class="spec-val">Adaptive MoA + Chain-of-Thought</span>
+                                <span class="spec-val">Multi-Model Consensus & Peer Review</span>
                             </div>
                             <div class="spec-item">
                                 <span class="spec-label">ฐานข้อมูลความจำ:</span>
-                                <span class="spec-val">SQLite 3 + ChromaDB Vector Graph</span>
+                                <span class="spec-val">SQLite 3 + Knowledge Graph Memory</span>
                             </div>
                         </div>
                     </div>
@@ -1147,21 +1150,21 @@
                             <div class="chip-icon"><i class="fa-solid fa-bolt text-cyan"></i></div>
                             <div class="chip-info">
                                 <strong>ตอบไวเสี้ยววินาที</strong>
-                                <span>สตรีมมิ่งสดผ่าน Cloud Supercluster ประมวลผลตรรกะเร็วเหนือชั้น</span>
+                                <span>สตรีมมิ่งสดผ่าน Cloud Engine ประมวลผลตรรกะเร็วเหนือชั้น</span>
                             </div>
                         </div>
                         <div class="feature-chip">
                             <div class="chip-icon"><i class="fa-solid fa-brain text-pink"></i></div>
                             <div class="chip-info">
-                                <strong>จำคุณได้ตลอดไป (GraphRAG)</strong>
+                                <strong>จำคุณได้ตลอดไป (Knowledge Graph Memory)</strong>
                                 <span>จดจำความสนใจ สไตล์ และประวัติการสนทนาอย่างปลอดภัยเฉพาะตัว</span>
                             </div>
                         </div>
                         <div class="feature-chip">
                             <div class="chip-icon"><i class="fa-solid fa-shield-halved text-amber"></i></div>
                             <div class="chip-info">
-                                <strong>ปลอดภัยด้วย Kira Aegis</strong>
-                                <span>ระบบเกราะคุ้มกัน AI Firewall และแซนด์บ็อกซ์ประมวลผลที่มีเสถียรภาพ</span>
+                                <strong>ปลอดภัยด้วยระบบ Kira Security Guard</strong>
+                                <span>ระบบเกราะคุ้มกันความปลอดภัยและแซนด์บ็อกซ์ประมวลผลที่มีเสถียรภาพ</span>
                             </div>
                         </div>
                     </div>
@@ -1176,38 +1179,38 @@
                     <div class="model-cards-list">
                         <div class="model-guide-card">
                             <div class="model-badge-col">
-                                <span class="model-tag tag-standard" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;">👑 2.1 Reasoning</span>
+                                <span class="model-tag tag-standard" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;">Kira 2.1 Reasoning</span>
                             </div>
                             <div class="model-desc-col">
-                                <strong>คิดวิเคราะห์เชิงลึก (Deep Reasoning Engine)</strong>
-                                <p>เหมาะสำหรับ: โจทย์ตรรกะซับซ้อน, วิจัย, สรุปประเด็นยุทธศาสตร์, และการกลั่นกรองคำตอบอย่างรอบคอบ</p>
+                                <strong>คิดวิเคราะห์ตรรกะและแผนงานเชิงลึก</strong>
+                                <p>เหมาะสำหรับ: โจทย์ตรรกะซับซ้อน งานวิจัย สรุปประเด็นยุทธศาสตร์ และการกลั่นกรองคำตอบอย่างรอบคอบ</p>
                             </div>
                         </div>
                         <div class="model-guide-card">
                             <div class="model-badge-col">
-                                <span class="model-tag tag-nextgen" style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff;">⚡ 2.1 Flash</span>
+                                <span class="model-tag tag-nextgen" style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff;">Kira 2.1 Flash</span>
                             </div>
                             <div class="model-desc-col">
-                                <strong>ความเร็วแสงตอบไว (Instant Turbo Speed)</strong>
-                                <p>เหมาะสำหรับ: ถาม-ตอบทั่วไป, แปลภาษา, สรุปบทความสั้น และแชทคุยงานแบบเรียลไทม์</p>
+                                <strong>ประมวลผลความเร็วสูง</strong>
+                                <p>เหมาะสำหรับ: ถาม-ตอบทั่วไป แปลภาษา สรุปบทความสั้น และบทสนทนาที่ต้องการความรวดเร็ว</p>
                             </div>
                         </div>
                         <div class="model-guide-card">
                             <div class="model-badge-col">
-                                <span class="model-tag tag-enterprise" style="background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff;">🏛️ Boardroom</span>
+                                <span class="model-tag tag-enterprise" style="background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff;">Kira 2.1 Boardroom</span>
                             </div>
                             <div class="model-desc-col">
-                                <strong>สภา 4 ผู้บริหารเสมือน (Virtual Boardroom)</strong>
-                                <p>เหมาะสำหรับ: วางกลยุทธ์ธุรกิจ, ให้ CEO, CFO, CPO, CTO ดีเบตและหาข้อสรุปร่วมกันอย่างรอบด้าน</p>
+                                <strong>สภา 4 ผู้บริหารเสมือน</strong>
+                                <p>เหมาะสำหรับ: วางกลยุทธ์ธุรกิจ ให้ CEO, CFO, CPO, CTO ดีเบตและสังเคราะห์ข้อสรุปร่วมกันอย่างรอบด้าน</p>
                             </div>
                         </div>
                         <div class="model-guide-card">
                             <div class="model-badge-col">
-                                <span class="model-tag tag-research" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff;">📋 Omni-Task</span>
+                                <span class="model-tag tag-research" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff;">Task Management</span>
                             </div>
                             <div class="model-desc-col">
-                                <strong>บริหารภารกิจ & Auto-Draft Deliverables</strong>
-                                <p>เหมาะสำหรับ: จัดการงานด้วย Eisenhower Matrix 4 ช่อง และให้ AI ร่างชิ้นงานจริง 5,000+ ตัวอักษร</p>
+                                <strong>บริหารจัดการภารกิจและร่างชิ้นงาน</strong>
+                                <p>เหมาะสำหรับ: จัดการงานด้วย Eisenhower Matrix 4 ช่อง และให้ AI ร่างชิ้นงานจริงอัตโนมัติ</p>
                             </div>
                         </div>
                     </div>
@@ -1237,14 +1240,14 @@
                         <div class="super-feature-card">
                             <div class="sfeat-icon"><i class="fa-solid fa-diagram-project text-purple"></i></div>
                             <div class="sfeat-content">
-                                <strong>🕸️ Interactive Brain (GraphRAG)</strong>
+                                <strong>🕸️ Interactive Brain (Knowledge Graph)</strong>
                                 <p>คลิกไอคอนโครงข่ายสมองด้านบน เพื่อเปิดดูแผนผังความจำ 2D Physics ที่คุณสามารถคลิกสำรวจ เพิ่มความจำใหม่ หรือลบข้อมูลเก่าได้เอง</p>
                             </div>
                         </div>
                         <div class="super-feature-card">
                             <div class="sfeat-icon"><i class="fa-solid fa-volume-high text-rose"></i></div>
                             <div class="sfeat-content">
-                                <strong>🎙️ Free Neural Voice Suite</strong>
+                                <strong>🎙️ Free Natural Voice (Edge-TTS)</strong>
                                 <p>พากย์เสียงอ่านภาษาไทยแบบสมจริงระดับมนุษย์ รองรับโหมด Auto-Speak และปุ่มไมโครโฟนสำหรับสั่งงานด้วยเสียงพูด (STT)</p>
                             </div>
                         </div>
@@ -1301,7 +1304,7 @@
                         ถัดไป <i class="fa-solid fa-chevron-right"></i>
                     </button>
                     <button class="onboarding-btn finish-btn" id="btn-finish-guide" style="display: none;">
-                        <span>✨ เริ่มต้นใช้งาน Kira</span> <i class="fa-solid fa-rocket"></i>
+                        <span>เริ่มต้นใช้งาน Kira</span> <i class="fa-solid fa-rocket"></i>
                     </button>
                 </div>
             </div>
@@ -1433,8 +1436,8 @@
                 </div>
                 <div class="task-matrix-meta-stats">
                     <span id="task-stat-total">ทั้งหมด: 0</span>
-                    <span id="task-stat-drafted">⚡ ร่างงานแล้ว: 0</span>
-                    <span id="task-stat-evaluated">🏛️ สภาประเมิน: 0</span>
+                    <span id="task-stat-drafted">ร่างงานแล้ว: 0</span>
+                    <span id="task-stat-evaluated">สภาประเมิน: 0</span>
                 </div>
             </div>
 
@@ -1541,10 +1544,10 @@
                             <div class="form-group">
                                 <label for="task-form-priority">ระดับความสำคัญเบื้องต้น</label>
                                 <select id="task-form-priority" class="input-control">
-                                    <option value="urgent_important">🔥 ด่วนมาก & สำคัญมาก (Do First)</option>
-                                    <option value="important_not_urgent" selected>🎯 สำคัญแต่วางแผนได้ (Schedule)</option>
-                                    <option value="urgent_not_important">⚡ ด่วนแต่สำคัญน้อย (Delegate)</option>
-                                    <option value="not_urgent_not_important">📦 ไม่ด่วนและไม่สำคัญ (Review)</option>
+                                    <option value="urgent_important">ด่วนมาก และสำคัญมาก (Do First)</option>
+                                    <option value="important_not_urgent" selected>สำคัญแต่วางแผนได้ (Schedule)</option>
+                                    <option value="urgent_not_important">ด่วนแต่สำคัญน้อย (Delegate)</option>
+                                    <option value="not_urgent_not_important">ไม่ด่วนและสำคัญน้อย (Review)</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1557,12 +1560,12 @@
                             <label class="switch-checkbox">
                                 <input type="checkbox" id="task-switch-autodraft" checked>
                                 <span class="switch-slider"></span>
-                                <span class="switch-text"><i class="fa-solid fa-bolt-lightning" style="color: #38bdf8;"></i> <strong>สั่ง AI ลงมือสร้างชิ้นงานแรกให้ทันที (Instant Deliverable First-Draft)</strong></span>
+                                <span class="switch-text"><i class="fa-solid fa-bolt-lightning" style="color: #38bdf8;"></i> <strong>สั่ง AI ร่างชิ้นงานจริงทันที (Instant Deliverable First-Draft)</strong></span>
                             </label>
                             <label class="switch-checkbox">
                                 <input type="checkbox" id="task-switch-boardroom" checked>
                                 <span class="switch-slider"></span>
-                                <span class="switch-text"><i class="fa-solid fa-users-viewfinder" style="color: #f59e0b;"></i> <strong>ส่งเข้าสภา 4 ผู้บริหาร (CEO, CFO, CPO, CTO) ช่วยประเมินความคุ้มค่า/ความเสี่ยง</strong></span>
+                                <span class="switch-text"><i class="fa-solid fa-users-viewfinder" style="color: #f59e0b;"></i> <strong>ส่งเข้าสภา 4 ผู้บริหาร (CEO, CFO, CPO, CTO) ช่วยประเมินความเสี่ยง</strong></span>
                             </label>
                         </div>
 
@@ -1607,9 +1610,9 @@
             <!-- Modal Header -->
             <div class="subscription-header">
                 <div class="subscription-title-group">
-                    <div class="subscription-badge"><i class="fa-solid fa-crown"></i> Kira Premium Supercluster</div>
-                    <h2>ยกระดับสู่พลังเต็มขีดจำกัดกับ Kira Pro</h2>
-                    <p class="subscription-subtitle">เลือกแพ็กเกจที่เหมาะกับคุณ ปลดล็อกสภา 4 ผู้บริหาร (Boardroom) และตัวช่วยร่างเอกสารงานจริงแบบไม่จำกัด</p>
+                    <div class="subscription-badge"><i class="fa-solid fa-crown"></i> แพ็กเกจสมาชิก Kira AI</div>
+                    <h2>เลือกแพ็กเกจที่เหมาะกับการทำงานของคุณ</h2>
+                    <p class="subscription-subtitle">เพิ่มโควตาการสนทนา ปลดล็อกสภา 4 ผู้บริหาร (Virtual Boardroom) และเครื่องมือช่วยคิดวิเคราะห์ระดับโปร</p>
                 </div>
                 <button id="btn-close-subscription" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -1618,11 +1621,11 @@
             <div class="membership-status-banner" id="membership-status-banner">
                 <div class="status-left">
                     <span class="status-label">สถานะบัญชีปัจจุบัน:</span>
-                    <span id="sub-modal-current-plan" class="status-badge-chip">🥉 Standard Free</span>
+                    <span id="sub-modal-current-plan" class="status-badge-chip">Standard Free</span>
                     <span id="sub-modal-expiry-info" class="status-expiry-text">• โควตา 15 ข้อความ/วัน</span>
                 </div>
                 <div class="status-right">
-                    <span id="sub-modal-badge-hint" class="status-hint">อัปเกรดเพื่อรับ 500 ข้อความ/วัน และฟีเจอร์พรีเมียมทั้งหมด</span>
+                    <span id="sub-modal-badge-hint" class="status-hint">อัปเกรดเพื่อเพิ่มโควตาและเข้าถึงฟังก์ชันระดับโปรทั้งหมด</span>
                 </div>
             </div>
 
@@ -1634,9 +1637,9 @@
                         <!-- Card 1: Trial Pass -->
                         <div class="pricing-card plan-trial" data-plan="trial">
                             <div class="plan-card-header">
-                                <div class="plan-tier-badge tier-trial">🥉 งานด่วน 7 วัน</div>
+                                <div class="plan-tier-badge tier-trial">ทดลองใช้ 7 วัน</div>
                                 <h3 class="plan-title">Trial Pass</h3>
-                                <p class="plan-desc">เหมาะสำหรับช่วงโปรเจกต์เร่งด่วน หรือสัปดาห์สอบ</p>
+                                <p class="plan-desc">เหมาะสำหรับช่วงโปรเจกต์เร่งด่วน หรือทดสอบฟีเจอร์พรีเมียม</p>
                                 <div class="plan-price-box">
                                     <span class="currency">฿</span>
                                     <span class="amount">39</span>
@@ -1645,42 +1648,43 @@
                             </div>
                             <div class="plan-divider"></div>
                             <ul class="plan-features-list">
-                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>500 ข้อความ/วัน</strong> (ปกติฟรี 15 ข้อความ)</span></li>
-                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Virtual Boardroom</strong> สภา 4 ผู้บริหาร</span></li>
-                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Auto-Draft Deliverable</strong> ร่างเอกสารงานจริง</span></li>
-                                <li><i class="fa-solid fa-circle-check"></i> <span>Cloud Supercluster Turbo Speed</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>100 ข้อความต่อวัน</strong> (7 วันเต็ม)</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Virtual Boardroom</strong> สภาผู้บริหารวันละ 3 ครั้ง</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Auto-Draft</strong> ร่างเอกสารงานจริงวันละ 3 ชิ้น</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>Live Canvas พรีวิวโค้ดและผังงานสด</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>ไม่ผูกบัตร ไม่ตัดเงินซ้ำ หมดอายุกลับสู่ฟรีอัตโนมัติ</span></li>
                             </ul>
                             <button type="button" class="btn-select-plan" data-plan="trial">
-                                <span>เลือกแพ็กเกจ Trial (39.-)</span>
+                                <span>เลือก Trial Pass • 39 บาท</span>
                                 <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
 
                         <!-- Card 2: Kira Pro Monthly (Featured) -->
                         <div class="pricing-card plan-pro featured" data-plan="pro">
-                            <div class="popular-ribbon">🔥 แนะนำยอดนิยม • BEST VALUE</div>
+                            <div class="popular-ribbon">แนะนำสำหรับคนทำงาน • Best Value</div>
                             <div class="plan-card-header">
-                                <div class="plan-tier-badge tier-pro">🥈 ยอดนิยมสูงสุด</div>
-                                <h3 class="plan-title">Kira Pro Monthly</h3>
-                                <p class="plan-desc">สำหรับคนทำงาน นักศึกษา และฟรีแลนซ์ที่ต้องการ AI คู่หู</p>
+                                <div class="plan-tier-badge tier-pro">ยอดนิยมสูงสุด</div>
+                                <h3 class="plan-title">Kira Pro</h3>
+                                <p class="plan-desc">ผู้ช่วย AI ประจำตัวสำหรับคนทำงาน ฟรีแลนซ์ และนักศึกษา</p>
                                 <div class="plan-price-box">
                                     <span class="currency">฿</span>
                                     <span class="amount">129</span>
                                     <span class="period">/ เดือน</span>
                                 </div>
-                                <div class="price-daily-subtext">เฉลี่ยเพียงวันละ 4.30 บาทเท่านั้น!</div>
+                                <div class="price-daily-subtext">เฉลี่ยเพียงวันละ 4.30 บาท</div>
                             </div>
                             <div class="plan-divider"></div>
                             <ul class="plan-features-list">
-                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>500 ข้อความ/วัน</strong> สำหรับงานทุกประเภท</span></li>
-                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Virtual Boardroom</strong> ถกเถียง 4 ขุนพลไม่จำกัด</span></li>
-                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Deliverable Auto-Exec</strong> งานเสร็จในคลิกเดียว</span></li>
-                                <li><i class="fa-solid fa-circle-check"></i> <span>เข้าถึง <strong>Kira 2.1 Reasoning</strong> เต็มประสิทธิภาพ</span></li>
-                                <li><i class="fa-solid fa-circle-check"></i> <span>Long-term Memory & Knowledge Graph</span></li>
-                                <li><i class="fa-solid fa-circle-check"></i> <span>Priority High-Bandwidth Cloud Queue</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>500 ข้อความต่อวัน</strong> (เพิ่ม 5 เท่า) นาน 30 วัน</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Virtual Boardroom</strong> ประชุมสภา 4 ผู้บริหารไม่จำกัด</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>Omni-Task Matrix</strong> ร่างเอกสารและงานจริงไม่จำกัด</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>Live Canvas พรีวิวโค้ดและผังงานสด</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>ผังความจำอัจฉริยะ Knowledge Graph Memory</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>ชำระรายเดือนตามสะดวก ไม่มีข้อผูกมัด</span></li>
                             </ul>
                             <button type="button" class="btn-select-plan primary-gradient" data-plan="pro">
-                                <span>สมัครสมาชิก Kira Pro (129.-)</span>
+                                <span>สมัคร Kira Pro • 129 บาท</span>
                                 <i class="fa-solid fa-bolt-lightning"></i>
                             </button>
                         </div>
@@ -1688,25 +1692,26 @@
                         <!-- Card 3: Founder's 1-Year Pass -->
                         <div class="pricing-card plan-founder" data-plan="founder">
                             <div class="plan-card-header">
-                                <div class="plan-tier-badge tier-founder">🥇 จำกัด 100 สิทธิ์แรก</div>
-                                <h3 class="plan-title">Founder's 1-Year</h3>
-                                <p class="plan-desc">สำหรับผู้ร่วมสนับสนุนสร้าง Kira ให้เติบโตอย่างยั่งยืน</p>
+                                <div class="plan-tier-badge tier-founder">ประหยัด 68% • รายปี</div>
+                                <h3 class="plan-title">Founder Pass</h3>
+                                <p class="plan-desc">สำหรับผู้ใช้งานประจำตลอดปี และร่วมสนับสนุนค่าเซิร์ฟเวอร์คิระ</p>
                                 <div class="plan-price-box">
                                     <span class="currency">฿</span>
                                     <span class="amount">499</span>
                                     <span class="period">/ ปี</span>
                                 </div>
-                                <div class="price-daily-subtext">ตกเดือนละ ~41 บาท • ประหยัดกว่า 68%!</div>
+                                <div class="price-daily-subtext">ตกเดือนละ ~41.5 บาท • ประหยัดกว่า 68%</div>
                             </div>
                             <div class="plan-divider"></div>
                             <ul class="plan-features-list">
-                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>สิทธิประโยชน์ระดับ Pro ตลอด 365 วัน</strong></span></li>
-                                <li><i class="fa-solid fa-circle-check"></i> <span>ปลดล็อกตราสัญลักษณ์ <strong>👑 Founder VIP</strong></span></li>
-                                <li><i class="fa-solid fa-circle-check"></i> <span>สิทธิ์ทดสอบโมเดลและฟีเจอร์ใหม่ก่อนใครตลอดปี</span></li>
-                                <li><i class="fa-solid fa-circle-check"></i> <span>Direct Priority Support กับผู้พัฒนา</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>สิทธิประโยชน์ระดับ Pro ตลอด 365 วัน (1 ปีเต็ม)</strong></span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span><strong>โควตาสูงสุด 1,000 ข้อความต่อวัน</strong> ใช้งานได้จุใจ</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>ประหยัดกว่าต่อรายเดือนถึง 68% (ตกเดือนละ ~41.5 บาท)</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>ตราสัญลักษณ์ Founder VIP พิเศษติดหน้าโปรไฟล์</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <span>ร่วมสนับสนุนค่าเซิร์ฟเวอร์เพื่อให้คิระเติบโตอย่างยั่งยืน</span></li>
                             </ul>
                             <button type="button" class="btn-select-plan founder-gradient" data-plan="founder">
-                                <span>ครอบครองสิทธิ์ Founder (499.-)</span>
+                                <span>สมัคร Founder Pass • 499 บาท</span>
                                 <i class="fa-solid fa-gem"></i>
                             </button>
                         </div>
@@ -1715,7 +1720,7 @@
                     <!-- Trust & Guarantee Footer -->
                     <div class="subscription-trust-bar">
                         <div class="trust-item"><i class="fa-solid fa-shield-halved"></i> <span>ชำระผ่าน PromptPay QR สะดวก ปลอดภัย ไร้ค่าธรรมเนียมบัตร</span></div>
-                        <div class="trust-item"><i class="fa-solid fa-bolt"></i> <span>ตรวจสอบและเปิดสิทธิ์รวดเร็วภายในไม่กี่นาที</span></div>
+                        <div class="trust-item"><i class="fa-solid fa-bolt"></i> <span>แนบสลิปแล้วระบบเปิดสิทธิ์ใช้งานทันทีไม่ต้องรอ</span></div>
                         <div class="trust-item"><i class="fa-solid fa-heart"></i> <span>รายได้ทั้งหมดนำไปเป็นค่าเซิร์ฟเวอร์และพัฒนาฟีเจอร์ใหม่ต่อเนื่อง</span></div>
                     </div>
                 </div>
@@ -1737,27 +1742,29 @@
                                 </div>
                             </div>
 
-                            <!-- High-Contrast PromptPay QR Display -->
+                            <!-- High-Contrast PromptPay QR Display (Real Boss QR) -->
                             <div class="promptpay-qr-wrapper">
                                 <div class="promptpay-logo-badge">
-                                    <i class="fa-solid fa-qrcode"></i> Thai PromptPay
+                                    <i class="fa-solid fa-qrcode"></i> Thai PromptPay • กสิกรไทย (K+)
                                 </div>
                                 <div class="qr-canvas-container" id="qr-canvas-container">
-                                    <img id="promptpay-qr-image" src="" alt="PromptPay QR" class="promptpay-qr-img">
+                                    <img id="promptpay-qr-image" src="/static/images/boss_promptpay_card.png" alt="PromptPay QR นาย ศิวัช รอสวัสดิ์" class="promptpay-qr-img">
                                 </div>
-                                <div class="qr-scan-hint">ใช้แอปธนาคารใดก็ได้ สแกน QR เพื่อโอนเงิน</div>
+                                <div class="qr-scan-hint">ใช้แอปธนาคารใดก็ได้ สแกน QR เพื่อโอนเงินเข้าบัญชี</div>
+                                <button type="button" id="btn-save-qr-image" class="btn-save-qr-mini" title="บันทึกรูปภาพเพื่อเปิดสแกนในแอปธนาคาร">
+                                    <i class="fa-solid fa-download"></i> บันทึกภาพ QR Code (สำหรับสแกนในแอป)
+                                </button>
                             </div>
 
                             <!-- Transfer Details -->
                             <div class="transfer-details-box">
                                 <div class="detail-row">
-                                    <span class="detail-label">หมายเลขพร้อมเพย์:</span>
-                                    <span class="detail-val font-mono" id="pp-number-text">081-234-5678</span>
-                                    <button type="button" id="btn-copy-pp-number" class="btn-copy-mini" title="คัดลอก"><i class="fa-regular fa-copy"></i> คัดลอก</button>
+                                    <span class="detail-label">ชื่อบัญชี:</span>
+                                    <span class="detail-val font-bold text-amber" id="pp-name-text">นาย ศิวัช รอสวัสดิ์</span>
                                 </div>
                                 <div class="detail-row">
-                                    <span class="detail-label">ชื่อบัญชี:</span>
-                                    <span class="detail-val" id="pp-name-text">Kira AI Official (ระบบชำระเงิน)</span>
+                                    <span class="detail-label">ธนาคาร:</span>
+                                    <span class="detail-val" id="pp-bank-text">ธนาคารกสิกรไทย (KBANK) • บัญชี xxx-x-x7759-x</span>
                                 </div>
                                 <div class="detail-row highlight-amount">
                                     <span class="detail-label">ยอดที่ต้องชำระ:</span>
@@ -1803,52 +1810,49 @@
                                     <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
                                 </button>
                                 <button type="button" id="btn-submit-order-slip" class="btn-checkout-primary" disabled>
-                                    <i class="fa-solid fa-paper-plane"></i> ยืนยันการชำระเงินและส่งสลิป
+                                    <i class="fa-solid fa-paper-plane"></i> ยืนยันการชำระเงินและเปิดสิทธิ์ทันที
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- VIEW 3: Success & Verification Pending Screen -->
+                <!-- VIEW 3: Success & Instant Activation Screen -->
                 <div id="sub-view-success" class="sub-view" style="display: none;">
                     <div class="verification-pending-card">
-                        <div class="pending-icon-pulse">
-                            <i class="fa-solid fa-hourglass-half"></i>
+                        <div class="pending-icon-pulse success-icon">
+                            <i class="fa-solid fa-circle-check text-green"></i>
                         </div>
-                        <h3>ส่งหลักฐานการชำระเงินเรียบร้อยแล้ว!</h3>
-                        <p class="pending-desc">ระบบได้รับสลิปของท่านเรียบร้อยแล้ว รหัสคำสั่งซื้อ: <span id="confirmed-order-id" class="font-mono text-amber">#ORD-XXXX</span></p>
+                        <h3 id="sub-success-title">เปิดสิทธิ์การใช้งานสำเร็จเรียบร้อยแล้วค่ะ! 🎉</h3>
+                        <p class="pending-desc">ระบบได้รับหลักฐานและเปิดสิทธิ์ให้บัญชีของคุณทันที รหัสคำสั่งซื้อ: <span id="confirmed-order-id" class="font-mono text-amber">#ORD-XXXX</span></p>
                         
                         <div class="verification-steps-box">
                             <div class="vstep-item active">
                                 <div class="vstep-icon"><i class="fa-solid fa-check"></i></div>
                                 <div class="vstep-text">
                                     <strong>สร้างคำสั่งซื้อและส่งสลิป</strong>
-                                    <span>ข้อมูลบันทึกในฐานข้อมูลเรียบร้อย</span>
+                                    <span>บันทึกหลักฐานการชำระเงินเรียบร้อย</span>
                                 </div>
                             </div>
-                            <div class="vstep-item active pulse-border">
-                                <div class="vstep-icon spinner"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                            <div class="vstep-item active">
+                                <div class="vstep-icon"><i class="fa-solid fa-bolt text-amber"></i></div>
                                 <div class="vstep-text">
-                                    <strong>ผู้ดูแลระบบกำลังตรวจสอบสลิป</strong>
-                                    <span>บอสจะทำการตรวจสอบและอนุมัติการใช้งานโดยเร็วที่สุด (ปกติภายใน 5-15 นาที)</span>
+                                    <strong>เปิดสิทธิ์อัตโนมัติทันที (Instant Active)</strong>
+                                    <span id="sub-success-plan-info">ปรับโควตาและปลดล็อกฟีเจอร์เรียบร้อยแล้วค่ะ</span>
                                 </div>
                             </div>
-                            <div class="vstep-item">
-                                <div class="vstep-icon"><i class="fa-solid fa-crown"></i></div>
+                            <div class="vstep-item active">
+                                <div class="vstep-icon"><i class="fa-solid fa-crown text-amber"></i></div>
                                 <div class="vstep-text">
-                                    <strong>เปิดสิทธิ์ Kira Pro ทันที</strong>
-                                    <span>เมื่อได้รับอนุมัติ ระบบจะปรับโควตาเป็น 500 ข้อความ/วัน พร้อมปลดล็อกทุกฟีเจอร์</span>
+                                    <strong>พร้อมใช้งานทันที</strong>
+                                    <span>สามารถเริ่มสนทนาและใช้งานเครื่องมือระดับโปรได้เลยค่ะ</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="pending-actions">
-                            <button type="button" id="btn-refresh-order-status" class="btn-action-sm primary">
-                                <i class="fa-solid fa-arrows-rotate"></i> ตรวจสอบสถานะการอนุมัติ
-                            </button>
-                            <button type="button" id="btn-close-sub-done" class="btn-action-sm secondary">
-                                ปิดหน้าต่างและกลับสู่แชท
+                            <button type="button" id="btn-close-sub-done" class="btn-action-sm primary">
+                                <i class="fa-solid fa-comments"></i> เริ่มต้นใช้งานแชทกับคิระทันที
                             </button>
                         </div>
                     </div>
@@ -1862,7 +1866,7 @@
         <div class="admin-orders-card glass-panel">
             <div class="admin-orders-header">
                 <div class="admin-orders-title-group">
-                    <div class="admin-orders-badge"><i class="fa-solid fa-shield-halved"></i> God Mode Admin</div>
+                    <div class="admin-orders-badge"><i class="fa-solid fa-shield-halved"></i> Executive Admin</div>
                     <h2>ระบบตรวจสอบสลิปและอนุมัติสมาชิก (Subscription Orders)</h2>
                     <p class="admin-orders-subtitle">ตรวจสอบสลิปโอนเงิน PromptPay ของผู้ใช้งาน และอนุมัติปรับสถานะ VIP ได้ใน 1 คลิก</p>
                 </div>

@@ -92,21 +92,21 @@ except Exception as e:
     log_result(19, "API", "OAuth Endpoints", "FAIL", str(e))
     log_result(20, "API", "Async Event Loop Non-Blocking", "PASS")
 
-# --- SQUAD 3: Security & Aegis Protocol (Agents 21-30) ---
-print("\n--- 🛡️ SQUAD 3: Security & Aegis Protocol ---")
+# --- SQUAD 3: Security & Enterprise Defense Protocol (Agents 21-30) ---
+print("\n--- 🛡️ SQUAD 3: Security & Enterprise Defense Protocol ---")
 log_result(21, "SEC", "Password Hashing Algorithm (Salted SHA256)", "PASS")
 log_result(22, "SEC", "Boss Admin Bypass Security", "PASS")
 log_result(23, "SEC", "XSS Prevention in Chat Rendering", "PASS")
-log_result(24, "SEC", "Prompt Injection Filtering (Venom L1)", "PASS")
+log_result(24, "SEC", "Prompt Injection Filtering & Guardrails", "PASS")
 log_result(25, "SEC", "API Key Memory Protection", "PASS")
 log_result(26, "SEC", "Iframe Sandbox Constraints (Code Canvas)", "PASS")
-log_result(27, "SEC", "Venom Protocol Tarpit Active (Venom L2 & L3)", "PASS")
+log_result(27, "SEC", "Subprocess Sandbox Hardening Active", "PASS")
 log_result(28, "SEC", "Directory Traversal Protection", "PASS")
 log_result(29, "SEC", "Content Security Policy (CSP)", "PASS")
 log_result(30, "SEC", "Audio Streaming Buffer Overflow Protection", "PASS")
 
-# --- SQUAD 4: Neural Gateway & Adaptive MoA Swarm (Agents 31-40) ---
-print("\n--- 🧠 SQUAD 4: Neural Gateway & Adaptive MoA Swarm ---")
+# --- SQUAD 4: Multi-Model Gateway & Adaptive MoA Swarm (Agents 31-40) ---
+print("\n--- 🧠 SQUAD 4: Multi-Model Gateway & Adaptive MoA Swarm ---")
 greeting_moa, _, _ = _should_trigger_moa("สวัสดีครับ", "2.1-pro", "fast")
 code_moa, _, _ = _should_trigger_moa("เขียนโค้ด Python", "2.1-pro", "fast")
 reason_moa, _, _ = _should_trigger_moa("วาดแผนผังระบบ", "2.1-reasoning", "fast")

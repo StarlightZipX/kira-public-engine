@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kira Admin Dashboard (God Mode)</title>
+    <title>Kira Executive Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -95,7 +95,7 @@
                     <img src="/static/images/kira_logo.jpg" alt="Kira Logo" class="w-12 h-12 rounded-lg object-cover shadow-[0_0_15px_rgba(56,189,248,0.5)] border border-slate-700"> 
                     Kira Executive Dashboard
                 </h1>
-                <p class="text-slate-400 mt-2 font-medium">Real-time Global Surveillance System</p>
+                <p class="text-slate-400 mt-2 font-medium">Real-time System Monitoring & Management Dashboard</p>
             </div>
             
             <div class="glass-panel px-4 py-2 rounded-full flex items-center gap-3 border border-slate-700/50">
@@ -128,7 +128,7 @@
                 </div>
                 
                 <div class="flex-1 w-full">
-                    <label for="date_filter" class="block text-sm font-medium text-slate-400 mb-1">Time Machine (ช่วงเวลา)</label>
+                    <label for="date_filter" class="block text-sm font-medium text-slate-400 mb-1">ช่วงเวลาที่ต้องการค้นหา (Date Filter)</label>
                     <select name="date_filter" id="date_filter" 
                             class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="all" {% if date_filter == 'all' %}selected{% endif %}>ทั้งหมด (All Time)</option>
@@ -142,7 +142,7 @@
                     <input type="checkbox" name="mistakes_only" id="mistakes_only" value="on" {% if mistakes_only %}checked{% endif %}
                            class="w-4 h-4 text-red-500 bg-slate-800 border-slate-600 rounded focus:ring-red-500 focus:ring-2">
                     <label for="mistakes_only" class="text-sm font-medium text-red-400 cursor-pointer flex items-center gap-1">
-                        🚨 จับผิด AI (Mistakes Catcher)
+                        ⚠️ กรองเฉพาะข้อผิดพลาดของ AI (Error & Issue Filter)
                     </label>
                 </div>
 
@@ -195,7 +195,7 @@
             
             <!-- Footer of Table -->
             <div class="bg-slate-900/40 p-4 text-center text-xs text-slate-500 border-t border-slate-800/50">
-                Data refreshed securely • God Mode Active
+                Data refreshed securely • Administrator Mode Active
             </div>
         </div>
         </div> <!-- End Tab 1 -->

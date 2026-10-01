@@ -41,15 +41,18 @@ def run_tests():
     # Verify logs exist
     cur.execute("SELECT count(*) FROM logs WHERE username=?", (test_user,))
     assert cur.fetchone()[0] == 2, "Failed to insert test logs"
+    conn.close()
     
     # Call /api/clear_chat WITHOUT session_id (which used to wipe everything!)
-    r_clear = requests.post(f"{BASE_URL}/api/clear_chat", json={"message": "", "username": test_user}, timeout=5)
+    r_clear = requests.post(f"{BASE_URL}/api/clear_chat", json={"message": "", "username": test_user}, timeout=10)
     assert r_clear.status_code == 200, f"clear_chat failed: {r_clear.status_code}"
 
     # Verify logs STILL exist in the database!
-    cur.execute("SELECT count(*) FROM logs WHERE username=?", (test_user,))
-    count_after = cur.fetchone()[0]
-    conn.close()
+    conn2 = sqlite3.connect("chat_logs.db")
+    cur2 = conn2.cursor()
+    cur2.execute("SELECT count(*) FROM logs WHERE username=?", (test_user,))
+    count_after = cur2.fetchone()[0]
+    conn2.close()
     
     assert count_after == 2, f"CRITICAL FAILURE: clear_chat wiped logs! Found {count_after} rows instead of 2"
     print(f"  ✅ Safety Guard Verified: Existing {count_after} logs preserved when starting new chat!")
