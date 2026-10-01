@@ -4758,7 +4758,7 @@ function initSubscriptionController() {
                 }
                 const ppBankText = document.getElementById('pp-bank-text');
                 if (ppBankText && data.promptpay_bank) {
-                    ppBankText.textContent = `${data.promptpay_bank} • บัญชี ${data.promptpay_account || 'xxx-x-x7759-x'}`;
+                    ppBankText.textContent = `${data.promptpay_bank} • บัญชี ${data.promptpay_account || '004-9-99252-5'}`;
                 }
 
                 // Reset dropzone

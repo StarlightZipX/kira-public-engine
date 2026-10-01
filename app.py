@@ -1019,7 +1019,7 @@ SUBSCRIPTION_PLANS["founder_yearly"] = SUBSCRIPTION_PLANS["founder"]
 PROMPTPAY_NUMBER = os.environ.get("PROMPTPAY_NUMBER", "004999252517585")
 PROMPTPAY_NAME = os.environ.get("PROMPTPAY_NAME", "นาย ศิวัช รอสวัสดิ์")
 PROMPTPAY_BANK = "ธนาคารกสิกรไทย (KBANK)"
-PROMPTPAY_ACCOUNT = "xxx-x-x7759-x"
+PROMPTPAY_ACCOUNT = os.environ.get("PROMPTPAY_ACCOUNT", "004-9-99252-5")
 PROMPTPAY_QR_IMAGE = "/static/images/boss_promptpay_card.png"
 
 def get_user_plan_status(uname: str) -> dict:
