@@ -3624,6 +3624,7 @@ async def _generate_virtual_boardroom_stream(user_input: str, uname: str, sessio
             SystemMessage(content=exec_info["prompt"]),
             HumanMessage(content=f"วาระการประชุมจากผู้ใช้: {user_input}")
         ]
+        ok, chunks, _ = await _try_all_keys_and_models(prompt_messages, boardroom_model)
         if ok:
             speech_text = "".join([getattr(c, "content", c) for c in chunks])
         else:
