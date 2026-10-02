@@ -34,7 +34,7 @@ def run_tests():
     assert plans["trial"]["price"] == 39
     assert plans["pro"]["price"] == 129
     assert plans["founder"]["price"] == 499
-    print(f"  ✅ Plans validated: Trial (39฿), Pro (129฿), Founder (499฿)")
+    print(f"  ✅ Plans validated: Starter (39฿), Pro (129฿), Founder (499฿)")
     assert data.get('promptpay_name') == "นาย ศิวัช รอสวัสดิ์", f"Expected Boss name, got {data.get('promptpay_name')}"
     assert data.get('promptpay_number') == "004999252517585", f"Expected Boss PromptPay number, got {data.get('promptpay_number')}"
     assert data.get('promptpay_account') == "004-9-99252-5", f"Expected Boss Account Number, got {data.get('promptpay_account')}"

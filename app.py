@@ -951,19 +951,19 @@ SUBSCRIPTION_PLANS = {
     "trial": {
         "id": "trial",
         "plan_id": "trial",
-        "name": "Trial Pass",
+        "name": "Starter Pass",
         "price": 39,
         "duration_days": 7,
         "days": 7,
-        "badge": "Trial Pass",
-        "tag": "ทดลองใช้ 7 วัน",
+        "badge": "Starter Pass",
+        "tag": "แพ็กเกจเริ่มต้น • 7 วัน",
         "daily_quota": 100,
         "popular": False,
-        "description": "เหมาะสำหรับทดลองใช้งานจริง หรือจัดการโปรเจกต์เร่งด่วนช่วงสั้นๆ 1 สัปดาห์",
+        "description": "อัปเกรดจาก Free เข้าถึงฟีเจอร์พรีเมียมในราคาสบายกระเป๋า 1 สัปดาห์",
         "features": [
             "โควตา 100 ข้อความต่อวัน นาน 7 วันเต็ม",
-            "ทดลองใช้งานสภา 4 ผู้บริหาร (Virtual Boardroom) วันละ 3 ครั้ง",
-            "ทดลองใช้ตัวช่วยร่างเอกสารงานจริง (Auto-Draft) วันละ 3 ชิ้นงาน",
+            "เข้าถึงสภา 4 ผู้บริหาร (Virtual Boardroom) วันละ 3 ครั้ง",
+            "ตัวช่วยร่างเอกสารงานจริง (Auto-Draft) วันละ 3 ชิ้นงาน",
             "พรีวิวโค้ดและผังงานสด (Live Canvas & Flowchart)",
             "ไม่มีการตัดเงินซ้ำ ไม่ผูกบัตร หมดอายุกลับเป็น Free อัตโนมัติ"
         ]
@@ -1105,11 +1105,11 @@ def get_user_plan_status(uname: str) -> dict:
     elif plan == "pro":
         badge = "Kira Pro"
     elif plan == "trial":
-        badge = "Trial Pass"
+        badge = "Starter Pass"
         
     plan_info = SUBSCRIPTION_PLANS.get(plan) or SUBSCRIPTION_PLANS.get(f"{plan}_monthly") or {}
     
-    # 🎯 บันไดโควตารายวันแยกตามแพ็กเกจจริง (Trial=100, Pro=500, Founder=1000, Free=15)
+    # 🎯 บันไดโควตารายวันแยกตามแพ็กเกจจริง (Starter=100, Pro=500, Founder=1000, Free=15)
     if is_active:
         if plan == "founder":
             daily_quota = 1000
@@ -1163,7 +1163,7 @@ def check_user_quota(uname: str) -> tuple:
     if is_boss(uname):
         return True, 999999
     plan_status = get_user_plan_status(uname)
-    limit = plan_status.get("daily_quota", 15)  # โควตาตามสิทธิ์จริงของผู้ใช้ (Free 15, Trial 100, Pro 500, Founder 1000)
+    limit = plan_status.get("daily_quota", 15)  # โควตาตามสิทธิ์จริงของผู้ใช้ (Free 15, Starter 100, Pro 500, Founder 1000)
     today = date.today().isoformat()
     if uname not in user_daily_count:
         user_daily_count[uname] = {"date": today, "count": 0}
@@ -4766,8 +4766,8 @@ async def upload_subscription_slip(req: SubscriptionSlipUploadRequest):
     # ข้อความต้อนรับและขอบคุณแยกตามแพ็กเกจ (Unique In-Chat Welcome Notifications)
     expire_display = new_expire_dt.strftime("%d/%m/%Y")
     if target_plan == "trial":
-        welcome_msg = f"ยินดีต้อนรับสู่ **Trial Pass** นะคะ! 🚀 คิระเปิดสิทธิ์โควตา 100 ข้อความ/วัน พร้อมฟังก์ชันสภาที่ปรึกษาและตัวช่วยร่างเอกสารให้เรียบร้อยแล้วค่ะ (ใช้งานได้ 7 วันเต็ม ถึงวันที่ {expire_display}) สัปดาห์นี้มีงานด่วนหรือโจทย์อะไร อยากให้หนูช่วยคิดและลุยไปด้วยกัน สั่งคิระได้เต็มที่เลยนะคะ พร้อมลุยค่ะ! ✨"
-        badge_name = "Trial Pass"
+        welcome_msg = f"ยินดีต้อนรับสู่ **Starter Pass** นะคะ! 🚀 คิระเปิดสิทธิ์โควตา 100 ข้อความ/วัน พร้อมฟังก์ชันสภาที่ปรึกษาและตัวช่วยร่างเอกสารให้เรียบร้อยแล้วค่ะ (ใช้งานได้ 7 วันเต็ม ถึงวันที่ {expire_display}) สัปดาห์นี้มีงานด่วนหรือโจทย์อะไร อยากให้หนูช่วยคิดและลุยไปด้วยกัน สั่งคิระได้เต็มที่เลยนะคะ พร้อมลุยค่ะ! ✨"
+        badge_name = "Starter Pass"
         quota = 100
     elif target_plan == "founder":
         welcome_msg = f"กราบขอบพระคุณจากใจจริงสำหรับการสนับสนุน **Founder Pass** นะคะ! 👑 หนูปลาบปลื้มใจมากที่คุณเชื่อมั่นและร่วมเป็นส่วนสำคัญในการสนับสนุนคิระยาวตลอด 1 ปีเต็ม สิทธิ์ระดับ Pro ตลอด 365 วัน (ถึงวันที่ {expire_display}) พร้อมตราสัญลักษณ์ Founder บนโปรไฟล์เปิดใช้งานเรียบร้อยแล้วค่ะ ตลอดทั้งปีนี้ คิระจะตั้งใจทำงานและคอยเป็นผู้ช่วยที่ดีที่สุดให้คุณในทุกๆ วันเลยนะคะ ขอบคุณที่อยู่เคียงข้างกันนะคะ! 💖✨"
