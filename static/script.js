@@ -3067,6 +3067,42 @@ async function loadSettingsPreferences() {
                 }
             }
         }
+
+        // 3. Fetch Neural Resilience Mesh / Providers Status
+        try {
+            const provRes = await fetch('/api/system/providers');
+            if (provRes.ok) {
+                const provData = await provRes.json();
+                const p = provData.providers || {};
+                const groqChip = document.getElementById('chip-groq');
+                if (groqChip && p.groq) {
+                    groqChip.innerHTML = `<i class="fa-solid fa-bolt text-yellow"></i> Groq: ${p.groq.configured ? `ออนไลน์ (${p.groq.active_keys} ดอก)` : 'สแตนด์บาย'}`;
+                }
+                const orChip = document.getElementById('chip-openrouter');
+                if (orChip && p.openrouter) {
+                    orChip.innerHTML = `<i class="fa-solid fa-rocket text-purple"></i> OpenRouter: ${p.openrouter.configured ? `พร้อมสำรอง (${p.openrouter.active_keys} ดอก)` : 'สแตนด์บาย'}`;
+                }
+                const geminiChip = document.getElementById('chip-gemini');
+                if (geminiChip && p.gemini) {
+                    geminiChip.innerHTML = `<i class="fa-solid fa-gem text-cyan"></i> Gemini: ${p.gemini.configured ? `พร้อมสลับ (${p.gemini.active_keys} ดอก)` : 'สแตนด์บาย'}`;
+                }
+                const circuitChip = document.getElementById('chip-circuit');
+                if (circuitChip && provData.circuit_breaker) {
+                    const cb = provData.circuit_breaker;
+                    if (cb.circuit_breaker_active) {
+                        circuitChip.style.background = 'rgba(239, 68, 68, 0.15)';
+                        circuitChip.style.color = '#f87171';
+                        circuitChip.innerHTML = `<i class="fa-solid fa-shield-virus"></i> Circuit Breaker: ป้องกัน 1 คีย์`;
+                    } else {
+                        circuitChip.style.background = 'rgba(16, 185, 129, 0.12)';
+                        circuitChip.style.color = '#34d399';
+                        circuitChip.innerHTML = `<i class="fa-solid fa-heart-pulse"></i> Circuit Breaker: ป้องกัน 100%`;
+                    }
+                }
+            }
+        } catch (provErr) {
+            console.warn('Could not fetch providers status:', provErr);
+        }
     } catch (err) {
         console.warn("Could not load backend preferences:", err);
     }

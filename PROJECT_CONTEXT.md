@@ -42,6 +42,7 @@ IDE ได้ทำการติดตั้งระบบรักษาค�
 3. **SSRF & DoS Payload Armor:** ควบคุมขนาด Payload ป้องกันการส่งข้อมูลเกินขนาด และป้องกันการเรียก URL ภายในเครื่อง
 4. **IDOR Session Tokens:** ป้องกันการสวมรอยหรือเข้าถึงความจำของผู้อื่นด้วย Token ประจำ Session
 5. **Enterprise Defense Suite:** ติดตั้ง Output Scrubber กรองข้อมูลหลุด, Persistent IP/User Blacklist, และ Rate Limiter สำหรับ TTS
+6. **Neural Resilience Fallback Engine & Multi-Tier Circuit Breaker (`/api/system/providers`):** ระบบป้องกันการผูกขาดและรับมือการปรับลดสเปกหรือขึ้นราคาของ Big Tech สลับโมเดลอัตโนมัติข้าม 4 ค่าย (Groq LPU -> OpenRouter Super-Brains -> Google Gemini Direct -> Local Ollama GPU -> Autonomous Emergency Synthesizer) พร้อมระบบ Circuit Breaker กักกันคีย์ที่ติด Rate Limit 60 วินาทีแบบ Zero-Downtime ป้องกันระบบล่ม 100%
 
 ---
 
