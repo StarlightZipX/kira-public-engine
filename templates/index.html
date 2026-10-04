@@ -11,7 +11,15 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=12">
+    <link rel="stylesheet" href="/static/style.css?v=14">
+    <!-- PWA Manifest & Mobile Web App Meta -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kira AI">
+    <link rel="apple-touch-icon" href="/static/images/kira_logo.png?v=6">
+    <link rel="icon" type="image/png" href="/static/images/kira_logo.png?v=6">
     <!-- MathJax for LaTeX Rendering -->
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <!-- html2canvas for Live Screen & Canvas Inspection -->
@@ -390,6 +398,12 @@
                         </div>
                     </div>
 
+                    <!-- PWA Quick Install Header Action (Revealed dynamically) -->
+                    <button id="btn-install-pwa-header" class="header-action-btn pwa-header-install-btn" title="ติดตั้ง Kira AI Web App บนอุปกรณ์" style="display: none;">
+                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                        <span class="pwa-header-text">ติดตั้งแอป</span>
+                    </button>
+
                     <!-- All Secondary Tools Unified in One Beautiful Dropdown -->
                     <div class="tools-dropdown-wrapper" id="tools-dropdown-wrapper">
                         <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" title="เครื่องมือเพิ่มเติม">
@@ -423,6 +437,14 @@
                                 <div class="tool-item-info">
                                     <span class="tool-item-title">ส่งออกบทสนทนา</span>
                                     <span class="tool-item-desc">บันทึกเป็น PDF หรือพิมพ์รายงาน</span>
+                                </div>
+                            </button>
+
+                            <button class="tools-menu-item" id="btn-install-app-menu" title="ติดตั้ง Kira AI Web App ลงอุปกรณ์">
+                                <span class="tool-item-icon icon-teal"><i class="fa-solid fa-mobile-screen-button"></i></span>
+                                <div class="tool-item-info">
+                                    <span class="tool-item-title">ติดตั้ง Kira Web App</span>
+                                    <span class="tool-item-desc" id="pwa-menu-status">ติดตั้งบนมือถือหรือคอมพิวเตอร์</span>
                                 </div>
                             </button>
 
@@ -1983,11 +2005,67 @@
         </div>
     </div>
 
+    <!-- 📱 Kira PWA Floating Install Banner -->
+    <div id="pwa-install-banner" class="pwa-install-banner" style="display: none;">
+        <div class="pwa-banner-card">
+            <div class="pwa-banner-icon-wrap">
+                <img src="/static/images/kira_logo.png?v=6" alt="Kira AI" class="pwa-banner-app-icon" onerror="this.src='/static/images/kira_avatar.jpg?v=5'">
+            </div>
+            <div class="pwa-banner-details">
+                <div class="pwa-banner-title">
+                    <span>ติดตั้ง Kira AI App</span>
+                    <span class="pwa-badge-v2">v2.2 Web App</span>
+                </div>
+                <div class="pwa-banner-desc">เปิดใช้งานแบบเต็มจอ เร็วขึ้น เข้าถึงง่ายจากหน้าจอมือถือหรือเดสก์ท็อป</div>
+            </div>
+            <div class="pwa-banner-actions">
+                <button id="pwa-btn-dismiss" class="pwa-banner-btn-secondary" title="ปิดไว้ก่อน">ไว้ทีหลัง</button>
+                <button id="pwa-btn-install" class="pwa-banner-btn-primary"><i class="fa-solid fa-cloud-arrow-down"></i> ติดตั้งทันที</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🍏 iOS PWA Safari Instruction Modal -->
+    <div id="ios-pwa-modal" class="modal-overlay ios-pwa-overlay" style="display: none; z-index: 1200;">
+        <div class="ios-pwa-card">
+            <div class="ios-pwa-header">
+                <div class="ios-pwa-icon"><i class="fa-brands fa-apple"></i></div>
+                <div class="ios-pwa-title-box">
+                    <h3>วิธีติดตั้ง Kira AI บน iPhone / iPad</h3>
+                    <span class="ios-pwa-sub">สำหรับ Safari บน iOS</span>
+                </div>
+                <button id="ios-pwa-close" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="ios-pwa-body">
+                <p class="ios-pwa-intro">Safari สามารถติดตั้ง Kira AI เป็น Web App เต็มหน้าจอได้ใน 2 ขั้นตอนง่ายๆ ค่ะ:</p>
+                <div class="ios-pwa-steps">
+                    <div class="ios-pwa-step">
+                        <div class="ios-step-num">1</div>
+                        <div class="ios-step-info">
+                            <div class="ios-step-title">แตะปุ่ม "แชร์" (Share) <i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+                            <div class="ios-step-desc">อยู่ที่แถบเครื่องมือด้านล่าง (iPhone) หรือมุมขวาบน (iPad)</div>
+                        </div>
+                    </div>
+                    <div class="ios-pwa-step">
+                        <div class="ios-step-num">2</div>
+                        <div class="ios-step-info">
+                            <div class="ios-step-title">เลือก "เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen) <i class="fa-regular fa-square-plus"></i></div>
+                            <div class="ios-step-desc">เลื่อนหาเมนูนี้ แล้วแตะ "เพิ่ม" (Add) เพื่อเริ่มใช้งานแอปได้ทันที</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ios-pwa-footer">
+                <button id="ios-pwa-gotit-btn" class="ios-pwa-confirm-btn">รับทราบและเข้าใจแล้วค่ะ</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=29"></script>
+    <script src="/static/script.js?v=30"></script>
 </body>
 </html>

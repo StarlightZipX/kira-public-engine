@@ -11,7 +11,7 @@ load_dotenv()
 
 import uvicorn
 from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Optional, Union, Any, Dict, List
@@ -109,6 +109,21 @@ if not os.path.exists(templates_dir):
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates = Jinja2Templates(directory=templates_dir)
+
+# --- PWA Service Worker & Manifest Endpoints ---
+@app.get("/sw.js")
+async def get_service_worker():
+    sw_path = os.path.join(static_dir, "sw.js")
+    if os.path.exists(sw_path):
+        return FileResponse(sw_path, media_type="application/javascript", headers={"Service-Worker-Allowed": "/"})
+    raise HTTPException(status_code=404, detail="Service worker not found")
+
+@app.get("/manifest.json")
+async def get_manifest():
+    manifest_path = os.path.join(static_dir, "manifest.json")
+    if os.path.exists(manifest_path):
+        return FileResponse(manifest_path, media_type="application/manifest+json")
+    raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- RAG Setup (Kira 2.0) — Lazy Loading เพื่อประหยัด RAM ---
 vector_collection = None

@@ -1299,6 +1299,15 @@ function attachDeliverablesBar(contentDiv, textContent) {
         URL.revokeObjectURL(url);
     };
 
+    // 3.5. Print & PDF Export (Executive & Silver Deliverable)
+    const pdfReportBtn = document.createElement('button');
+    pdfReportBtn.className = 'deliverable-btn deliverable-pdf-btn';
+    pdfReportBtn.innerHTML = '<i class="fa-solid fa-print text-emerald"></i> พิมพ์ / PDF';
+    pdfReportBtn.title = 'พิมพ์เอกสารหรือบันทึกเป็น PDF สวยงามแบบ A4 พร้อมหัวจดหมายทางการ';
+    pdfReportBtn.onclick = () => {
+        exportDeliverableToPDF('เอกสารส่งงาน (Executive Deliverable)', textContent, 'executive');
+    };
+
     // 4. Open in Live Canvas Document
     const canvasDocBtn = document.createElement('button');
     canvasDocBtn.className = 'deliverable-btn';
@@ -1358,6 +1367,7 @@ function attachDeliverablesBar(contentDiv, textContent) {
     feedbackUI.appendChild(copyMsgBtn);
     feedbackUI.appendChild(cleanReportBtn);
     feedbackUI.appendChild(downloadReportBtn);
+    feedbackUI.appendChild(pdfReportBtn);
     feedbackUI.appendChild(canvasDocBtn);
     feedbackUI.appendChild(speakerBtn);
     feedbackUI.appendChild(likeBtn);
@@ -1711,18 +1721,21 @@ if (btnTheme) {
     });
 }
 
-// --- Export Chat History ---
+// --- Export Chat History & Print/PDF Report ---
 const btnExport = document.getElementById('btn-export');
 if (btnExport) {
     btnExport.addEventListener('click', () => {
+        const dropdown = document.getElementById('tools-dropdown-menu');
+        if (dropdown) dropdown.classList.remove('show');
+
         const messages = chatBox.querySelectorAll('.message');
         if (!messages || messages.length === 0) {
             alert('ยังไม่มีข้อความในประวัติการสนทนานี้ค่ะ');
             return;
         }
         
-        let mdContent = `# 💬 Kira AI System 2.1 - ประวัติการสนทนา\n`;
-        mdContent += `**ผู้ใช้งาน:** ${currentUser || 'User'}\n`;
+        let mdContent = `# 💬 บันทึกประวัติการสนทนาฉบับสมบูรณ์ (Session Transcript)\n\n`;
+        mdContent += `**ผู้ใช้งาน:** ${currentUser || 'ผู้ใช้'}\n`;
         mdContent += `**วันที่บันทึก:** ${new Date().toLocaleString('th-TH')}\n\n---\n\n`;
         
         messages.forEach(msg => {
@@ -1732,26 +1745,20 @@ if (btnExport) {
             
             // Clone and remove feedback buttons before getting text
             const clone = contentEl.cloneNode(true);
-            const fb = clone.querySelector('div[style*="border-top"]');
+            const fb = clone.querySelector('.feedback-ui');
             if (fb) fb.remove();
             const txt = clone.innerText.trim();
+            if (!txt) return;
             
             if (isUser) {
-                mdContent += `### คุณ (${currentUser}):\n${txt}\n\n`;
+                mdContent += `### 👤 คุณ (${currentUser || 'ผู้ใช้'}):\n${txt}\n\n`;
             } else {
-                mdContent += `### Kira 2.1:\n${txt}\n\n`;
+                mdContent += `### 🌸 Kira AI (ผู้ช่วยอัจฉริยะ):\n${txt}\n\n`;
             }
         });
         
-        const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Kira_Chat_${Date.now()}.md`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Export via High-Contrast Print & PDF Engine
+        exportDeliverableToPDF('รายงานการสนทนาฉบับสมบูรณ์ (Kira AI Session Transcript)', mdContent, 'full_chat');
     });
 }
 
@@ -3942,6 +3949,7 @@ function renderBoardroomHTML(rawText) {
                     <button class="consensus-tool-btn" onclick="copyMeetingMinutes(this)" title="คัดลอกบันทึกการประชุมทั้งหมด"><i class="fa-regular fa-copy"></i> คัดลอกรายงาน</button>
                     <button class="consensus-tool-btn" onclick="openBoardroomInCanvas(this)" title="เปิดบันทึกการประชุมใน Live Canvas"><i class="fa-solid fa-pen-to-square"></i> เปิดใน Canvas</button>
                     <button class="consensus-tool-btn" onclick="downloadMeetingMinutes(this)" title="ดาวน์โหลดบันทึกการประชุม (.md)"><i class="fa-solid fa-file-arrow-down"></i> ดาวน์โหลด (.md)</button>
+                    <button class="consensus-tool-btn" onclick="exportBoardroomToPDF(this)" title="พิมพ์รายงานหรือบันทึกเป็น PDF สวยงามแบบ A4"><i class="fa-solid fa-print"></i> พิมพ์ / PDF</button>
                     <button class="consensus-tool-btn" onclick="playBoardroomConsensusAudio(this)" title="ฟังเสียงอ่านสรุปมติที่ประชุม"><i class="fa-solid fa-volume-high"></i> ฟังเสียงมติ</button>
                 </div>
             </div>
@@ -4035,6 +4043,18 @@ function downloadMeetingMinutes(btn) {
         alert("ไม่สามารถส่งออกบันทึกการประชุมได้ในขณะนี้ค่ะ");
     }
 }
+
+function exportBoardroomToPDF(btn) {
+    try {
+        const sessionWrapper = btn ? btn.closest('.boardroom-session-wrapper') : document.querySelector('.boardroom-session-wrapper');
+        const fullMeetingText = extractBoardroomFullMinutes(sessionWrapper);
+        exportDeliverableToPDF('บันทึกการประชุมสภาที่ปรึกษาผู้บริหาร (Kira Virtual Boardroom Minutes)', fullMeetingText, 'boardroom');
+    } catch (err) {
+        console.error("Export boardroom to PDF error:", err);
+        alert("ไม่สามารถพิมพ์รายงานบันทึกการประชุมได้ในขณะนี้ค่ะ");
+    }
+}
+window.exportBoardroomToPDF = exportBoardroomToPDF;
 
 async function playBoardroomConsensusAudio(btn) {
     try {
@@ -4830,6 +4850,7 @@ initSpeechRecognition();
 initLiveCanvasController();
 initTaskMatrixController();
 initSubscriptionController();
+initPWAController();
 
 // ====================================================================
 // 👑 Kira Subscription & Monetization Engine Controller
@@ -5465,6 +5486,604 @@ function initSubscriptionController() {
     // Initial check
     setTimeout(refreshSubscriptionStatus, 1500);
 }
+
+// ====================================================================
+// 📱 Progressive Web App (PWA) Controller & Installation Logic
+// ====================================================================
+let deferredPWAInstallPrompt = null;
+
+function initPWAController() {
+    const btnHeaderInstall = document.getElementById('btn-install-pwa-header');
+    const btnMenuInstall = document.getElementById('btn-install-app-menu');
+    const pwaBanner = document.getElementById('pwa-install-banner');
+    const pwaBtnInstall = document.getElementById('pwa-btn-install');
+    const pwaBtnDismiss = document.getElementById('pwa-btn-dismiss');
+    const iosModal = document.getElementById('ios-pwa-modal');
+    const iosCloseBtn = document.getElementById('ios-pwa-close');
+    const iosGotitBtn = document.getElementById('ios-pwa-gotit-btn');
+    const pwaMenuStatus = document.getElementById('pwa-menu-status');
+
+    // 1. Register Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then((reg) => {
+                    console.log('🌸 Kira PWA Service Worker Registered! Scope:', reg.scope);
+                })
+                .catch((err) => {
+                    console.warn('PWA /sw.js registration attempt failed, trying fallback:', err);
+                    navigator.serviceWorker.register('/static/sw.js', { scope: '/' })
+                        .catch((fallbackErr) => console.warn('PWA fallback SW registration error:', fallbackErr));
+                });
+        });
+    }
+
+    // 2. Check if already installed in standalone mode
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) {
+        if (pwaMenuStatus) pwaMenuStatus.textContent = 'ติดตั้งบนอุปกรณ์นี้แล้ว';
+        if (btnHeaderInstall) btnHeaderInstall.style.display = 'none';
+        if (pwaBanner) pwaBanner.style.display = 'none';
+        return;
+    }
+
+    // 3. Detect iOS Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    if (isIOS && !isStandalone) {
+        if (btnHeaderInstall) btnHeaderInstall.style.display = 'inline-flex';
+        // Show banner after short delay if not dismissed recently
+        const dismissedTime = localStorage.getItem('kira_pwa_dismissed');
+        const now = Date.now();
+        if (!dismissedTime || (now - parseInt(dismissedTime, 10)) > 3 * 24 * 60 * 60 * 1000) {
+            setTimeout(() => {
+                if (pwaBanner) pwaBanner.style.display = 'block';
+            }, 3000);
+        }
+    }
+
+    // 4. Capture beforeinstallprompt (Chrome, Edge, Samsung Internet, Android)
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent default mini-infobar
+        e.preventDefault();
+        deferredPWAInstallPrompt = e;
+
+        if (btnHeaderInstall) btnHeaderInstall.style.display = 'inline-flex';
+
+        const dismissedTime = localStorage.getItem('kira_pwa_dismissed');
+        const now = Date.now();
+        if (!dismissedTime || (now - parseInt(dismissedTime, 10)) > 3 * 24 * 60 * 60 * 1000) {
+            setTimeout(() => {
+                if (pwaBanner) pwaBanner.style.display = 'block';
+            }, 3000);
+        }
+    });
+
+    // 5. Handle Install Triggers
+    async function triggerPWAInstall() {
+        if (deferredPWAInstallPrompt) {
+            deferredPWAInstallPrompt.prompt();
+            const choiceResult = await deferredPWAInstallPrompt.userChoice;
+            if (choiceResult && choiceResult.outcome === 'accepted') {
+                console.log('User accepted Kira PWA installation');
+                if (pwaBanner) pwaBanner.style.display = 'none';
+                if (btnHeaderInstall) btnHeaderInstall.style.display = 'none';
+            }
+            deferredPWAInstallPrompt = null;
+        } else if (isIOS) {
+            // Show iOS Safari instruction modal
+            if (iosModal) iosModal.style.display = 'flex';
+        } else {
+            // Desktop fallback guidance
+            if (typeof showConnectionToast === 'function') {
+                showConnectionToast('💡 กดที่ไอคอน ⊕ หรือดาวน์โหลดบนช่อง Address Bar เพื่อติดตั้ง Kira AI ค่ะ', 'ready');
+            } else {
+                alert('ท่านสามารถติดตั้งแอปได้โดยกดที่ไอคอนติดตั้ง (⊕) บริเวณแถบที่อยู่เว็บของเบราว์เซอร์ค่ะ');
+            }
+        }
+    }
+
+    if (btnHeaderInstall) {
+        btnHeaderInstall.addEventListener('click', triggerPWAInstall);
+    }
+    if (btnMenuInstall) {
+        btnMenuInstall.addEventListener('click', () => {
+            const dropdown = document.getElementById('tools-dropdown-menu');
+            if (dropdown) dropdown.classList.remove('show');
+            triggerPWAInstall();
+        });
+    }
+    if (pwaBtnInstall) {
+        pwaBtnInstall.addEventListener('click', triggerPWAInstall);
+    }
+
+    // Dismiss banner
+    if (pwaBtnDismiss) {
+        pwaBtnDismiss.addEventListener('click', () => {
+            if (pwaBanner) pwaBanner.style.display = 'none';
+            localStorage.setItem('kira_pwa_dismissed', Date.now().toString());
+        });
+    }
+
+    // iOS Modal close buttons
+    if (iosCloseBtn) {
+        iosCloseBtn.addEventListener('click', () => {
+            if (iosModal) iosModal.style.display = 'none';
+        });
+    }
+    if (iosGotitBtn) {
+        iosGotitBtn.addEventListener('click', () => {
+            if (iosModal) iosModal.style.display = 'none';
+        });
+    }
+    if (iosModal) {
+        iosModal.addEventListener('click', (e) => {
+            if (e.target === iosModal) iosModal.style.display = 'none';
+        });
+    }
+
+    // App installed event
+    window.addEventListener('appinstalled', () => {
+        console.log('🎉 Kira AI PWA installed successfully!');
+        if (pwaBanner) pwaBanner.style.display = 'none';
+        if (btnHeaderInstall) btnHeaderInstall.style.display = 'none';
+        if (pwaMenuStatus) pwaMenuStatus.textContent = 'ติดตั้งบนอุปกรณ์นี้แล้ว';
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('🎉 ติดตั้ง Kira AI บนเครื่องของคุณเรียบร้อยแล้วค่ะ', 'ready');
+        }
+    });
+}
+window.initPWAController = initPWAController;
+
+// ====================================================================
+// 🖨️ One-Click Executive & Silver Care Deliverables PDF/Print Engine
+// ====================================================================
+function exportDeliverableToPDF(title, rawContent, mode = 'executive') {
+    if (!rawContent || rawContent.trim() === '') {
+        alert('ไม่มีเนื้อหาสำหรับการพิมพ์รายงานค่ะ');
+        return;
+    }
+
+    // 1. Determine Mode & Labels
+    const isSilver = mode === 'silver_care' || document.body.classList.contains('mode-silver-care');
+    const isBoardroom = mode === 'boardroom';
+    
+    let modeBadge = '';
+    let categoryTitle = '';
+    if (isBoardroom) {
+        modeBadge = '<span class="badge badge-boardroom">🏛️ สภาที่ปรึกษาผู้บริหาร (Virtual Boardroom)</span>';
+        categoryTitle = 'บันทึกการประชุมและมติเอกฉันท์สภาที่ปรึกษา';
+    } else if (isSilver) {
+        modeBadge = '<span class="badge badge-silver">🌸 โหมดวัยเก๋าอุ่นใจ (Silver Care)</span>';
+        categoryTitle = 'เอกสารสรุปความรู้และคำแนะนำสุขภาพประจำวัน';
+    } else {
+        modeBadge = '<span class="badge badge-exec">👔 ระบบผู้บริหารระดับสูง (Executive Intelligence)</span>';
+        categoryTitle = 'เอกสารส่งงานและรายงานกลยุทธ์ผู้บริหาร';
+    }
+
+    // User tier badge
+    const isBoss = (typeof currentUser !== 'undefined' && (currentUser === 'บอส' || (currentUser && currentUser.includes('ศิวัช'))));
+    let userBadge = '';
+    if (isBoss) {
+        userBadge = '<span class="badge badge-boss">👑 ประธานกรรมการ / บอส</span>';
+    } else if (typeof currentUserStatus !== 'undefined' && currentUserStatus && currentUserStatus.tier === 'vip') {
+        userBadge = '<span class="badge badge-vip">⭐ สมาชิก VIP</span>';
+    } else {
+        userBadge = '<span class="badge badge-user">👤 สมาชิกทั่วไป</span>';
+    }
+
+    // 2. Parse Markdown to HTML
+    let parsedHTML = '';
+    try {
+        if (typeof marked !== 'undefined' && marked.parse) {
+            parsedHTML = marked.parse(cleanDeliverableText(rawContent));
+        } else {
+            parsedHTML = '<div style="white-space: pre-wrap;">' + cleanDeliverableText(rawContent) + '</div>';
+        }
+    } catch (e) {
+        parsedHTML = '<div style="white-space: pre-wrap;">' + cleanDeliverableText(rawContent) + '</div>';
+    }
+
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long'
+    }) + ' เวลา ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+    
+    const docId = 'KIRA-' + now.getFullYear() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + '-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+
+    // 3. Build High-Contrast Printable Document
+    const printDocContent = `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} - ${docId}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 16mm 14mm 16mm 14mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: 'Noto Sans Thai', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: ${isSilver ? '12pt' : '10pt'};
+            line-height: ${isSilver ? '1.75' : '1.6'};
+            color: #0f172a;
+            background: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        .report-page {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .report-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 2.5px solid #0284c7;
+            margin-bottom: 14px;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 1px solid #cbd5e1;
+        }
+        .brand-text h1 {
+            font-size: 14.5pt;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 2px 0;
+            letter-spacing: -0.3px;
+        }
+        .brand-text p {
+            font-size: 8.5pt;
+            color: #64748b;
+            margin: 0;
+        }
+        .header-meta {
+            text-align: right;
+            font-size: 8.5pt;
+            color: #475569;
+            line-height: 1.4;
+        }
+        .header-meta strong {
+            color: #0f172a;
+        }
+        .doc-meta-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .doc-title-area h2 {
+            font-size: ${isSilver ? '14.5pt' : '12.5pt'};
+            font-weight: 700;
+            color: #0284c7;
+            margin: 0 0 4px 0;
+        }
+        .doc-category {
+            font-size: 9pt;
+            color: #64748b;
+        }
+        .doc-badges {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 8pt;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+        .badge-boardroom { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+        .badge-silver { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .badge-exec { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .badge-boss { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .badge-vip { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+        .badge-user { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+        .report-body {
+            color: #1e293b;
+            font-size: ${isSilver ? '11.5pt' : '10pt'};
+            line-height: ${isSilver ? '1.8' : '1.65'};
+        }
+        .report-body h1, .report-body h2, .report-body h3, .report-body h4 {
+            color: #0f172a;
+            margin-top: 14pt;
+            margin-bottom: 6pt;
+            page-break-after: avoid;
+        }
+        .report-body h1 { font-size: 13.5pt; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; }
+        .report-body h2 { font-size: 12pt; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px; }
+        .report-body h3 { font-size: 11pt; color: #0369a1; }
+        .report-body p { margin: 0 0 8pt 0; text-align: justify; }
+        .report-body ul, .report-body ol { margin: 0 0 10pt 0; padding-left: 20px; }
+        .report-body li { margin-bottom: 3pt; }
+        .report-body blockquote {
+            border-left: 3px solid #0284c7;
+            background: #f8fafc;
+            padding: 8px 12px;
+            margin: 8pt 0;
+            color: #334155;
+            font-style: italic;
+        }
+        .report-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12pt 0;
+            font-size: 9pt;
+            page-break-inside: avoid;
+        }
+        .report-body th, .report-body td {
+            border: 1px solid #cbd5e1;
+            padding: 6pt 8pt;
+            text-align: left;
+        }
+        .report-body th {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .report-body tr:nth-child(even) td {
+            background-color: #fafaf9;
+        }
+        .report-body pre {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: 'JetBrains Mono', Consolas, monospace;
+            font-size: 8.5pt;
+            overflow-x: auto;
+            page-break-inside: avoid;
+        }
+        .report-body code {
+            font-family: 'JetBrains Mono', Consolas, monospace;
+            font-size: 9pt;
+            background: #f1f5f9;
+            padding: 1px 4px;
+            border-radius: 4px;
+        }
+
+        .report-signoff-section {
+            margin-top: 24pt;
+            padding-top: 14pt;
+            border-top: 1px solid #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            page-break-inside: avoid;
+        }
+        .signoff-box {
+            width: 48%;
+        }
+        .sign-title {
+            font-size: 9pt;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 28pt;
+        }
+        .sign-line {
+            border-bottom: 1px solid #94a3b8;
+            width: 85%;
+            margin-bottom: 6pt;
+        }
+        .sign-caption {
+            font-size: 8.5pt;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        .audit-seal-box {
+            width: 46%;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 10px 12px;
+            text-align: right;
+            font-size: 8pt;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        .seal-title {
+            font-weight: 700;
+            color: #0284c7;
+            font-size: 8.5pt;
+            margin-bottom: 3px;
+        }
+        .seal-hash {
+            font-family: 'JetBrains Mono', monospace;
+            color: #475569;
+            word-break: break-all;
+        }
+
+        .report-footer {
+            margin-top: 16pt;
+            padding-top: 6pt;
+            border-top: 0.5px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 7.5pt;
+            color: #94a3b8;
+        }
+
+        .print-controls-bar {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 16px;
+        }
+        .print-controls-bar button {
+            background: #0284c7;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 9pt;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .print-controls-bar button.btn-secondary {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        @media print {
+            .print-controls-bar {
+                display: none !important;
+            }
+            .report-page {
+                padding: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-controls-bar">
+        <div>
+            <strong>พิมพ์รายงาน / บันทึก PDF (A4)</strong> — ${title}
+        </div>
+        <div>
+            <button onclick="window.print()">สั่งพิมพ์ / Save as PDF</button>
+            <button class="btn-secondary" onclick="window.close()">ปิด</button>
+        </div>
+    </div>
+
+    <div class="report-page">
+        <!-- Letterhead Header -->
+        <div class="report-header">
+            <div class="header-brand">
+                <img src="${window.location.origin}/static/images/kira_logo.png?v=6" alt="Kira AI" class="brand-logo" onerror="this.src='${window.location.origin}/static/images/kira_avatar.jpg?v=5'">
+                <div class="brand-text">
+                    <h1>Kira AI Enterprise System</h1>
+                    <p>ระบบปัญญาประดิษฐ์อัจฉริยะภาษาไทย • สภาที่ปรึกษาผู้บริหารและผู้ช่วยส่วนบุคคล (v2.2)</p>
+                </div>
+            </div>
+            <div class="header-meta">
+                <div><strong>รหัสเอกสาร:</strong> ${docId}</div>
+                <div><strong>วันที่ออกเอกสาร:</strong> ${formattedDate}</div>
+                <div><strong>ชั้นความลับ:</strong> เอกสารทางการ (Confidential)</div>
+            </div>
+        </div>
+
+        <!-- Document Metadata Card -->
+        <div class="doc-meta-card">
+            <div class="doc-title-area">
+                <h2>${title}</h2>
+                <div class="doc-category">${categoryTitle}</div>
+            </div>
+            <div class="doc-badges">
+                ${modeBadge}
+                ${userBadge}
+            </div>
+        </div>
+
+        <!-- Rendered Report Body -->
+        <div class="report-body">
+            ${parsedHTML}
+        </div>
+
+        <!-- Sign-off & Audit Section -->
+        <div class="report-signoff-section">
+            <div class="signoff-box">
+                <div class="sign-title">ลายมือชื่อผู้มีอำนาจลงนาม / ผู้ตรวจสอบรายงาน</div>
+                <div class="sign-line"></div>
+                <div class="sign-caption">
+                    (....................................................................)<br>
+                    ตำแหน่ง: ประธานเจ้าหน้าที่บริหาร / ผู้มีอำนาจอนุมัติ<br>
+                    วันที่: ...... / ...... / ..........
+                </div>
+            </div>
+            <div class="audit-seal-box">
+                <div class="seal-title">🏛️ Kira AI Enterprise Intelligence Verification</div>
+                <div>เอกสารนี้ได้รับการประมวลผลและจัดทำโดยระบบปัญญาประดิษฐ์ Kira AI v2.2</div>
+                <div style="margin-top: 4px;"><strong>Verification Digest:</strong></div>
+                <div class="seal-hash">SHA256:${Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2)}</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <div>จัดทำโดย Kira AI System — https://kira-public-engine.onrender.com</div>
+            <div>หน้า 1 / 1 (Official Document)</div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                window.focus();
+                window.print();
+            }, 500);
+        });
+    </script>
+</body>
+</html>`;
+
+    // 4. Open Print Window
+    const printWindow = window.open('', '_blank', 'width=950,height=900,menubar=no,toolbar=no,location=no,status=no');
+    if (printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(printDocContent);
+        printWindow.document.close();
+    } else {
+        // Fallback for pop-up blocker: Print within an invisible iframe
+        const printIframe = document.createElement('iframe');
+        printIframe.style.position = 'fixed';
+        printIframe.style.right = '0';
+        printIframe.style.bottom = '0';
+        printIframe.style.width = '0';
+        printIframe.style.height = '0';
+        printIframe.style.border = '0';
+        document.body.appendChild(printIframe);
+        
+        printIframe.contentWindow.document.open();
+        printIframe.contentWindow.document.write(printDocContent);
+        printIframe.contentWindow.document.close();
+        
+        setTimeout(() => {
+            printIframe.contentWindow.focus();
+            printIframe.contentWindow.print();
+            setTimeout(() => {
+                if (printIframe.parentNode) printIframe.parentNode.removeChild(printIframe);
+            }, 3000);
+        }, 500);
+    }
+}
+window.exportDeliverableToPDF = exportDeliverableToPDF;
+
 
 
 

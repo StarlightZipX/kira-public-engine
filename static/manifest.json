@@ -1,0 +1,39 @@
+{
+  "name": "Kira AI - Public & Executive AI Assistant",
+  "short_name": "Kira AI",
+  "description": "ระบบปัญญาประดิษฐ์อัจฉริยะภาษาไทย รองรับสภาบอร์ดรูมผู้บริหาร โหมดทั่วไป และโหมดวัยเก๋าอุ่นใจสั่งด้วยเสียง 100%",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0f19",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/static/images/kira_logo.png?v=6",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/images/kira_logo.png?v=6",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/images/kira_avatar.jpg?v=5",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/images/kira_avatar.jpg?v=5",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities", "business", "lifestyle"],
+  "lang": "th",
+  "dir": "ltr"
+}
