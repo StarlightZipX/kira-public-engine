@@ -11,7 +11,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=18">
+    <link rel="stylesheet" href="/static/style.css?v=19">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -400,6 +400,13 @@
                         <span id="task-matrix-badge" class="task-matrix-badge" style="display: none;">0</span>
                     </button>
 
+                    <!-- 🎙️ Kira Real-Time Live Voice Assistant Button -->
+                    <button title="เปิดโหมดสนทนาด้วยเสียงสดสองทิศทาง (Kira Live Voice)" id="btn-live-voice" class="header-action-btn live-voice-btn">
+                        <i class="fa-solid fa-microphone-lines text-rose"></i>
+                        <span class="live-voice-btn-text">คุยสด</span>
+                        <span class="live-voice-pulse-dot"></span>
+                    </button>
+
                     <!-- PWA Quick Install Header Action (Preserved for compatibility) -->
                     <button id="btn-install-pwa-header" class="header-action-btn pwa-header-install-btn" title="ติดตั้ง Kira AI Web App บนอุปกรณ์" style="display: none;">
                         <i class="fa-solid fa-cloud-arrow-down"></i>
@@ -658,6 +665,64 @@
         <div class="artifacts-body">
             <!-- The Live Web Canvas -->
             <iframe id="artifacts-iframe" sandbox="allow-scripts allow-modals allow-forms allow-popups allow-same-origin" title="Live Preview"></iframe>
+        </div>
+    </div>
+
+    <!-- 🎙️ Kira Real-Time Live Voice Dialog Modal -->
+    <div id="live-voice-modal" class="live-voice-overlay" style="display: none;">
+        <div class="live-voice-card">
+            <!-- Header -->
+            <div class="live-voice-header">
+                <div class="live-voice-branding">
+                    <span class="live-voice-dot"></span>
+                    <span class="live-voice-title">Kira Live Voice</span>
+                    <span class="live-voice-badge">REAL-TIME</span>
+                </div>
+                <button id="btn-close-live-voice" class="live-voice-close-btn" title="ปิดโหมดสนทนาด้วยเสียง"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Central Visualizer -->
+            <div class="live-voice-visualizer-container">
+                <div class="live-voice-orb" id="live-voice-orb">
+                    <div class="orb-ring ring-1"></div>
+                    <div class="orb-ring ring-2"></div>
+                    <div class="orb-ring ring-3"></div>
+                    <div class="orb-core">
+                        <i class="fa-solid fa-sparkles orb-icon" id="live-voice-orb-icon"></i>
+                    </div>
+                </div>
+                <!-- Dynamic Frequency Bars -->
+                <div class="live-voice-bars" id="live-voice-bars">
+                    <span class="vbar"></span><span class="vbar"></span><span class="vbar"></span>
+                    <span class="vbar"></span><span class="vbar"></span><span class="vbar"></span>
+                    <span class="vbar"></span><span class="vbar"></span><span class="vbar"></span>
+                </div>
+                <div class="live-voice-status" id="live-voice-status-text">พร้อมรับฟังคุณแล้วค่ะ พูดคุยได้เลยนะคะ...</div>
+            </div>
+
+            <!-- Live Subtitle / Transcript -->
+            <div class="live-voice-transcript-wrapper">
+                <div class="live-voice-user-transcript" id="live-voice-user-text"></div>
+                <div class="live-voice-ai-transcript" id="live-voice-ai-text">
+                    <span class="ai-transcript-placeholder">"สวัสดีค่ะบอส มีเรื่องอะไรอยากปรึกษา สั่งงาน หรือคุยเล่นกับคิระ พูดได้เลยนะคะ..."</span>
+                </div>
+            </div>
+
+            <!-- Controls Footer -->
+            <div class="live-voice-controls">
+                <button id="btn-voice-mute" class="voice-ctrl-btn" title="ปิด/เปิดไมโครโฟน">
+                    <i class="fa-solid fa-microphone"></i>
+                    <span id="voice-mute-label">ไมค์</span>
+                </button>
+                <button id="btn-voice-interrupt" class="voice-ctrl-btn voice-ctrl-interrupt" title="แตะเพื่อพูดแทรกทันที">
+                    <i class="fa-solid fa-hand"></i>
+                    <span>พูดแทรก</span>
+                </button>
+                <button id="btn-voice-end" class="voice-ctrl-btn voice-ctrl-end" title="จบการสนทนาด้วยเสียง">
+                    <i class="fa-solid fa-phone-slash"></i>
+                    <span>วางสาย</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -2095,10 +2160,11 @@
     </div>
 
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=33"></script>
+    <script src="/static/script.js?v=34"></script>
 </body>
 </html>

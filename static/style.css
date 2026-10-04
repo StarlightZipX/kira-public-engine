@@ -9491,4 +9491,572 @@ body.mode-silver-care .welcome-subtitle {
     }
 }
 
+/* ==========================================================================
+   🎙️ 1. Kira Real-Time Live Voice Assistant (Gemini Live / GPT-Voice Style)
+   ========================================================================== */
+.live-voice-btn {
+    position: relative;
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(236, 72, 153, 0.15)) !important;
+    border: 1px solid rgba(244, 63, 94, 0.35) !important;
+    color: #fb7185 !important;
+    font-weight: 600 !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.live-voice-btn:hover {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.28), rgba(236, 72, 153, 0.28)) !important;
+    border-color: #f43f5e !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 16px rgba(244, 63, 94, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+.live-voice-pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f43f5e;
+    box-shadow: 0 0 8px #f43f5e;
+    display: inline-block;
+    animation: liveVoiceDotPulse 1.6s infinite ease-in-out;
+}
+
+@keyframes liveVoiceDotPulse {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.6); opacity: 1; box-shadow: 0 0 12px #f43f5e; }
+}
+
+/* Live Voice Overlay & Card */
+.live-voice-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: rgba(10, 15, 29, 0.85);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: liveVoiceFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes liveVoiceFadeIn {
+    from { opacity: 0; transform: scale(0.97); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.live-voice-card {
+    background: rgba(15, 23, 42, 0.94);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(244, 63, 94, 0.15);
+    border-radius: 28px;
+    width: 100%;
+    max-width: 580px;
+    padding: 26px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    position: relative;
+    overflow: hidden;
+}
+
+.live-voice-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.live-voice-branding {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.live-voice-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981;
+    animation: liveVoiceDotPulse 1.4s infinite ease-in-out;
+}
+
+.live-voice-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: -0.01em;
+}
+
+.live-voice-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    background: rgba(244, 63, 94, 0.18);
+    border: 1px solid rgba(244, 63, 94, 0.4);
+    color: #fb7185;
+    letter-spacing: 0.05em;
+}
+
+.live-voice-close-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.live-voice-close-btn:hover {
+    background: rgba(244, 63, 94, 0.2);
+    color: #f43f5e;
+    border-color: rgba(244, 63, 94, 0.4);
+    transform: rotate(90deg);
+}
+
+/* Central Visualizer Orb */
+.live-voice-visualizer-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin: 10px 0;
+    position: relative;
+}
+
+.live-voice-orb {
+    width: 130px;
+    height: 130px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.orb-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px solid transparent;
+}
+
+.orb-ring.ring-1 {
+    width: 100%;
+    height: 100%;
+    border-top-color: #f43f5e;
+    border-right-color: #fb7185;
+    animation: orbSpin 3.5s linear infinite;
+}
+
+.orb-ring.ring-2 {
+    width: 82%;
+    height: 82%;
+    border-bottom-color: #38bdf8;
+    border-left-color: #818cf8;
+    animation: orbSpinReverse 4.5s linear infinite;
+}
+
+.orb-ring.ring-3 {
+    width: 64%;
+    height: 64%;
+    border-top-color: #a855f7;
+    border-bottom-color: #ec4899;
+    animation: orbSpin 2.8s linear infinite;
+}
+
+@keyframes orbSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes orbSpinReverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+}
+
+.orb-core {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f43f5e, #8b5cf6);
+    box-shadow: 0 0 28px rgba(244, 63, 94, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+/* Orb States */
+.live-voice-card.listening .orb-core {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    box-shadow: 0 0 35px rgba(6, 182, 212, 0.85);
+    transform: scale(1.12);
+}
+
+.live-voice-card.speaking .orb-core {
+    background: linear-gradient(135deg, #f43f5e, #e11d48);
+    box-shadow: 0 0 40px rgba(244, 63, 94, 0.9);
+    animation: orbPulseSpeaking 1s infinite alternate ease-in-out;
+}
+
+@keyframes orbPulseSpeaking {
+    from { transform: scale(1); }
+    to { transform: scale(1.2); }
+}
+
+/* Frequency Bars */
+.live-voice-bars {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+}
+
+.vbar {
+    width: 4px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 9999px;
+    transition: height 0.15s ease, background 0.2s ease;
+}
+
+.live-voice-card.listening .vbar {
+    background: #38bdf8;
+    animation: vbarWave 0.8s infinite ease-in-out alternate;
+}
+
+.live-voice-card.speaking .vbar {
+    background: #fb7185;
+    animation: vbarWaveSpeaking 0.6s infinite ease-in-out alternate;
+}
+
+.vbar:nth-child(2) { animation-delay: 0.1s !important; }
+.vbar:nth-child(3) { animation-delay: 0.2s !important; }
+.vbar:nth-child(4) { animation-delay: 0.3s !important; }
+.vbar:nth-child(5) { animation-delay: 0.4s !important; }
+.vbar:nth-child(6) { animation-delay: 0.3s !important; }
+.vbar:nth-child(7) { animation-delay: 0.2s !important; }
+.vbar:nth-child(8) { animation-delay: 0.1s !important; }
+.vbar:nth-child(9) { animation-delay: 0.25s !important; }
+
+@keyframes vbarWave {
+    from { height: 4px; }
+    to { height: 22px; }
+}
+
+@keyframes vbarWaveSpeaking {
+    from { height: 6px; }
+    to { height: 28px; }
+}
+
+.live-voice-status {
+    font-size: 0.88rem;
+    color: #94a3b8;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Live Subtitle / Transcripts */
+.live-voice-transcript-wrapper {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 105px;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.live-voice-user-transcript {
+    font-size: 0.95rem;
+    color: #38bdf8;
+    font-weight: 600;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.live-voice-ai-transcript {
+    font-size: 0.92rem;
+    color: #e2e8f0;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.ai-transcript-placeholder {
+    color: #64748b;
+    font-style: italic;
+}
+
+/* Controls Footer */
+.live-voice-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    width: 100%;
+}
+
+.voice-ctrl-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    padding: 10px 18px;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 80px;
+}
+
+.voice-ctrl-btn i {
+    font-size: 1.25rem;
+}
+
+.voice-ctrl-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.voice-ctrl-btn.muted {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #f87171;
+}
+
+.voice-ctrl-interrupt {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+}
+
+.voice-ctrl-interrupt:hover {
+    background: rgba(245, 158, 11, 0.28);
+    border-color: #f59e0b;
+    color: #ffffff;
+}
+
+.voice-ctrl-end {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+}
+
+.voice-ctrl-end:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+}
+
+/* ==========================================================================
+   📊 2. Interactive Financial & Data Chart Engine (Chart.js Integration)
+   ========================================================================== */
+.kira-chart-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin: 14px 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.25s ease;
+}
+
+.kira-chart-card:hover {
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), 0 0 20px rgba(56, 189, 248, 0.08);
+}
+
+.kira-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 10px;
+}
+
+.kira-chart-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kira-chart-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    color: #38bdf8;
+    text-transform: uppercase;
+}
+
+.kira-chart-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.kira-chart-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chart-action-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-size: 0.76rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.chart-action-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.chart-canvas-wrapper {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+    max-height: 380px;
+}
+
+/* Light Theme Overrides for Charts and Live Voice */
+body.light-theme .live-voice-card,
+body.light-mode .live-voice-card {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15), 0 0 30px rgba(244, 63, 94, 0.1) !important;
+}
+
+body.light-theme .live-voice-title,
+body.light-mode .live-voice-title {
+    color: #0f172a !important;
+}
+
+body.light-theme .live-voice-status,
+body.light-mode .live-voice-status {
+    color: #475569 !important;
+}
+
+body.light-theme .live-voice-transcript-wrapper,
+body.light-mode .live-voice-transcript-wrapper {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+body.light-theme .live-voice-ai-transcript,
+body.light-mode .live-voice-ai-transcript {
+    color: #1e293b !important;
+}
+
+body.light-theme .voice-ctrl-btn,
+body.light-mode .voice-ctrl-btn {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+}
+
+body.light-theme .voice-ctrl-btn:hover,
+body.light-mode .voice-ctrl-btn:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+body.light-theme .kira-chart-card,
+body.light-mode .kira-chart-card {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06) !important;
+}
+
+body.light-theme .kira-chart-header,
+body.light-mode .kira-chart-header {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .kira-chart-title,
+body.light-mode .kira-chart-title {
+    color: #0f172a !important;
+}
+
+body.light-theme .chart-action-btn,
+body.light-mode .chart-action-btn {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+}
+
+body.light-theme .chart-action-btn:hover,
+body.light-mode .chart-action-btn:hover {
+    background: #f1f5f9 !important;
+    color: #0284c7 !important;
+    border-color: #0284c7 !important;
+}
+
+/* OLED Theme Overrides for Charts and Live Voice */
+body.oled-theme .live-voice-card,
+body.oled-mode .live-voice-card {
+    background: #000000 !important;
+    border: 1px solid #27272a !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9) !important;
+}
+
+body.oled-theme .live-voice-transcript-wrapper,
+body.oled-mode .live-voice-transcript-wrapper {
+    background: #09090b !important;
+    border: 1px solid #18181b !important;
+}
+
+body.oled-theme .kira-chart-card,
+body.oled-mode .kira-chart-card {
+    background: #09090b !important;
+    border: 1px solid #27272a !important;
+}
+
+body.oled-theme .chart-action-btn,
+body.oled-mode .chart-action-btn {
+    background: #09090b !important;
+    border: 1px solid #27272a !important;
+    color: #a1a1aa !important;
+}
+
+
 

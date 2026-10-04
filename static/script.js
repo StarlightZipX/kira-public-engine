@@ -1504,6 +1504,8 @@ function addMessage(text, isUser, imageBase64 = null) {
                 </div>`;
             }
             content.innerHTML = htmlContent;
+            applyCodeActions(content);
+            renderKiraCharts(content);
             attachDeliverablesBar(content, finalMarkdown || text);
         }
     }
@@ -1691,6 +1693,7 @@ async function sendMessage() {
         
         // Apply Advanced Code Actions (Copy & Live Preview)
         applyCodeActions(contentDiv);
+        renderKiraCharts(contentDiv);
         
         // Append Executive Deliverables Suite & Actions
         const deliverableElements = attachDeliverablesBar(contentDiv, finalMarkdown || fullText);
@@ -6085,6 +6088,483 @@ function initKiraApp() {
     try { updateModelUI(); } catch (e) { console.warn("Model UI update error:", e); }
     try { checkEngineStatus(); } catch (e) { console.warn("Engine status check error:", e); }
 
+// =========================================================================
+// 📊 Interactive Financial & Data Chart Engine (Chart.js Integration)
+// =========================================================================
+function renderKiraCharts(container) {
+    if (!container || typeof Chart === 'undefined') return;
+
+    const codeBlocks = container.querySelectorAll('pre code');
+    codeBlocks.forEach(block => {
+        const pre = block.parentElement;
+        if (!pre || pre.dataset.chartRendered) return;
+
+        const codeText = block.innerText.trim();
+        const className = block.className || '';
+        const isChartCode = className.includes('chart') || 
+                            className.includes('json:chart') ||
+                            (codeText.startsWith('{') && codeText.includes('"type"') && codeText.includes('"data"'));
+
+        if (!isChartCode) return;
+
+        try {
+            const chartSpec = JSON.parse(codeText);
+            if (!chartSpec.type || !chartSpec.data) return;
+
+            pre.dataset.chartRendered = "true";
+
+            // Create Chart Card
+            const card = document.createElement('div');
+            card.className = 'kira-chart-card';
+
+            const chartTitle = chartSpec.title || 'แผนภูมิวิเคราะห์ข้อมูลเชิงบริหาร (Executive Chart)';
+            const chartType = chartSpec.type || 'bar';
+            const chartId = 'kira-chart-' + Math.random().toString(36).substring(2, 9);
+
+            card.innerHTML = `
+                <div class="kira-chart-header">
+                    <div class="kira-chart-title-group">
+                        <span class="kira-chart-badge">${escapeHtml(chartType.toUpperCase())}</span>
+                        <span class="kira-chart-title">${escapeHtml(chartTitle)}</span>
+                    </div>
+                    <div class="kira-chart-actions">
+                        <button class="chart-action-btn btn-toggle-chart" title="สลับรูปแบบกราฟ (Bar <-> Line)">
+                            <i class="fa-solid fa-chart-line"></i> สลับมุมมอง
+                        </button>
+                        <button class="chart-action-btn btn-download-chart" title="ดาวน์โหลดเป็นรูปภาพ PNG คมชัดสูง">
+                            <i class="fa-solid fa-download"></i> บันทึก PNG
+                        </button>
+                        <button class="chart-action-btn btn-canvas-chart" title="เปิดวิเคราะห์เต็มจอบน Live Canvas">
+                            <i class="fa-solid fa-expand"></i> เต็มจอ
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrapper">
+                    <canvas id="${chartId}"></canvas>
+                </div>
+            `;
+
+            pre.parentNode.insertBefore(card, pre.nextSibling);
+            pre.style.display = 'none'; // Hide raw code block
+
+            // Build Chart.js with high-end styling
+            const canvasEl = card.querySelector(`#${chartId}`);
+            if (!canvasEl) return;
+
+            const isLight = document.body.classList.contains('light-theme') || document.body.classList.contains('light-mode');
+            const textColor = isLight ? '#0f172a' : '#f8fafc';
+            const gridColor = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)';
+
+            // Executive Palette
+            const defaultColors = [
+                '#38bdf8', '#818cf8', '#34d399', '#fbbf24', '#f43f5e', 
+                '#a855f7', '#2dd4bf', '#fb923c', '#e879f9', '#60a5fa'
+            ];
+
+            if (chartSpec.data && chartSpec.data.datasets) {
+                chartSpec.data.datasets.forEach((ds, idx) => {
+                    const col = defaultColors[idx % defaultColors.length];
+                    if (!ds.backgroundColor) {
+                        ds.backgroundColor = (chartType === 'line') ? 'transparent' : col;
+                    }
+                    if (!ds.borderColor) {
+                        ds.borderColor = col;
+                    }
+                    if (chartType === 'line') {
+                        ds.borderWidth = 2.5;
+                        ds.tension = 0.35;
+                        ds.pointRadius = 4;
+                        ds.pointHoverRadius = 7;
+                    } else if (chartType === 'bar') {
+                        ds.borderRadius = 6;
+                    }
+                });
+            }
+
+            const chartInstance = new Chart(canvasEl.getContext('2d'), {
+                type: chartType,
+                data: chartSpec.data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: textColor, font: { family: "'Inter', 'Noto Sans Thai', sans-serif", weight: 600 } }
+                        },
+                        tooltip: {
+                            backgroundColor: isLight ? 'rgba(15, 23, 42, 0.95)' : 'rgba(0, 0, 0, 0.9)',
+                            titleColor: '#38bdf8',
+                            bodyColor: '#ffffff',
+                            padding: 10,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: (chartType === 'pie' || chartType === 'doughnut') ? {} : {
+                        x: {
+                            ticks: { color: isLight ? '#475569' : '#94a3b8' },
+                            grid: { color: gridColor }
+                        },
+                        y: {
+                            ticks: { color: isLight ? '#475569' : '#94a3b8' },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+
+            // Wire action buttons
+            const btnDownload = card.querySelector('.btn-download-chart');
+            if (btnDownload) {
+                btnDownload.onclick = () => {
+                    const imgUrl = chartInstance.toBase64Image();
+                    const a = document.createElement('a');
+                    a.href = imgUrl;
+                    a.download = `Kira_Chart_${chartTitle.replace(/[^a-zA-Z0-9ก-๙]/g, '_')}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    if (typeof showConnectionToast === 'function') {
+                        showConnectionToast('📊 บันทึกรูปภาพชาร์ตความละเอียดสูงเรียบร้อยแล้วค่ะ', 'ready');
+                    }
+                };
+            }
+
+            const btnToggle = card.querySelector('.btn-toggle-chart');
+            if (btnToggle) {
+                btnToggle.onclick = () => {
+                    const currentT = chartInstance.config.type;
+                    const nextT = (currentT === 'bar') ? 'line' : (currentT === 'line' ? 'doughnut' : 'bar');
+                    chartInstance.config.type = nextT;
+                    card.querySelector('.kira-chart-badge').textContent = nextT.toUpperCase();
+                    chartInstance.update();
+                };
+            }
+
+            const btnCanvas = card.querySelector('.btn-canvas-chart');
+            if (btnCanvas) {
+                btnCanvas.onclick = () => {
+                    const canvasHtml = `<!DOCTYPE html><html><head><title>${chartTitle}</title><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script><style>body { margin: 0; background: #0f172a; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; box-sizing: border-box; } .container { width: 90%; max-width: 900px; height: 80vh; background: #1e293b; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }</style></head><body><div class="container"><canvas id="c"></canvas></div><script>const ctx = document.getElementById('c').getContext('2d'); new Chart(ctx, ${JSON.stringify(chartInstance.config)});<\/script></body></html>`;
+                    if (typeof openInLiveCanvas === 'function') {
+                        openInLiveCanvas(chartTitle, canvasHtml, 'html');
+                    }
+                };
+            }
+        } catch (e) {
+            console.warn("Failed to parse chart spec:", e);
+        }
+    });
+}
+
+// =========================================================================
+// 🎙️ Kira Real-Time Two-Way Live Voice Assistant (Continuous Loop)
+// =========================================================================
+let liveVoiceRecognition = null;
+let liveVoiceAudio = null;
+let isLiveVoiceActive = false;
+let isLiveVoiceMuted = false;
+let isKiraSpeakingNow = false;
+
+function initLiveVoiceAssistant() {
+    const btnLiveVoice = document.getElementById('btn-live-voice');
+    const modal = document.getElementById('live-voice-modal');
+    const btnClose = document.getElementById('btn-close-live-voice');
+    const btnEnd = document.getElementById('btn-voice-end');
+    const btnMute = document.getElementById('btn-voice-mute');
+    const btnInterrupt = document.getElementById('btn-voice-interrupt');
+    const orb = document.getElementById('live-voice-orb');
+    const card = modal ? modal.querySelector('.live-voice-card') : null;
+    const statusText = document.getElementById('live-voice-status-text');
+    const userText = document.getElementById('live-voice-user-text');
+    const aiText = document.getElementById('live-voice-ai-text');
+
+    if (!btnLiveVoice || !modal) return;
+
+    // Check Speech Recognition support
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    function openLiveVoice() {
+        if (!currentUser) {
+            alert("กรุณาเข้าสู่ระบบก่อนใช้งานโหมดเสียงสดนะคะ");
+            return;
+        }
+        if (!SpeechRec) {
+            alert("เบราว์เซอร์นี้ไม่รองรับ Web Speech API ค่ะ แนะนำให้ใช้งานบน Google Chrome หรือ Microsoft Edge นะคะ");
+            return;
+        }
+
+        modal.style.display = 'flex';
+        isLiveVoiceActive = true;
+        isLiveVoiceMuted = false;
+        isKiraSpeakingNow = false;
+        if (card) {
+            card.classList.remove('speaking', 'thinking');
+            card.classList.add('listening');
+        }
+        if (statusText) statusText.textContent = "🎙️ พร้อมรับฟังคุณแล้วค่ะ พูดคุยได้เลยนะคะ...";
+        if (userText) userText.textContent = "";
+
+        playKiraSound('send');
+        startLiveListening();
+    }
+
+    function closeLiveVoice() {
+        isLiveVoiceActive = false;
+        if (liveVoiceRecognition) {
+            try { liveVoiceRecognition.stop(); } catch (e) {}
+        }
+        if (liveVoiceAudio) {
+            try { liveVoiceAudio.pause(); } catch (e) {}
+            liveVoiceAudio = null;
+        }
+        isKiraSpeakingNow = false;
+        modal.style.display = 'none';
+        if (card) card.classList.remove('listening', 'speaking', 'thinking');
+    }
+
+    function startLiveListening() {
+        if (!isLiveVoiceActive || isLiveVoiceMuted || isKiraSpeakingNow) return;
+
+        if (liveVoiceRecognition) {
+            try { liveVoiceRecognition.stop(); } catch (e) {}
+        }
+
+        try {
+            liveVoiceRecognition = new SpeechRec();
+            liveVoiceRecognition.lang = 'th-TH';
+            liveVoiceRecognition.continuous = false;
+            liveVoiceRecognition.interimResults = true;
+
+            let finalTranscript = '';
+
+            liveVoiceRecognition.onstart = () => {
+                if (card) {
+                    card.classList.remove('speaking', 'thinking');
+                    card.classList.add('listening');
+                }
+                if (statusText) statusText.textContent = "🎙️ กำลังฟังเสียงของคุณ... พูดได้เลยค่ะ";
+            };
+
+            liveVoiceRecognition.onresult = (e) => {
+                let interim = '';
+                for (let i = e.resultIndex; i < e.results.length; ++i) {
+                    if (e.results[i].isFinal) {
+                        finalTranscript += e.results[i][0].transcript;
+                    } else {
+                        interim += e.results[i][0].transcript;
+                    }
+                }
+                if (userText) {
+                    userText.textContent = finalTranscript || interim || "...";
+                }
+            };
+
+            liveVoiceRecognition.onerror = (err) => {
+                console.warn("Live voice recognition error:", err);
+                if (isLiveVoiceActive && !isKiraSpeakingNow && !isLiveVoiceMuted) {
+                    setTimeout(() => startLiveListening(), 1000);
+                }
+            };
+
+            liveVoiceRecognition.onend = () => {
+                if (finalTranscript && finalTranscript.trim().length > 0) {
+                    handleUserSpokenQuery(finalTranscript.trim());
+                } else if (isLiveVoiceActive && !isKiraSpeakingNow && !isLiveVoiceMuted) {
+                    // Re-arm microphone if no speech was detected
+                    setTimeout(() => startLiveListening(), 400);
+                }
+            };
+
+            liveVoiceRecognition.start();
+        } catch (err) {
+            console.error("Failed to start speech recognition:", err);
+        }
+    }
+
+    async function handleUserSpokenQuery(queryText) {
+        if (!isLiveVoiceActive) return;
+
+        if (card) {
+            card.classList.remove('listening', 'speaking');
+            card.classList.add('thinking');
+        }
+        if (statusText) statusText.textContent = "🧠 คิระกำลังประมวลผลคำตอบเชิงลึก...";
+
+        try {
+            // Also append to background chat so history is preserved
+            addMessage(queryText, true);
+
+            const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.1-reasoning";
+            const persona = document.getElementById('persona-select') ? document.getElementById('persona-select').value : "default";
+
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: queryText,
+                    username: currentUser,
+                    model_version: modelVersion,
+                    session_id: currentSessionId,
+                    persona: persona,
+                    user_mode: currentUserMode || 'general'
+                })
+            });
+
+            if (!res.ok) throw new Error("API Error");
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let fullText = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                fullText += decoder.decode(value, { stream: true });
+            }
+
+            // Extract clean speech text
+            let cleanResponse = fullText.replace(/<think>[\s\S]*?<\/think>/gi, "")
+                                        .replace(/\[THINKING\][\s\S]*?\[\/THINKING\]/gi, "")
+                                        .replace(/\[THINKING_DONE\]/g, "")
+                                        .replace(/```[\s\S]*?```/g, "")
+                                        .replace(/[*#_`~>]/g, "")
+                                        .trim();
+
+            if (!cleanResponse) cleanResponse = "คิระได้วิเคราะห์ข้อมูลเรียบร้อยแล้วค่ะ";
+
+            // Also post message in main chat window
+            const aiMsgContent = addMessage(fullText, false);
+            applyCodeActions(aiMsgContent);
+            renderKiraCharts(aiMsgContent);
+
+            // Display in Live Voice subtitle
+            if (aiText) aiText.textContent = cleanResponse;
+
+            // Speak response via Edge-TTS
+            await speakKiraResponse(cleanResponse);
+
+        } catch (err) {
+            console.error("Live voice query failed:", err);
+            if (statusText) statusText.textContent = "⚠️ ไม่สามารถประมวลผลได้ กรุณาลองใหม่อีกครั้งค่ะ";
+            if (card) {
+                card.classList.remove('thinking');
+                card.classList.add('listening');
+            }
+            setTimeout(() => startLiveListening(), 1500);
+        }
+    }
+
+    async function speakKiraResponse(textToSpeak) {
+        if (!isLiveVoiceActive) return;
+
+        isKiraSpeakingNow = true;
+        if (card) {
+            card.classList.remove('listening', 'thinking');
+            card.classList.add('speaking');
+        }
+        if (statusText) statusText.textContent = "🔊 คิระกำลังพูด... (แตะ 'พูดแทรก' ได้ทุกเมื่อ)";
+
+        try {
+            const activeVoice = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
+            const activeRate = parseFloat(localStorage.getItem('kira_speech_rate') || '1.05');
+
+            const ttsRes = await fetch('/api/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: textToSpeak, voice: activeVoice, rate: activeRate })
+            });
+
+            if (!ttsRes.ok) throw new Error("TTS Failed");
+
+            const blob = await ttsRes.blob();
+            const audioUrl = URL.createObjectURL(blob);
+
+            if (liveVoiceAudio) {
+                liveVoiceAudio.pause();
+            }
+
+            liveVoiceAudio = new Audio(audioUrl);
+            liveVoiceAudio.onended = () => {
+                isKiraSpeakingNow = false;
+                if (isLiveVoiceActive && !isLiveVoiceMuted) {
+                    if (card) {
+                        card.classList.remove('speaking');
+                        card.classList.add('listening');
+                    }
+                    if (statusText) statusText.textContent = "🎙️ พร้อมรับฟังคุณแล้วค่ะ พูดต่อได้เลยนะคะ...";
+                    startLiveListening();
+                }
+            };
+
+            liveVoiceAudio.onerror = () => {
+                isKiraSpeakingNow = false;
+                if (isLiveVoiceActive) startLiveListening();
+            };
+
+            await liveVoiceAudio.play();
+        } catch (ttsErr) {
+            console.warn("TTS error in live voice:", ttsErr);
+            isKiraSpeakingNow = false;
+            if (isLiveVoiceActive) startLiveListening();
+        }
+    }
+
+    function interruptKira() {
+        if (liveVoiceAudio) {
+            liveVoiceAudio.pause();
+            liveVoiceAudio = null;
+        }
+        isKiraSpeakingNow = false;
+        if (card) {
+            card.classList.remove('speaking', 'thinking');
+            card.classList.add('listening');
+        }
+        if (statusText) statusText.textContent = "🎙️ ขัดจังหวะแล้วค่ะ กำลังฟังเสียงของคุณ...";
+        startLiveListening();
+    }
+
+    // Attach event listeners
+    btnLiveVoice.addEventListener('click', openLiveVoice);
+    if (btnClose) btnClose.addEventListener('click', closeLiveVoice);
+    if (btnEnd) btnEnd.addEventListener('click', closeLiveVoice);
+
+    if (btnMute) {
+        btnMute.addEventListener('click', () => {
+            isLiveVoiceMuted = !isLiveVoiceMuted;
+            btnMute.classList.toggle('muted', isLiveVoiceMuted);
+            const label = document.getElementById('voice-mute-label');
+            if (label) label.textContent = isLiveVoiceMuted ? 'เปิดไมค์' : 'ปิดไมค์';
+            if (isLiveVoiceMuted) {
+                if (liveVoiceRecognition) {
+                    try { liveVoiceRecognition.stop(); } catch (e) {}
+                }
+                if (statusText) statusText.textContent = "🔇 ไมโครโฟนถูกปิดชั่วคราว (แตะเปิดไมค์เพื่อคุยต่อ)";
+            } else {
+                startLiveListening();
+            }
+        });
+    }
+
+    if (btnInterrupt) {
+        btnInterrupt.addEventListener('click', interruptKira);
+    }
+
+    if (orb) {
+        orb.addEventListener('click', () => {
+            if (isKiraSpeakingNow) interruptKira();
+        });
+    }
+}
+
+// =========================================================================
+// 🚀 Master Application Lifecycle Initialization
+// =========================================================================
+function initKiraApp() {
+    console.log("⚡ [Kira AI] Initializing all subsystems & controllers...");
+
+    // 1. Session & Auth Guards
+    try { checkSession(); } catch (e) { console.error("Session check init error:", e); }
+    try { checkPendingOAuthMessage(); } catch (e) { console.error("OAuth check error:", e); }
+
     // 2. Interactive Controls & Dropdowns
     try { initToolsDropdownController(); } catch (e) { console.error("Tools dropdown init error:", e); }
     try { initSettingsModalEventListeners(); } catch (e) { console.error("Settings modal init error:", e); }
@@ -6096,6 +6576,7 @@ function initKiraApp() {
     try { initTaskMatrixController(); } catch (e) { console.error("Task matrix init error:", e); }
     try { initLiveScreenInspector(); } catch (e) { console.error("Live screen inspector init error:", e); }
     try { initSpeechRecognition(); } catch (e) { console.error("Speech recognition init error:", e); }
+    try { initLiveVoiceAssistant(); } catch (e) { console.error("Live voice init error:", e); }
     try { initSubscriptionController(); } catch (e) { console.error("Subscription controller init error:", e); }
     try { initPWAController(); } catch (e) { console.error("PWA controller init error:", e); }
 
