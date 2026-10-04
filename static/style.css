@@ -2351,9 +2351,23 @@ body.glow-1-1 .chat-input-wrapper {
 
 .welcome-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 8px;
-    margin-top: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+}
+
+@media (max-width: 960px) {
+    .welcome-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+}
+
+@media (max-width: 640px) {
+    .welcome-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
 }
 
 .welcome-pill {
@@ -5454,17 +5468,19 @@ body.oled-theme .chat-input-wrapper {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 20px;
+    padding: 8px 18px;
     background: rgba(15, 23, 42, 0.88);
     backdrop-filter: blur(18px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     z-index: 100;
+    gap: 12px;
 }
 
 .header-left {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-shrink: 0;
 }
 
 .header-branding {
@@ -5512,10 +5528,26 @@ body.oled-theme .chat-input-wrapper {
     display: inline-block;
 }
 
+/* Header Center (Adaptive Mode Segmented Switcher) */
+.header-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
+}
+
+@media (max-width: 960px) {
+    .header-center {
+        display: none;
+    }
+}
+
 .zen-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 /* Tools Dropdown Wrapper & Button */
@@ -5562,7 +5594,8 @@ body.oled-theme .chat-input-wrapper {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    min-width: 290px;
+    min-width: 320px;
+    max-width: 350px;
     background: rgba(15, 23, 42, 0.96);
     backdrop-filter: blur(24px);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -5571,9 +5604,11 @@ body.oled-theme .chat-input-wrapper {
     padding: 8px;
     display: none;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
     z-index: 1050;
     transform-origin: top right;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .tools-dropdown-wrapper.open .tools-dropdown-menu {
@@ -5594,16 +5629,39 @@ body.oled-theme .chat-input-wrapper {
 
 .tools-dropdown-header {
     padding: 6px 10px 8px 10px;
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: #64748b;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     margin-bottom: 4px;
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+.tools-group-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tools-category-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px 4px 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+.tools-category-label i {
+    font-size: 0.72rem;
+    color: #38bdf8;
 }
 
 .tools-menu-item {
@@ -5611,7 +5669,7 @@ body.oled-theme .chat-input-wrapper {
     align-items: center;
     gap: 12px;
     width: 100%;
-    padding: 9px 10px;
+    padding: 8px 10px;
     border-radius: 10px;
     border: none;
     background: transparent;
@@ -5646,6 +5704,8 @@ body.oled-theme .chat-input-wrapper {
 .icon-blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
 .icon-amber { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
 .icon-slate { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+.icon-indigo { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+.icon-teal { background: rgba(20, 184, 166, 0.15); color: #2dd4bf; border: 1px solid rgba(20, 184, 166, 0.3); }
 
 .tool-item-info {
     display: flex;
@@ -8140,26 +8200,27 @@ body.mode-silver-care .welcome-subtitle {
     }
 }
 
-/* Floating PWA Install Banner */
+/* Floating PWA Install Banner (Top-Right Notification Toast) */
 .pwa-install-banner {
     position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 32px);
-    max-width: 520px;
+    top: 72px;
+    right: 20px;
+    left: auto;
+    transform: none;
+    width: calc(100% - 40px);
+    max-width: 440px;
     z-index: 1080;
-    animation: pwaSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: pwaSlideInTop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes pwaSlideUp {
+@keyframes pwaSlideInTop {
     from {
         opacity: 0;
-        transform: translate(-50%, 40px);
+        transform: translateY(-16px) scale(0.97);
     }
     to {
         opacity: 1;
-        transform: translate(-50%, 0);
+        transform: translateY(0) scale(1);
     }
 }
 
@@ -8274,7 +8335,14 @@ body.mode-silver-care .welcome-subtitle {
     box-shadow: 0 6px 16px rgba(14, 165, 233, 0.5);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+    .pwa-install-banner {
+        top: 66px;
+        right: 12px;
+        left: 12px;
+        width: auto;
+        max-width: none;
+    }
     .pwa-banner-card {
         flex-wrap: wrap;
         gap: 10px;

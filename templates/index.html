@@ -11,7 +11,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=15">
+    <link rel="stylesheet" href="/static/style.css?v=16">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -348,42 +348,8 @@
                     </div>
                 </div>
 
-                <div class="header-actions zen-actions">
-                    <!-- 👑 Kira Pro Subscription Button (Compact) -->
-                    <button title="อัปเกรดเป็น Kira Pro / Founder Pass" id="btn-upgrade-pro" class="header-action-btn upgrade-pro-btn">
-                        <i class="fa-solid fa-crown text-amber"></i>
-                        <span class="upgrade-btn-text">Pro</span>
-                        <span class="pro-sparkle-dot"></span>
-                    </button>
-
-                    <!-- Virtual Boardroom Quick Toggle (Compact) -->
-                    <button title="เปิดสภาที่ปรึกษาเสมือน Kira 2.1 Boardroom" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn">
-                        <i class="fa-solid fa-users-viewfinder"></i>
-                        <span class="boardroom-btn-text">สภา</span>
-                    </button>
-
-                    <!-- 📋 Kira Omni-Task & Matrix Button (Compact) -->
-                    <button title="เปิดกระดานจัดการภารกิจและร่างชิ้นงาน" id="btn-task-matrix-toggle" class="header-action-btn task-matrix-btn">
-                        <i class="fa-solid fa-list-check"></i>
-                        <span class="task-matrix-btn-text">งาน</span>
-                        <span id="task-matrix-badge" class="task-matrix-badge" style="display: none;">0</span>
-                    </button>
-
-                    <!-- Model Select -->
-                    <div class="model-select-wrapper">
-                        <select id="model-select" class="model-select">
-                            <optgroup label="Kira 2.1 Brain Engines">
-                                <option value="2.1-reasoning" selected>Kira 2.1 Reasoning</option>
-                                <option value="2.1-pro">Kira 2.1 Pro</option>
-                                <option value="2.0-flash">Kira 2.1 Flash</option>
-                            </optgroup>
-                            <optgroup label="Executive Simulation">
-                                <option value="boardroom">Kira 2.1 Boardroom</option>
-                            </optgroup>
-                        </select>
-                    </div>
-
-                    <!-- 👥 Age-Adaptive User Mode Switcher -->
+                <!-- 👥 Centered User Mode Switcher (General / Executive / Silver Care) -->
+                <div class="header-center">
                     <div class="user-mode-switcher-wrapper" id="user-mode-switcher-wrapper">
                         <div class="user-mode-pill-group" id="header-user-mode-group">
                             <button type="button" class="mode-pill-btn active" data-mode="general" title="โหมดทั่วไป (General): ทำงานและถามตอบทั่วไป">
@@ -397,74 +363,141 @@
                             </button>
                         </div>
                     </div>
+                </div>
 
-                    <!-- PWA Quick Install Header Action (Revealed dynamically) -->
+                <div class="header-actions zen-actions">
+                    <!-- Model Select -->
+                    <div class="model-select-wrapper">
+                        <select id="model-select" class="model-select" title="เลือกมันสมองประมวลผล Kira AI">
+                            <optgroup label="Kira 2.1 Brain Engines">
+                                <option value="2.1-reasoning" selected>Kira 2.1 Reasoning</option>
+                                <option value="2.1-pro">Kira 2.1 Pro</option>
+                                <option value="2.0-flash">Kira 2.1 Flash</option>
+                            </optgroup>
+                            <optgroup label="Executive Simulation">
+                                <option value="boardroom">Kira 2.1 Boardroom</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- 👑 Kira Pro Subscription Button -->
+                    <button title="อัปเกรดเป็น Kira Pro / Founder Pass" id="btn-upgrade-pro" class="header-action-btn upgrade-pro-btn">
+                        <i class="fa-solid fa-crown text-amber"></i>
+                        <span class="upgrade-btn-text">Pro</span>
+                        <span class="pro-sparkle-dot"></span>
+                    </button>
+
+                    <!-- Virtual Boardroom Quick Toggle -->
+                    <button title="เปิดสภาที่ปรึกษาเสมือน Kira 2.1 Boardroom" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn">
+                        <i class="fa-solid fa-users-viewfinder"></i>
+                        <span class="boardroom-btn-text">สภา</span>
+                    </button>
+
+                    <!-- 📋 Kira Omni-Task & Matrix Button -->
+                    <button title="เปิดกระดานจัดการภารกิจและร่างชิ้นงาน" id="btn-task-matrix-toggle" class="header-action-btn task-matrix-btn">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span class="task-matrix-btn-text">งาน</span>
+                        <span id="task-matrix-badge" class="task-matrix-badge" style="display: none;">0</span>
+                    </button>
+
+                    <!-- PWA Quick Install Header Action (Preserved for compatibility) -->
                     <button id="btn-install-pwa-header" class="header-action-btn pwa-header-install-btn" title="ติดตั้ง Kira AI Web App บนอุปกรณ์" style="display: none;">
                         <i class="fa-solid fa-cloud-arrow-down"></i>
                         <span class="pwa-header-text">ติดตั้งแอป</span>
                     </button>
 
-                    <!-- All Secondary Tools Unified in One Beautiful Dropdown -->
+                    <!-- Categorized Secondary Tools Dropdown -->
                     <div class="tools-dropdown-wrapper" id="tools-dropdown-wrapper">
-                        <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" title="เครื่องมือเพิ่มเติม">
+                        <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" title="ศูนย์รวมฟีเจอร์และเครื่องมือ">
                             <i class="fa-solid fa-toolbox"></i>
                             <span class="tools-btn-text">เครื่องมือ</span>
                             <i class="fa-solid fa-chevron-down tools-caret"></i>
                         </button>
                         <div class="tools-dropdown-menu" id="tools-dropdown-menu">
                             <div class="tools-dropdown-header">
-                                <i class="fa-solid fa-sliders"></i> เครื่องมือเสริม
+                                <i class="fa-solid fa-sliders"></i> ศูนย์รวมฟีเจอร์ & เครื่องมือ
                             </div>
                             
-                            <button class="tools-menu-item" id="btn-graph" title="ผังความจำ">
-                                <span class="tool-item-icon icon-purple"><i class="fa-solid fa-diagram-project"></i></span>
-                                <div class="tool-item-info">
-                                    <span class="tool-item-title">ผังความจำ</span>
-                                    <span class="tool-item-desc">ส่องแผนผังความจำส่วนบุคคล</span>
+                            <!-- กลุ่ม 1: งาน & กลยุทธ์ -->
+                            <div class="tools-group-section">
+                                <div class="tools-category-label">
+                                    <i class="fa-solid fa-briefcase"></i> <span>งาน & กลยุทธ์</span>
                                 </div>
-                            </button>
-
-                            <button class="tools-menu-item" id="btn-autospeak" title="อ่านออกเสียงอัตโนมัติ">
-                                <span class="tool-item-icon icon-green"><i class="fa-solid fa-volume-high" id="autospeak-icon"></i></span>
-                                <div class="tool-item-info">
-                                    <span class="tool-item-title">อ่านออกเสียงอัตโนมัติ</span>
-                                    <span class="tool-item-desc" id="autospeak-status-text">สถานะ: ปิดอยู่</span>
-                                </div>
-                            </button>
-
-                            <button class="tools-menu-item" id="btn-export" title="ส่งออกบทสนทนา">
-                                <span class="tool-item-icon icon-blue"><i class="fa-solid fa-file-export"></i></span>
-                                <div class="tool-item-info">
-                                    <span class="tool-item-title">ส่งออกบทสนทนา</span>
-                                    <span class="tool-item-desc">บันทึกเป็น PDF หรือพิมพ์รายงาน</span>
-                                </div>
-                            </button>
-
-                            <button class="tools-menu-item" id="btn-install-app-menu" title="ติดตั้ง Kira AI Web App ลงอุปกรณ์">
-                                <span class="tool-item-icon icon-teal"><i class="fa-solid fa-mobile-screen-button"></i></span>
-                                <div class="tool-item-info">
-                                    <span class="tool-item-title">ติดตั้ง Kira Web App</span>
-                                    <span class="tool-item-desc" id="pwa-menu-status">ติดตั้งบนมือถือหรือคอมพิวเตอร์</span>
-                                </div>
-                            </button>
-
-                            <button class="tools-menu-item" id="btn-open-guide" title="คู่มือการใช้งาน">
-                                <span class="tool-item-icon icon-amber"><i class="fa-solid fa-book-open"></i></span>
-                                <div class="tool-item-info">
-                                    <span class="tool-item-title">คู่มือการใช้งาน</span>
-                                    <span class="tool-item-desc">ทัวร์ระบบและฟีเจอร์เด่น</span>
-                                </div>
-                            </button>
+                                <button class="tools-menu-item" type="button" onclick="document.getElementById('btn-boardroom-toggle').click();" title="สภาที่ปรึกษา 4 ผู้บริหาร (CEO, CFO, CPO, CTO)">
+                                    <span class="tool-item-icon icon-amber"><i class="fa-solid fa-users-viewfinder"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">สภาที่ปรึกษาเสมือน</span>
+                                        <span class="tool-item-desc">ระดมสมอง 4 ผู้บริหารระดับสูง</span>
+                                    </div>
+                                </button>
+                                <button class="tools-menu-item" type="button" onclick="document.getElementById('btn-task-matrix-toggle').click();" title="กระดานภารกิจและดราฟต์ชิ้นงาน">
+                                    <span class="tool-item-icon icon-blue"><i class="fa-solid fa-list-check"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">กระดานภารกิจ & ชิ้นงาน</span>
+                                        <span class="tool-item-desc">จัดการ Task Matrix & ดราฟต์อัตโนมัติ</span>
+                                    </div>
+                                </button>
+                                <button class="tools-menu-item" id="btn-export" title="ส่งออกบทสนทนา">
+                                    <span class="tool-item-icon icon-green"><i class="fa-solid fa-file-export"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">ส่งออกบทสนทนา / PDF</span>
+                                        <span class="tool-item-desc">บันทึกเป็น PDF หรือพิมพ์รายงาน</span>
+                                    </div>
+                                </button>
+                            </div>
 
                             <div class="tools-dropdown-divider"></div>
 
-                            <button class="tools-menu-item" id="btn-info" title="เกี่ยวกับ Kira 2.1">
-                                <span class="tool-item-icon icon-slate"><i class="fa-solid fa-circle-info"></i></span>
-                                <div class="tool-item-info">
-                                    <span class="tool-item-title">เกี่ยวกับ Kira 2.1</span>
-                                    <span class="tool-item-desc">ข้อมูลสถาปัตยกรรมและเวอร์ชัน</span>
+                            <!-- กลุ่ม 2: สมอง & ความจำ -->
+                            <div class="tools-group-section">
+                                <div class="tools-category-label">
+                                    <i class="fa-solid fa-brain"></i> <span>สมอง & การสื่อสาร</span>
                                 </div>
-                            </button>
+                                <button class="tools-menu-item" id="btn-graph" title="ผังความจำ">
+                                    <span class="tool-item-icon icon-purple"><i class="fa-solid fa-diagram-project"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">ผังความจำ (Knowledge Graph)</span>
+                                        <span class="tool-item-desc">ส่องแผนผังความจำส่วนบุคคล</span>
+                                    </div>
+                                </button>
+                                <button class="tools-menu-item" id="btn-autospeak" title="อ่านออกเสียงอัตโนมัติ">
+                                    <span class="tool-item-icon icon-teal"><i class="fa-solid fa-volume-high" id="autospeak-icon"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">อ่านออกเสียงอัตโนมัติ</span>
+                                        <span class="tool-item-desc" id="autospeak-status-text">สถานะ: ปิดอยู่</span>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <div class="tools-dropdown-divider"></div>
+
+                            <!-- กลุ่ม 3: ระบบ & ตัวช่วย -->
+                            <div class="tools-group-section">
+                                <div class="tools-category-label">
+                                    <i class="fa-solid fa-gear"></i> <span>ระบบ & การช่วยเหลือ</span>
+                                </div>
+                                <button class="tools-menu-item" id="btn-install-app-menu" title="ติดตั้ง Kira AI Web App ลงอุปกรณ์">
+                                    <span class="tool-item-icon icon-indigo"><i class="fa-solid fa-mobile-screen-button"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">ติดตั้ง Kira Web App (PWA)</span>
+                                        <span class="tool-item-desc" id="pwa-menu-status">ติดตั้งบนมือถือหรือเดสก์ท็อป</span>
+                                    </div>
+                                </button>
+                                <button class="tools-menu-item" id="btn-open-guide" title="คู่มือการใช้งาน">
+                                    <span class="tool-item-icon icon-amber"><i class="fa-solid fa-book-open"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">คู่มือการใช้งาน (User Guide)</span>
+                                        <span class="tool-item-desc">ทัวร์ระบบและฟีเจอร์เด่น</span>
+                                    </div>
+                                </button>
+                                <button class="tools-menu-item" id="btn-info" title="เกี่ยวกับ Kira 2.1">
+                                    <span class="tool-item-icon icon-slate"><i class="fa-solid fa-circle-info"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">เกี่ยวกับ Kira AI</span>
+                                        <span class="tool-item-desc">สถาปัตยกรรม & โมเดล Cloud</span>
+                                    </div>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -2066,6 +2099,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=31"></script>
+    <script src="/static/script.js?v=32"></script>
 </body>
 </html>
