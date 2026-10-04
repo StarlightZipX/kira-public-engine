@@ -8207,8 +8207,8 @@ body.mode-silver-care .welcome-subtitle {
     right: 20px;
     left: auto;
     transform: none;
-    width: calc(100% - 40px);
-    max-width: 440px;
+    width: auto;
+    max-width: 490px;
     z-index: 1080;
     animation: pwaSlideInTop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -8227,21 +8227,21 @@ body.mode-silver-care .welcome-subtitle {
 .pwa-banner-card {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 12px 16px;
-    background: rgba(15, 23, 42, 0.94);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(56, 189, 248, 0.35);
-    border-radius: 16px;
+    border-radius: 14px;
     box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.15);
 }
 
 .pwa-banner-icon-wrap {
     flex-shrink: 0;
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
     overflow: hidden;
     background: #0b0f19;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -8257,6 +8257,9 @@ body.mode-silver-care .welcome-subtitle {
 }
 
 .pwa-banner-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     flex: 1;
     min-width: 0;
 }
@@ -8265,35 +8268,39 @@ body.mode-silver-care .welcome-subtitle {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: #f8fafc;
+    white-space: nowrap;
+}
+
+.pwa-title-text {
+    white-space: nowrap;
 }
 
 .pwa-badge-v2 {
-    font-size: 0.68rem;
-    padding: 2px 6px;
-    border-radius: 6px;
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 5px;
     background: rgba(14, 165, 233, 0.2);
     border: 1px solid rgba(14, 165, 233, 0.4);
     color: #38bdf8;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .pwa-banner-desc {
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     color: #94a3b8;
     line-height: 1.35;
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
 }
 
 .pwa-banner-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     flex-shrink: 0;
 }
 
@@ -8301,12 +8308,13 @@ body.mode-silver-care .welcome-subtitle {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
     color: #94a3b8;
-    padding: 8px 12px;
-    border-radius: 10px;
-    font-size: 0.8rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.78rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .pwa-banner-btn-secondary:hover {
@@ -8318,16 +8326,17 @@ body.mode-silver-care .welcome-subtitle {
     background: linear-gradient(135deg, #0284c7, #6366f1);
     border: none;
     color: #ffffff;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-size: 0.82rem;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .pwa-banner-btn-primary:hover {
@@ -8344,11 +8353,9 @@ body.mode-silver-care .welcome-subtitle {
         max-width: none;
     }
     .pwa-banner-card {
-        flex-wrap: wrap;
+        padding: 10px 12px;
         gap: 10px;
-    }
-    .pwa-banner-desc {
-        white-space: normal;
+        flex-wrap: wrap;
     }
     .pwa-banner-actions {
         width: 100%;
