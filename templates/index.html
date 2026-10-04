@@ -11,7 +11,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=19">
+    <link rel="stylesheet" href="/static/style.css?v=20">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -444,6 +444,13 @@
                                         <span class="tool-item-desc">จัดการ Task Matrix & ดราฟต์อัตโนมัติ</span>
                                     </div>
                                 </button>
+                                <button class="tools-menu-item" id="btn-tools-slide-studio" title="สตูดิโอสร้างสไลด์ผู้บริหาร (Executive Slide Deck 16:9)">
+                                    <span class="tool-item-icon icon-rose"><i class="fa-solid fa-file-powerpoint"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">สไลด์พรีเซนต์ (16:9)</span>
+                                        <span class="tool-item-desc">สร้างชุดสไลด์ผู้บริหาร Keynote ในคลิกเดียว</span>
+                                    </div>
+                                </button>
                                 <button class="tools-menu-item" id="btn-export" title="ส่งออกบทสนทนา">
                                     <span class="tool-item-icon icon-green"><i class="fa-solid fa-file-export"></i></span>
                                     <div class="tool-item-info">
@@ -722,6 +729,49 @@
                     <i class="fa-solid fa-phone-slash"></i>
                     <span>วางสาย</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📽️ Executive Slide Deck Studio Modal (16:9 Keynote Style) -->
+    <div id="slide-deck-modal" class="slide-deck-overlay" style="display: none;">
+        <div class="slide-deck-container">
+            <!-- Studio Top Bar -->
+            <div class="slide-deck-topbar">
+                <div class="slide-deck-brand">
+                    <span class="slide-badge-169"><i class="fa-solid fa-file-powerpoint"></i> 16:9 KEYNOTE</span>
+                    <span class="slide-deck-title" id="slide-deck-title-text">Executive Presentation</span>
+                </div>
+                <div class="slide-deck-actions">
+                    <button id="btn-slide-fullscreen" class="slide-act-btn" title="นำเสนอแบบเต็มจอ (F)"><i class="fa-solid fa-expand"></i> <span>เต็มจอ</span></button>
+                    <button id="btn-slide-print" class="slide-act-btn" title="พิมพ์เป็นชุดเอกสาร / บันทึก PDF (16:9 Landscape)"><i class="fa-solid fa-print"></i> <span>พิมพ์ / PDF</span></button>
+                    <button id="btn-slide-download" class="slide-act-btn" title="ดาวน์โหลดเป็นไฟล์ HTML เปิดออฟไลน์ได้ทุกที่"><i class="fa-solid fa-download"></i> <span>ดาวน์โหลด HTML</span></button>
+                    <button id="btn-close-slide-deck" class="slide-act-btn slide-close-btn" title="ปิดหน้าต่างสไลด์ (Esc)"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <!-- Slide Viewport (16:9 Stage) -->
+            <div class="slide-viewport" id="slide-viewport">
+                <div class="slide-stage" id="slide-stage">
+                    <!-- Slides are dynamically rendered here -->
+                </div>
+            </div>
+
+            <!-- Studio Bottom Navigation & Controls -->
+            <div class="slide-deck-bottombar">
+                <div class="slide-nav-left">
+                    <button id="btn-slide-prev" class="slide-nav-btn" title="สไลด์ก่อนหน้า (ลูกศรซ้าย / Backspace)"><i class="fa-solid fa-chevron-left"></i> ย้อนกลับ</button>
+                </div>
+                <div class="slide-nav-center">
+                    <div class="slide-counter-badge" id="slide-counter-badge">สไลด์ 01 / 01</div>
+                    <div class="slide-dots-container" id="slide-dots-container"></div>
+                </div>
+                <div class="slide-nav-right">
+                    <button id="btn-slide-next" class="slide-nav-btn slide-nav-btn-next" title="สไลด์ถัดไป (ลูกศรขวา / Space / Enter)">ถัดไป <i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="slide-deck-shortcuts-hint">
+                <span>💡 <strong>คีย์ลัดการนำเสนอ:</strong> ◀ ▶ หรือ Space เปลี่ยนสไลด์ | [F] สลับเต็มจอ | [Esc] ปิดการนำเสนอ</span>
             </div>
         </div>
     </div>
@@ -2165,6 +2215,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=34"></script>
+    <script src="/static/script.js?v=35"></script>
 </body>
 </html>

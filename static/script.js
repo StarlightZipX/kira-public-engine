@@ -1344,6 +1344,17 @@ function attachDeliverablesBar(contentDiv, textContent) {
         exportDeliverableToPDF('เอกสารส่งงาน (Executive Deliverable)', textContent, 'executive');
     };
 
+    // 3.6. Executive Slide Deck Studio (16:9 Keynote Presentation)
+    const slideDeckBtn = document.createElement('button');
+    slideDeckBtn.className = 'deliverable-btn deliverable-slide-btn';
+    slideDeckBtn.innerHTML = '<i class="fa-solid fa-file-powerpoint text-rose"></i> สร้างสไลด์ (16:9)';
+    slideDeckBtn.title = 'แปลงเนื้อหาคำตอบนี้เป็นชุดสไลด์พรีเซนต์ระดับผู้บริหาร 16:9 (Executive Slide Deck)';
+    slideDeckBtn.onclick = () => {
+        if (typeof generateAndOpenSlideDeck === 'function') {
+            generateAndOpenSlideDeck(textContent);
+        }
+    };
+
     // 4. Open in Live Canvas Document
     const canvasDocBtn = document.createElement('button');
     canvasDocBtn.className = 'deliverable-btn';
@@ -1404,6 +1415,7 @@ function attachDeliverablesBar(contentDiv, textContent) {
     feedbackUI.appendChild(cleanReportBtn);
     feedbackUI.appendChild(downloadReportBtn);
     feedbackUI.appendChild(pdfReportBtn);
+    feedbackUI.appendChild(slideDeckBtn);
     feedbackUI.appendChild(canvasDocBtn);
     feedbackUI.appendChild(speakerBtn);
     feedbackUI.appendChild(likeBtn);
@@ -6076,18 +6088,6 @@ function exportDeliverableToPDF(title, rawContent, mode = 'executive') {
 }
 window.exportDeliverableToPDF = exportDeliverableToPDF;
 
-// ====================================================================
-// 🚀 Unified Kira Application Bootstrap Engine
-// ====================================================================
-function initKiraApp() {
-    console.log("🌸 [Kira AI] Initializing client subsystems...");
-
-    // 1. Core Connection & Auth
-    try { checkNeuralCoreHealth(true); } catch (e) { console.warn("NeuralCore health check error:", e); }
-    try { checkAuth(); } catch (e) { console.error("Auth initialization error:", e); }
-    try { updateModelUI(); } catch (e) { console.warn("Model UI update error:", e); }
-    try { checkEngineStatus(); } catch (e) { console.warn("Engine status check error:", e); }
-
 // =========================================================================
 // 📊 Interactive Financial & Data Chart Engine (Chart.js Integration)
 // =========================================================================
@@ -6253,6 +6253,784 @@ function renderKiraCharts(container) {
             console.warn("Failed to parse chart spec:", e);
         }
     });
+}
+
+// =========================================================================
+// 📽️ Executive Slide Deck Studio (16:9 Keynote Style)
+// =========================================================================
+let currentSlideDeck = [];
+let currentSlideIndex = 0;
+let isSlideDeckFullscreen = false;
+
+function initSlideDeckStudio() {
+    const modal = document.getElementById('slide-deck-modal');
+    const btnClose = document.getElementById('btn-close-slide-deck');
+    const btnPrev = document.getElementById('btn-slide-prev');
+    const btnNext = document.getElementById('btn-slide-next');
+    const btnFullscreen = document.getElementById('btn-slide-fullscreen');
+    const btnPrint = document.getElementById('btn-slide-print');
+    const btnDownload = document.getElementById('btn-slide-download');
+    const btnStudioMenu = document.getElementById('btn-tools-slide-studio');
+
+    if (!modal) return;
+
+    if (btnClose) {
+        btnClose.addEventListener('click', closeSlideDeck);
+    }
+
+    if (btnPrev) {
+        btnPrev.addEventListener('click', () => goToSlide(currentSlideIndex - 1));
+    }
+    if (btnNext) {
+        btnNext.addEventListener('click', () => goToSlide(currentSlideIndex + 1));
+    }
+
+    if (btnFullscreen) {
+        btnFullscreen.addEventListener('click', toggleSlideDeckFullscreen);
+    }
+
+    if (btnPrint) {
+        btnPrint.addEventListener('click', printSlideDeck);
+    }
+
+    if (btnDownload) {
+        btnDownload.addEventListener('click', downloadSlideDeckAsHTML);
+    }
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal && !isSlideDeckFullscreen) {
+            closeSlideDeck();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (!modal || modal.style.display === 'none') return;
+
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            goToSlide(currentSlideIndex + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+            e.preventDefault();
+            goToSlide(currentSlideIndex - 1);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            if (isSlideDeckFullscreen) {
+                toggleSlideDeckFullscreen();
+            } else {
+                closeSlideDeck();
+            }
+        } else if (e.key === 'f' || e.key === 'F') {
+            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                toggleSlideDeckFullscreen();
+            }
+        }
+    });
+
+    if (btnStudioMenu) {
+        btnStudioMenu.addEventListener('click', () => {
+            const dropdown = document.getElementById('tools-dropdown-menu');
+            if (dropdown) dropdown.classList.remove('show');
+
+            const botMessages = chatBox ? chatBox.querySelectorAll('.message:not(.user)') : [];
+            let targetText = '';
+            if (botMessages.length > 0) {
+                const lastBotMsg = botMessages[botMessages.length - 1];
+                const contentEl = lastBotMsg.querySelector('.content');
+                if (contentEl) {
+                    const clone = contentEl.cloneNode(true);
+                    const fb = clone.querySelector('.feedback-ui');
+                    if (fb) fb.remove();
+                    targetText = clone.innerText.trim();
+                }
+            }
+
+            if (targetText && targetText.length > 30) {
+                if (typeof showConnectionToast === 'function') {
+                    showConnectionToast('📽️ กำลังแปลงเนื้อหาการวิเคราะห์ล่าสุดเป็นชุดสไลด์พรีเซนต์ 16:9...', 'ready');
+                }
+                generateAndOpenSlideDeck(targetText);
+            } else {
+                if (userInput) {
+                    userInput.value = 'ช่วยจัดทำโครงสร้างสไลด์พรีเซนต์ระดับผู้บริหาร 16:9 สำหรับหัวข้อ: ';
+                    userInput.focus();
+                    if (typeof showConnectionToast === 'function') {
+                        showConnectionToast('💡 ระบุหัวข้อที่ต้องการนำเสนอในช่องข้อความได้เลยค่ะ คิระจะสร้างสไลด์ให้ทันที', 'info');
+                    }
+                }
+            }
+        });
+    }
+}
+
+function closeSlideDeck() {
+    const modal = document.getElementById('slide-deck-modal');
+    if (!modal) return;
+    if (isSlideDeckFullscreen) {
+        if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        modal.classList.remove('is-fullscreen');
+        isSlideDeckFullscreen = false;
+    }
+    modal.style.display = 'none';
+}
+
+function toggleSlideDeckFullscreen() {
+    const modal = document.getElementById('slide-deck-modal');
+    if (!modal) return;
+
+    if (!isSlideDeckFullscreen) {
+        if (modal.requestFullscreen) {
+            modal.requestFullscreen().catch(() => {});
+        }
+        modal.classList.add('is-fullscreen');
+        isSlideDeckFullscreen = true;
+        const btnFullscreen = document.getElementById('btn-slide-fullscreen');
+        if (btnFullscreen) btnFullscreen.innerHTML = '<i class="fa-solid fa-compress"></i> <span>ย่อจอ</span>';
+    } else {
+        if (document.exitFullscreen && document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        }
+        modal.classList.remove('is-fullscreen');
+        isSlideDeckFullscreen = false;
+        const btnFullscreen = document.getElementById('btn-slide-fullscreen');
+        if (btnFullscreen) btnFullscreen.innerHTML = '<i class="fa-solid fa-expand"></i> <span>เต็มจอ</span>';
+    }
+}
+
+function parseTextToSlides(rawContent, customTitle = '') {
+    if (!rawContent || !rawContent.trim()) {
+        return [{
+            type: 'cover',
+            title: 'Kira AI Executive Presentation',
+            subtitle: 'รายงานสรุปเชิงกลยุทธ์ระดับผู้บริหาร',
+            category: 'KEYNOTE 16:9',
+            contentHtml: ''
+        }];
+    }
+
+    const clean = cleanDeliverableText(rawContent);
+    const slides = [];
+
+    // 1. Delimiter-based splitting
+    let rawChunks = [];
+    if (clean.includes('<!-- slide -->')) {
+        rawChunks = clean.split('<!-- slide -->').map(c => c.trim()).filter(Boolean);
+    } else if (clean.split(/\n\s*---\s*\n/).length >= 3) {
+        rawChunks = clean.split(/\n\s*---\s*\n/).map(c => c.trim()).filter(Boolean);
+    } else {
+        const lines = clean.split('\n');
+        let currentChunk = [];
+        for (const line of lines) {
+            if (/^#{1,3}\s+/.test(line) && currentChunk.length > 0 && currentChunk.join('\n').length > 120) {
+                rawChunks.push(currentChunk.join('\n').trim());
+                currentChunk = [line];
+            } else {
+                currentChunk.push(line);
+            }
+        }
+        if (currentChunk.length > 0) {
+            rawChunks.push(currentChunk.join('\n').trim());
+        }
+    }
+
+    if (rawChunks.length <= 1) {
+        const paragraphs = clean.split(/\n\n+/).filter(p => p.trim());
+        if (paragraphs.length >= 4) {
+            const p1 = paragraphs.slice(0, 1).join('\n\n');
+            const p2 = paragraphs.slice(1, Math.ceil(paragraphs.length / 2)).join('\n\n');
+            const p3 = paragraphs.slice(Math.ceil(paragraphs.length / 2), -1).join('\n\n');
+            const p4 = paragraphs.slice(-1).join('\n\n');
+            rawChunks = [
+                `# สรุปภาพรวมเชิงกลยุทธ์\n\n${p1}`,
+                `# การวิเคราะห์และประเด็นสำคัญ\n\n${p2}`,
+                `# แผนปฏิบัติการและข้อแนะนำ\n\n${p3}`,
+                `# บทสรุปและการดำเนินการถัดไป\n\n${p4}`
+            ];
+        } else {
+            rawChunks = [clean];
+        }
+    }
+
+    let mainTitle = customTitle || '';
+    if (!mainTitle) {
+        const firstHeader = clean.match(/^#{1,3}\s+(.+)$/m);
+        if (firstHeader) {
+            mainTitle = firstHeader[1].replace(/สไลด์ที่\s*\d+\s*[:：-]?\s*/i, '').replace(/Slide\s*\d+\s*[:：-]?\s*/i, '').trim();
+        } else {
+            const firstLine = clean.split('\n').find(l => l.trim().length > 0) || 'Kira Executive Brief';
+            mainTitle = firstLine.replace(/[*_#]/g, '').slice(0, 55).trim();
+        }
+    }
+
+    slides.push({
+        type: 'cover',
+        title: mainTitle,
+        subtitle: 'ชุดสไลด์พรีเซนต์ระดับผู้บริหาร 16:9 • จัดทำโดย Kira AI Executive Suite',
+        category: 'EXECUTIVE KEYNOTE',
+        contentHtml: ''
+    });
+
+    const categoryNames = [
+        'EXECUTIVE SUMMARY',
+        'STRATEGIC ANALYSIS',
+        'KEY FINDINGS & METRICS',
+        'ACTION PLAN & ROADMAP',
+        'EXECUTIVE CONCLUSION',
+        'APPENDIX & NOTES'
+    ];
+
+    rawChunks.forEach((chunk, idx) => {
+        const lines = chunk.split('\n');
+        let slideTitle = '';
+        let contentLines = [];
+
+        for (const line of lines) {
+            const headerMatch = line.match(/^#{1,3}\s+(.+)$/);
+            if (headerMatch && !slideTitle) {
+                slideTitle = headerMatch[1].replace(/สไลด์ที่\s*\d+\s*[:：-]?\s*/i, '').replace(/Slide\s*\d+\s*[:：-]?\s*/i, '').trim();
+            } else {
+                contentLines.push(line);
+            }
+        }
+
+        if (!slideTitle) {
+            slideTitle = `ประเด็นสำคัญที่ ${idx + 1}`;
+        }
+
+        const rawContent = contentLines.join('\n').trim();
+        let parsedHtml = '';
+        if (typeof marked !== 'undefined' && marked.parse) {
+            parsedHtml = marked.parse(rawContent);
+        } else {
+            parsedHtml = `<p>${rawContent.replace(/\n/g, '<br>')}</p>`;
+        }
+
+        let isCards = false;
+        const boldBullets = rawContent.match(/^[\s]*[-*•]\s+\*\*(.+?)\*\*[:：]?\s*(.*)$/gm);
+        if (boldBullets && boldBullets.length >= 2 && boldBullets.length <= 4) {
+            isCards = true;
+            let cardsHtml = '<div class="slide-content-area is-cards-layout">';
+            const icons = ['fa-bolt', 'fa-chart-line', 'fa-shield-halved', 'fa-bullseye', 'fa-award'];
+            boldBullets.forEach((item, cIdx) => {
+                const m = item.match(/^[\s]*[-*•]\s+\*\*(.+?)\*\*[:：]?\s*(.*)$/);
+                if (m) {
+                    const cTitle = m[1].trim();
+                    const cBody = m[2].trim() || 'ข้อพิจารณาเชิงกลยุทธ์ที่สำคัญ';
+                    const iconName = icons[cIdx % icons.length];
+                    cardsHtml += `
+                    <div class="slide-content-card">
+                        <div class="slide-card-header">
+                            <i class="fa-solid ${iconName} text-rose"></i>
+                            <span>${cTitle}</span>
+                        </div>
+                        <div class="slide-card-body">${cBody}</div>
+                    </div>`;
+                }
+            });
+            cardsHtml += '</div>';
+            parsedHtml = cardsHtml;
+        }
+
+        slides.push({
+            type: isCards ? 'cards' : 'standard',
+            title: slideTitle,
+            category: categoryNames[idx % categoryNames.length],
+            contentHtml: isCards ? parsedHtml : `<div class="slide-content-area">${parsedHtml}</div>`,
+            rawText: rawContent
+        });
+    });
+
+    if (slides.length <= 2) {
+        slides.push({
+            type: 'conclusion',
+            title: 'บทสรุปและขั้นตอนการดำเนินงาน (Action Milestones)',
+            category: 'ACTION PLAN',
+            contentHtml: `
+                <div class="slide-content-area">
+                    <div class="slide-milestone-grid">
+                        <div class="milestone-box">
+                            <span class="m-step">เฟส 1</span>
+                            <h4>อนุมัติแผนงาน</h4>
+                            <p>พิจารณาและรับรองทิศทางเชิงกลยุทธ์จากที่ประชุมผู้บริหาร</p>
+                        </div>
+                        <div class="milestone-box">
+                            <span class="m-step">เฟส 2</span>
+                            <h4>จัดสรรทรัพยากร</h4>
+                            <p>เตรียมความพร้อมด้านเทคโนโลยี บุคลากร และงบประมาณ</p>
+                        </div>
+                        <div class="milestone-box">
+                            <span class="m-step">เฟส 3</span>
+                            <h4>เริ่มปฏิบัติการ</h4>
+                            <p>ติดตามผลลัพธ์ผ่านตัวชี้วัด KPI รายสัปดาห์</p>
+                        </div>
+                    </div>
+                </div>`,
+            rawText: 'Milestones'
+        });
+    }
+
+    return slides;
+}
+
+function renderSlideItemHtml(slide, index, totalSlides) {
+    const isBoss = (typeof currentUser !== 'undefined' && (currentUser === 'บอส' || (currentUser && currentUser.includes('ศิวัช'))));
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+
+    if (slide.type === 'cover') {
+        return `
+        <div class="slide-item slide-cover ${index === 0 ? 'active' : ''}" data-slide-index="${index}">
+            <div class="slide-top-meta">
+                <span class="slide-brand-pill"><i class="fa-solid fa-sparkles"></i> KIRA AI EXECUTIVE INTELLIGENCE</span>
+                <span class="slide-cat-badge">${slide.category || 'EXECUTIVE KEYNOTE'}</span>
+            </div>
+            <div class="slide-cover-body">
+                <div class="slide-cover-badge-row">
+                    <span class="slide-luxury-badge"><i class="fa-solid fa-crown text-amber"></i> ${isBoss ? 'นำเสนอแด่ท่านประธาน / บอส' : 'ชุดนำเสนอผู้บริหาร'}</span>
+                    <span class="slide-aspect-tag">16:9 ULTRA-WIDE</span>
+                </div>
+                <h1 class="slide-cover-title">${slide.title}</h1>
+                <p class="slide-cover-subtitle">${slide.subtitle || 'บทสรุปกลยุทธ์และการวิเคราะห์ข้อมูลรอบด้าน'}</p>
+                <div class="slide-cover-meta-grid">
+                    <div class="meta-item">
+                        <span class="meta-label">ผู้จัดทำ:</span>
+                        <span class="meta-val">Kira AI Executive Suite</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">วันที่นำเสนอ:</span>
+                        <span class="meta-val">${dateStr}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">สถานะเอกสาร:</span>
+                        <span class="meta-val text-emerald"><i class="fa-solid fa-circle-check"></i> พร้อมนำเสนอ (Ready)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-bottom-bar">
+                <span class="slide-foot-brand">Kira AI 2.2 • Confidential Enterprise Presentation</span>
+                <span class="slide-num-pill">${String(index + 1).padStart(2, '0')} / ${String(totalSlides).padStart(2, '0')}</span>
+            </div>
+        </div>`;
+    }
+
+    return `
+    <div class="slide-item slide-content-slide ${index === 0 ? 'active' : ''}" data-slide-index="${index}">
+        <div class="slide-top-meta">
+            <span class="slide-brand-pill"><i class="fa-solid fa-shield-halved"></i> KIRA EXECUTIVE STRATEGY</span>
+            <span class="slide-cat-badge">${slide.category || 'ANALYSIS'}</span>
+        </div>
+        <div class="slide-main-header">
+            <h2 class="slide-heading">${slide.title}</h2>
+        </div>
+        ${slide.contentHtml}
+        <div class="slide-bottom-bar">
+            <span class="slide-foot-brand">Kira AI 2.2 • Executive Decision Support</span>
+            <span class="slide-num-pill">${String(index + 1).padStart(2, '0')} / ${String(totalSlides).padStart(2, '0')}</span>
+        </div>
+    </div>`;
+}
+
+function goToSlide(index) {
+    if (!currentSlideDeck || currentSlideDeck.length === 0) return;
+    if (index < 0) index = 0;
+    if (index >= currentSlideDeck.length) index = currentSlideDeck.length - 1;
+
+    currentSlideIndex = index;
+    const stage = document.getElementById('slide-stage');
+    if (!stage) return;
+
+    const slides = stage.querySelectorAll('.slide-item');
+    slides.forEach((sl, idx) => {
+        if (idx === index) {
+            sl.classList.add('active');
+        } else {
+            sl.classList.remove('active');
+        }
+    });
+
+    const counter = document.getElementById('slide-counter-badge');
+    if (counter) {
+        counter.textContent = `สไลด์ ${String(index + 1).padStart(2, '0')} / ${String(currentSlideDeck.length).padStart(2, '0')}`;
+    }
+
+    const dotsContainer = document.getElementById('slide-dots-container');
+    if (dotsContainer) {
+        const dots = dotsContainer.querySelectorAll('.slide-dot');
+        dots.forEach((dot, idx) => {
+            if (idx === index) dot.classList.add('active');
+            else dot.classList.remove('active');
+        });
+    }
+
+    const btnPrev = document.getElementById('btn-slide-prev');
+    const btnNext = document.getElementById('btn-slide-next');
+    if (btnPrev) btnPrev.disabled = (index === 0);
+    if (btnNext) btnNext.disabled = (index === currentSlideDeck.length - 1);
+}
+
+function generateAndOpenSlideDeck(rawContent, customTitle = '') {
+    const modal = document.getElementById('slide-deck-modal');
+    const stage = document.getElementById('slide-stage');
+    const titleEl = document.getElementById('slide-deck-title-text');
+    const dotsContainer = document.getElementById('slide-dots-container');
+    if (!modal || !stage) return;
+
+    currentSlideDeck = parseTextToSlides(rawContent, customTitle);
+    currentSlideIndex = 0;
+
+    if (titleEl) {
+        titleEl.textContent = currentSlideDeck[0]?.title || 'Executive Presentation';
+    }
+
+    let stageHtml = '';
+    currentSlideDeck.forEach((slide, idx) => {
+        stageHtml += renderSlideItemHtml(slide, idx, currentSlideDeck.length);
+    });
+    stage.innerHTML = stageHtml;
+
+    if (dotsContainer) {
+        let dotsHtml = '';
+        currentSlideDeck.forEach((_, idx) => {
+            dotsHtml += `<span class="slide-dot ${idx === 0 ? 'active' : ''}" onclick="goToSlide(${idx})" title="ไปยังสไลด์ที่ ${idx + 1}"></span>`;
+        });
+        dotsContainer.innerHTML = dotsHtml;
+    }
+
+    modal.style.display = 'flex';
+    goToSlide(0);
+
+    if (typeof showConnectionToast === 'function') {
+        showConnectionToast(`📽️ ชุดสไลด์ 16:9 (${currentSlideDeck.length} สไลด์) พร้อมนำเสนอแล้วค่ะ`, 'ready');
+    }
+}
+window.generateAndOpenSlideDeck = generateAndOpenSlideDeck;
+window.goToSlide = goToSlide;
+
+function downloadSlideDeckAsHTML() {
+    if (!currentSlideDeck || currentSlideDeck.length === 0) {
+        alert('ยังไม่มีชุดสไลด์สำหรับการดาวน์โหลดค่ะ');
+        return;
+    }
+
+    const title = currentSlideDeck[0]?.title || 'Kira Executive Slide Deck';
+    const stageEl = document.getElementById('slide-stage');
+    const slidesHtml = stageEl ? stageEl.innerHTML : '';
+
+    const standaloneHtml = `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} - Kira AI 16:9 Keynote</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #040710;
+            color: #f8fafc;
+            font-family: 'Noto Sans Thai', 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .deck-wrapper {
+            width: 100%;
+            max-width: 1140px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .deck-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 18px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+        }
+        .badge-169 {
+            background: linear-gradient(135deg, #f43f5e, #fb923c);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        .viewport {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #090d16;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.12);
+        }
+        .slide-item {
+            position: absolute;
+            inset: 0;
+            padding: 34px 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.98);
+            transition: all 0.3s ease;
+            background: linear-gradient(145deg, #0d1527 0%, #060913 100%);
+            overflow-y: auto;
+        }
+        .slide-item.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+            z-index: 2;
+        }
+        .slide-cover {
+            background: radial-gradient(circle at 80% 20%, rgba(244, 63, 94, 0.15) 0%, transparent 50%),
+                        linear-gradient(145deg, #0b1120 0%, #050811 100%);
+        }
+        .slide-top-meta, .slide-bottom-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 10px;
+        }
+        .slide-bottom-bar { border-bottom: none; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; font-size: 0.75rem; color: #64748b; }
+        .slide-brand-pill { color: #38bdf8; font-weight: 700; font-size: 0.72rem; }
+        .slide-cover-title {
+            font-size: 2.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 30%, #fda4af 80%, #fb923c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 14px 0;
+        }
+        .slide-cover-subtitle { font-size: 1.1rem; color: #94a3b8; line-height: 1.6; }
+        .slide-heading { font-size: 1.6rem; font-weight: 700; color: #fff; margin: 10px 0; }
+        .slide-content-area { flex: 1; display: flex; flex-direction: column; justify-content: center; line-height: 1.65; color: #cbd5e1; }
+        .slide-content-area.is-cards-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+        .slide-content-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 16px; }
+        .slide-card-header { font-weight: 700; color: #fff; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .slide-milestone-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .milestone-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; border-top: 3px solid #38bdf8; }
+        .deck-bottombar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+        }
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 7px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .nav-btn-next { background: linear-gradient(135deg, #f43f5e, #e11d48); border: none; }
+        .dots { display: flex; gap: 6px; align-items: center; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; }
+        .dot.active { width: 22px; border-radius: 4px; background: linear-gradient(90deg, #f43f5e, #fb923c); }
+        .text-rose { color: #fb7185; }
+        .text-emerald { color: #34d399; }
+        .text-amber { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div class="deck-wrapper">
+        <div class="deck-topbar">
+            <span class="badge-169"><i class="fa-solid fa-file-powerpoint"></i> 16:9 KEYNOTE</span>
+            <span style="font-weight: 600;">${title}</span>
+            <button class="nav-btn" onclick="toggleFullscreen()"><i class="fa-solid fa-expand"></i> เต็มจอ</button>
+        </div>
+        <div class="viewport" id="viewport">
+            ${slidesHtml}
+        </div>
+        <div class="deck-bottombar">
+            <button class="nav-btn" onclick="prevSlide()"><i class="fa-solid fa-chevron-left"></i> ย้อนกลับ</button>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                <span id="counter" style="font-size: 0.8rem; color: #94a3b8; font-weight: 700;">สไลด์ 01 / ${String(currentSlideDeck.length).padStart(2, '0')}</span>
+                <div class="dots" id="dots"></div>
+            </div>
+            <button class="nav-btn nav-btn-next" onclick="nextSlide()">ถัดไป <i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+    </div>
+    <script>
+        let current = 0;
+        const slides = document.querySelectorAll('.slide-item');
+        const dotsBox = document.getElementById('dots');
+        const counter = document.getElementById('counter');
+
+        slides.forEach((_, i) => {
+            const d = document.createElement('span');
+            d.className = 'dot' + (i === 0 ? ' active' : '');
+            d.onclick = () => showSlide(i);
+            dotsBox.appendChild(d);
+        });
+
+        function showSlide(idx) {
+            if (idx < 0 || idx >= slides.length) return;
+            current = idx;
+            slides.forEach((s, i) => s.classList.toggle('active', i === current));
+            const dots = dotsBox.querySelectorAll('.dot');
+            dots.forEach((d, i) => d.classList.toggle('active', i === current));
+            counter.textContent = 'สไลด์ ' + String(current + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+        }
+
+        function nextSlide() { showSlide(current + 1); }
+        function prevSlide() { showSlide(current - 1); }
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+            else if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft' || e.key === 'Backspace') { e.preventDefault(); prevSlide(); }
+            else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFullscreen(); }
+        });
+    <\/script>
+</body>
+</html>`;
+
+    const blob = new Blob([standaloneHtml], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Kira_Executive_SlideDeck_${new Date().toISOString().slice(0, 10)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    if (typeof showConnectionToast === 'function') {
+        showConnectionToast('💾 บันทึกไฟล์ชุดสไลด์พรีเซนต์ (.html) เรียบร้อยแล้วค่ะ', 'ready');
+    }
+}
+
+function printSlideDeck() {
+    if (!currentSlideDeck || currentSlideDeck.length === 0) {
+        alert('ยังไม่มีชุดสไลด์สำหรับการพิมพ์ค่ะ');
+        return;
+    }
+
+    const title = currentSlideDeck[0]?.title || 'Kira Executive Slide Deck';
+    const stageEl = document.getElementById('slide-stage');
+    const slidesHtml = stageEl ? stageEl.innerHTML : '';
+
+    const printHtml = `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>${title} - Print PDF</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @page {
+            size: landscape;
+            margin: 0;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #090d16;
+            color: #f8fafc;
+            font-family: 'Noto Sans Thai', 'Inter', sans-serif;
+        }
+        .slide-item {
+            width: 100vw;
+            height: 100vh;
+            page-break-after: always;
+            break-after: page;
+            display: flex !important;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 60px;
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: none !important;
+            position: relative !important;
+            background: linear-gradient(145deg, #0d1527 0%, #060913 100%) !important;
+        }
+        .slide-top-meta, .slide-bottom-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            padding-bottom: 12px;
+        }
+        .slide-bottom-bar { border-bottom: none; border-top: 1px solid rgba(255,255,255,0.12); padding-top: 12px; font-size: 0.85rem; color: #94a3b8; }
+        .slide-brand-pill { color: #38bdf8; font-weight: 700; }
+        .slide-cat-badge { background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; }
+        .slide-cover-title { font-size: 3rem; font-weight: 800; color: #ffffff; margin: 20px 0; }
+        .slide-cover-subtitle { font-size: 1.3rem; color: #94a3b8; line-height: 1.6; }
+        .slide-heading { font-size: 2rem; font-weight: 700; color: #fff; margin: 16px 0; }
+        .slide-content-area { flex: 1; display: flex; flex-direction: column; justify-content: center; font-size: 1.15rem; line-height: 1.8; color: #cbd5e1; }
+        .slide-content-area.is-cards-layout { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .slide-content-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 20px; }
+        .slide-card-header { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        .slide-milestone-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .milestone-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 20px; border-top: 4px solid #38bdf8; }
+        .print-toolbar {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            display: flex;
+            gap: 10px;
+            background: rgba(0,0,0,0.85);
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .print-btn {
+            background: #f43f5e;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        @media print {
+            .print-toolbar { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-toolbar">
+        <button class="print-btn" onclick="window.print()">สั่งพิมพ์ / Save as PDF (Landscape)</button>
+        <button class="print-btn" style="background: rgba(255,255,255,0.15);" onclick="window.close()">ปิด</button>
+    </div>
+    ${slidesHtml}
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => { window.print(); }, 600);
+        });
+    <\/script>
+</body>
+</html>`;
+
+    const printWin = window.open('', '_blank', 'width=1100,height=800');
+    if (printWin) {
+        printWin.document.open();
+        printWin.document.write(printHtml);
+        printWin.document.close();
+    }
 }
 
 // =========================================================================
@@ -6577,6 +7355,7 @@ function initKiraApp() {
     try { initLiveScreenInspector(); } catch (e) { console.error("Live screen inspector init error:", e); }
     try { initSpeechRecognition(); } catch (e) { console.error("Speech recognition init error:", e); }
     try { initLiveVoiceAssistant(); } catch (e) { console.error("Live voice init error:", e); }
+    try { initSlideDeckStudio(); } catch (e) { console.error("Slide deck studio init error:", e); }
     try { initSubscriptionController(); } catch (e) { console.error("Subscription controller init error:", e); }
     try { initPWAController(); } catch (e) { console.error("PWA controller init error:", e); }
 
