@@ -106,6 +106,7 @@ const chatHistorySidebar = document.getElementById('chat-history');
 
 // --- Auth State Management ---
 let currentUser = localStorage.getItem('kira_username');
+let currentUserMode = localStorage.getItem('kira_user_mode') || 'general';
 let isGenerating = false;
 let currentImageBase64 = null;
 
@@ -337,6 +338,7 @@ checkEngineStatus();
 initProactiveHeartbeat();
 initLiveScreenInspector();
 initOnboardingGuide();
+initUserModeController();
 setInterval(checkEngineStatus, 30000);
 setInterval(() => checkNeuralCoreHealth(false), 240000); // 4-min Keepalive Heartbeat
 
@@ -1545,7 +1547,8 @@ async function sendMessage() {
                 image_base64: imgBase64ToSend,
                 session_id: currentSessionId,
                 flavor: flavor,
-                persona: persona
+                persona: persona,
+                user_mode: currentUserMode || 'general'
             })
         });
 
@@ -1804,14 +1807,164 @@ userInput.addEventListener('blur', () => {
     document.querySelector('.input-wrapper').style.borderColor = 'rgba(255, 255, 255, 0.2)';
 });
 
-// --- Quick Prompts ---
-document.querySelectorAll('.quick-prompt-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        userInput.value = btn.getAttribute('data-prompt');
-        userInput.focus();
-        sendBtn.disabled = false;
+// ==========================================================================
+// 👥 Age-Adaptive User Modes (General, Executive, Silver Care) & Prompts
+// ==========================================================================
+const MODE_QUICK_PROMPTS = {
+    general: [
+        { icon: 'fa-solid fa-list-check', color: '#38bdf8', label: 'สรุปประเด็น & Actions', prompt: 'ช่วยสรุปประเด็นสำคัญและ Action items ที่ต้องทำต่อจากข้อความหรือเอกสารนี้อย่างชัดเจน: ' },
+        { icon: 'fa-solid fa-lightbulb', color: '#fbbf24', label: 'ระดมสมอง & วางโครงงาน', prompt: 'ช่วยหาไอเดียสร้างสรรค์และวางโครงร่างขั้นตอนการดำเนินงานสำหรับโปรเจกต์นี้ให้หน่อย: ' },
+        { icon: 'fa-solid fa-pen-nib', color: '#c084fc', label: 'เกลาภาษา & เรียบเรียง', prompt: 'ช่วยตรวจไวยากรณ์และเรียบเรียงข้อความนี้ให้สุภาพ คล่องตัว และน่าอ่านขึ้น: ' },
+        { icon: 'fa-solid fa-book-open', color: '#34d399', label: 'อธิบายเรื่องยากให้ง่าย', prompt: 'ช่วยอธิบายเรื่องนี้ให้เข้าใจง่ายๆ แบบเห็นภาพและยกตัวอย่างประกอบในชีวิตประจำวัน: ' },
+        { icon: 'fa-solid fa-calculator', color: '#60a5fa', label: 'ช่วยคิดเลข & สูตรชีต', prompt: 'ช่วยคิดคำนวณหรือเขียนสูตร Excel / Google Sheets เพื่อจัดการข้อมูลนี้: ' },
+        { icon: 'fa-solid fa-calendar-days', color: '#f43f5e', label: 'จัดตาราง & แผนท่องเที่ยว', prompt: 'ช่วยร่างตารางเวลาและแผนการเดินทางสำหรับกิจกรรมนี้ให้คุ้มค่าและไม่เหนื่อยเกินไป: ' }
+    ],
+    executive: [
+        { icon: 'fa-solid fa-file-shield', color: '#38bdf8', label: 'ตรวจสัญญา & ความเสี่ยง', prompt: 'ช่วยวิเคราะห์และตรวจสอบสัญญาหรือข้อตกลงนี้อย่างละเอียด ระบุจุดเสี่ยง ช่องโหว่ทางกฎหมายและการเงิน พร้อมข้อเสนอแนะในการแก้ไข: ' },
+        { icon: 'fa-solid fa-users-viewfinder', color: '#c084fc', label: 'สภาบอร์ดรูม 4 มิติ', prompt: 'ช่วยเปิดการประชุม Virtual Boardroom วิเคราะห์ทิศทางกลยุทธ์ทางธุรกิจในประเด็นนี้อย่างรอบด้าน 4 มิติ (CEO, CFO, CPO, CTO): ' },
+        { icon: 'fa-solid fa-handshake-angle', color: '#fbbf24', label: 'ร่างอีเมลเจรจาธุรกิจ', prompt: 'ช่วยร่างอีเมลเจรจาต่อรองธุรกิจระดับผู้บริหารอย่างเป็นมืออาชีพ มีวาทศิลป์ นอบน้อมแต่เด็ดขาดและรักษาผลประโยชน์สูงสุด ในกรณี: ' },
+        { icon: 'fa-solid fa-compass', color: '#34d399', label: 'แผนกลยุทธ์ 30-90-365 วัน', prompt: 'ช่วยจัดทำแผนกลยุทธ์ปฏิบัติการเชิงลึกแบบ 30-90-365 วัน พร้อมกำหนด KPI, ความเสี่ยง และจุดตรวจวัดความสำเร็จ สำหรับ: ' },
+        { icon: 'fa-solid fa-diagram-project', color: '#60a5fa', label: 'ออกแบบผัง Mermaid', prompt: 'ช่วยออกแบบสถาปัตยกรรมระบบหรือลำดับขั้นตอนการทำงานเป็น Mermaid Flowchart และ Diagram ที่เข้าใจง่าย สำหรับ: ' },
+        { icon: 'fa-solid fa-wand-magic-sparkles', color: '#f43f5e', label: 'เกลาเอกสารระดับทางการ', prompt: 'ช่วยขัดเกลาและยกระดับภาษาของเอกสารนี้ให้กระชับ คมคาย ทรงพลัง และน่าเชื่อถือสูงสุดสำหรับนำเสนอผู้บริหารระดับสูง: ' }
+    ],
+    silver_care: [
+        { icon: 'fa-solid fa-pills', color: '#fb7185', label: 'เตือนทานยา & สุขภาพ', prompt: 'ช่วยจัดตารางเตือนการทานยาและวิธีรับประทานยาอย่างปลอดภัยตามรายการนี้ให้หนูฟังหน่อย: ' },
+        { icon: 'fa-solid fa-shield-halved', color: '#38bdf8', label: 'เช็กข่าวปลอม & มิจฉาชีพ', prompt: 'ช่วยตรวจสอบข้อความ ข่าว หรือเบอร์โทร/ลิงก์นี้ให้หน่อยว่าจริงหรือหลอก ล่อลวงมิจฉาชีพไหม: ' },
+        { icon: 'fa-solid fa-file-lines', color: '#fbbf24', label: 'ย่อยจดหมายราชการเป็นภาษาพูด', prompt: 'ช่วยอ่านและย่อยเอกสารราชการหรือจดหมายทางการฉบับนี้เป็นภาษาพูดง่ายๆ ให้ฟังทีละข้อหน่อย: ' },
+        { icon: 'fa-solid fa-heart', color: '#f43f5e', label: 'แต่งคำอวยพรส่ง LINE', prompt: 'ช่วยแต่งข้อความอวยพรน่ารักๆ อบอุ่น พร้อมส่งให้เพื่อนๆ ใน LINE สวัสดีวันใหม่ในธีม: ' },
+        { icon: 'fa-solid fa-stethoscope', color: '#34d399', label: 'ปรึกษาอาการสุขภาพเบื้องต้น', prompt: 'มีอาการเบื้องต้นแบบนี้ ควรดูแลตัวเองอย่างไรและเมื่อไหร่ควรไปพบคุณหมอ: ' },
+        { icon: 'fa-solid fa-cloud-sun', color: '#60a5fa', label: 'สภาพอากาศ & ฝุ่น PM2.5', prompt: 'รายงานสภาพอากาศ คุณภาพอากาศ และฝุ่น PM2.5 วันนี้ พร้อมคำแนะนำในการดูแลสุขภาพ: ' }
+    ]
+};
+
+function renderQuickPromptsForMode(mode) {
+    const container = document.getElementById('quick-prompts');
+    if (!container) return;
+    const prompts = MODE_QUICK_PROMPTS[mode] || MODE_QUICK_PROMPTS.general;
+    // Duplicate 2 sets for seamless loop marquee
+    const fullList = [...prompts, ...prompts];
+    container.innerHTML = fullList.map(item => `
+        <button class="quick-prompt-btn" data-prompt="${escapeHtml(item.prompt)}">
+            <i class="${item.icon}" style="color: ${item.color};"></i> ${escapeHtml(item.label)}
+        </button>
+    `).join('');
+}
+
+function setUserMode(mode, savePreference = true) {
+    if (!['general', 'executive', 'silver_care'].includes(mode)) {
+        mode = 'general';
+    }
+    currentUserMode = mode;
+    localStorage.setItem('kira_user_mode', mode);
+
+    // 1. Update body class
+    document.body.classList.remove('mode-general', 'mode-executive', 'mode-silver-care');
+    document.body.classList.add(`mode-${mode.replace('_', '-')}`);
+
+    // 2. Silver Care floating voice pill visibility & Auto-Speak
+    const silverVoicePill = document.getElementById('silver-voice-pill');
+    if (silverVoicePill) {
+        silverVoicePill.style.display = (mode === 'silver_care') ? 'inline-flex' : 'none';
+    }
+
+    if (mode === 'silver_care') {
+        // Auto-enable spoken voice response for seniors
+        isAutoSpeakEnabled = true;
+        if (typeof updateAutoSpeakUI === 'function') updateAutoSpeakUI();
+        const autoSpeakChk = document.getElementById('setting-auto-speak');
+        if (autoSpeakChk) autoSpeakChk.checked = true;
+        localStorage.setItem('kira_auto_speak', 'true');
+    }
+
+    // 3. Update Header mode pill buttons
+    document.querySelectorAll('.mode-pill-btn').forEach(btn => {
+        if (btn.getAttribute('data-mode') === mode) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
     });
-});
+
+    // 4. Update Settings modal radio cards
+    const modeRadio = document.querySelector(`input[name="setting-user-mode"][value="${mode}"]`);
+    if (modeRadio) modeRadio.checked = true;
+
+    // 5. Render mode-tailored quick prompts
+    renderQuickPromptsForMode(mode);
+
+    // 6. Optional async preference sync with backend
+    if (savePreference && currentUser) {
+        fetch('/api/user/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: currentUser,
+                user_mode: mode
+            })
+        }).catch(err => console.warn("User mode preference sync notice:", err));
+    }
+}
+
+function initUserModeController() {
+    if (window._userModeControllerInitialized) return;
+    window._userModeControllerInitialized = true;
+
+    // 1. Apply current active mode
+    setUserMode(currentUserMode, false);
+
+    // 2. Header mode buttons click listeners
+    const headerPills = document.querySelectorAll('.mode-pill-btn');
+    headerPills.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetMode = btn.getAttribute('data-mode');
+            if (targetMode) {
+                setUserMode(targetMode, true);
+                if (typeof playKiraSound === 'function') playKiraSound('receive');
+            }
+        });
+    });
+
+    // 3. Settings modal radio cards change listeners
+    const settingRadios = document.querySelectorAll('input[name="setting-user-mode"]');
+    settingRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.checked) {
+                setUserMode(radio.value, true);
+                if (typeof playKiraSound === 'function') playKiraSound('receive');
+            }
+        });
+    });
+
+    // 4. Quick prompts event delegation (works seamlessly with dynamically re-rendered prompts)
+    const quickPromptsContainer = document.getElementById('quick-prompts');
+    if (quickPromptsContainer) {
+        quickPromptsContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.quick-prompt-btn');
+            if (!btn) return;
+            const promptText = btn.getAttribute('data-prompt');
+            if (promptText) {
+                userInput.value = promptText;
+                userInput.focus();
+                if (sendBtn) sendBtn.disabled = false;
+            }
+        });
+    }
+
+    // 5. Silver Care floating voice helper pill click -> triggers mic
+    const silverVoicePill = document.getElementById('silver-voice-pill');
+    if (silverVoicePill) {
+        silverVoicePill.addEventListener('click', () => {
+            const mic = document.getElementById('mic-btn');
+            if (mic) {
+                mic.click();
+            }
+        });
+    }
+}
+
+window.setUserMode = setUserMode;
+window.initUserModeController = initUserModeController;
+
 
 // --- Speech-to-Text (Web Speech API) ---
 const micBtn = document.getElementById('mic-btn');
@@ -3004,11 +3157,13 @@ function applyTheme(themeName) {
 }
 
 function applyFontSize(size) {
-    document.body.classList.remove('chat-font-small', 'chat-font-medium', 'chat-font-large');
+    document.body.classList.remove('chat-font-small', 'chat-font-medium', 'chat-font-large', 'chat-font-extra_large');
     if (size === 'small') {
         document.body.classList.add('chat-font-small');
     } else if (size === 'large') {
         document.body.classList.add('chat-font-large');
+    } else if (size === 'extra_large') {
+        document.body.classList.add('chat-font-extra_large');
     } else {
         document.body.classList.add('chat-font-medium');
     }
@@ -3023,6 +3178,9 @@ async function loadSettingsPreferences() {
     // 1. Initial cached values
     const cachedTheme = localStorage.getItem('kira_theme') || 'dark';
     applyTheme(cachedTheme);
+    
+    const cachedUserMode = localStorage.getItem('kira_user_mode') || 'general';
+    setUserMode(cachedUserMode, false);
     
     const cachedFontSize = localStorage.getItem('kira_font_size') || 'medium';
     applyFontSize(cachedFontSize);
@@ -3108,6 +3266,7 @@ async function loadSettingsPreferences() {
                 // Form values from backend
                 if (prefs.theme) applyTheme(prefs.theme);
                 if (prefs.chat_font_size) applyFontSize(prefs.chat_font_size);
+                if (prefs.user_mode) setUserMode(prefs.user_mode, false);
                 
                 const nameInput = document.getElementById('setting-preferred-name');
                 if (nameInput) nameInput.value = prefs.preferred_name || '';
@@ -3214,6 +3373,7 @@ async function saveSettings() {
     }
     
     const selectedTheme = document.querySelector('input[name="setting-theme"]:checked')?.value || 'dark';
+    const selectedUserMode = document.querySelector('input[name="setting-user-mode"]:checked')?.value || currentUserMode || 'general';
     const fontSize = document.getElementById('setting-font-size')?.value || 'medium';
     const enterSend = document.getElementById('setting-enter-send')?.value || 'enter';
     const soundEffects = document.getElementById('setting-sound-effects')?.checked ?? true;
@@ -3236,6 +3396,7 @@ async function saveSettings() {
 
     // Apply immediate local changes
     applyTheme(selectedTheme);
+    setUserMode(selectedUserMode, false);
     applyFontSize(fontSize);
     localStorage.setItem('kira_enter_send', enterSend);
     localStorage.setItem('kira_sound_effects', soundEffects);
@@ -3258,6 +3419,7 @@ async function saveSettings() {
         username: currentUser,
         preferred_name: preferredName,
         theme: selectedTheme,
+        user_mode: selectedUserMode,
         chat_font_size: fontSize,
         auto_speak: autoSpeak,
         voice_name: voiceName,

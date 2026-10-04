@@ -375,6 +375,21 @@
                         </select>
                     </div>
 
+                    <!-- 👥 Age-Adaptive User Mode Switcher -->
+                    <div class="user-mode-switcher-wrapper" id="user-mode-switcher-wrapper">
+                        <div class="user-mode-pill-group" id="header-user-mode-group">
+                            <button type="button" class="mode-pill-btn active" data-mode="general" title="โหมดทั่วไป (General): ทำงานและถามตอบทั่วไป">
+                                <i class="fa-solid fa-house"></i> <span>ทั่วไป</span>
+                            </button>
+                            <button type="button" class="mode-pill-btn" data-mode="executive" title="โหมดผู้บริหาร (Executive): กลยุทธ์ สัญญา ส่งงานในคลิกเดียว">
+                                <i class="fa-solid fa-briefcase"></i> <span>ผู้บริหาร</span>
+                            </button>
+                            <button type="button" class="mode-pill-btn silver-mode-btn" data-mode="silver_care" title="โหมดวัยเก๋าอุ่นใจ (Silver Care): ตัวหนังสือใหญ่พิเศษ สั่งด้วยเสียง 100% ดูแลสุขภาพและย่อยเรื่องยาก">
+                                <i class="fa-solid fa-heart-pulse"></i> <span>วัยเก๋า</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- All Secondary Tools Unified in One Beautiful Dropdown -->
                     <div class="tools-dropdown-wrapper" id="tools-dropdown-wrapper">
                         <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" title="เครื่องมือเพิ่มเติม">
@@ -532,6 +547,12 @@
             </div>
 
             <div class="input-area" style="position: relative;">
+                <!-- Silver Care Floating Voice Helper Pill -->
+                <div id="silver-voice-pill" class="silver-voice-pill" style="display: none;" title="แตะเพื่อพูดคุยด้วยเสียงกับคิระ">
+                    <span class="silver-voice-pulse"></span>
+                    <i class="fa-solid fa-microphone-lines silver-voice-icon"></i>
+                    <span id="silver-voice-label">แตะที่นี่เพื่อพูดคุยกับคิระ (ไม่ต้องพิมพ์คีย์บอร์ดนะคะ)</span>
+                </div>
                 <div id="image-preview-container" style="display: none; position: absolute; bottom: 100%; left: 10px; padding: 10px; background: #1e293b; border-radius: 8px; border: 1px solid #334155; margin-bottom: 10px;">
                     <img id="image-preview" src="" style="max-height: 80px; border-radius: 4px;">
                     <button id="remove-img-btn" style="position: absolute; top: 0; right: 0; transform: translate(50%, -50%); background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fa-solid fa-xmark"></i></button>
@@ -704,6 +725,43 @@
                     <div class="settings-panel active" id="settings-panel-general">
                         <h3 class="panel-section-title"><i class="fa-solid fa-palette text-purple"></i> ธีมและการแสดงผล (Appearance)</h3>
                         
+                        <!-- Age-Adaptive Experience Mode Section -->
+                        <div class="settings-group">
+                            <label class="settings-label"><i class="fa-solid fa-users text-cyan"></i> โหมดประสบการณ์ตามช่วงวัย (User Experience Mode)</label>
+                            <div class="mode-options-grid">
+                                <label class="mode-card-option">
+                                    <input type="radio" name="setting-user-mode" value="general" checked>
+                                    <div class="mode-card-inner">
+                                        <div class="mode-icon-circle bg-cyan-soft"><i class="fa-solid fa-house"></i></div>
+                                        <div class="mode-info">
+                                            <strong class="mode-name">ทั่วไป (General)</strong>
+                                            <span class="mode-desc">สมดุล คล่องตัว เหมาะกับการทำงานและถามตอบทั่วไป</span>
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="mode-card-option">
+                                    <input type="radio" name="setting-user-mode" value="executive">
+                                    <div class="mode-card-inner">
+                                        <div class="mode-icon-circle bg-amber-soft"><i class="fa-solid fa-briefcase"></i></div>
+                                        <div class="mode-info">
+                                            <strong class="mode-name">ผู้บริหาร (Executive)</strong>
+                                            <span class="mode-desc">เน้นยุทธศาสตร์ ตรวจสัญญา สรุปส่งงานในคลิกเดียว</span>
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="mode-card-option">
+                                    <input type="radio" name="setting-user-mode" value="silver_care">
+                                    <div class="mode-card-inner">
+                                        <div class="mode-icon-circle bg-rose-soft"><i class="fa-solid fa-heart-pulse"></i></div>
+                                        <div class="mode-info">
+                                            <strong class="mode-name">วัยเก๋าอุ่นใจ (Silver Care)</strong>
+                                            <span class="mode-desc">ตัวหนังสือใหญ่พิเศษ สั่งด้วยเสียง 100% ดูแลสุขภาพ & ย่อยภาษาราชการ</span>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="settings-group">
                             <label class="settings-label">ธีมของระบบ (Color Theme)</label>
                             <div class="theme-options-grid">
@@ -744,6 +802,7 @@
                                     <option value="small">กะทัดรัด (Small - 13.5px)</option>
                                     <option value="medium" selected>มาตรฐาน (Medium - 14.5px)</option>
                                     <option value="large">ตัวใหญ่ (Large - 16px)</option>
+                                    <option value="extra_large">ตัวใหญ่พิเศษสำหรับผู้ใหญ่ (Extra Large - 18px)</option>
                                 </select>
                             </div>
                         </div>

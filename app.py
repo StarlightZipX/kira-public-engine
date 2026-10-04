@@ -439,7 +439,12 @@ def init_db():
                       auto_speak INTEGER DEFAULT 0,
                       sound_effects INTEGER DEFAULT 1,
                       memory_enabled INTEGER DEFAULT 1,
+                      user_mode TEXT DEFAULT 'general',
                       updated_at TEXT)''')
+        try:
+            execute_query("ALTER TABLE user_preferences ADD COLUMN user_mode TEXT DEFAULT 'general'")
+        except:
+            pass
 
         execute_query('''CREATE TABLE IF NOT EXISTS tasks
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1452,6 +1457,7 @@ class ChatRequest(BaseModel):
     flavor: Optional[str] = "fast"
     persona: Optional[str] = "default"
     boardroom_mode: Optional[bool] = False
+    user_mode: Optional[str] = "general"
 
 class FeedbackRequest(BaseModel):
     username: str
@@ -1496,6 +1502,7 @@ class UserSettingsRequest(BaseModel):
     memory_enabled: Optional[Union[int, bool]] = None
     long_term_memory: Optional[Union[int, bool]] = None
     thinking_accordion: Optional[str] = None
+    user_mode: Optional[str] = None
     token: Optional[str] = None
 
 class ChangePasswordRequest(BaseModel):
@@ -2284,7 +2291,7 @@ async def get_user_settings(username: str, token: Optional[str] = None, request:
     pref_row = execute_query(
         """SELECT preferred_name, custom_instructions, custom_response_style, 
                   default_model, persona, voice, voice_rate, theme, font_size, 
-                  enter_action, auto_canvas, auto_speak, sound_effects, memory_enabled 
+                  enter_action, auto_canvas, auto_speak, sound_effects, memory_enabled, user_mode 
            FROM user_preferences WHERE username=?""",
         (clean_user,), fetch='one'
     )
@@ -2311,6 +2318,7 @@ async def get_user_settings(username: str, token: Optional[str] = None, request:
         "sound_effects": bool(pref_row[12]) if pref_row and pref_row[12] is not None else True,
         "memory_enabled": bool(pref_row[13]) if pref_row and pref_row[13] is not None else True,
         "long_term_memory": bool(pref_row[13]) if pref_row and pref_row[13] is not None else True,
+        "user_mode": pref_row[14] if (pref_row and len(pref_row) > 14 and pref_row[14]) else "general",
     }
 
     # 3. Quota stats
@@ -2381,14 +2389,15 @@ async def save_user_settings(req: UserSettingsRequest):
     a_speak = 1 if (req.auto_speak is True or req.auto_speak == 1) else 0
     s_effects = 1 if (req.sound_effects is True or req.sound_effects == 1 or req.sound_effects is None) else 0
     m_enabled = 1 if (req.memory_enabled is True or req.memory_enabled == 1 or req.long_term_memory is True or req.long_term_memory == 1 or req.memory_enabled is None) else 0
+    u_mode = req.user_mode or "general"
 
     # Upsert preferences
     execute_query(
         """INSERT INTO user_preferences 
            (username, preferred_name, custom_instructions, custom_response_style, 
             default_model, persona, voice, voice_rate, theme, font_size, 
-            enter_action, auto_canvas, auto_speak, sound_effects, memory_enabled, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            enter_action, auto_canvas, auto_speak, sound_effects, memory_enabled, user_mode, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(username) DO UPDATE SET
             preferred_name=excluded.preferred_name,
             custom_instructions=excluded.custom_instructions,
@@ -2404,6 +2413,7 @@ async def save_user_settings(req: UserSettingsRequest):
             auto_speak=excluded.auto_speak,
             sound_effects=excluded.sound_effects,
             memory_enabled=excluded.memory_enabled,
+            user_mode=COALESCE(excluded.user_mode, user_preferences.user_mode, 'general'),
             updated_at=excluded.updated_at""",
         (
             clean_user,
@@ -2421,6 +2431,7 @@ async def save_user_settings(req: UserSettingsRequest):
             a_speak,
             s_effects,
             m_enabled,
+            u_mode,
             updated_at
         )
     )
@@ -4286,6 +4297,25 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                 "- หากเป็นการตรวจงาน Canvas หรือเขียนหน้าเว็บ จงส่งมอบโค้ด HTML/CSS/JS ฉบับปรับปรุงแก้ไขที่สมบูรณ์ในบล็อก ```html...``` เพื่อให้ผู้ใช้สามารถกดรันสดบน Live Code Canvas ได้ทันที\n"
             )
             temp_history.insert(-1, SystemMessage(content=vision_guideline))
+
+        # Pillar A: Age-Adaptive User Mode Context (Silver Care / Executive)
+        user_mode = getattr(req, "user_mode", "general") or "general"
+        if user_mode == "silver_care":
+            silver_guideline = (
+                "\n👵 [โหมดวัยเก๋าอุ่นใจ / SILVER CARE MODE กำลังทำงาน 100%]:\n"
+                "- ผู้ใช้งานอยู่ในโหมดวัยเก๋า/ผู้สูงวัย หรือผู้ใหญ่ที่ต้องการคำอธิบายที่อบอุ่น นอบน้อม สุภาพ และเข้าใจง่ายเป็นพิเศษ\n"
+                "- ใช้น้ำเสียงที่สุภาพ อ่อนโยน ใจเย็น เปรียบเสมือนลูกหลานที่คอยดูแลอย่างใส่ใจ ลงท้ายด้วย 'ค่ะ / นะคะ' อย่างเป็นธรรมชาติเสมอ\n"
+                "- ใช้ภาษาไทยที่สละสลวย ชัดเจน ตรงไปตรงมา หลีกเลี่ยงศัพท์เทคนิคหรือตัวย่อภาษาอังกฤษที่ซับซ้อน (หากจำเป็นต้องใช้ให้มีคำแปลหรือคำอธิบายภาษาไทยประกอบเสมอ)\n"
+                "- แบ่งย่อหน้าให้อ่านง่าย สบายตา ไม่เขียนติดกันเป็นพรืด ชี้แจงเป็นข้อๆ ชัดเจน\n"
+                "- หากเป็นเรื่องสุขภาพ ให้คำแนะนำเบื้องต้นอย่างระมัดระวังและเตือนให้ปรึกษาแพทย์เสมอ หากเป็นเรื่องข่าวสาร ให้เน้นความถูกต้องและเตือนระวังมิจฉาชีพ\n"
+            )
+            temp_history.insert(-1, SystemMessage(content=silver_guideline))
+        elif user_mode == "executive":
+            exec_guideline = (
+                "\n💼 [โหมดผู้บริหารระดับสูง / EXECUTIVE COMMAND MODE กำลังทำงาน 100%]:\n"
+                "- ผู้ใช้งานอยู่ในโหมดผู้บริหาร/ทำงานระดับมืออาชีพ เน้นความกระชับ ตรงประเด็น ผลลัพธ์เชิงกลยุทธ์ (Strategic Deliverable) ชัดเจน มีตัวเลข/กรอบเวลา/จุดชี้ขาด และพร้อมส่งต่อผู้บริหารได้ทันที\n"
+            )
+            temp_history.insert(-1, SystemMessage(content=exec_guideline))
 
         yield "[THINKING]กำลังเรียบเรียงคำตอบ...[/THINKING]"
 

@@ -7754,4 +7754,346 @@ select.input-control:focus,
     margin-bottom: 6px;
 }
 
+/* ==========================================================================
+   👥 Age-Adaptive User Modes (General, Executive, Silver Care) & Font Scaling
+   ========================================================================== */
+
+/* Header Mode Switcher */
+.user-mode-switcher-wrapper {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 4px;
+}
+
+.user-mode-pill-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    padding: 3px 4px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.mode-pill-btn {
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 5px 11px;
+    border-radius: 9999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    outline: none;
+    user-select: none;
+}
+
+.mode-pill-btn:hover {
+    color: #f1f5f9;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.mode-pill-btn.active[data-mode="general"] {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(59, 130, 246, 0.25));
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    font-weight: 600;
+}
+
+.mode-pill-btn.active[data-mode="executive"] {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.25));
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.5);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+    font-weight: 600;
+}
+
+.mode-pill-btn.active[data-mode="silver_care"],
+.mode-pill-btn.silver-mode-btn.active {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.28), rgba(236, 72, 153, 0.28));
+    color: #fb7185;
+    border: 1px solid rgba(244, 63, 94, 0.55);
+    box-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
+    font-weight: 600;
+}
+
+/* Floating Voice Helper Pill (Silver Care Mode) */
+.silver-voice-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.22), rgba(168, 85, 247, 0.22));
+    border: 1.5px solid rgba(244, 63, 94, 0.5);
+    border-radius: 9999px;
+    padding: 9px 20px;
+    margin: 0 auto 10px auto;
+    width: fit-content;
+    max-width: 95%;
+    color: #fecdd3;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 18px rgba(244, 63, 94, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    position: relative;
+    z-index: 10;
+}
+
+.silver-voice-pill:hover {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.32), rgba(168, 85, 247, 0.32));
+    border-color: #fb7185;
+    color: #ffffff;
+    box-shadow: 0 6px 22px rgba(244, 63, 94, 0.38);
+    transform: translateY(-2px);
+}
+
+.silver-voice-pulse {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #f43f5e;
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7);
+    animation: silver-pulse-anim 1.8s infinite cubic-bezier(0.45, 0, 0.2, 1);
+    flex-shrink: 0;
+}
+
+@keyframes silver-pulse-anim {
+    0% {
+        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7);
+        transform: scale(0.95);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(244, 63, 94, 0);
+        transform: scale(1.15);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+        transform: scale(0.95);
+    }
+}
+
+.silver-voice-icon {
+    font-size: 1.15rem;
+    color: #fb7185;
+}
+
+/* Settings Modal User Mode Selection Cards */
+.mode-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+.mode-card-option {
+    cursor: pointer;
+    display: block;
+    position: relative;
+    user-select: none;
+}
+
+.mode-card-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.mode-card-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.mode-card-option:hover .mode-card-inner {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(30, 41, 59, 0.75);
+    transform: translateY(-2px);
+}
+
+.mode-card-option input[type="radio"]:checked + .mode-card-inner {
+    border-color: #38bdf8;
+    background: rgba(14, 165, 233, 0.12);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+}
+
+.mode-card-option input[type="radio"][value="executive"]:checked + .mode-card-inner {
+    border-color: #fbbf24;
+    background: rgba(245, 158, 11, 0.12);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+}
+
+.mode-card-option input[type="radio"][value="silver_care"]:checked + .mode-card-inner {
+    border-color: #fb7185;
+    background: rgba(244, 63, 94, 0.12);
+    box-shadow: 0 0 15px rgba(244, 63, 94, 0.25);
+}
+
+.mode-icon-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.bg-cyan-soft {
+    background: rgba(6, 182, 212, 0.15);
+    color: #22d3ee;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.bg-amber-soft {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.bg-rose-soft {
+    background: rgba(244, 63, 94, 0.15);
+    color: #fb7185;
+    border: 1px solid rgba(244, 63, 94, 0.3);
+}
+
+.mode-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mode-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.mode-desc {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    line-height: 1.45;
+}
+
+/* Chat Font Size Presets */
+body.chat-font-small,
+body.chat-font-small .message-text,
+body.chat-font-small #chat-box {
+    font-size: 13.5px !important;
+}
+
+body.chat-font-medium,
+body.chat-font-medium .message-text,
+body.chat-font-medium #chat-box {
+    font-size: 14.5px !important;
+}
+
+body.chat-font-large,
+body.chat-font-large .message-text,
+body.chat-font-large #chat-box {
+    font-size: 16.5px !important;
+    line-height: 1.68 !important;
+}
+
+body.chat-font-extra_large,
+body.chat-font-extra_large .message-text,
+body.chat-font-extra_large #chat-box {
+    font-size: 18.5px !important;
+    line-height: 1.78 !important;
+}
+
+/* ==========================================================================
+   👵 Silver Care Mode - Universal Accessibility & Scaled Typography
+   ========================================================================== */
+body.mode-silver-care {
+    font-size: 16.5px;
+}
+
+body.mode-silver-care .message-text {
+    font-size: 1.18rem !important;
+    line-height: 1.82 !important;
+    letter-spacing: 0.25px !important;
+    font-weight: 450;
+}
+
+body.mode-silver-care .message.user .message-text {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.25)) !important;
+    border: 1px solid rgba(56, 189, 248, 0.4) !important;
+    color: #f8fafc !important;
+}
+
+body.mode-silver-care .message.assistant .message-text {
+    background: rgba(30, 41, 59, 0.88) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+}
+
+body.mode-silver-care #user-input {
+    font-size: 1.15rem !important;
+    line-height: 1.6 !important;
+    padding: 13px 18px !important;
+    min-height: 52px !important;
+}
+
+body.mode-silver-care #user-input::placeholder {
+    font-size: 1.05rem !important;
+}
+
+body.mode-silver-care .quick-prompt-btn {
+    font-size: 0.95rem !important;
+    padding: 10px 18px !important;
+    border-radius: 12px !important;
+    line-height: 1.5 !important;
+}
+
+body.mode-silver-care #send-btn,
+body.mode-silver-care #mic-btn {
+    width: 46px !important;
+    height: 46px !important;
+    font-size: 1.25rem !important;
+}
+
+body.mode-silver-care .welcome-title {
+    font-size: 1.45rem !important;
+}
+
+body.mode-silver-care .welcome-subtitle {
+    font-size: 1.05rem !important;
+    line-height: 1.65 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .mode-pill-btn span {
+        display: none;
+    }
+    .mode-pill-btn {
+        padding: 6px 9px;
+    }
+    .silver-voice-pill {
+        font-size: 0.85rem;
+        padding: 7px 14px;
+    }
+}
+
 
