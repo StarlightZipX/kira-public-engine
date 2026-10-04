@@ -104,12 +104,62 @@ const closeSidebarBtn = document.getElementById('close-sidebar');
 const newChatBtn = document.querySelector('.new-chat-btn');
 const chatHistorySidebar = document.getElementById('chat-history');
 
-// --- Auth State Management ---
+// --- Global State Management ---
 let currentUser = localStorage.getItem('kira_username');
 let currentUserMode = localStorage.getItem('kira_user_mode') || 'general';
 let isGenerating = false;
 let currentImageBase64 = null;
+let currentSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+let currentTasksList = [];
+let currentGuideStep = 1;
+const totalGuideSteps = 4;
+let guideBusy = false;
+let isAutoSpeakEnabled = localStorage.getItem('kira_auto_speak') === 'true';
+let deferredPWAInstallPrompt = null;
+let speechRecognition = null;
+let isListening = false;
+let latestBriefingData = null;
+let lastUserActivityTime = Date.now();
+let proactiveToastDismissed = false;
+let currentAudio = null;
+let currentSpeakingBtn = null;
+let currentArtifactCode = '';
+let artifactVersions = [];
+let activeVersionId = 1;
+let graphAnimationId = null;
+let graphNodes = [];
+let graphLinks = [];
+let selectedActiveNode = null;
+let draggedNode = null;
+let sharedAudioCtx = null;
 
+// 👥 Age-Adaptive User Modes (General, Executive, Silver Care) & Prompts
+const MODE_QUICK_PROMPTS = {
+    general: [
+        { icon: 'fa-solid fa-list-check', color: '#38bdf8', label: 'สรุปประเด็น & Actions', prompt: 'ช่วยสรุปประเด็นสำคัญและ Action items ที่ต้องทำต่อจากข้อความหรือเอกสารนี้อย่างชัดเจน: ' },
+        { icon: 'fa-solid fa-lightbulb', color: '#fbbf24', label: 'ระดมสมอง & วางโครงงาน', prompt: 'ช่วยหาไอเดียสร้างสรรค์และวางโครงร่างขั้นตอนการดำเนินงานสำหรับโปรเจกต์นี้ให้หน่อย: ' },
+        { icon: 'fa-solid fa-pen-nib', color: '#c084fc', label: 'เกลาภาษา & เรียบเรียง', prompt: 'ช่วยตรวจไวยากรณ์และเรียบเรียงข้อความนี้ให้สุภาพ คล่องตัว และน่าอ่านขึ้น: ' },
+        { icon: 'fa-solid fa-book-open', color: '#34d399', label: 'อธิบายเรื่องยากให้ง่าย', prompt: 'ช่วยอธิบายเรื่องนี้ให้เข้าใจง่ายๆ แบบเห็นภาพและยกตัวอย่างประกอบในชีวิตประจำวัน: ' },
+        { icon: 'fa-solid fa-calculator', color: '#60a5fa', label: 'ช่วยคิดเลข & สูตรชีต', prompt: 'ช่วยคิดคำนวณหรือเขียนสูตร Excel / Google Sheets เพื่อจัดการข้อมูลนี้: ' },
+        { icon: 'fa-solid fa-calendar-days', color: '#f43f5e', label: 'จัดตาราง & แผนท่องเที่ยว', prompt: 'ช่วยร่างตารางเวลาและแผนการเดินทางสำหรับกิจกรรมนี้ให้คุ้มค่าและไม่เหนื่อยเกินไป: ' }
+    ],
+    executive: [
+        { icon: 'fa-solid fa-file-shield', color: '#38bdf8', label: 'ตรวจสัญญา & ความเสี่ยง', prompt: 'ช่วยวิเคราะห์และตรวจสอบสัญญาหรือข้อตกลงนี้อย่างละเอียด ระบุจุดเสี่ยง ช่องโหว่ทางกฎหมายและการเงิน พร้อมข้อเสนอแนะในการแก้ไข: ' },
+        { icon: 'fa-solid fa-users-viewfinder', color: '#c084fc', label: 'สภาบอร์ดรูม 4 มิติ', prompt: 'ช่วยเปิดการประชุม Virtual Boardroom วิเคราะห์ทิศทางกลยุทธ์ทางธุรกิจในประเด็นนี้อย่างรอบด้าน 4 มิติ (CEO, CFO, CPO, CTO): ' },
+        { icon: 'fa-solid fa-handshake-angle', color: '#fbbf24', label: 'ร่างอีเมลเจรจาธุรกิจ', prompt: 'ช่วยร่างอีเมลเจรจาต่อรองธุรกิจระดับผู้บริหารอย่างเป็นมืออาชีพ มีวาทศิลป์ นอบน้อมแต่เด็ดขาดและรักษาผลประโยชน์สูงสุด ในกรณี: ' },
+        { icon: 'fa-solid fa-compass', color: '#34d399', label: 'แผนกลยุทธ์ 30-90-365 วัน', prompt: 'ช่วยจัดทำแผนกลยุทธ์ปฏิบัติการเชิงลึกแบบ 30-90-365 วัน พร้อมกำหนด KPI, ความเสี่ยง และจุดตรวจวัดความสำเร็จ สำหรับ: ' },
+        { icon: 'fa-solid fa-diagram-project', color: '#60a5fa', label: 'ออกแบบผัง Mermaid', prompt: 'ช่วยออกแบบสถาปัตยกรรมระบบหรือลำดับขั้นตอนการทำงานเป็น Mermaid Flowchart และ Diagram ที่เข้าใจง่าย สำหรับ: ' },
+        { icon: 'fa-solid fa-wand-magic-sparkles', color: '#f43f5e', label: 'เกลาเอกสารระดับทางการ', prompt: 'ช่วยขัดเกลาและยกระดับภาษาของเอกสารนี้ให้กระชับ คมคาย ทรงพลัง และน่าเชื่อถือสูงสุดสำหรับนำเสนอผู้บริหารระดับสูง: ' }
+    ],
+    silver_care: [
+        { icon: 'fa-solid fa-pills', color: '#fb7185', label: 'เตือนทานยา & สุขภาพ', prompt: 'ช่วยจัดตารางเตือนการทานยาและวิธีรับประทานยาอย่างปลอดภัยตามรายการนี้ให้หนูฟังหน่อย: ' },
+        { icon: 'fa-solid fa-shield-halved', color: '#38bdf8', label: 'เช็กข่าวปลอม & มิจฉาชีพ', prompt: 'ช่วยตรวจสอบข้อความ ข่าว หรือเบอร์โทร/ลิงก์นี้ให้หน่อยว่าจริงหรือหลอก ล่อลวงมิจฉาชีพไหม: ' },
+        { icon: 'fa-solid fa-file-lines', color: '#fbbf24', label: 'ย่อยจดหมายราชการเป็นภาษาพูด', prompt: 'ช่วยอ่านและย่อยเอกสารราชการหรือจดหมายทางการฉบับนี้เป็นภาษาพูดง่ายๆ ให้ฟังทีละข้อหน่อย: ' },
+        { icon: 'fa-solid fa-heart', color: '#f43f5e', label: 'แต่งคำอวยพรส่ง LINE', prompt: 'ช่วยแต่งข้อความอวยพรน่ารักๆ อบอุ่น พร้อมส่งให้เพื่อนๆ ใน LINE สวัสดีวันใหม่ในธีม: ' },
+        { icon: 'fa-solid fa-stethoscope', color: '#34d399', label: 'ปรึกษาอาการสุขภาพเบื้องต้น', prompt: 'มีอาการเบื้องต้นแบบนี้ ควรดูแลตัวเองอย่างไรและเมื่อไหร่ควรไปพบคุณหมอ: ' },
+        { icon: 'fa-solid fa-cloud-sun', color: '#60a5fa', label: 'สภาพอากาศ & ฝุ่น PM2.5', prompt: 'รายงานสภาพอากาศ คุณภาพอากาศ และฝุ่น PM2.5 วันนี้ พร้อมคำแนะนำในการดูแลสุขภาพ: ' }
+    ]
+};
 
 const isBoss = (name) => {
     if (!name) return false;
@@ -330,17 +380,8 @@ try {
     console.warn("Auth error check notice:", e);
 }
 
-// Check auth on load
-checkNeuralCoreHealth(true);
-checkAuth();
-updateModelUI();
-checkEngineStatus();
-initProactiveHeartbeat();
-initLiveScreenInspector();
-initOnboardingGuide();
-initUserModeController();
-setInterval(checkEngineStatus, 30000);
-setInterval(() => checkNeuralCoreHealth(false), 240000); // 4-min Keepalive Heartbeat
+// Note: Client initialization is handled safely in initKiraApp() at DOM ready
+
 
 // --- Auth UI Toggles & Tabs ---
 function switchAuthTab(tab) {
@@ -653,7 +694,6 @@ if (btnLogout) {
 }
 
 // --- Chat Logic ---
-let currentSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
 
 // --- Kira 2.2 Proactive Heartbeat & Briefing Suite ---
 function escapeHtml(text) {
@@ -667,10 +707,6 @@ function escapeHtml(text) {
     };
     return text.toString().replace(/[&<>"']/g, m => map[m]);
 }
-
-let latestBriefingData = null;
-let lastUserActivityTime = Date.now();
-let proactiveToastDismissed = false;
 
 async function loadProactiveBriefing() {
     if (!currentUser) return null;
@@ -1196,7 +1232,7 @@ async function loadHistory() {
             });
         } else {
             // New user, no sessions
-            newChatDiv.classList.add('active');
+            if (newChatBtn) newChatBtn.classList.add('active');
             renderWelcomeHub();
         }
     } catch (err) {
@@ -1803,8 +1839,12 @@ userInput.addEventListener('input', function() {
     }
 });
 
-toggleSidebarBtn.addEventListener('click', () => sidebar.classList.add('open'));
-closeSidebarBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+if (toggleSidebarBtn && sidebar) {
+    toggleSidebarBtn.addEventListener('click', () => sidebar.classList.add('open'));
+}
+if (closeSidebarBtn && sidebar) {
+    closeSidebarBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+}
 
 // Add floating label behavior to input area
 userInput.addEventListener('focus', () => {
@@ -1814,35 +1854,8 @@ userInput.addEventListener('blur', () => {
     document.querySelector('.input-wrapper').style.borderColor = 'rgba(255, 255, 255, 0.2)';
 });
 
-// ==========================================================================
-// 👥 Age-Adaptive User Modes (General, Executive, Silver Care) & Prompts
-// ==========================================================================
-const MODE_QUICK_PROMPTS = {
-    general: [
-        { icon: 'fa-solid fa-list-check', color: '#38bdf8', label: 'สรุปประเด็น & Actions', prompt: 'ช่วยสรุปประเด็นสำคัญและ Action items ที่ต้องทำต่อจากข้อความหรือเอกสารนี้อย่างชัดเจน: ' },
-        { icon: 'fa-solid fa-lightbulb', color: '#fbbf24', label: 'ระดมสมอง & วางโครงงาน', prompt: 'ช่วยหาไอเดียสร้างสรรค์และวางโครงร่างขั้นตอนการดำเนินงานสำหรับโปรเจกต์นี้ให้หน่อย: ' },
-        { icon: 'fa-solid fa-pen-nib', color: '#c084fc', label: 'เกลาภาษา & เรียบเรียง', prompt: 'ช่วยตรวจไวยากรณ์และเรียบเรียงข้อความนี้ให้สุภาพ คล่องตัว และน่าอ่านขึ้น: ' },
-        { icon: 'fa-solid fa-book-open', color: '#34d399', label: 'อธิบายเรื่องยากให้ง่าย', prompt: 'ช่วยอธิบายเรื่องนี้ให้เข้าใจง่ายๆ แบบเห็นภาพและยกตัวอย่างประกอบในชีวิตประจำวัน: ' },
-        { icon: 'fa-solid fa-calculator', color: '#60a5fa', label: 'ช่วยคิดเลข & สูตรชีต', prompt: 'ช่วยคิดคำนวณหรือเขียนสูตร Excel / Google Sheets เพื่อจัดการข้อมูลนี้: ' },
-        { icon: 'fa-solid fa-calendar-days', color: '#f43f5e', label: 'จัดตาราง & แผนท่องเที่ยว', prompt: 'ช่วยร่างตารางเวลาและแผนการเดินทางสำหรับกิจกรรมนี้ให้คุ้มค่าและไม่เหนื่อยเกินไป: ' }
-    ],
-    executive: [
-        { icon: 'fa-solid fa-file-shield', color: '#38bdf8', label: 'ตรวจสัญญา & ความเสี่ยง', prompt: 'ช่วยวิเคราะห์และตรวจสอบสัญญาหรือข้อตกลงนี้อย่างละเอียด ระบุจุดเสี่ยง ช่องโหว่ทางกฎหมายและการเงิน พร้อมข้อเสนอแนะในการแก้ไข: ' },
-        { icon: 'fa-solid fa-users-viewfinder', color: '#c084fc', label: 'สภาบอร์ดรูม 4 มิติ', prompt: 'ช่วยเปิดการประชุม Virtual Boardroom วิเคราะห์ทิศทางกลยุทธ์ทางธุรกิจในประเด็นนี้อย่างรอบด้าน 4 มิติ (CEO, CFO, CPO, CTO): ' },
-        { icon: 'fa-solid fa-handshake-angle', color: '#fbbf24', label: 'ร่างอีเมลเจรจาธุรกิจ', prompt: 'ช่วยร่างอีเมลเจรจาต่อรองธุรกิจระดับผู้บริหารอย่างเป็นมืออาชีพ มีวาทศิลป์ นอบน้อมแต่เด็ดขาดและรักษาผลประโยชน์สูงสุด ในกรณี: ' },
-        { icon: 'fa-solid fa-compass', color: '#34d399', label: 'แผนกลยุทธ์ 30-90-365 วัน', prompt: 'ช่วยจัดทำแผนกลยุทธ์ปฏิบัติการเชิงลึกแบบ 30-90-365 วัน พร้อมกำหนด KPI, ความเสี่ยง และจุดตรวจวัดความสำเร็จ สำหรับ: ' },
-        { icon: 'fa-solid fa-diagram-project', color: '#60a5fa', label: 'ออกแบบผัง Mermaid', prompt: 'ช่วยออกแบบสถาปัตยกรรมระบบหรือลำดับขั้นตอนการทำงานเป็น Mermaid Flowchart และ Diagram ที่เข้าใจง่าย สำหรับ: ' },
-        { icon: 'fa-solid fa-wand-magic-sparkles', color: '#f43f5e', label: 'เกลาเอกสารระดับทางการ', prompt: 'ช่วยขัดเกลาและยกระดับภาษาของเอกสารนี้ให้กระชับ คมคาย ทรงพลัง และน่าเชื่อถือสูงสุดสำหรับนำเสนอผู้บริหารระดับสูง: ' }
-    ],
-    silver_care: [
-        { icon: 'fa-solid fa-pills', color: '#fb7185', label: 'เตือนทานยา & สุขภาพ', prompt: 'ช่วยจัดตารางเตือนการทานยาและวิธีรับประทานยาอย่างปลอดภัยตามรายการนี้ให้หนูฟังหน่อย: ' },
-        { icon: 'fa-solid fa-shield-halved', color: '#38bdf8', label: 'เช็กข่าวปลอม & มิจฉาชีพ', prompt: 'ช่วยตรวจสอบข้อความ ข่าว หรือเบอร์โทร/ลิงก์นี้ให้หน่อยว่าจริงหรือหลอก ล่อลวงมิจฉาชีพไหม: ' },
-        { icon: 'fa-solid fa-file-lines', color: '#fbbf24', label: 'ย่อยจดหมายราชการเป็นภาษาพูด', prompt: 'ช่วยอ่านและย่อยเอกสารราชการหรือจดหมายทางการฉบับนี้เป็นภาษาพูดง่ายๆ ให้ฟังทีละข้อหน่อย: ' },
-        { icon: 'fa-solid fa-heart', color: '#f43f5e', label: 'แต่งคำอวยพรส่ง LINE', prompt: 'ช่วยแต่งข้อความอวยพรน่ารักๆ อบอุ่น พร้อมส่งให้เพื่อนๆ ใน LINE สวัสดีวันใหม่ในธีม: ' },
-        { icon: 'fa-solid fa-stethoscope', color: '#34d399', label: 'ปรึกษาอาการสุขภาพเบื้องต้น', prompt: 'มีอาการเบื้องต้นแบบนี้ ควรดูแลตัวเองอย่างไรและเมื่อไหร่ควรไปพบคุณหมอ: ' },
-        { icon: 'fa-solid fa-cloud-sun', color: '#60a5fa', label: 'สภาพอากาศ & ฝุ่น PM2.5', prompt: 'รายงานสภาพอากาศ คุณภาพอากาศ และฝุ่น PM2.5 วันนี้ พร้อมคำแนะนำในการดูแลสุขภาพ: ' }
-    ]
-};
+// Mode prompts already registered at global scope
+
 
 function renderQuickPromptsForMode(mode) {
     const container = document.getElementById('quick-prompts');
@@ -2175,9 +2188,7 @@ if (attachToggleBtn && attachmentMenu) {
 // =========================================================================
 // 🎙️ 1. Free Natural Neural Voice Engine (Edge-TTS Integration)
 // =========================================================================
-let currentAudio = null;
-let currentSpeakingBtn = null;
-let isAutoSpeakEnabled = localStorage.getItem('kira_auto_speak') === 'true';
+
 
 function updateAutoSpeakUI() {
     const btnAutoSpeak = document.getElementById('btn-autospeak');
@@ -2308,9 +2319,6 @@ const btnViewportDesktop = document.getElementById('btn-viewport-desktop');
 const btnViewportMobile = document.getElementById('btn-viewport-mobile');
 const btnDownloadArtifact = document.getElementById('btn-download-artifact');
 
-let currentArtifactCode = '';
-let artifactVersions = []; // Array of { id: 1, label: 'v1', code: '...', fullHtml: '...', timestamp: Date }
-let activeVersionId = 1;
 
 if (btnCloseArtifact) {
     btnCloseArtifact.addEventListener('click', () => {
@@ -2520,11 +2528,6 @@ const graphNodeDetails = document.getElementById('graph-node-details');
 const detailNodeName = document.getElementById('detail-node-name');
 const detailNodeDesc = document.getElementById('detail-node-desc');
 
-let graphAnimationId = null;
-let graphNodes = [];
-let graphLinks = [];
-let selectedActiveNode = null;
-let draggedNode = null;
 
 if (btnGraph) {
     btnGraph.addEventListener('click', () => openKnowledgeGraph());
@@ -2824,9 +2827,7 @@ function startPhysicsLoop() {
 // ==========================================
 // 📖 Interactive Onboarding Tour & Feature Guide
 // ==========================================
-let currentGuideStep = 1;
-const totalGuideSteps = 4;
-let guideBusy = false;
+
 
 function updateGuideUI() {
     const slides = document.querySelectorAll('.onboarding-slide');
@@ -3038,7 +3039,7 @@ window.guideGoToStep = guideGoToStep;
 // =========================================================================
 
 // Shared AudioContext Singleton to prevent AudioContext exhaustion / memory leaks
-let sharedAudioCtx = null;
+
 function getSharedAudioContext() {
     try {
         if (!sharedAudioCtx) {
@@ -3171,10 +3172,10 @@ async function loadSettingsPreferences() {
                 
                 // Account Tab Info
                 const userDisplay = document.getElementById('settings-username-display');
-                if (userDisplay) userDisplay.textContent = data.user.nickname || data.user.username;
+                if (userDisplay && data.user) userDisplay.textContent = data.user.nickname || data.user.username || '';
                 
                 const userRole = document.getElementById('settings-user-role');
-                if (userRole) {
+                if (userRole && data.user) {
                     if (data.user.role === 'admin' || isBoss(currentUser)) {
                         userRole.textContent = 'Admin / Boss';
                         userRole.style.color = '#f59e0b';
@@ -3186,7 +3187,7 @@ async function loadSettingsPreferences() {
                 }
                 
                 const userCreated = document.getElementById('settings-user-created');
-                if (userCreated && data.user.created_at) {
+                if (userCreated && data.user && data.user.created_at) {
                     const dateStr = data.user.created_at.split(' ')[0] || data.user.created_at;
                     userCreated.textContent = `สมาชิกตั้งแต่: ${dateStr}`;
                 }
@@ -3819,8 +3820,6 @@ function initSettingsModalEventListeners() {
     });
 }
 
-// Initialize on DOM load
-initSettingsModalEventListeners();
 
 // Expose globally
 window.openSettingsModal = openSettingsModal;
@@ -4186,8 +4185,6 @@ function initBoardroomController() {
     }
 }
 
-// Initialize Boardroom on load
-initBoardroomController();
 
 // --- 🧰 Tools Popover Dropdown Controller ---
 function initToolsDropdownController() {
@@ -4223,7 +4220,6 @@ function initToolsDropdownController() {
     }
 }
 
-initToolsDropdownController();
 
 // Expose globally
 window.playGavelSound = playGavelSound;
@@ -4240,8 +4236,7 @@ window.attachDeliverablesBar = attachDeliverablesBar;
 // ====================================================================
 // 🎙️ Kira Web Speech Recognition Controller (Thai & Multi-Language)
 // ====================================================================
-let speechRecognition = null;
-let isListening = false;
+
 
 function initSpeechRecognition() {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -4445,7 +4440,7 @@ function initLiveCanvasController() {
 // ====================================================================
 // 📋 Kira Omni-Task Suite & Matrix Controller
 // ====================================================================
-let currentTasksList = [];
+
 
 async function loadOmniTasks() {
     const user = currentUser || localStorage.getItem('kira_username') || 'guest';
@@ -4845,12 +4840,6 @@ function initTaskMatrixController() {
     loadOmniTasks();
 }
 
-// Auto-run controllers on load
-initSpeechRecognition();
-initLiveCanvasController();
-initTaskMatrixController();
-initSubscriptionController();
-initPWAController();
 
 // ====================================================================
 // 👑 Kira Subscription & Monetization Engine Controller
@@ -4956,12 +4945,12 @@ function initSubscriptionController() {
         try {
             const res = await fetch(`/api/subscription/status/${encodeURIComponent(user)}`);
             const data = await res.json();
-            if (data.status === 'success') {
+            if (data.status === 'success' && data.subscription) {
                 const sub = data.subscription;
-                if (planBadgeText) {
+                if (planBadgeText && sub.badge) {
                     planBadgeText.textContent = sub.badge;
                 }
-                if (userPlanBadge) {
+                if (userPlanBadge && sub.plan) {
                     if (sub.plan === 'founder' || sub.is_boss) {
                         userPlanBadge.style.color = '#c084fc';
                         userPlanBadge.style.background = 'rgba(168, 85, 247, 0.15)';
@@ -4981,7 +4970,7 @@ function initSubscriptionController() {
                     }
                 }
 
-                if (subCurrentPlan) {
+                if (subCurrentPlan && sub.badge) {
                     subCurrentPlan.textContent = sub.badge;
                 }
                 if (subExpiryInfo) {
@@ -5490,7 +5479,7 @@ function initSubscriptionController() {
 // ====================================================================
 // 📱 Progressive Web App (PWA) Controller & Installation Logic
 // ====================================================================
-let deferredPWAInstallPrompt = null;
+
 
 function initPWAController() {
     const btnHeaderInstall = document.getElementById('btn-install-pwa-header');
@@ -5519,7 +5508,7 @@ function initPWAController() {
     }
 
     // 2. Check if already installed in standalone mode
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const isStandalone = (window.matchMedia && typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches) || (typeof navigator !== 'undefined' && navigator && navigator.standalone === true);
     if (isStandalone) {
         if (pwaMenuStatus) pwaMenuStatus.textContent = 'ติดตั้งบนอุปกรณ์นี้แล้ว';
         if (btnHeaderInstall) btnHeaderInstall.style.display = 'none';
@@ -5528,7 +5517,7 @@ function initPWAController() {
     }
 
     // 3. Detect iOS Safari
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isIOS = (typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent || '')) && !(window && window.MSStream);
 
     if (isIOS && !isStandalone) {
         if (btnHeaderInstall) btnHeaderInstall.style.display = 'inline-flex';
@@ -6083,6 +6072,54 @@ function exportDeliverableToPDF(title, rawContent, mode = 'executive') {
     }
 }
 window.exportDeliverableToPDF = exportDeliverableToPDF;
+
+// ====================================================================
+// 🚀 Unified Kira Application Bootstrap Engine
+// ====================================================================
+function initKiraApp() {
+    console.log("🌸 [Kira AI] Initializing client subsystems...");
+
+    // 1. Core Connection & Auth
+    try { checkNeuralCoreHealth(true); } catch (e) { console.warn("NeuralCore health check error:", e); }
+    try { checkAuth(); } catch (e) { console.error("Auth initialization error:", e); }
+    try { updateModelUI(); } catch (e) { console.warn("Model UI update error:", e); }
+    try { checkEngineStatus(); } catch (e) { console.warn("Engine status check error:", e); }
+
+    // 2. Interactive Controls & Dropdowns
+    try { initToolsDropdownController(); } catch (e) { console.error("Tools dropdown init error:", e); }
+    try { initSettingsModalEventListeners(); } catch (e) { console.error("Settings modal init error:", e); }
+    try { initUserModeController(); } catch (e) { console.error("User mode controller init error:", e); }
+    try { initBoardroomController(); } catch (e) { console.error("Boardroom controller init error:", e); }
+
+    // 3. Productivity & Studio Controllers
+    try { initLiveCanvasController(); } catch (e) { console.error("Live canvas init error:", e); }
+    try { initTaskMatrixController(); } catch (e) { console.error("Task matrix init error:", e); }
+    try { initLiveScreenInspector(); } catch (e) { console.error("Live screen inspector init error:", e); }
+    try { initSpeechRecognition(); } catch (e) { console.error("Speech recognition init error:", e); }
+    try { initSubscriptionController(); } catch (e) { console.error("Subscription controller init error:", e); }
+    try { initPWAController(); } catch (e) { console.error("PWA controller init error:", e); }
+
+    // 4. Background Care & Assistance
+    try { initProactiveHeartbeat(); } catch (e) { console.warn("Heartbeat init error:", e); }
+    try { initOnboardingGuide(); } catch (e) { console.warn("Onboarding guide init error:", e); }
+
+    // 5. Standing Intervals
+    try {
+        setInterval(checkEngineStatus, 30000);
+        setInterval(() => checkNeuralCoreHealth(false), 240000);
+    } catch (e) {
+        console.warn("Background interval registration notice:", e);
+    }
+
+    console.log("✨ [Kira AI] All interactive systems operational!");
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initKiraApp);
+} else {
+    initKiraApp();
+}
+
 
 
 
