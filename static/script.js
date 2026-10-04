@@ -3085,13 +3085,13 @@ function playKiraSound(type = 'send') {
 }
 
 function applyTheme(themeName) {
-    document.body.classList.remove('light-theme', 'oled-theme');
+    document.body.classList.remove('light-theme', 'light-mode', 'oled-theme', 'oled-mode');
     const btnThemeEl = document.getElementById('btn-theme');
     if (themeName === 'light') {
-        document.body.classList.add('light-theme');
+        document.body.classList.add('light-theme', 'light-mode');
         if (btnThemeEl) btnThemeEl.innerHTML = '<i class="fa-solid fa-sun" style="color: #f59e0b;"></i>';
     } else if (themeName === 'oled') {
-        document.body.classList.add('oled-theme');
+        document.body.classList.add('oled-theme', 'oled-mode');
         if (btnThemeEl) btnThemeEl.innerHTML = '<i class="fa-solid fa-circle" style="color: #a855f7;"></i>';
     } else {
         // dark
