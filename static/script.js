@@ -1965,83 +1965,6 @@ function initUserModeController() {
 window.setUserMode = setUserMode;
 window.initUserModeController = initUserModeController;
 
-
-// --- Speech-to-Text (Web Speech API) ---
-const micBtn = document.getElementById('mic-btn');
-if (micBtn) {
-    let recognition = null;
-    let isRecording = false;
-    let initialTextBeforeSpeech = '';
-
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = true; // Stream words in real-time
-        recognition.lang = 'th-TH'; // Default to Thai with English loanword support
-
-        recognition.onstart = function() {
-            isRecording = true;
-            micBtn.classList.add('listening');
-            micBtn.title = "กำลังฟัง... (คลิกอีกครั้งเพื่อหยุด)";
-            initialTextBeforeSpeech = userInput.value;
-            userInput.placeholder = "🎙️ กำลังฟังเสียงของคุณ...";
-        };
-
-        recognition.onresult = function(event) {
-            let interimTranscript = '';
-            let finalTranscript = '';
-
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
-                }
-            }
-
-            const prefix = initialTextBeforeSpeech ? initialTextBeforeSpeech.trim() + ' ' : '';
-            userInput.value = prefix + (finalTranscript || interimTranscript);
-            
-            // Auto grow input
-            userInput.style.height = 'auto';
-            userInput.style.height = (userInput.scrollHeight) + 'px';
-            sendBtn.disabled = userInput.value.trim() === '';
-        };
-
-        recognition.onerror = function(event) {
-            console.warn("Speech recognition notice:", event.error);
-            if (event.error === 'not-allowed') {
-                alert("กรุณาอนุญาตการเข้าถึงไมโครโฟนในเบราว์เซอร์เพื่อใช้งานระบบเสียงนะคะ");
-            }
-        };
-
-        recognition.onend = function() {
-            isRecording = false;
-            micBtn.classList.remove('listening');
-            micBtn.title = "พูดด้วยเสียง (Web Speech API)";
-            userInput.placeholder = "พิมพ์ข้อความหา Kira...";
-            userInput.focus();
-        };
-
-        micBtn.addEventListener('click', () => {
-            if (isRecording) {
-                recognition.stop();
-            } else {
-                try {
-                    recognition.start();
-                } catch (e) {
-                    console.error("Mic start error:", e);
-                }
-            }
-        });
-    } else {
-        micBtn.addEventListener('click', () => {
-            alert("เบราว์เซอร์ของคุณไม่รองรับระบบสั่งงานด้วยเสียง กรุณาเปิดใช้งานผ่าน Google Chrome หรือ Microsoft Edge บน PC นะคะ");
-        });
-    }
-}
-
 userInput.addEventListener('keydown', (e) => {
     const enterAction = localStorage.getItem('kira_enter_send') || 'enter';
     if (enterAction === 'shift_enter') {
@@ -3107,13 +3030,29 @@ window.guideGoToStep = guideGoToStep;
 // ⚙️ Kira 2.1 Full-Featured Settings Modal Controller & Synchronization
 // =========================================================================
 
+// Shared AudioContext Singleton to prevent AudioContext exhaustion / memory leaks
+let sharedAudioCtx = null;
+function getSharedAudioContext() {
+    try {
+        if (!sharedAudioCtx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) sharedAudioCtx = new AudioCtx();
+        }
+        if (sharedAudioCtx && sharedAudioCtx.state === 'suspended') {
+            sharedAudioCtx.resume().catch(() => {});
+        }
+        return sharedAudioCtx;
+    } catch (e) {
+        return null;
+    }
+}
+
 // Synthesized Audio Chimes (Web Audio API)
 function playKiraSound(type = 'send') {
     if (localStorage.getItem('kira_sound_effects') === 'false') return;
     try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
+        const ctx = getSharedAudioContext();
+        if (!ctx) return;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
@@ -3891,10 +3830,8 @@ window.applyFontSize = applyFontSize;
 
 function playGavelSound() {
     try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        const audioCtx = getSharedAudioContext();
+        if (!audioCtx) return;
 
         // 3 realistic wooden gavel taps with sharp transients
         const tapTimes = [0, 0.2, 0.4];
@@ -4311,6 +4248,8 @@ function initSpeechRecognition() {
             if (activeTarget === 'chat' && micBtn) {
                 micBtn.classList.add('listening');
                 micBtn.innerHTML = '<i class="fa-solid fa-microphone-lines fa-fade" style="color: #f43f5e;"></i>';
+                const uInput = document.getElementById('user-input');
+                if (uInput) uInput.placeholder = "🎙️ กำลังฟังเสียงของคุณ... (พูดเสร็จแล้วระบบจะพิมพ์ให้อัตโนมัติ)";
             } else if (activeTarget === 'task' && taskVoiceBtn) {
                 taskVoiceBtn.classList.add('listening');
                 const label = document.getElementById('voice-record-label');
@@ -4322,9 +4261,13 @@ function initSpeechRecognition() {
             const transcript = event.results[0][0].transcript;
             if (activeTarget === 'chat') {
                 const uInput = document.getElementById('user-input');
+                const sBtn = document.getElementById('send-btn');
                 if (uInput) {
                     uInput.value = (uInput.value ? uInput.value + ' ' : '') + transcript;
                     uInput.focus();
+                    uInput.style.height = 'auto';
+                    uInput.style.height = Math.min(uInput.scrollHeight, 180) + 'px';
+                    if (sBtn) sBtn.disabled = uInput.value.trim() === '';
                 }
             } else if (activeTarget === 'task') {
                 const titleInput = document.getElementById('task-form-title');
@@ -4340,7 +4283,7 @@ function initSpeechRecognition() {
         };
 
         speechRecognition.onerror = (event) => {
-            console.warn("Speech recognition error:", event.error);
+            console.warn("Speech recognition notice:", event.error);
         };
 
         speechRecognition.onend = () => {
@@ -4348,6 +4291,8 @@ function initSpeechRecognition() {
             if (micBtn) {
                 micBtn.classList.remove('listening');
                 micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                const uInput = document.getElementById('user-input');
+                if (uInput) uInput.placeholder = "พิมพ์ข้อความหา Kira...";
             }
             if (taskVoiceBtn) {
                 taskVoiceBtn.classList.remove('listening');

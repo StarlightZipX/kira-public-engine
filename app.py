@@ -276,7 +276,7 @@ def get_db_connection():
     if USE_POSTGRES:
         return psycopg2.connect(DATABASE_URL)
     else:
-        return sqlite3.connect(DB_FILE)
+        return sqlite3.connect(DB_FILE, timeout=30.0)
 
 def execute_query(sql: str, params=(), fetch=None):
     if USE_POSTGRES:
@@ -301,6 +301,13 @@ def execute_query(sql: str, params=(), fetch=None):
 
 def init_db():
     try:
+        if not USE_POSTGRES:
+            try:
+                execute_query("PRAGMA journal_mode=WAL;")
+                execute_query("PRAGMA synchronous=NORMAL;")
+            except Exception:
+                pass
+
         execute_query('''CREATE TABLE IF NOT EXISTS users
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
                       username TEXT UNIQUE,
