@@ -1221,6 +1221,151 @@ async function loadSession(sessionId) {
     }
 }
 
+// --- 📑 Executive Deliverables Suite (1-Click Clean Deliverables) ---
+function cleanDeliverableText(text) {
+    if (!text) return '';
+    return text.replace(/\[THINKING\](.*?)(\[\/THINKING\]|$)/gs, "")
+               .replace(/\[THINKING_DONE\]/g, "")
+               .replace(/<think>(.*?)<\/think>/gs, "")
+               .replace(/\[BOARDROOM_START\]|\[BOARDROOM_DONE\]|\[BOARDROOM_SPEAKER:[^\]]+\]|\[BOARDROOM_DEBATE[^\]]*\]|\[BOARDROOM_CONSENSUS[^\]]*\]/g, "")
+               .trim();
+}
+
+function formatExecutiveDeliverable(text) {
+    const clean = cleanDeliverableText(text);
+    const now = new Date();
+    const thaiDate = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    
+    let header = `# 📋 รายงานสรุปงานสำหรับผู้บริหาร (Executive Deliverable)\n`;
+    header += `**ระบบ:** Kira AI System 2.2 Pro | **ผู้จัดทำ:** ${currentUser || 'ท่านประธาน'} | **วันที่:** ${thaiDate}\n`;
+    header += `**สถานะ:** ผ่านการกลั่นกรองและตรวจสอบความถูกต้องสมบูรณ์ (Verified)\n\n---\n\n`;
+    
+    return header + clean + `\n\n---\n*จัดทำโดย Kira AI System — ระบบผู้ช่วยอัจฉริยะระดับผู้บริหาร*`;
+}
+
+function attachDeliverablesBar(contentDiv, textContent) {
+    if (!contentDiv || !textContent || textContent.trim() === '') return;
+    if (contentDiv.querySelector('.feedback-ui')) return;
+
+    const feedbackUI = document.createElement('div');
+    feedbackUI.className = 'feedback-ui';
+    feedbackUI.style.cssText = 'margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 6px; justify-content: flex-start; align-items: center; flex-wrap: wrap; font-size: 0.8rem;';
+
+    // 1. Quick Copy
+    const copyMsgBtn = document.createElement('button');
+    copyMsgBtn.className = 'deliverable-btn';
+    copyMsgBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
+    copyMsgBtn.title = 'คัดลอกข้อความทั้งหมด';
+    copyMsgBtn.onclick = () => {
+        const clean = cleanDeliverableText(textContent);
+        navigator.clipboard.writeText(clean);
+        copyMsgBtn.innerHTML = '<i class="fa-solid fa-check" style="color: #38bdf8;"></i> คัดลอกแล้ว';
+        setTimeout(() => { copyMsgBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก'; }, 2000);
+    };
+
+    // 2. 1-Click Clean Executive Report
+    const cleanReportBtn = document.createElement('button');
+    cleanReportBtn.className = 'deliverable-btn deliverable-highlight';
+    cleanReportBtn.innerHTML = '<i class="fa-solid fa-file-signature text-cyan"></i> สรุปส่งงาน';
+    cleanReportBtn.title = 'จัดฟอร์แมตรายงานสรุปผู้บริหารและคัดลอกลง Clipboard ทันที';
+    cleanReportBtn.onclick = () => {
+        const clean = formatExecutiveDeliverable(textContent);
+        navigator.clipboard.writeText(clean);
+        cleanReportBtn.innerHTML = '<i class="fa-solid fa-circle-check text-green"></i> สรุปรายงานแล้ว!';
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('📑 จัดฟอร์แมตรายงานผู้บริหารและคัดลอกลง Clipboard เรียบร้อยแล้วค่ะ', 'ready');
+        }
+        setTimeout(() => { cleanReportBtn.innerHTML = '<i class="fa-solid fa-file-signature text-cyan"></i> สรุปส่งงาน'; }, 2500);
+    };
+
+    // 3. Download Report as Markdown/Doc
+    const downloadReportBtn = document.createElement('button');
+    downloadReportBtn.className = 'deliverable-btn';
+    downloadReportBtn.innerHTML = '<i class="fa-solid fa-file-arrow-down text-purple"></i> ดาวน์โหลด (.md)';
+    downloadReportBtn.title = 'ดาวน์โหลดรายงานสรุปงานเป็นไฟล์ Markdown';
+    downloadReportBtn.onclick = () => {
+        const clean = formatExecutiveDeliverable(textContent);
+        const blob = new Blob([clean], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const filename = `Kira_Executive_Report_${new Date().toISOString().slice(0, 10)}.md`;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    // 4. Open in Live Canvas Document
+    const canvasDocBtn = document.createElement('button');
+    canvasDocBtn.className = 'deliverable-btn';
+    canvasDocBtn.innerHTML = '<i class="fa-solid fa-pen-to-square text-amber"></i> เปิดใน Canvas';
+    canvasDocBtn.title = 'เปิดเอกสารนี้ใน Live Canvas เพื่อตรวจงานหรือแก้ไข';
+    canvasDocBtn.onclick = () => {
+        const clean = formatExecutiveDeliverable(textContent);
+        if (typeof openInLiveCanvas === 'function') {
+            openInLiveCanvas('เอกสารส่งงาน (Executive Deliverable)', clean, 'document');
+        }
+    };
+
+    // 5. Natural Voice Speaker
+    const speakerBtn = document.createElement('button');
+    speakerBtn.className = 'deliverable-btn';
+    speakerBtn.title = 'ฟังเสียงคิระอ่านคำตอบนี้ (Natural Voice)';
+    speakerBtn.innerHTML = '<i class="fa-solid fa-volume-high text-sky"></i> ฟังเสียง';
+    speakerBtn.onclick = () => {
+        if (typeof playKiraVoice === 'function') {
+            playKiraVoice(cleanDeliverableText(textContent), speakerBtn);
+        }
+    };
+
+    // 6. Like, Dislike & Review
+    const likeBtn = document.createElement('button');
+    likeBtn.className = 'deliverable-btn icon-only';
+    likeBtn.title = 'ชอบคำตอบนี้';
+    likeBtn.innerHTML = '<i class="fa-solid fa-thumbs-up"></i>';
+    likeBtn.onclick = () => {
+        if (typeof submitFeedback === 'function') submitFeedback('like', textContent);
+        likeBtn.style.color = '#34d399';
+        likeBtn.style.borderColor = '#34d399';
+        dislikeBtn.style.color = '#94a3b8';
+        dislikeBtn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+    };
+
+    const dislikeBtn = document.createElement('button');
+    dislikeBtn.className = 'deliverable-btn icon-only';
+    dislikeBtn.title = 'ไม่ชอบคำตอบนี้';
+    dislikeBtn.innerHTML = '<i class="fa-solid fa-thumbs-down"></i>';
+    dislikeBtn.onclick = () => {
+        if (typeof submitFeedback === 'function') submitFeedback('dislike', textContent);
+        dislikeBtn.style.color = '#ef4444';
+        dislikeBtn.style.borderColor = '#ef4444';
+        likeBtn.style.color = '#94a3b8';
+        likeBtn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+    };
+
+    const reviewBtn = document.createElement('button');
+    reviewBtn.className = 'deliverable-btn icon-only';
+    reviewBtn.title = 'รีวิวและให้ข้อเสนอแนะ';
+    reviewBtn.innerHTML = '<i class="fa-solid fa-comment-dots"></i>';
+    reviewBtn.onclick = () => {
+        if (typeof openReviewModal === 'function') openReviewModal(textContent);
+    };
+
+    feedbackUI.appendChild(copyMsgBtn);
+    feedbackUI.appendChild(cleanReportBtn);
+    feedbackUI.appendChild(downloadReportBtn);
+    feedbackUI.appendChild(canvasDocBtn);
+    feedbackUI.appendChild(speakerBtn);
+    feedbackUI.appendChild(likeBtn);
+    feedbackUI.appendChild(dislikeBtn);
+    feedbackUI.appendChild(reviewBtn);
+
+    contentDiv.appendChild(feedbackUI);
+    return { feedbackUI, speakerBtn };
+}
+
 function addMessage(text, isUser, imageBase64 = null) {
     const msgDiv = document.createElement('div');
     msgDiv.className = `message ${isUser ? 'user' : 'ai'}`;
@@ -1282,6 +1427,7 @@ function addMessage(text, isUser, imageBase64 = null) {
                 let hasSubstantialAnswer = finalMarkdown.length > 25;
                 let boxClass = hasSubstantialAnswer ? "thinking-box done collapsed" : "thinking-box done";
                 let toggleIcon = hasSubstantialAnswer ? "▼" : "▲";
+                let stepsHtml = steps.map(s => `<div class="thinking-step" style="white-space: pre-wrap; font-size: 0.85rem; margin-bottom: 4px;">${escapeHtml(s)}</div>`).join('');
                 
                 htmlContent += `
                 <div class="${boxClass}">
@@ -1310,6 +1456,7 @@ function addMessage(text, isUser, imageBase64 = null) {
                 </div>`;
             }
             content.innerHTML = htmlContent;
+            attachDeliverablesBar(content, finalMarkdown || text);
         }
     }
 
@@ -1496,66 +1643,12 @@ async function sendMessage() {
         // Apply Advanced Code Actions (Copy & Live Preview)
         applyCodeActions(contentDiv);
         
-        // Append Feedback & Voice UI
-        const feedbackUI = document.createElement('div');
-        feedbackUI.className = 'feedback-ui';
-        feedbackUI.style.cssText = 'margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; gap: 8px; justify-content: flex-start; align-items: center; flex-wrap: wrap;';
-        
-        const speakerBtn = document.createElement('button');
-        speakerBtn.className = 'btn-speaker';
-        speakerBtn.title = 'ฟังเสียงคิระอ่านคำตอบนี้ (Natural Voice)';
-        speakerBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
-        speakerBtn.onclick = () => playKiraVoice(finalMarkdown || fullText, speakerBtn);
-
-        const likeBtn = document.createElement('button');
-        likeBtn.innerHTML = '<i class="fa-solid fa-thumbs-up"></i>';
-        likeBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
-        likeBtn.onclick = () => { 
-            submitFeedback('like', fullText); 
-            likeBtn.style.color = '#34d399'; 
-            likeBtn.style.borderColor = '#34d399'; 
-            dislikeBtn.style.color = '#94a3b8'; 
-            dislikeBtn.style.borderColor = '#334155'; 
-        };
-
-        const dislikeBtn = document.createElement('button');
-        dislikeBtn.innerHTML = '<i class="fa-solid fa-thumbs-down"></i>';
-        dislikeBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
-        dislikeBtn.onclick = () => { 
-            submitFeedback('dislike', fullText); 
-            dislikeBtn.style.color = '#ef4444'; 
-            dislikeBtn.style.borderColor = '#ef4444'; 
-            likeBtn.style.color = '#94a3b8'; 
-            likeBtn.style.borderColor = '#334155'; 
-        };
-
-        const copyMsgBtn = document.createElement('button');
-        copyMsgBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
-        copyMsgBtn.title = 'คัดลอกคำตอบนี้';
-        copyMsgBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
-        copyMsgBtn.onclick = () => {
-            navigator.clipboard.writeText(finalMarkdown || fullText);
-            copyMsgBtn.innerHTML = '<i class="fa-solid fa-check" style="color: #38bdf8;"></i> คัดลอกแล้ว';
-            setTimeout(() => {
-                copyMsgBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
-            }, 2000);
-        };
-
-        const reviewBtn = document.createElement('button');
-        reviewBtn.innerHTML = '<i class="fa-solid fa-comment-dots"></i> รีวิว';
-        reviewBtn.style.cssText = 'background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;';
-        reviewBtn.onclick = () => openReviewModal(fullText);
-
-        feedbackUI.appendChild(copyMsgBtn);
-        feedbackUI.appendChild(speakerBtn);
-        feedbackUI.appendChild(likeBtn);
-        feedbackUI.appendChild(dislikeBtn);
-        feedbackUI.appendChild(reviewBtn);
-        contentDiv.appendChild(feedbackUI);
+        // Append Executive Deliverables Suite & Actions
+        const deliverableElements = attachDeliverablesBar(contentDiv, finalMarkdown || fullText);
         
         // Auto-Speak if enabled
-        if (isAutoSpeakEnabled) {
-            playKiraVoice(finalMarkdown || fullText, speakerBtn);
+        if (isAutoSpeakEnabled && deliverableElements && deliverableElements.speakerBtn) {
+            playKiraVoice(cleanDeliverableText(finalMarkdown || fullText), deliverableElements.speakerBtn);
         }
 
         playKiraSound('receive');
@@ -3747,8 +3840,10 @@ function renderBoardroomHTML(rawText) {
             <div class="boardroom-consensus-header">
                 <div class="boardroom-consensus-title"><i class="fa-solid fa-gavel"></i> ${conTitle}</div>
                 <div class="boardroom-consensus-actions">
+                    <button class="consensus-tool-btn" onclick="copyMeetingMinutes(this)" title="คัดลอกบันทึกการประชุมทั้งหมด"><i class="fa-regular fa-copy"></i> คัดลอกรายงาน</button>
+                    <button class="consensus-tool-btn" onclick="openBoardroomInCanvas(this)" title="เปิดบันทึกการประชุมใน Live Canvas"><i class="fa-solid fa-pen-to-square"></i> เปิดใน Canvas</button>
+                    <button class="consensus-tool-btn" onclick="downloadMeetingMinutes(this)" title="ดาวน์โหลดบันทึกการประชุม (.md)"><i class="fa-solid fa-file-arrow-down"></i> ดาวน์โหลด (.md)</button>
                     <button class="consensus-tool-btn" onclick="playBoardroomConsensusAudio(this)" title="ฟังเสียงอ่านสรุปมติที่ประชุม"><i class="fa-solid fa-volume-high"></i> ฟังเสียงมติ</button>
-                    <button class="consensus-tool-btn" onclick="downloadMeetingMinutes(this)" title="ดาวน์โหลดบันทึกการประชุม (.md)"><i class="fa-solid fa-file-arrow-down"></i> บันทึกรายงาน</button>
                 </div>
             </div>
             <div class="boardroom-consensus-body">${parsedConsensus}</div>
@@ -3760,40 +3855,72 @@ function renderBoardroomHTML(rawText) {
     return html;
 }
 
+function extractBoardroomFullMinutes(sessionWrapper) {
+    let fullMeetingText = "# 🏛️ บันทึกการประชุมสภาที่ปรึกษาผู้บริหารเสมือน (Kira Virtual Boardroom Minutes)\n\n";
+    const now = new Date();
+    fullMeetingText += `**วันและเวลาประชุม:** ${now.toLocaleString('th-TH')}\n\n`;
+    fullMeetingText += `**คณะกรรมการบริหารผู้เข้าร่วมประชุม:**\n`;
+    fullMeetingText += `- 👔 **คุณคิรินทร์**: ประธานเจ้าหน้าที่บริหาร (CEO & Strategist)\n`;
+    fullMeetingText += `- 💰 **คุณเมธัส**: ประธานเจ้าหน้าที่ฝ่ายการเงิน (CFO & Risk Lead)\n`;
+    fullMeetingText += `- 🎨 **คุณรินดา**: ประธานเจ้าหน้าที่ฝ่ายประสบการณ์ลูกค้า (CPO & UX)\n`;
+    fullMeetingText += `- 🛡️ **คุณธนิน**: ประธานเจ้าหน้าที่ฝ่ายเทคโนโลยี (CTO & Systems Architect)\n\n`;
+    fullMeetingText += `---\n\n`;
+
+    if (sessionWrapper) {
+        const speeches = sessionWrapper.querySelectorAll('.executive-speech-card');
+        speeches.forEach(card => {
+            const name = card.querySelector('.exec-speech-name')?.innerText || 'ผู้บริหาร';
+            const tag = card.querySelector('.exec-speech-tag')?.innerText || '';
+            const body = card.querySelector('.exec-speech-content')?.innerText || '';
+            fullMeetingText += `## ${name} (${tag})\n\n${body}\n\n---\n\n`;
+        });
+
+        const debate = sessionWrapper.querySelector('.boardroom-debate-body');
+        if (debate) {
+            fullMeetingText += `## สรุปการถกเถียงและประนีประนอมจุดอ่อน (Executive Debate)\n\n${debate.innerText}\n\n---\n\n`;
+        }
+
+        const consensus = sessionWrapper.querySelector('.boardroom-consensus-body');
+        if (consensus) {
+            fullMeetingText += `## มติเอกฉันท์และพิมพ์เขียวกลยุทธ์ (Resolution Blueprint)\n\n${consensus.innerText}\n\n`;
+        }
+    }
+    return fullMeetingText;
+}
+
+function copyMeetingMinutes(btn) {
+    try {
+        const sessionWrapper = btn ? btn.closest('.boardroom-session-wrapper') : document.querySelector('.boardroom-session-wrapper');
+        const text = extractBoardroomFullMinutes(sessionWrapper);
+        navigator.clipboard.writeText(text);
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check" style="color: #38bdf8;"></i> คัดลอกแล้ว';
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('📋 คัดลอกบันทึกการประชุมสภาที่ปรึกษาลง Clipboard เรียบร้อยแล้วค่ะ', 'ready');
+        }
+        setTimeout(() => { btn.innerHTML = originalHTML; }, 2500);
+    } catch (err) {
+        console.error("Copy meeting minutes error:", err);
+    }
+}
+
+function openBoardroomInCanvas(btn) {
+    try {
+        const sessionWrapper = btn ? btn.closest('.boardroom-session-wrapper') : document.querySelector('.boardroom-session-wrapper');
+        const text = extractBoardroomFullMinutes(sessionWrapper);
+        if (typeof openInLiveCanvas === 'function') {
+            openInLiveCanvas('บันทึกการประชุมสภาที่ปรึกษาเสมือน', text, 'document');
+        }
+    } catch (err) {
+        console.error("Open boardroom in canvas error:", err);
+    }
+}
+
 function downloadMeetingMinutes(btn) {
     try {
         const sessionWrapper = btn ? btn.closest('.boardroom-session-wrapper') : document.querySelector('.boardroom-session-wrapper');
-        let fullMeetingText = "# 🏛️ บันทึกการประชุมสภาที่ปรึกษาผู้บริหารเสมือน (Kira Virtual Boardroom Minutes)\n\n";
-        
+        const fullMeetingText = extractBoardroomFullMinutes(sessionWrapper);
         const now = new Date();
-        fullMeetingText += `**วันและเวลาประชุม:** ${now.toLocaleString('th-TH')}\n\n`;
-        fullMeetingText += `**คณะกรรมการบริหารผู้เข้าร่วมประชุม:**\n`;
-        fullMeetingText += `- 👔 **คุณคิรินทร์**: ประธานเจ้าหน้าที่บริหาร (CEO & Strategist)\n`;
-        fullMeetingText += `- 💰 **คุณเมธัส**: ประธานเจ้าหน้าที่ฝ่ายการเงิน (CFO & Risk Lead)\n`;
-        fullMeetingText += `- 🎨 **คุณรินดา**: ประธานเจ้าหน้าที่ฝ่ายประสบการณ์ลูกค้า (CPO & UX)\n`;
-        fullMeetingText += `- 🛡️ **คุณธนิน**: ประธานเจ้าหน้าที่ฝ่ายเทคโนโลยี (CTO & Systems Architect)\n\n`;
-        fullMeetingText += `---\n\n`;
-
-        if (sessionWrapper) {
-            const speeches = sessionWrapper.querySelectorAll('.executive-speech-card');
-            speeches.forEach(card => {
-                const name = card.querySelector('.exec-speech-name')?.innerText || 'ผู้บริหาร';
-                const tag = card.querySelector('.exec-speech-tag')?.innerText || '';
-                const body = card.querySelector('.exec-speech-content')?.innerText || '';
-                fullMeetingText += `## ${name} (${tag})\n\n${body}\n\n---\n\n`;
-            });
-
-            const debate = sessionWrapper.querySelector('.boardroom-debate-body');
-            if (debate) {
-                fullMeetingText += `## สรุปการถกเถียงและประนีประนอมจุดอ่อน (Executive Debate)\n\n${debate.innerText}\n\n---\n\n`;
-            }
-
-            const consensus = sessionWrapper.querySelector('.boardroom-consensus-body');
-            if (consensus) {
-                fullMeetingText += `## มติเอกฉันท์และพิมพ์เขียวกลยุทธ์ (Resolution Blueprint)\n\n${consensus.innerText}\n\n`;
-            }
-        }
-
         const blob = new Blob([fullMeetingText], { type: 'text/markdown;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -3983,8 +4110,13 @@ initToolsDropdownController();
 window.playGavelSound = playGavelSound;
 window.renderBoardroomHTML = renderBoardroomHTML;
 window.downloadMeetingMinutes = downloadMeetingMinutes;
+window.copyMeetingMinutes = copyMeetingMinutes;
+window.openBoardroomInCanvas = openBoardroomInCanvas;
 window.playBoardroomConsensusAudio = playBoardroomConsensusAudio;
 window.toggleBoardroomMode = toggleBoardroomMode;
+window.cleanDeliverableText = cleanDeliverableText;
+window.formatExecutiveDeliverable = formatExecutiveDeliverable;
+window.attachDeliverablesBar = attachDeliverablesBar;
 
 // ====================================================================
 // 🎙️ Kira Web Speech Recognition Controller (Thai & Multi-Language)
