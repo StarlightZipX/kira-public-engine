@@ -34,6 +34,22 @@
     }
   ],
   "categories": ["productivity", "utilities", "business", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "คลังนิรภัยออฟไลน์ (Offline Vault)",
+      "short_name": "Vault",
+      "description": "เข้าถึงเอกสารและบันทึกคำสั่งออฟไลน์",
+      "url": "/?open=vault",
+      "icons": [{ "src": "/static/images/kira_logo.png?v=6", "sizes": "192x192" }]
+    },
+    {
+      "name": "สภาผู้บริหาร (Boardroom)",
+      "short_name": "Boardroom",
+      "description": "เปิดประชุมและจำลองดีเบต 4 ผู้บริหาร",
+      "url": "/?open=boardroom",
+      "icons": [{ "src": "/static/images/kira_logo.png?v=6", "sizes": "192x192" }]
+    }
+  ],
   "lang": "th",
   "dir": "ltr"
 }

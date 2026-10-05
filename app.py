@@ -129,6 +129,10 @@ async def get_manifest():
 from mcp_hub import mcp_router, init_mcp_tables, auto_detect_and_dispatch_mcp
 app.include_router(mcp_router)
 
+# --- Executive Offline Vault & Mobile PWA Sync (Kira 2.2 Phase 3) ---
+from vault_sync import vault_router, init_vault_tables
+app.include_router(vault_router)
+
 # --- RAG Setup (Kira 2.0) — Lazy Loading เพื่อประหยัด RAM ---
 vector_collection = None
 embedding_model = None
@@ -504,6 +508,12 @@ def init_db():
             init_mcp_tables()
         except Exception as _e_mcp:
             print("MCP Tables Init Error:", _e_mcp)
+
+        # Initialize Executive Offline Vault tables
+        try:
+            init_vault_tables()
+        except Exception as _e_vault:
+            print("Vault Tables Init Error:", _e_vault)
 
     except Exception as e:
         print("DB Init Error:", e)

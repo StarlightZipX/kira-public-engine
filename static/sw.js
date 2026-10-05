@@ -1,8 +1,8 @@
 // ====================================================================
-// 🚀 Kira AI Progressive Web App - Service Worker (v2.2-Production)
+// 🚀 Kira AI Progressive Web App - Service Worker (v2.3-VaultSync)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.2';
+const CACHE_NAME = 'kira-ai-cache-v2.3';
 const STATIC_ASSETS = [
     '/',
     '/static/style.css',
@@ -42,6 +42,26 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+// Background Sync Listener (Phase 3: Executive Offline Vault)
+self.addEventListener('sync', (event) => {
+    if (event.tag === 'kira-vault-sync') {
+        event.waitUntil(
+            self.clients.matchAll().then((clients) => {
+                clients.forEach((client) => {
+                    client.postMessage({ type: 'KIRA_TRIGGER_VAULT_SYNC' });
+                });
+            })
+        );
+    }
+});
+
+// Messages from clients (Skip Waiting or Cache Requests)
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
+
 // Fetch: Network-First for API routes, Stale-While-Revalidate for Static Assets
 self.addEventListener('fetch', (event) => {
     const request = event.request;
@@ -70,9 +90,9 @@ self.addEventListener('fetch', (event) => {
                 // Offline fallback
                 return cachedResponse || new Response(
                     '<div style="font-family:sans-serif;text-align:center;padding:50px;color:#fff;background:#0f172a;min-height:100vh;">' +
-                    '<h2>🌸 Kira AI - โหมดออฟไลน์</h2>' +
-                    '<p>อุปกรณ์ของคุณกำลังขาดการเชื่อมต่ออินเทอร์เน็ต กรุณาตรวจสอบสัญญาณ Wi-Fi หรือ Cellular นะคะ</p>' +
-                    '<button onclick="window.location.reload()" style="padding:10px 20px;border-radius:8px;background:#38bdf8;color:#0f172a;font-weight:bold;border:none;cursor:pointer;">ลองใหม่อีกครั้ง</button>' +
+                    '<h2>🌸 Kira AI - โหมดออฟไลน์ (Offline Mode)</h2>' +
+                    '<p>อุปกรณ์ของคุณกำลังขาดการเชื่อมต่ออินเทอร์เน็ต แต่คุณยังสามารถเข้าถึงคลังเอกสารนิรภัย (Executive Offline Vault) ได้ตามปกติค่ะ</p>' +
+                    '<button onclick="window.location.reload()" style="padding:10px 20px;border-radius:8px;background:#38bdf8;color:#0f172a;font-weight:bold;border:none;cursor:pointer;">รีโหลดหน้าเว็บ</button>' +
                     '</div>',
                     { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
                 );

@@ -11,7 +11,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=22">
+    <link rel="stylesheet" href="/static/style.css?v=23">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -413,6 +413,13 @@
                         <span class="pwa-header-text">ติดตั้งแอป</span>
                     </button>
 
+                    <!-- 🛡️ Executive Offline Vault & Network Sync Pill -->
+                    <button id="btn-vault-network-pill" class="header-action-btn vault-network-pill online" title="สถานะการเชื่อมต่อและคลังนิรภัยออฟไลน์ (คลิกเพื่อเปิด Vault)">
+                        <span class="vault-status-dot"></span>
+                        <span class="vault-pill-text" id="vault-pill-status-text">Online</span>
+                        <span class="vault-pending-count" id="vault-pending-count" style="display: none;">0</span>
+                    </button>
+
                     <!-- Categorized Secondary Tools Dropdown -->
                     <div class="tools-dropdown-wrapper" id="tools-dropdown-wrapper">
                         <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" title="ศูนย์รวมฟีเจอร์และเครื่องมือ">
@@ -430,6 +437,13 @@
                                 <div class="tools-category-label">
                                     <i class="fa-solid fa-briefcase"></i> <span>งาน & กลยุทธ์</span>
                                 </div>
+                                <button class="tools-menu-item" type="button" onclick="if (typeof openOfflineVaultModal === 'function') openOfflineVaultModal();" title="คลังข้อมูลนิรภัยออฟไลน์สำหรับผู้บริหาร & ระบบซิงก์สองทิศทาง (Executive Offline Vault)">
+                                    <span class="tool-item-icon icon-emerald"><i class="fa-solid fa-vault"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">Executive Offline Vault</span>
+                                        <span class="tool-item-desc">คลังนิรภัยออฟไลน์ & ซิงก์สองทิศทาง PWA</span>
+                                    </div>
+                                </button>
                                 <button class="tools-menu-item" type="button" onclick="if (typeof openMCPHubModal === 'function') openMCPHubModal();" title="Model Context Protocol (MCP) Integration Hub & Tool Studio">
                                     <span class="tool-item-icon icon-cyan"><i class="fa-solid fa-network-wired"></i></span>
                                     <div class="tool-item-info">
@@ -2489,6 +2503,204 @@
         </div>
     </div>
 
+    <!-- 🗄️ Executive Offline Vault & Mobile PWA Sync Modal -->
+    <div id="offline-vault-modal" class="modal-overlay vault-modal-overlay" style="display: none; z-index: 1106;">
+        <div class="vault-modal-card glass-panel">
+            <!-- Modal Header -->
+            <div class="vault-modal-header">
+                <div class="vault-title-group">
+                    <div class="vault-badge"><i class="fa-solid fa-shield-halved text-emerald"></i> Executive Local-First Vault</div>
+                    <h2>Executive Offline Vault & Mobile PWA Sync</h2>
+                    <p class="vault-subtitle">คลังข้อมูลนิรภัยออฟไลน์สำหรับผู้บริหาร ทำงานได้ 100% แม้ไม่มีอินเทอร์เน็ต พร้อมระบบซิงก์สองทิศทางเมื่อกลับมาออนไลน์</p>
+                </div>
+                <button id="btn-close-vault-modal" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Sync & Storage Status Banner -->
+            <div class="vault-status-banner">
+                <div class="vault-status-left">
+                    <div class="vault-conn-indicator" id="vault-banner-conn-indicator">
+                        <span class="vault-status-dot online"></span>
+                        <strong id="vault-banner-conn-text">Cloud Synced (Online)</strong>
+                    </div>
+                    <span class="vault-stat-sep">•</span>
+                    <span class="vault-stat-label">รายการในคลัง: <strong id="vault-stat-total-count" class="text-cyan">0</strong> รายการ</span>
+                    <span class="vault-stat-sep">•</span>
+                    <span class="vault-stat-label">รอซิงก์: <strong id="vault-stat-pending-count" class="text-amber">0</strong></span>
+                </div>
+                <div class="vault-status-right">
+                    <button type="button" id="btn-vault-manual-sync" class="btn-vault-sync-action">
+                        <i class="fa-solid fa-arrows-rotate"></i> <span>ซิงก์ข้อมูลทันที</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs Bar -->
+            <div class="vault-tabs-bar">
+                <button type="button" class="vault-tab-btn active" data-tab="catalog">
+                    <i class="fa-solid fa-box-archive"></i> <span>คลังเอกสารนิรภัย (<span id="vault-catalog-count">0</span>)</span>
+                </button>
+                <button type="button" class="vault-tab-btn" data-tab="memo">
+                    <i class="fa-solid fa-pen-to-square"></i> <span>สร้างบันทึก / คำสั่งด่วน</span>
+                </button>
+                <button type="button" class="vault-tab-btn" data-tab="outbox">
+                    <i class="fa-solid fa-clock-rotate-left"></i> <span>คิวรอซิงก์ Outbox (<span id="vault-outbox-count">0</span>)</span>
+                </button>
+                <button type="button" class="vault-tab-btn" data-tab="security">
+                    <i class="fa-solid fa-lock"></i> <span>ความปลอดภัย & สำรองข้อมูล</span>
+                </button>
+            </div>
+
+            <!-- Tab 1: Catalog -->
+            <div id="vault-pane-catalog" class="vault-tab-pane active">
+                <div class="vault-pane-toolbar">
+                    <div class="vault-search-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="vault-search-input" placeholder="ค้นหาบันทึก คำสั่งการ หรือเอกสารในคลังนิรภัย...">
+                    </div>
+                    <div class="vault-category-filters">
+                        <button type="button" class="vault-cat-btn active" data-cat="all">ทั้งหมด</button>
+                        <button type="button" class="vault-cat-btn" data-cat="memo">บันทึก & คำสั่งการ</button>
+                        <button type="button" class="vault-cat-btn" data-cat="boardroom_minutes">มติสภา 4 บริหาร</button>
+                        <button type="button" class="vault-cat-btn" data-cat="slide_deck">ชุดสไลด์ (16:9)</button>
+                        <button type="button" class="vault-cat-btn" data-cat="task">ภารกิจ & ชิ้นงาน</button>
+                    </div>
+                </div>
+
+                <div class="vault-items-grid" id="vault-items-container">
+                    <div class="vault-loading-text"><i class="fa-solid fa-circle-notch fa-spin"></i> กำลังโหลดเอกสารในคลังนิรภัย...</div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Create Offline Memo / Directive -->
+            <div id="vault-pane-memo" class="vault-tab-pane" style="display: none;">
+                <div class="vault-memo-card">
+                    <div class="vault-memo-intro">
+                        <div class="vault-memo-icon"><i class="fa-solid fa-feather-pointed text-emerald"></i></div>
+                        <div>
+                            <h3>Executive Offline Directive Studio</h3>
+                            <p>เขียนบันทึกยุทธศาสตร์หรือข้อสั่งการฉุกเฉิน ทำงานได้ทันที 100% แม้ไม่มีเน็ต โดยระบบจะเก็บใน Local Vault และดันขึ้น Cloud อัตโนมัติเมื่อต่อเน็ต</p>
+                        </div>
+                    </div>
+                    <form id="vault-memo-form" class="vault-form">
+                        <div class="form-row">
+                            <div class="form-group flex-2">
+                                <label for="vault-memo-title">หัวข้อบันทึก / ชื่องานยุทธศาสตร์</label>
+                                <input type="text" id="vault-memo-title" class="input-control" placeholder="เช่น แผนการขยายตลาด Q4 หรือ สรุปประเด็นด่วนจาก CEO" required>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="vault-memo-cat">หมวดหมู่เอกสาร</label>
+                                <select id="vault-memo-cat" class="input-control">
+                                    <option value="memo" selected>บันทึกข้อสั่งการ (Directive Memo)</option>
+                                    <option value="boardroom_minutes">มติการประชุมสภา (Boardroom Minutes)</option>
+                                    <option value="task">ภารกิจพิเศษ (Strategic Task)</option>
+                                    <option value="slide_deck">โครงร่างสไลด์ (Slide Outline)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="vault-memo-content">เนื้อหาเอกสาร / รายละเอียด (รองรับ Markdown)</label>
+                            <textarea id="vault-memo-content" class="input-control" rows="8" placeholder="ระบุรายละเอียด ข้อสั่งการ วัตถุประสงค์ หรือตัวเลขสถิติสำคัญที่ต้องการบันทึกไว้อย่างปลอดภัย..." required></textarea>
+                        </div>
+                        <div class="form-row" style="align-items: center;">
+                            <label class="switch-checkbox" style="margin: 0;">
+                                <input type="checkbox" id="vault-memo-pinned">
+                                <span class="switch-slider"></span>
+                                <span class="switch-text"><i class="fa-solid fa-thumbtack text-amber"></i> <strong>ปักหมุดเอกสารนี้ไว้บนสุด (Pin Priority)</strong></span>
+                            </label>
+                            <button type="submit" id="btn-save-vault-memo" class="btn-save-vault-primary" style="margin-left: auto;">
+                                <i class="fa-solid fa-floppy-disk"></i> บันทึกลงคลังนิรภัยทันที
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab 3: Sync Outbox -->
+            <div id="vault-pane-outbox" class="vault-tab-pane" style="display: none;">
+                <div class="vault-outbox-header-row">
+                    <span>รายการที่สร้างหรือแก้ไขขณะออฟไลน์ที่กำลังรอการซิงก์ส่งต่อไปยังเซิร์ฟเวอร์คลาวด์</span>
+                    <button type="button" class="btn-refresh-mcp" id="btn-clear-outbox-queue" style="color: #f87171; border-color: rgba(239, 68, 68, 0.3);">
+                        <i class="fa-solid fa-trash-can"></i> ล้างคิวรอซิงก์
+                    </button>
+                </div>
+                <div class="vault-outbox-list" id="vault-outbox-container">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Tab 4: Security & Cold Backup -->
+            <div id="vault-pane-security" class="vault-tab-pane" style="display: none;">
+                <div class="vault-security-grid">
+                    <div class="vault-sec-card">
+                        <div class="sec-card-header">
+                            <i class="fa-solid fa-database text-cyan"></i>
+                            <h4>พื้นที่จัดเก็บออฟไลน์ในอุปกรณ์</h4>
+                        </div>
+                        <p class="sec-card-desc">คิระใช้เทคโนโลยี Local-First Hybrid Storage (IndexedDB + Encrypted LocalStorage Cache) ในการจัดเก็บข้อมูล</p>
+                        <div class="vault-storage-stats-box">
+                            <div class="storage-stat-line">
+                                <span>สถานะความสมบูรณ์ Local Sandbox:</span>
+                                <strong class="text-emerald">สมบูรณ์ 100%</strong>
+                            </div>
+                            <div class="storage-stat-line">
+                                <span>กลไกความปลอดภัย:</span>
+                                <strong>Client-Side Isolation Shield</strong>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-clear-vault-cache" class="btn-sec-danger">
+                            <i class="fa-solid fa-broom"></i> ล้างแคชออฟไลน์ในเบราว์เซอร์นี้
+                        </button>
+                    </div>
+
+                    <div class="vault-sec-card">
+                        <div class="sec-card-header">
+                            <i class="fa-solid fa-file-export text-emerald"></i>
+                            <h4>ส่งออกข้อมูลสำรอง (Cold Storage Backup)</h4>
+                        </div>
+                        <p class="sec-card-desc">ดาวน์โหลดข้อมูลทั้งหมดในคลังนิรภัยของคุณเป็นไฟล์ JSON เพื่อเก็บสำรองไว้ในแฟลชไดรฟ์หรือเครื่องคอมพิวเตอร์ส่วนตัว</p>
+                        <button type="button" id="btn-export-vault-json" class="btn-sec-primary">
+                            <i class="fa-solid fa-download"></i> ดาวน์โหลดไฟล์สำรอง (.json)
+                        </button>
+                    </div>
+
+                    <div class="vault-sec-card">
+                        <div class="sec-card-header">
+                            <i class="fa-solid fa-file-import text-purple"></i>
+                            <h4>กู้คืนข้อมูลจากไฟล์สำรอง (Restore Backup)</h4>
+                        </div>
+                        <p class="sec-card-desc">นำเข้าไฟล์สำรอง JSON ที่เคยดาวน์โหลดไว้กลับเข้าสู่ระบบคลังนิรภัยของคิระ</p>
+                        <div class="import-file-wrap">
+                            <input type="file" id="vault-import-file-input" accept=".json" style="display: none;">
+                            <button type="button" id="btn-trigger-vault-import" class="btn-sec-secondary">
+                                <i class="fa-solid fa-upload"></i> เลือกไฟล์สำรอง (.json) เพื่อกู้คืน
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full Document Viewer Lightbox / Drawer -->
+            <div id="vault-doc-viewer" class="vault-doc-viewer" style="display: none;">
+                <div class="vault-viewer-header">
+                    <div class="viewer-title-box">
+                        <span id="vault-viewer-cat-badge" class="vault-cat-badge">MEMO</span>
+                        <h3 id="vault-viewer-title">ชื่อเอกสาร</h3>
+                        <span id="vault-viewer-time" class="vault-viewer-time">เวลา</span>
+                    </div>
+                    <button id="btn-close-vault-viewer" class="viewer-close-btn">&times;</button>
+                </div>
+                <div id="vault-viewer-body" class="vault-viewer-body markdown-body">
+                    <!-- Markdown Content -->
+                </div>
+                <div class="vault-viewer-footer">
+                    <button id="btn-copy-vault-content" class="btn-action-sm secondary"><i class="fa-regular fa-copy"></i> คัดลอกข้อความ</button>
+                    <button id="btn-delete-viewed-vault" class="btn-action-sm danger"><i class="fa-solid fa-trash-can"></i> ลบเอกสารนี้</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 🛡️ In-App Admin Orders Review Modal (For Boss) -->
     <div id="admin-orders-modal" class="modal-overlay" style="display: none; z-index: 1110;">
         <div class="admin-orders-card glass-panel">
@@ -2603,6 +2815,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=37"></script>
+    <script src="/static/script.js?v=38"></script>
 </body>
 </html>

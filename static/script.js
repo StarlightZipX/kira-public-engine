@@ -8385,6 +8385,850 @@ function initMCPHubController() {
 }
 
 // =========================================================================
+// 🛡️ Phase 3: Executive Offline Vault & Mobile PWA Sync Controller
+// =========================================================================
+
+const VAULT_STORAGE_ITEMS_KEY = 'kira_offline_vault_items';
+const VAULT_STORAGE_OUTBOX_KEY = 'kira_offline_vault_outbox';
+const VAULT_STORAGE_LAST_SYNC_KEY = 'kira_offline_vault_last_sync';
+
+let vaultCatalogCache = [];
+let vaultOutboxCache = [];
+let currentVaultCategory = 'all';
+let currentlyViewedVaultItem = null;
+let isVaultSyncing = false;
+
+function escapeVaultHtml(str) {
+    if (!str) return '';
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return String(str).replace(/[&<>"']/g, m => map[m]);
+}
+
+function getLocalVaultItems() {
+    try {
+        const raw = localStorage.getItem(VAULT_STORAGE_ITEMS_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        console.warn("Error reading local vault items:", e);
+        return [];
+    }
+}
+
+function setLocalVaultItems(items) {
+    try {
+        localStorage.setItem(VAULT_STORAGE_ITEMS_KEY, JSON.stringify(items));
+        vaultCatalogCache = items;
+    } catch (e) {
+        console.error("Error saving local vault items:", e);
+    }
+}
+
+function getLocalVaultOutbox() {
+    try {
+        const raw = localStorage.getItem(VAULT_STORAGE_OUTBOX_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        console.warn("Error reading vault outbox:", e);
+        return [];
+    }
+}
+
+function setLocalVaultOutbox(outbox) {
+    try {
+        localStorage.setItem(VAULT_STORAGE_OUTBOX_KEY, JSON.stringify(outbox));
+        vaultOutboxCache = outbox;
+        updateVaultPillAndBadgeUI();
+    } catch (e) {
+        console.error("Error saving vault outbox:", e);
+    }
+}
+
+function getLastVaultSyncTime() {
+    return localStorage.getItem(VAULT_STORAGE_LAST_SYNC_KEY) || null;
+}
+
+function setLastVaultSyncTime(ts) {
+    if (ts) {
+        localStorage.setItem(VAULT_STORAGE_LAST_SYNC_KEY, ts);
+    }
+}
+
+function updateVaultConnectivityUI(isOnline) {
+    const isConn = (typeof isOnline === 'boolean') ? isOnline : navigator.onLine;
+    const pill = document.getElementById('btn-vault-network-pill');
+    const pillText = document.getElementById('vault-pill-status-text');
+    const pillBadge = document.getElementById('vault-pending-count');
+    const bannerDot = document.querySelector('#vault-banner-conn-indicator .vault-status-dot');
+    const bannerText = document.getElementById('vault-banner-conn-text');
+    const statPending = document.getElementById('vault-stat-pending-count');
+    const tabOutboxCount = document.getElementById('vault-outbox-count');
+
+    const outbox = getLocalVaultOutbox();
+    const pendingCount = outbox.length;
+
+    if (pill) {
+        if (isConn) {
+            pill.classList.remove('offline');
+            pill.classList.add('online');
+            if (pillText) pillText.textContent = 'Online';
+        } else {
+            pill.classList.remove('online');
+            pill.classList.add('offline');
+            if (pillText) pillText.textContent = 'Offline';
+        }
+    }
+
+    if (pillBadge) {
+        if (pendingCount > 0) {
+            pillBadge.textContent = pendingCount;
+            pillBadge.style.display = 'inline-block';
+        } else {
+            pillBadge.style.display = 'none';
+        }
+    }
+
+    if (bannerDot) {
+        if (isConn) {
+            bannerDot.classList.remove('offline');
+            bannerDot.classList.add('online');
+        } else {
+            bannerDot.classList.remove('online');
+            bannerDot.classList.add('offline');
+        }
+    }
+
+    if (bannerText) {
+        bannerText.textContent = isConn ? 'Cloud Synced (Online)' : 'Offline Vault Mode (Local-First)';
+    }
+
+    if (statPending) {
+        statPending.textContent = pendingCount;
+    }
+
+    if (tabOutboxCount) {
+        tabOutboxCount.textContent = pendingCount;
+    }
+}
+
+function updateVaultPillAndBadgeUI() {
+    updateVaultConnectivityUI(navigator.onLine);
+}
+
+function openOfflineVaultModal(targetTab = 'catalog') {
+    const modal = document.getElementById('offline-vault-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    switchVaultTab(targetTab);
+    loadVaultData(true);
+}
+
+function closeOfflineVaultModal() {
+    const modal = document.getElementById('offline-vault-modal');
+    if (modal) modal.style.display = 'none';
+    closeVaultDocumentViewer();
+}
+
+function switchVaultTab(tabKey) {
+    const tabBtns = document.querySelectorAll('.vault-tab-btn');
+    tabBtns.forEach(btn => {
+        if (btn.dataset.tab === tabKey) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    const panes = ['catalog', 'memo', 'outbox', 'security'];
+    panes.forEach(pane => {
+        const el = document.getElementById(`vault-pane-${pane}`);
+        if (el) {
+            el.style.display = (pane === tabKey) ? 'block' : 'none';
+        }
+    });
+
+    if (tabKey === 'outbox') {
+        renderVaultOutbox();
+    } else if (tabKey === 'catalog') {
+        renderVaultCatalog();
+    }
+}
+
+async function loadVaultData(silent = false) {
+    // 1. Load local cache first for instant responsiveness
+    vaultCatalogCache = getLocalVaultItems();
+    vaultOutboxCache = getLocalVaultOutbox();
+    renderVaultCatalog();
+    renderVaultOutbox();
+    updateVaultPillAndBadgeUI();
+
+    // 2. If online, perform background sync with server
+    if (navigator.onLine) {
+        await triggerVaultSync(silent);
+    }
+}
+
+async function triggerVaultSync(isManual = false) {
+    if (isVaultSyncing) return;
+    if (!navigator.onLine) {
+        if (isManual) {
+            alert('ระบบกำลังทำงานในโหมด Offline Vault ค่ะ เมื่อเชื่อมต่อสัญญาณอินเทอร์เน็ต ระบบจะทำการซิงก์ข้อมูลขึ้น Cloud ให้อัตโนมัติทันทีค่ะ');
+        }
+        return;
+    }
+
+    isVaultSyncing = true;
+    const syncBtn = document.getElementById('btn-vault-manual-sync');
+    const syncIcon = syncBtn ? syncBtn.querySelector('i') : null;
+    if (syncIcon) syncIcon.classList.add('fa-spin');
+
+    try {
+        const outbox = getLocalVaultOutbox();
+        const lastSync = getLastVaultSyncTime();
+
+        const payload = {
+            username: 'boss',
+            client_changes: outbox,
+            last_sync_time: lastSync
+        };
+
+        const res = await fetch('/api/vault/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            throw new Error(`Server responded with status ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data.status === 'success') {
+            // Clear outbox queue since changes were successfully applied on server
+            setLocalVaultOutbox([]);
+
+            // Merge server items with local items
+            const serverItems = data.server_items || [];
+            let localItems = getLocalVaultItems();
+            
+            // Map by item_id
+            const itemMap = new Map();
+            localItems.forEach(item => itemMap.set(item.item_id, item));
+            serverItems.forEach(item => itemMap.set(item.item_id, item));
+
+            const merged = Array.from(itemMap.values());
+            setLocalVaultItems(merged);
+
+            if (data.synced_at) {
+                setLastVaultSyncTime(data.synced_at);
+            }
+
+            renderVaultCatalog();
+            renderVaultOutbox();
+            updateVaultPillAndBadgeUI();
+
+            if (isManual) {
+                alert(data.message || 'ซิงก์ข้อมูลคลังนิรภัยกับคลาวด์สำเร็จเรียบร้อยแล้วค่ะ');
+            }
+        }
+    } catch (err) {
+        console.warn("Vault sync warning:", err);
+        if (isManual) {
+            alert('ไม่สามารถซิงก์ข้อมูลกับ Cloud ได้ในขณะนี้ค่ะ: ' + err.message);
+        }
+    } finally {
+        isVaultSyncing = false;
+        if (syncIcon) syncIcon.classList.remove('fa-spin');
+    }
+}
+
+function getCategoryDisplayMeta(cat) {
+    switch (cat) {
+        case 'boardroom_minutes':
+            return { label: 'มติสภา 4 บริหาร', icon: 'fa-users-gear', chipClass: 'boardroom_minutes' };
+        case 'slide_deck':
+            return { label: 'ชุดสไลด์ (16:9)', icon: 'fa-file-powerpoint', chipClass: 'slide_deck' };
+        case 'task':
+            return { label: 'ภารกิจยุทธศาสตร์', icon: 'fa-list-check', chipClass: 'task' };
+        case 'memo':
+        default:
+            return { label: 'บันทึกข้อสั่งการ', icon: 'fa-file-lines', chipClass: 'memo' };
+    }
+}
+
+function renderVaultCatalog(itemsToRender = null) {
+    const container = document.getElementById('vault-items-container');
+    const totalCountEl = document.getElementById('vault-stat-total-count');
+    const tabCountEl = document.getElementById('vault-catalog-count');
+    if (!container) return;
+
+    let items = itemsToRender || vaultCatalogCache;
+
+    // Filter by Category
+    if (currentVaultCategory && currentVaultCategory !== 'all') {
+        items = items.filter(item => item.category === currentVaultCategory);
+    }
+
+    // Filter by Search Query
+    const searchInput = document.getElementById('vault-search-input');
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    if (query) {
+        items = items.filter(item => {
+            const title = (item.title || '').toLowerCase();
+            const content = (item.content || '').toLowerCase();
+            return title.includes(query) || content.includes(query);
+        });
+    }
+
+    // Sort: Pinned first, then client_updated_at / created_at desc
+    items.sort((a, b) => {
+        const pinA = a.is_pinned ? 1 : 0;
+        const pinB = b.is_pinned ? 1 : 0;
+        if (pinA !== pinB) return pinB - pinA;
+        const dateA = a.client_updated_at || a.created_at || '';
+        const dateB = b.client_updated_at || b.created_at || '';
+        return dateB.localeCompare(dateA);
+    });
+
+    if (totalCountEl) totalCountEl.textContent = vaultCatalogCache.length;
+    if (tabCountEl) tabCountEl.textContent = vaultCatalogCache.length;
+
+    if (items.length === 0) {
+        container.innerHTML = `
+            <div class="vault-empty-state" style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; color: #94a3b8;">
+                <div style="font-size: 2.8rem; margin-bottom: 12px; color: #64748b;"><i class="fa-solid fa-box-open"></i></div>
+                <h4 style="color: #f1f5f9; margin: 0 0 6px 0; font-size: 1.05rem;">ยังไม่มีเอกสารในหมวดหมู่นี้</h4>
+                <p style="font-size: 0.85rem; max-width: 440px; margin: 0 auto 16px auto; line-height: 1.5;">ท่านประธานสามารถคลิกแท็บ 'สร้างบันทึก / คำสั่งด่วน' เพื่อจัดเก็บข้อมูลลงคลังนิรภัยออฟไลน์ได้ทันทีนะคะ</p>
+                <button type="button" class="btn-sec-secondary" onclick="switchVaultTab('memo')">
+                    <i class="fa-solid fa-pen-to-square"></i> สร้างบันทึกแรก
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    items.forEach(item => {
+        const catMeta = getCategoryDisplayMeta(item.category);
+        const isPinned = !!item.is_pinned;
+        const safeTitle = escapeVaultHtml(item.title || 'ไม่มีชื่อหัวข้อ');
+        const rawContent = item.content || '';
+        const preview = escapeVaultHtml(rawContent.substring(0, 140)) + (rawContent.length > 140 ? '...' : '');
+        const dateStr = item.client_updated_at || item.created_at || 'เพิ่งบันทึก';
+
+        html += `
+            <div class="vault-item-card ${isPinned ? 'pinned' : ''}" data-id="${item.item_id}">
+                <div class="vault-card-top">
+                    <span class="vault-cat-chip ${catMeta.chipClass}">
+                        <i class="fa-solid ${catMeta.icon}"></i> ${catMeta.label}
+                    </span>
+                    ${isPinned ? '<span class="vault-pin-indicator" title="ปักหมุดสำคัญ"><i class="fa-solid fa-thumbtack text-amber"></i></span>' : ''}
+                </div>
+                <div class="vault-card-title" title="${safeTitle}">${safeTitle}</div>
+                <div class="vault-card-preview">${preview}</div>
+                <div class="vault-card-footer">
+                    <span class="vault-card-date"><i class="fa-regular fa-clock"></i> ${escapeVaultHtml(dateStr)}</span>
+                    <div class="vault-card-actions">
+                        <button type="button" class="btn-card-action view" onclick="viewVaultDocument('${item.item_id}')" title="เปิดอ่านเอกสาร">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                        <button type="button" class="btn-card-action pin ${isPinned ? 'active' : ''}" onclick="togglePinVaultItem('${item.item_id}')" title="${isPinned ? 'ยกเลิกปักหมุด' : 'ปักหมุดเอกสารนี้'}">
+                            <i class="fa-solid fa-thumbtack"></i>
+                        </button>
+                        <button type="button" class="btn-card-action del" onclick="deleteVaultItemPrompt('${item.item_id}', '${safeTitle.replace(/'/g, "\\'")}')" title="ลบเอกสาร">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function renderVaultOutbox() {
+    const container = document.getElementById('vault-outbox-container');
+    if (!container) return;
+
+    const outbox = getLocalVaultOutbox();
+    if (outbox.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 36px 16px; color: #94a3b8;">
+                <i class="fa-solid fa-circle-check text-emerald" style="font-size: 2.2rem; margin-bottom: 10px; display: inline-block;"></i>
+                <div style="color: #f1f5f9; font-weight: 600;">คิวรอซิงก์ว่างเปล่า (All Synced)</div>
+                <p style="font-size: 0.8rem; margin: 4px 0 0 0;">ข้อมูลทุกรายการถูกซิงก์ขึ้นสู่เซิร์ฟเวอร์คลาวด์เรียบร้อยแล้วค่ะ</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    outbox.forEach((chg) => {
+        const action = chg.action || 'upsert';
+        const title = escapeVaultHtml(chg.title || (chg.item && chg.item.title) || chg.item_id || 'เอกสาร');
+        const timeStr = chg.client_updated_at || chg.timestamp || 'รอส่ง';
+        const actionBadgeColor = (action === 'delete') ? '#ef4444' : '#10b981';
+        const actionBadgeText = (action === 'delete') ? 'DELETE' : 'SAVE';
+
+        html += `
+            <div class="vault-outbox-item">
+                <div>
+                    <div class="outbox-item-title">${title}</div>
+                    <div class="outbox-item-meta">
+                        <span style="display: inline-block; padding: 2px 6px; border-radius: 4px; background: ${actionBadgeColor}22; color: ${actionBadgeColor}; font-weight: 700; margin-right: 6px;">${actionBadgeText}</span>
+                        <span>เวลา: ${escapeVaultHtml(timeStr)}</span>
+                    </div>
+                </div>
+                <div style="color: #fbbf24; font-size: 0.82rem; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-clock-rotate-left"></i> รอเชื่อมต่อ
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function handleSaveVaultMemo(e) {
+    if (e) e.preventDefault();
+    const titleInput = document.getElementById('vault-memo-title');
+    const catSelect = document.getElementById('vault-memo-cat');
+    const contentInput = document.getElementById('vault-memo-content');
+    const pinCheckbox = document.getElementById('vault-memo-pinned');
+
+    if (!titleInput || !contentInput) return;
+
+    const title = titleInput.value.trim();
+    const content = contentInput.value.trim();
+    const category = catSelect ? catSelect.value : 'memo';
+    const isPinned = pinCheckbox ? pinCheckbox.checked : false;
+
+    if (!title || !content) {
+        alert('กรุณากรอกหัวข้อและเนื้อหาเอกสารให้ครบถ้วนนะคะ');
+        return;
+    }
+
+    saveToOfflineVault(category, title, content, isPinned);
+
+    titleInput.value = '';
+    contentInput.value = '';
+    if (pinCheckbox) pinCheckbox.checked = false;
+
+    switchVaultTab('catalog');
+    alert(`บันทึกเอกสาร '${title}' ลงใน Executive Offline Vault เรียบร้อยแล้วค่ะ!`);
+}
+
+function saveToOfflineVault(category, title, content, isPinned = false, metadata = {}) {
+    const now = new Date().toISOString();
+    const itemId = `vault_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    
+    const newItem = {
+        item_id: itemId,
+        username: 'boss',
+        category: category || 'memo',
+        title: title,
+        content: content,
+        metadata: metadata || {},
+        is_pinned: !!isPinned,
+        client_updated_at: now,
+        synced_at: null,
+        created_at: now
+    };
+
+    // 1. Add to local cache immediately
+    const items = getLocalVaultItems();
+    items.unshift(newItem);
+    setLocalVaultItems(items);
+
+    // 2. Add to outbox queue
+    const outbox = getLocalVaultOutbox();
+    outbox.push({
+        action: 'upsert',
+        item_id: itemId,
+        title: title,
+        content: content,
+        category: category,
+        metadata: metadata,
+        is_pinned: !!isPinned,
+        client_updated_at: now,
+        created_at: now
+    });
+    setLocalVaultOutbox(outbox);
+
+    renderVaultCatalog();
+    renderVaultOutbox();
+    updateVaultPillAndBadgeUI();
+
+    // 3. If online, trigger background sync
+    if (navigator.onLine) {
+        triggerVaultSync(false);
+    }
+
+    return itemId;
+}
+
+async function togglePinVaultItem(itemId) {
+    const items = getLocalVaultItems();
+    const item = items.find(i => i.item_id === itemId);
+    if (!item) return;
+
+    item.is_pinned = !item.is_pinned;
+    item.client_updated_at = new Date().toISOString();
+    setLocalVaultItems(items);
+
+    // Add to outbox
+    const outbox = getLocalVaultOutbox();
+    outbox.push({
+        action: 'upsert',
+        item_id: item.item_id,
+        title: item.title,
+        content: item.content,
+        category: item.category,
+        metadata: item.metadata,
+        is_pinned: item.is_pinned,
+        client_updated_at: item.client_updated_at
+    });
+    setLocalVaultOutbox(outbox);
+
+    renderVaultCatalog();
+
+    if (navigator.onLine) {
+        try {
+            await fetch(`/api/vault/items/${itemId}/pin`, { method: 'POST' });
+        } catch (e) {
+            console.warn("Online pin toggle notice:", e);
+        }
+    }
+}
+
+async function deleteVaultItemPrompt(itemId, title) {
+    if (!confirm(`ท่านประธานต้องการลบเอกสาร '${title}' ออกจากคลังนิรภัยหรือไม่คะ?`)) return;
+
+    let items = getLocalVaultItems();
+    items = items.filter(i => i.item_id !== itemId);
+    setLocalVaultItems(items);
+
+    const outbox = getLocalVaultOutbox();
+    outbox.push({
+        action: 'delete',
+        item_id: itemId
+    });
+    setLocalVaultOutbox(outbox);
+
+    renderVaultCatalog();
+    renderVaultOutbox();
+    closeVaultDocumentViewer();
+
+    if (navigator.onLine) {
+        try {
+            await fetch(`/api/vault/items/${itemId}`, { method: 'DELETE' });
+        } catch (e) {
+            console.warn("Online delete notice:", e);
+        }
+    }
+}
+
+function viewVaultDocument(itemId) {
+    const items = getLocalVaultItems();
+    const item = items.find(i => i.item_id === itemId);
+    if (!item) return;
+
+    currentlyViewedVaultItem = item;
+    const viewer = document.getElementById('vault-doc-viewer');
+    const titleEl = document.getElementById('vault-viewer-title');
+    const timeEl = document.getElementById('vault-viewer-time');
+    const badgeEl = document.getElementById('vault-viewer-cat-badge');
+    const bodyEl = document.getElementById('vault-viewer-body');
+
+    if (!viewer) return;
+
+    const catMeta = getCategoryDisplayMeta(item.category);
+    if (badgeEl) {
+        badgeEl.textContent = catMeta.label;
+        badgeEl.className = `vault-cat-badge ${catMeta.chipClass}`;
+    }
+
+    if (titleEl) titleEl.textContent = item.title || 'ไม่มีชื่อหัวข้อ';
+    if (timeEl) timeEl.textContent = `อัปเดตเมื่อ: ${item.client_updated_at || item.created_at || 'ไม่ระบุ'}`;
+
+    if (bodyEl) {
+        const raw = item.content || '';
+        if (typeof marked !== 'undefined' && marked.parse) {
+            bodyEl.innerHTML = marked.parse(raw);
+        } else {
+            bodyEl.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${escapeVaultHtml(raw)}</pre>`;
+        }
+    }
+
+    viewer.style.display = 'flex';
+}
+
+function closeVaultDocumentViewer() {
+    const viewer = document.getElementById('vault-doc-viewer');
+    if (viewer) viewer.style.display = 'none';
+    currentlyViewedVaultItem = null;
+}
+
+function copyVaultDocumentContent() {
+    if (!currentlyViewedVaultItem) return;
+    const content = currentlyViewedVaultItem.content || '';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(content).then(() => {
+            alert('คัดลอกเนื้อหาเอกสารลงคลิปบอร์ดเรียบร้อยแล้วค่ะ');
+        }).catch(err => {
+            alert('ไม่สามารถคัดลอกได้: ' + err.message);
+        });
+    } else {
+        alert('เบราว์เซอร์ไม่รองรับ Clipboard API ค่ะ');
+    }
+}
+
+function deleteViewedVaultDocument() {
+    if (!currentlyViewedVaultItem) return;
+    deleteVaultItemPrompt(currentlyViewedVaultItem.item_id, currentlyViewedVaultItem.title || 'เอกสาร');
+}
+
+function clearVaultCachePrompt() {
+    if (!confirm('คำเตือน: ท่านประธานต้องการล้างแคชออฟไลน์ในเครื่องนี้หรือไม่คะ? (รายการทั้งหมดจะถูกดาวน์โหลดใหม่จาก Cloud เมื่อออนไลน์)')) return;
+
+    localStorage.removeItem(VAULT_STORAGE_ITEMS_KEY);
+    localStorage.removeItem(VAULT_STORAGE_OUTBOX_KEY);
+    localStorage.removeItem(VAULT_STORAGE_LAST_SYNC_KEY);
+
+    vaultCatalogCache = [];
+    vaultOutboxCache = [];
+    renderVaultCatalog();
+    renderVaultOutbox();
+    updateVaultPillAndBadgeUI();
+
+    alert('ล้างแคชออฟไลน์ในเครื่องเรียบร้อยแล้วค่ะ');
+    if (navigator.onLine) {
+        loadVaultData(true);
+    }
+}
+
+function clearVaultOutboxPrompt() {
+    if (!confirm('ท่านประธานต้องการล้างคิวรอซิงก์ทั้งหมดหรือไม่คะ?')) return;
+    setLocalVaultOutbox([]);
+    renderVaultOutbox();
+    updateVaultPillAndBadgeUI();
+    alert('ล้างคิวรอซิงก์เรียบร้อยแล้วค่ะ');
+}
+
+async function exportVaultJsonBackup() {
+    try {
+        let items = getLocalVaultItems();
+        if (navigator.onLine) {
+            try {
+                const res = await fetch('/api/vault/export');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'success' && Array.isArray(data.items)) {
+                        items = data.items;
+                    }
+                }
+            } catch (e) {
+                console.log("Using local cache for backup export");
+            }
+        }
+
+        const exportPayload = {
+            system: "Kira AI Executive Offline Vault",
+            export_timestamp: new Date().toISOString(),
+            total_items: items.length,
+            items: items
+        };
+
+        const jsonStr = JSON.stringify(exportPayload, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const filename = `kira_executive_vault_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        alert('เกิดข้อผิดพลาดในการส่งออกไฟล์สำรอง: ' + err.message);
+    }
+}
+
+function handleVaultFileImport(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(evt) {
+        try {
+            const parsed = JSON.parse(evt.target.result);
+            const items = Array.isArray(parsed) ? parsed : (parsed.items || []);
+            if (!Array.isArray(items) || items.length === 0) {
+                alert('ไม่พบรายการข้อมูลในไฟล์สำรองค่ะ');
+                return;
+            }
+
+            // Merge into local cache
+            const existing = getLocalVaultItems();
+            const map = new Map();
+            existing.forEach(i => map.set(i.item_id, i));
+            items.forEach(i => {
+                if (i.item_id) map.set(i.item_id, i);
+            });
+            const merged = Array.from(map.values());
+            setLocalVaultItems(merged);
+
+            // If online, send to /api/vault/import
+            if (navigator.onLine) {
+                try {
+                    await fetch('/api/vault/import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: 'boss', backup_data: items })
+                    });
+                } catch (e) {
+                    console.warn("Online import sync notice:", e);
+                }
+            }
+
+            renderVaultCatalog();
+            updateVaultPillAndBadgeUI();
+            alert(`กู้คืนข้อมูลสำเร็จเรียบร้อยค่ะ! นำเข้าข้อมูลทั้งหมด ${items.length} รายการ`);
+        } catch (err) {
+            alert('ไม่สามารถอ่านไฟล์สำรองได้: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function initOfflineVaultController() {
+    // 1. Network Pill & Modal Open
+    const pill = document.getElementById('btn-vault-network-pill');
+    if (pill) {
+        pill.addEventListener('click', () => openOfflineVaultModal('catalog'));
+    }
+
+    const btnClose = document.getElementById('btn-close-vault-modal');
+    if (btnClose) {
+        btnClose.addEventListener('click', closeOfflineVaultModal);
+    }
+
+    const modal = document.getElementById('offline-vault-modal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeOfflineVaultModal();
+        });
+    }
+
+    // 2. Tab Navigation
+    const tabBtns = document.querySelectorAll('.vault-tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            if (tab) switchVaultTab(tab);
+        });
+    });
+
+    // 3. Category Filters
+    const catBtns = document.querySelectorAll('.vault-cat-btn');
+    catBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            catBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentVaultCategory = btn.dataset.cat || 'all';
+            renderVaultCatalog();
+        });
+    });
+
+    // 4. Search Filter
+    const searchInput = document.getElementById('vault-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => renderVaultCatalog());
+    }
+
+    // 5. Manual Sync Action
+    const btnSync = document.getElementById('btn-vault-manual-sync');
+    if (btnSync) {
+        btnSync.addEventListener('click', () => triggerVaultSync(true));
+    }
+
+    // 6. Directive / Memo Form
+    const memoForm = document.getElementById('vault-memo-form');
+    if (memoForm) {
+        memoForm.addEventListener('submit', handleSaveVaultMemo);
+    }
+
+    // 7. Outbox Operations
+    const btnClearOutbox = document.getElementById('btn-clear-outbox-queue');
+    if (btnClearOutbox) {
+        btnClearOutbox.addEventListener('click', clearVaultOutboxPrompt);
+    }
+
+    // 8. Security & Backup Actions
+    const btnClearCache = document.getElementById('btn-clear-vault-cache');
+    if (btnClearCache) {
+        btnClearCache.addEventListener('click', clearVaultCachePrompt);
+    }
+
+    const btnExport = document.getElementById('btn-export-vault-json');
+    if (btnExport) {
+        btnExport.addEventListener('click', exportVaultJsonBackup);
+    }
+
+    const btnTriggerImport = document.getElementById('btn-trigger-vault-import');
+    const fileInput = document.getElementById('vault-import-file-input');
+    if (btnTriggerImport && fileInput) {
+        btnTriggerImport.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleVaultFileImport(e.target.files[0]);
+                e.target.value = '';
+            }
+        });
+    }
+
+    // 9. Document Viewer Controls
+    const btnCloseViewer = document.getElementById('btn-close-vault-viewer');
+    if (btnCloseViewer) {
+        btnCloseViewer.addEventListener('click', closeVaultDocumentViewer);
+    }
+
+    const btnCopyContent = document.getElementById('btn-copy-vault-content');
+    if (btnCopyContent) {
+        btnCopyContent.addEventListener('click', copyVaultDocumentContent);
+    }
+
+    const btnDeleteViewed = document.getElementById('btn-delete-viewed-vault');
+    if (btnDeleteViewed) {
+        btnDeleteViewed.addEventListener('click', deleteViewedVaultDocument);
+    }
+
+    // 10. Global Network State Listeners
+    window.addEventListener('online', () => {
+        updateVaultConnectivityUI(true);
+        triggerVaultSync(false);
+    });
+
+    window.addEventListener('offline', () => {
+        updateVaultConnectivityUI(false);
+    });
+
+    // 11. Initial State Setup
+    updateVaultConnectivityUI(navigator.onLine);
+    loadVaultData(true);
+
+    // Expose Global Vault Interface
+    window.openOfflineVaultModal = openOfflineVaultModal;
+    window.closeOfflineVaultModal = closeOfflineVaultModal;
+    window.switchVaultTab = switchVaultTab;
+    window.saveToOfflineVault = saveToOfflineVault;
+    window.togglePinVaultItem = togglePinVaultItem;
+    window.deleteVaultItemPrompt = deleteVaultItemPrompt;
+    window.viewVaultDocument = viewVaultDocument;
+    window.triggerVaultSync = triggerVaultSync;
+    window.exportVaultJsonBackup = exportVaultJsonBackup;
+}
+
+// =========================================================================
 // 🚀 Master Application Lifecycle Initialization
 // =========================================================================
 function initKiraApp() {
@@ -8410,6 +9254,7 @@ function initKiraApp() {
     try { initSubscriptionController(); } catch (e) { console.error("Subscription controller init error:", e); }
     try { initPWAController(); } catch (e) { console.error("PWA controller init error:", e); }
     try { initMCPHubController(); } catch (e) { console.error("MCP Hub controller init error:", e); }
+    try { initOfflineVaultController(); } catch (e) { console.error("Offline Vault controller init error:", e); }
 
     // 4. Background Care & Assistance
     try { initProactiveHeartbeat(); } catch (e) { console.warn("Heartbeat init error:", e); }
