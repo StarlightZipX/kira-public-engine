@@ -11,7 +11,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=21">
+    <link rel="stylesheet" href="/static/style.css?v=22">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -430,6 +430,13 @@
                                 <div class="tools-category-label">
                                     <i class="fa-solid fa-briefcase"></i> <span>งาน & กลยุทธ์</span>
                                 </div>
+                                <button class="tools-menu-item" type="button" onclick="if (typeof openMCPHubModal === 'function') openMCPHubModal();" title="Model Context Protocol (MCP) Integration Hub & Tool Studio">
+                                    <span class="tool-item-icon icon-cyan"><i class="fa-solid fa-network-wired"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">MCP Integration Hub</span>
+                                        <span class="tool-item-desc">ศูนย์เชื่อมต่อระบบนิเวศ & เครื่องมือ MCP</span>
+                                    </div>
+                                </button>
                                 <button class="tools-menu-item" type="button" onclick="document.getElementById('btn-boardroom-toggle').click();" title="สภาที่ปรึกษา 4 ผู้บริหาร (CEO, CFO, CPO, CTO)">
                                     <span class="tool-item-icon icon-amber"><i class="fa-solid fa-users-viewfinder"></i></span>
                                     <div class="tool-item-info">
@@ -2301,6 +2308,187 @@
         </div>
     </div>
 
+    <!-- 🔌 Model Context Protocol (MCP) Integration Hub Modal -->
+    <div id="mcp-hub-modal" class="modal-overlay mcp-hub-overlay" style="display: none; z-index: 1105;">
+        <div class="mcp-hub-card glass-panel">
+            <!-- Modal Header -->
+            <div class="mcp-hub-header">
+                <div class="mcp-hub-title-group">
+                    <div class="mcp-hub-badge"><i class="fa-solid fa-network-wired text-cyan"></i> Model Context Protocol (MCP) Core</div>
+                    <h2>Kira 2.2 MCP Integration Hub & Tool Studio</h2>
+                    <p class="mcp-hub-subtitle">ศูนย์รวมการเชื่อมต่อระบบนิเวศและเครื่องมือภายนอกตามมาตรฐานสากล Model Context Protocol (Anthropic / Linux Foundation)</p>
+                </div>
+                <button id="btn-close-mcp-hub" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Tab Navigation Bar -->
+            <div class="mcp-tabs-bar">
+                <button type="button" class="mcp-tab-btn active" data-tab="catalog">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> <span>คลังเครื่องมือ (Tool Catalog)</span>
+                </button>
+                <button type="button" class="mcp-tab-btn" data-tab="servers">
+                    <i class="fa-solid fa-server"></i> <span>เซิร์ฟเวอร์ MCP (<span id="mcp-server-count">3</span>)</span>
+                </button>
+                <button type="button" class="mcp-tab-btn" data-tab="runner">
+                    <i class="fa-solid fa-terminal"></i> <span>ห้องทดสอบสด (Interactive Studio)</span>
+                </button>
+                <button type="button" class="mcp-tab-btn" data-tab="audits">
+                    <i class="fa-solid fa-clock-rotate-left"></i> <span>ประวัติ Audit Logs</span>
+                </button>
+                <button type="button" class="mcp-tab-btn" data-tab="connector">
+                    <i class="fa-solid fa-plus-circle"></i> <span>เชื่อมต่อ Server ใหม่</span>
+                </button>
+            </div>
+
+            <!-- Tab 1: Tool Catalog -->
+            <div id="mcp-pane-catalog" class="mcp-tab-pane active">
+                <div class="mcp-pane-toolbar">
+                    <div class="mcp-search-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="mcp-tool-search-input" placeholder="ค้นหาเครื่องมือ MCP เช่น financial, workspace, diagnostics...">
+                    </div>
+                    <div class="mcp-category-filters">
+                        <button type="button" class="mcp-cat-btn active" data-cat="all">ทั้งหมด</button>
+                        <button type="button" class="mcp-cat-btn" data-cat="financial">การเงิน & ผู้บริหาร</button>
+                        <button type="button" class="mcp-cat-btn" data-cat="workspace">โปรเจกต์ & ไฟล์</button>
+                        <button type="button" class="mcp-cat-btn" data-cat="system">สุขภาพระบบ</button>
+                        <button type="button" class="mcp-cat-btn" data-cat="intelligence">ข่าวกรองธุรกิจ</button>
+                    </div>
+                </div>
+
+                <div class="mcp-tools-grid" id="mcp-tools-container">
+                    <div class="mcp-loading-text"><i class="fa-solid fa-circle-notch fa-spin"></i> กำลังโหลดรายการ MCP Tools...</div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Registered MCP Servers -->
+            <div id="mcp-pane-servers" class="mcp-tab-pane" style="display: none;">
+                <div class="mcp-servers-header-row">
+                    <span class="mcp-servers-intro">เซิร์ฟเวอร์ MCP ที่ผูกไว้กับ Kira Engine พร้อมให้บริการแบบ Low Latency ผ่านมาตรฐาน SSE / Local In-Memory</span>
+                    <button type="button" class="btn-refresh-mcp" id="btn-refresh-mcp-servers"><i class="fa-solid fa-arrows-rotate"></i> ตรวจสอบสถานะสด</button>
+                </div>
+                <div class="mcp-servers-grid" id="mcp-servers-container">
+                    <!-- Dynamically populated server cards -->
+                </div>
+            </div>
+
+            <!-- Tab 3: Interactive Tool Runner Studio -->
+            <div id="mcp-pane-runner" class="mcp-tab-pane" style="display: none;">
+                <div class="mcp-runner-layout">
+                    <div class="mcp-runner-sidebar">
+                        <label class="mcp-runner-label">เลือกเครื่องมือที่ต้องการทดสอบ:</label>
+                        <select id="mcp-runner-tool-select" class="input-control mcp-tool-dropdown">
+                            <!-- Populated with available tools -->
+                        </select>
+                        <div id="mcp-runner-tool-meta" class="mcp-tool-meta-box">
+                            <!-- Selected tool metadata and description -->
+                        </div>
+                    </div>
+                    <div class="mcp-runner-main">
+                        <div class="mcp-runner-inputs-card">
+                            <div class="mcp-inputs-title">
+                                <span><i class="fa-solid fa-sliders"></i> พารามิเตอร์ทดสอบ (Arguments):</span>
+                                <span class="mcp-hint-text">กรอกค่าที่ต้องการทดสอบ หรือใช้ค่ามาตรฐาน</span>
+                            </div>
+                            <div id="mcp-dynamic-arguments-form" class="mcp-form-fields-container">
+                                <!-- Dynamic input fields based on tool schema -->
+                            </div>
+                            <div class="mcp-runner-actions">
+                                <button type="button" id="btn-execute-mcp-runner" class="btn-execute-mcp-primary">
+                                    <i class="fa-solid fa-play"></i> รันคำสั่ง MCP ทันที
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Result Console Box -->
+                        <div class="mcp-runner-console-card">
+                            <div class="mcp-console-header">
+                                <span><i class="fa-solid fa-terminal"></i> ผลลัพธ์การประมวลผล (MCP Execution Result)</span>
+                                <span id="mcp-exec-latency-badge" class="mcp-exec-latency" style="display: none;">0 ms</span>
+                            </div>
+                            <div id="mcp-console-output" class="mcp-console-output">
+                                <div class="mcp-console-idle">คลิก "รันคำสั่ง MCP ทันที" เพื่อทดสอบการเรียกใช้งานเครื่องมือ</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Audit History -->
+            <div id="mcp-pane-audits" class="mcp-tab-pane" style="display: none;">
+                <div class="mcp-audits-header-row">
+                    <span>บันทึกความปลอดภัยและสถิติเวลาประมวลผลของทุกการเรียกใช้ MCP Tools</span>
+                    <button type="button" class="btn-refresh-mcp" id="btn-refresh-mcp-audits"><i class="fa-solid fa-arrows-rotate"></i> โหลดประวัติล่าสุด</button>
+                </div>
+                <div class="mcp-audits-table-wrapper">
+                    <table class="mcp-audits-table">
+                        <thead>
+                            <tr>
+                                <th>รหัสการรัน (Execution ID)</th>
+                                <th>ผู้ใช้งาน</th>
+                                <th>ชื่อเครื่องมือ</th>
+                                <th>เซิร์ฟเวอร์</th>
+                                <th>สถานะ</th>
+                                <th>เวลาประมวลผล</th>
+                                <th>วันเวลาที่เรียกใช้</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mcp-audits-table-body">
+                            <tr>
+                                <td colspan="7" class="empty-orders-text">กำลังโหลดประวัติการเรียกใช้...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 5: Connect New Server -->
+            <div id="mcp-pane-connector" class="mcp-tab-pane" style="display: none;">
+                <div class="mcp-connector-card">
+                    <div class="mcp-connector-intro">
+                        <div class="mcp-connector-icon"><i class="fa-solid fa-network-wired text-cyan"></i></div>
+                        <div class="mcp-connector-texts">
+                            <h3>ลงทะเบียน External MCP Server ใหม่</h3>
+                            <p>รองรับการเชื่อมต่อกับเซิร์ฟเวอร์ภายนอกตามข้อกำหนด Model Context Protocol (Anthropic SSE MCP Server, GitHub MCP, PostgreSQL/SQLite MCP)</p>
+                        </div>
+                    </div>
+                    <form id="mcp-register-server-form" class="mcp-server-form">
+                        <div class="form-row">
+                            <div class="form-group flex-2">
+                                <label for="mcp-server-name">ชื่อเซิร์ฟเวอร์ (Server Display Name)</label>
+                                <input type="text" id="mcp-server-name" class="input-control" placeholder="เช่น Anthropic Knowledge Hub หรือ Dev GitHub MCP" required>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="mcp-server-transport">Transport Protocol</label>
+                                <select id="mcp-server-transport" class="input-control">
+                                    <option value="sse" selected>SSE (Server-Sent Events)</option>
+                                    <option value="http">HTTP POST / JSON-RPC</option>
+                                    <option value="stdio">stdio (Local Subprocess)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="mcp-server-endpoint">Endpoint URL / Connection String</label>
+                            <input type="text" id="mcp-server-endpoint" class="input-control" placeholder="https://mcp.your-domain.com/sse หรือ http://127.0.0.1:8080/mcp" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="mcp-server-token">Bearer Authentication Token (ทางเลือก - หากมีรหัสผ่าน)</label>
+                            <input type="password" id="mcp-server-token" class="input-control" placeholder="mcp_sec_************************">
+                        </div>
+                        <div class="mcp-boss-guard-note">
+                            <i class="fa-solid fa-shield-halved text-amber"></i> การลงทะเบียน External Server สงวนสิทธิ์เฉพาะท่านประธาน (Boss) เพื่อความปลอดภัยสูงสุดของระบบค่ะ
+                        </div>
+                        <div class="form-actions" style="margin-top: 18px;">
+                            <button type="submit" id="btn-save-mcp-server" class="btn-primary-action">
+                                <i class="fa-solid fa-link"></i> บันทึกและทดสอบเชื่อมต่อ MCP Server
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 🛡️ In-App Admin Orders Review Modal (For Boss) -->
     <div id="admin-orders-modal" class="modal-overlay" style="display: none; z-index: 1110;">
         <div class="admin-orders-card glass-panel">
@@ -2415,6 +2603,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=36"></script>
+    <script src="/static/script.js?v=37"></script>
 </body>
 </html>

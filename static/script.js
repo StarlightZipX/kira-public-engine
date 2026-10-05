@@ -1266,6 +1266,7 @@ function cleanDeliverableText(text) {
                .replace(/\[THINKING_DONE\]/g, "")
                .replace(/<think>(.*?)<\/think>/gs, "")
                .replace(/\[BOARDROOM_START\]|\[BOARDROOM_DONE\]|\[BOARDROOM_SPEAKER:[^\]]+\]|\[BOARDROOM_DEBATE[^\]]*\]|\[BOARDROOM_CONSENSUS[^\]]*\]/g, "")
+               .replace(/\[MCP_ACTION:[^\]]+\]/g, "")
                .trim();
 }
 
@@ -7817,6 +7818,572 @@ function initLiveVoiceAssistant() {
     }
 }
 
+// ====================================================================
+// 🔌 KIRA 2.2 MODEL CONTEXT PROTOCOL (MCP) INTEGRATION HUB CONTROLLER
+// ====================================================================
+
+let mcpToolsCatalog = [];
+let mcpServersList = [];
+let mcpAuditsList = [];
+let currentMCPCategory = 'all';
+
+function openMCPHubModal(defaultTab = 'catalog') {
+    const modal = document.getElementById('mcp-hub-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    switchMCPTab(defaultTab);
+    loadMCPHubData();
+}
+
+function closeMCPHubModal() {
+    const modal = document.getElementById('mcp-hub-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function switchMCPTab(tabName) {
+    const tabBtns = document.querySelectorAll('.mcp-tab-btn');
+    const tabPanes = document.querySelectorAll('.mcp-tab-pane');
+
+    tabBtns.forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    tabPanes.forEach(pane => {
+        if (pane.id === `mcp-pane-${tabName}`) {
+            pane.style.display = 'flex';
+        } else {
+            pane.style.display = 'none';
+        }
+    });
+}
+
+async function loadMCPHubData() {
+    try {
+        const [toolsRes, serversRes, auditsRes] = await Promise.all([
+            fetch('/api/mcp/tools').then(r => r.json()).catch(() => ({ status: 'error', tools: [] })),
+            fetch('/api/mcp/servers').then(r => r.json()).catch(() => ({ status: 'error', servers: [] })),
+            fetch('/api/mcp/audits?limit=25').then(r => r.json()).catch(() => ({ status: 'error', audits: [] }))
+        ]);
+
+        if (toolsRes.status === 'success' && Array.isArray(toolsRes.tools)) {
+            mcpToolsCatalog = toolsRes.tools;
+            renderMCPTools(mcpToolsCatalog);
+            populateRunnerToolsDropdown(mcpToolsCatalog);
+        }
+
+        if (serversRes.status === 'success' && Array.isArray(serversRes.servers)) {
+            mcpServersList = serversRes.servers;
+            renderMCPServers(mcpServersList);
+            const countEl = document.getElementById('mcp-server-count');
+            if (countEl) countEl.textContent = mcpServersList.length;
+        }
+
+        if (auditsRes.status === 'success' && Array.isArray(auditsRes.audits)) {
+            mcpAuditsList = auditsRes.audits;
+            renderMCPAudits(mcpAuditsList);
+        }
+    } catch (e) {
+        console.error('Error loading MCP Hub data:', e);
+    }
+}
+
+function renderMCPTools(tools) {
+    const container = document.getElementById('mcp-tools-container');
+    if (!container) return;
+
+    let filtered = tools;
+    if (currentMCPCategory !== 'all') {
+        filtered = tools.filter(t => t.category === currentMCPCategory);
+    }
+
+    const searchInput = document.getElementById('mcp-tool-search-input');
+    const query = (searchInput?.value || '').toLowerCase().trim();
+    if (query) {
+        filtered = filtered.filter(t => 
+            (t.tool_name && t.tool_name.toLowerCase().includes(query)) ||
+            (t.display_name && t.display_name.toLowerCase().includes(query)) ||
+            (t.description && t.description.toLowerCase().includes(query))
+        );
+    }
+
+    if (!filtered.length) {
+        container.innerHTML = `<div class="mcp-empty-state" style="grid-column: 1/-1; text-align: center; padding: 40px; color: #64748b;">
+            <i class="fa-solid fa-toolbox" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+            ไม่พบเครื่องมือที่ตรงกับเงื่อนไขการค้นหาค่ะ
+        </div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(tool => {
+        const catMap = {
+            financial: 'การเงิน & ผู้บริหาร',
+            workspace: 'โปรเจกต์ & ไฟล์',
+            system: 'สุขภาพระบบ',
+            intelligence: 'ข่าวกรองธุรกิจ'
+        };
+        const catName = catMap[tool.category] || tool.category;
+        const iconClass = tool.icon || 'fa-solid fa-wrench';
+
+        return `
+        <div class="mcp-tool-card">
+            <div>
+                <div class="mcp-tool-top">
+                    <div class="mcp-tool-icon-box">
+                        <i class="${iconClass}"></i>
+                    </div>
+                    <span class="mcp-tool-badge">${catName}</span>
+                </div>
+                <div class="mcp-tool-name">${tool.display_name || tool.tool_name}</div>
+                <div class="mcp-tool-desc">${tool.description}</div>
+            </div>
+            <div class="mcp-tool-footer">
+                <span class="mcp-tool-server-name">
+                    <i class="fa-solid fa-server"></i> ${tool.server_name || 'Kira Core'}
+                </span>
+                <button type="button" class="btn-test-mcp-tool" onclick="testRunMCPTool('${tool.tool_name}')">
+                    <i class="fa-solid fa-play"></i> ทดสอบรันสด
+                </button>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+function renderMCPServers(servers) {
+    const container = document.getElementById('mcp-servers-container');
+    if (!container) return;
+
+    if (!servers.length) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: #64748b;">ยังไม่มีเซิร์ฟเวอร์ MCP ที่ลงทะเบียน</div>`;
+        return;
+    }
+
+    container.innerHTML = servers.map(srv => {
+        const transportUpper = (srv.transport || 'sse').toUpperCase();
+        const isBuiltin = srv.is_builtin;
+        const deleteBtnHtml = !isBuiltin ? `
+            <button type="button" class="btn-del-mcp-server" onclick="deleteMCPServerPrompt('${srv.server_id}', '${srv.name}')" style="background: transparent; border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; border-radius: 6px; padding: 4px 8px; font-size: 0.72rem; cursor: pointer;">
+                <i class="fa-solid fa-trash-can"></i> ตัดการเชื่อมต่อ
+            </button>
+        ` : `<span style="font-size: 0.72rem; color: #38bdf8; font-weight: 600;"><i class="fa-solid fa-shield"></i> Built-in Core</span>`;
+
+        return `
+        <div class="mcp-server-card">
+            <div class="mcp-server-top">
+                <div class="mcp-server-title">${srv.name}</div>
+                <span class="mcp-status-pill ${srv.is_active ? 'online' : ''}">
+                    <span class="mcp-status-dot"></span> ${srv.is_active ? 'Online' : 'Standby'}
+                </span>
+            </div>
+            <div class="mcp-server-meta-row">
+                <span><strong>Transport:</strong> ${transportUpper}</span>
+                <span><strong>Tools:</strong> ${srv.tools_count} ตัว</span>
+            </div>
+            <div class="mcp-server-meta-row">
+                <span><strong>Latency:</strong> <span class="mcp-latency-tag">~${srv.ping_latency_ms} ms</span></span>
+                <span><strong>Status:</strong> 100% SLA</span>
+            </div>
+            <div class="mcp-tool-footer" style="padding-top: 8px; margin-top: 4px;">
+                <span style="font-size: 0.72rem; color: #64748b; font-family: monospace;">${srv.endpoint}</span>
+                ${deleteBtnHtml}
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+function renderMCPAudits(audits) {
+    const tbody = document.getElementById('mcp-audits-table-body');
+    if (!tbody) return;
+
+    if (!audits.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-orders-text">ยังไม่มีประวัติการเรียกใช้ MCP Tool</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = audits.map(a => {
+        const badgeClass = a.status === 'success' ? 'mcp-badge-success' : 'mcp-badge-failed';
+        const statusText = a.status === 'success' ? 'สำเร็จ' : 'ล้มเหลว';
+
+        return `
+        <tr>
+            <td style="font-family: monospace; font-size: 0.78rem; color: #38bdf8;">${a.execution_id}</td>
+            <td><strong>${a.username || 'boss'}</strong></td>
+            <td><code>${a.tool_name}</code></td>
+            <td><span style="color: #94a3b8; font-size: 0.75rem;">${a.server_id}</span></td>
+            <td><span class="${badgeClass}">${statusText}</span></td>
+            <td><strong>${a.execution_time_ms} ms</strong></td>
+            <td style="color: #64748b; font-size: 0.76rem;">${a.executed_at}</td>
+        </tr>
+        `;
+    }).join('');
+}
+
+function populateRunnerToolsDropdown(tools) {
+    const select = document.getElementById('mcp-runner-tool-select');
+    if (!select) return;
+
+    const currentVal = select.value;
+    select.innerHTML = tools.map(t => `<option value="${t.tool_name}">${t.display_name || t.tool_name}</option>`).join('');
+
+    if (currentVal && tools.some(t => t.tool_name === currentVal)) {
+        select.value = currentVal;
+    } else if (tools.length > 0) {
+        select.value = tools[0].tool_name;
+    }
+
+    updateRunnerInputsForSelectedTool();
+}
+
+function updateRunnerInputsForSelectedTool() {
+    const select = document.getElementById('mcp-runner-tool-select');
+    if (!select) return;
+    const toolName = select.value;
+    const tool = mcpToolsCatalog.find(t => t.tool_name === toolName);
+
+    const metaBox = document.getElementById('mcp-runner-tool-meta');
+    const fieldsContainer = document.getElementById('mcp-dynamic-arguments-form');
+    if (!tool) return;
+
+    if (metaBox) {
+        metaBox.innerHTML = `
+            <div><strong>${tool.display_name}</strong> (<code>${tool.tool_name}</code>)</div>
+            <div style="margin-top: 4px;">${tool.description}</div>
+            <div style="margin-top: 6px; font-size: 0.72rem; color: #38bdf8;">
+                <i class="fa-solid fa-server"></i> Server: ${tool.server_name || tool.server_id}
+            </div>
+        `;
+    }
+
+    if (!fieldsContainer) return;
+
+    if (toolName === 'financial_calculator') {
+        fieldsContainer.innerHTML = `
+            <div class="form-group">
+                <label style="font-size: 0.78rem; color: #94a3b8;">สูตรคำนวณ (Action):</label>
+                <select id="mcp-arg-action" class="input-control" onchange="toggleFinancialInputs(this.value)">
+                    <option value="bep" selected>จุดคุ้มทุน (Break-Even Point)</option>
+                    <option value="roi">ผลตอบแทนการลงทุน (ROI)</option>
+                    <option value="runway">ระยะเวลาอยู่รอดเงินสด (Runway / Burn Rate)</option>
+                </select>
+            </div>
+            <div id="fin-group-bep" style="display: contents;">
+                <div class="form-group">
+                    <label style="font-size: 0.78rem; color: #94a3b8;">ต้นทุนคงที่ (Fixed Costs ฿):</label>
+                    <input type="number" id="mcp-arg-fixed-cost" class="input-control" value="100000">
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 0.78rem; color: #94a3b8;">ราคาขายต่อชิ้น (Price ฿):</label>
+                    <input type="number" id="mcp-arg-price" class="input-control" value="500">
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 0.78rem; color: #94a3b8;">ต้นทุนผันแปรต่อชิ้น (Var Cost ฿):</label>
+                    <input type="number" id="mcp-arg-var-cost" class="input-control" value="200">
+                </div>
+            </div>
+            <div id="fin-group-roi" style="display: none;">
+                <div class="form-group">
+                    <label style="font-size: 0.78rem; color: #94a3b8;">รายได้ที่ได้รับ (Total Gain ฿):</label>
+                    <input type="number" id="mcp-arg-roi-gain" class="input-control" value="250000">
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 0.78rem; color: #94a3b8;">เงินลงทุนทั้งหมด (Total Cost ฿):</label>
+                    <input type="number" id="mcp-arg-roi-cost" class="input-control" value="100000">
+                </div>
+            </div>
+            <div id="fin-group-runway" style="display: none;">
+                <div class="form-group">
+                    <label style="font-size: 0.78rem; color: #94a3b8;">เงินสดสำรอง (Cash Reserve ฿):</label>
+                    <input type="number" id="mcp-arg-runway-cash" class="input-control" value="1000000">
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 0.78rem; color: #94a3b8;">อัตราการเผาผลาญต่อเดือน (Burn Rate ฿):</label>
+                    <input type="number" id="mcp-arg-runway-burn" class="input-control" value="150000">
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 0.78rem; color: #94a3b8;">รายได้ต่อเดือน (Monthly Revenue ฿):</label>
+                    <input type="number" id="mcp-arg-runway-rev" class="input-control" value="30000">
+                </div>
+            </div>
+        `;
+    } else if (toolName === 'workspace_inspector') {
+        fieldsContainer.innerHTML = `
+            <div class="form-group">
+                <label style="font-size: 0.78rem; color: #94a3b8;">ไดเรกทอรีย่อย (Subpath relative to workspace):</label>
+                <input type="text" id="mcp-arg-subpath" class="input-control" value="" placeholder="เว้นว่างไว้เพื่อสแกนทั้งโปรเจกต์">
+            </div>
+            <div class="form-group">
+                <label style="font-size: 0.78rem; color: #94a3b8;">ความลึกสูงสุด (Max Depth):</label>
+                <input type="number" id="mcp-arg-depth" class="input-control" value="3" min="1" max="5">
+            </div>
+        `;
+    } else if (toolName === 'system_diagnostics') {
+        fieldsContainer.innerHTML = `
+            <div class="form-group">
+                <label style="font-size: 0.78rem; color: #94a3b8;">ตรวจสอบความจุพื้นที่ Disk:</label>
+                <select id="mcp-arg-check-disk" class="input-control">
+                    <option value="true" selected>ตรวจสอบ (True)</option>
+                    <option value="false">ข้าม (False)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label style="font-size: 0.78rem; color: #94a3b8;">ตรวจสอบสุขภาพ SQLite WAL Database:</label>
+                <select id="mcp-arg-check-db" class="input-control">
+                    <option value="true" selected>ตรวจสอบ (True)</option>
+                    <option value="false">ข้าม (False)</option>
+                </select>
+            </div>
+        `;
+    } else if (toolName === 'market_intel') {
+        fieldsContainer.innerHTML = `
+            <div class="form-group">
+                <label style="font-size: 0.78rem; color: #94a3b8;">อุตสาหกรรม / กลุ่มธุรกิจ (Industry):</label>
+                <input type="text" id="mcp-arg-industry" class="input-control" value="SaaS & Enterprise AI">
+            </div>
+            <div class="form-group">
+                <label style="font-size: 0.78rem; color: #94a3b8;">ประเด็นยุทธศาสตร์ที่ต้องการวิเคราะห์ (Query):</label>
+                <input type="text" id="mcp-arg-market-query" class="input-control" value="วิเคราะห์ความได้เปรียบเชิงการแข่งขันและการเติบโต">
+            </div>
+        `;
+    } else {
+        fieldsContainer.innerHTML = `
+            <div class="form-group" style="grid-column: 1/-1;">
+                <label style="font-size: 0.78rem; color: #94a3b8;">JSON Arguments Payload:</label>
+                <textarea id="mcp-arg-custom-json" class="input-control" rows="3" placeholder='{"key": "value"}'></textarea>
+            </div>
+        `;
+    }
+}
+
+function toggleFinancialInputs(action) {
+    const bepEl = document.getElementById('fin-group-bep');
+    const roiEl = document.getElementById('fin-group-roi');
+    const runwayEl = document.getElementById('fin-group-runway');
+    if (!bepEl || !roiEl || !runwayEl) return;
+
+    bepEl.style.display = (action === 'bep') ? 'contents' : 'none';
+    roiEl.style.display = (action === 'roi') ? 'contents' : 'none';
+    runwayEl.style.display = (action === 'runway') ? 'contents' : 'none';
+}
+
+function testRunMCPTool(toolName) {
+    switchMCPTab('runner');
+    const select = document.getElementById('mcp-runner-tool-select');
+    if (select) {
+        select.value = toolName;
+        updateRunnerInputsForSelectedTool();
+    }
+}
+
+async function executeMCPToolFromRunner() {
+    const select = document.getElementById('mcp-runner-tool-select');
+    if (!select) return;
+    const toolName = select.value;
+    const tool = mcpToolsCatalog.find(t => t.tool_name === toolName);
+    if (!tool) return;
+
+    let args = {};
+    if (toolName === 'financial_calculator') {
+        const action = document.getElementById('mcp-arg-action')?.value || 'bep';
+        args.action = action;
+        if (action === 'bep') {
+            args.fixed_cost = parseFloat(document.getElementById('mcp-arg-fixed-cost')?.value || 100000);
+            args.price_per_unit = parseFloat(document.getElementById('mcp-arg-price')?.value || 500);
+            args.variable_cost_per_unit = parseFloat(document.getElementById('mcp-arg-var-cost')?.value || 200);
+        } else if (action === 'roi') {
+            args.gain = parseFloat(document.getElementById('mcp-arg-roi-gain')?.value || 250000);
+            args.cost = parseFloat(document.getElementById('mcp-arg-roi-cost')?.value || 100000);
+        } else if (action === 'runway') {
+            args.cash = parseFloat(document.getElementById('mcp-arg-runway-cash')?.value || 1000000);
+            args.burn_rate = parseFloat(document.getElementById('mcp-arg-runway-burn')?.value || 150000);
+            args.monthly_revenue = parseFloat(document.getElementById('mcp-arg-runway-rev')?.value || 0);
+        }
+    } else if (toolName === 'workspace_inspector') {
+        args.subpath = document.getElementById('mcp-arg-subpath')?.value || '';
+        args.max_depth = parseInt(document.getElementById('mcp-arg-depth')?.value || 3);
+    } else if (toolName === 'system_diagnostics') {
+        args.check_disk = document.getElementById('mcp-arg-check-disk')?.value === 'true';
+        args.check_db = document.getElementById('mcp-arg-check-db')?.value === 'true';
+    } else if (toolName === 'market_intel') {
+        args.industry = document.getElementById('mcp-arg-industry')?.value || 'SaaS';
+        args.query = document.getElementById('mcp-arg-market-query')?.value || '';
+    } else {
+        const rawJson = document.getElementById('mcp-arg-custom-json')?.value || '{}';
+        try { args = JSON.parse(rawJson); } catch (e) { alert('JSON Payload ไม่ถูกต้องค่ะ: ' + e.message); return; }
+    }
+
+    const consoleBox = document.getElementById('mcp-console-output');
+    const latencyBadge = document.getElementById('mcp-exec-latency-badge');
+    const execBtn = document.getElementById('btn-execute-mcp-runner');
+
+    if (consoleBox) {
+        consoleBox.innerHTML = `<span style="color: #38bdf8;"><i class="fa-solid fa-spinner fa-spin"></i> กำลังส่งคำสั่งไปยัง ${tool.server_name || tool.server_id} ผ่านโปรโตคอล MCP...</span>`;
+    }
+    if (execBtn) execBtn.disabled = true;
+
+    try {
+        const res = await fetch('/api/mcp/tools/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                server_id: tool.server_id,
+                tool_name: toolName,
+                arguments: args,
+                username: currentUser || 'boss'
+            })
+        });
+
+        const data = await res.json();
+        if (execBtn) execBtn.disabled = false;
+
+        if (latencyBadge) {
+            latencyBadge.style.display = 'inline-block';
+            latencyBadge.textContent = `${data.execution_time_ms || 0} ms`;
+        }
+
+        if (consoleBox) {
+            let verdict = '';
+            if (data.result && data.result.executive_verdict) {
+                verdict = `\n\n💡 [Executive Verdict]:\n${data.result.executive_verdict}`;
+            }
+            consoleBox.textContent = JSON.stringify(data, null, 2) + verdict;
+        }
+
+        // Reload Audits
+        fetch('/api/mcp/audits?limit=25')
+            .then(r => r.json())
+            .then(a => { if (a.status === 'success') renderMCPAudits(a.audits); });
+
+    } catch (err) {
+        if (execBtn) execBtn.disabled = false;
+        if (consoleBox) consoleBox.textContent = `❌ MCP Error: ${err.message}`;
+    }
+}
+
+async function handleRegisterMCPServer(e) {
+    e.preventDefault();
+    const name = document.getElementById('mcp-server-name')?.value;
+    const transport = document.getElementById('mcp-server-transport')?.value;
+    const endpoint = document.getElementById('mcp-server-endpoint')?.value;
+    const authToken = document.getElementById('mcp-server-token')?.value;
+
+    try {
+        const res = await fetch('/api/mcp/servers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name,
+                transport,
+                endpoint,
+                auth_token: authToken || null,
+                admin_username: currentUser || 'boss'
+            })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            alert(data.message || 'เชื่อมต่อ MCP Server สำเร็จเรียบร้อยค่ะ');
+            document.getElementById('mcp-register-server-form')?.reset();
+            switchMCPTab('servers');
+            loadMCPHubData();
+        } else {
+            alert('เกิดข้อผิดพลาด: ' + (data.detail || data.message || 'ไม่สามารถเชื่อมต่อได้'));
+        }
+    } catch (err) {
+        alert('Connection Error: ' + err.message);
+    }
+}
+
+async function deleteMCPServerPrompt(serverId, name) {
+    if (!confirm(`ท่านประธานต้องการตัดการเชื่อมต่อกับเซิร์ฟเวอร์ '${name}' หรือไม่คะ?`)) return;
+
+    try {
+        const res = await fetch(`/api/mcp/servers/${serverId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            alert(data.message || 'ตัดการเชื่อมต่อเรียบร้อยค่ะ');
+            loadMCPHubData();
+        } else {
+            alert(data.detail || 'ไม่สามารถตัดการเชื่อมต่อได้ค่ะ');
+        }
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+function initMCPHubController() {
+    const btnClose = document.getElementById('btn-close-mcp-hub');
+    if (btnClose) btnClose.addEventListener('click', closeMCPHubModal);
+
+    const modal = document.getElementById('mcp-hub-modal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeMCPHubModal();
+        });
+    }
+
+    // Tabs
+    const tabBtns = document.querySelectorAll('.mcp-tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            if (tab) switchMCPTab(tab);
+        });
+    });
+
+    // Category Filters
+    const catBtns = document.querySelectorAll('.mcp-cat-btn');
+    catBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            catBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentMCPCategory = btn.dataset.cat || 'all';
+            renderMCPTools(mcpToolsCatalog);
+        });
+    });
+
+    // Search Input
+    const searchInput = document.getElementById('mcp-tool-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => renderMCPTools(mcpToolsCatalog));
+    }
+
+    // Refresh Buttons
+    const btnRefSrv = document.getElementById('btn-refresh-mcp-servers');
+    if (btnRefSrv) btnRefSrv.addEventListener('click', loadMCPHubData);
+
+    const btnRefAud = document.getElementById('btn-refresh-mcp-audits');
+    if (btnRefAud) btnRefAud.addEventListener('click', loadMCPHubData);
+
+    // Runner Select & Execute
+    const runnerSelect = document.getElementById('mcp-runner-tool-select');
+    if (runnerSelect) {
+        runnerSelect.addEventListener('change', updateRunnerInputsForSelectedTool);
+    }
+
+    const btnExec = document.getElementById('btn-execute-mcp-runner');
+    if (btnExec) {
+        btnExec.addEventListener('click', executeMCPToolFromRunner);
+    }
+
+    // Register Server Form
+    const srvForm = document.getElementById('mcp-register-server-form');
+    if (srvForm) {
+        srvForm.addEventListener('submit', handleRegisterMCPServer);
+    }
+
+    // Global expose
+    window.openMCPHubModal = openMCPHubModal;
+    window.closeMCPHubModal = closeMCPHubModal;
+    window.testRunMCPTool = testRunMCPTool;
+    window.deleteMCPServerPrompt = deleteMCPServerPrompt;
+    window.toggleFinancialInputs = toggleFinancialInputs;
+}
+
 // =========================================================================
 // 🚀 Master Application Lifecycle Initialization
 // =========================================================================
@@ -7842,6 +8409,7 @@ function initKiraApp() {
     try { initSlideDeckStudio(); } catch (e) { console.error("Slide deck studio init error:", e); }
     try { initSubscriptionController(); } catch (e) { console.error("Subscription controller init error:", e); }
     try { initPWAController(); } catch (e) { console.error("PWA controller init error:", e); }
+    try { initMCPHubController(); } catch (e) { console.error("MCP Hub controller init error:", e); }
 
     // 4. Background Care & Assistance
     try { initProactiveHeartbeat(); } catch (e) { console.warn("Heartbeat init error:", e); }

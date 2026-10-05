@@ -125,6 +125,10 @@ async def get_manifest():
         return FileResponse(manifest_path, media_type="application/manifest+json")
     raise HTTPException(status_code=404, detail="Manifest not found")
 
+# --- Model Context Protocol (MCP) Hub Integration (Kira 2.2 Phase 2) ---
+from mcp_hub import mcp_router, init_mcp_tables, auto_detect_and_dispatch_mcp
+app.include_router(mcp_router)
+
 # --- RAG Setup (Kira 2.0) — Lazy Loading เพื่อประหยัด RAM ---
 vector_collection = None
 embedding_model = None
@@ -494,6 +498,12 @@ def init_db():
         check_p2 = execute_query("SELECT id FROM system_settings WHERE key_name='prompt_1.1'", fetch='one')
         if not check_p2:
             execute_query("INSERT INTO system_settings (key_name, value) VALUES (?, ?)", ('prompt_1.1', system_prompt_boss))
+
+        # Initialize MCP Protocol tables and seed builtin servers
+        try:
+            init_mcp_tables()
+        except Exception as _e_mcp:
+            print("MCP Tables Init Error:", _e_mcp)
 
     except Exception as e:
         print("DB Init Error:", e)
@@ -4639,6 +4649,26 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             if weather_ctx:
                 temp_history.insert(-1, SystemMessage(content=weather_ctx))
                 yield "[THINKING]รับข้อมูลสภาพอากาศเรียบร้อย[/THINKING]"
+
+        # Autonomous Model Context Protocol (MCP) Tool Dispatcher (Kira 2.2 Phase 2)
+        try:
+            mcp_dispatch = await asyncio.to_thread(auto_detect_and_dispatch_mcp, user_input)
+            if mcp_dispatch:
+                mcp_tool_name = mcp_dispatch.get("tool_name", "mcp_tool")
+                mcp_disp_name = mcp_dispatch.get("display_name", mcp_tool_name)
+                mcp_result = mcp_dispatch.get("result", {})
+                yield f"[THINKING]🔌 เรียกใช้เครื่องมือ MCP: {mcp_disp_name}...[/THINKING]"
+                
+                mcp_ctx = (
+                    f"\n[Model Context Protocol (MCP) Tool Execution Result]:\n"
+                    f"เครื่องมือ: {mcp_disp_name} ({mcp_tool_name})\n"
+                    f"ข้อมูลผลลัพธ์ (JSON):\n{json.dumps(mcp_result, ensure_ascii=False, indent=2)}\n"
+                    f"(Instruction: นำผลลัพธ์การประมวลผลของ MCP Tool ด้านบนนี้ มาสรุป วิเคราะห์ และให้คำแนะนำเชิงยุทธศาสตร์แก่ผู้ใช้/บอส อย่างถูกต้อง สละสลวย และชัดเจนที่สุด)\n"
+                )
+                temp_history.insert(-1, SystemMessage(content=mcp_ctx))
+                yield f"[THINKING]รับผลการประมวลผลจาก MCP ({mcp_disp_name}) เรียบร้อย[/THINKING]"
+        except Exception as _e_mcp_disp:
+            print("MCP Dispatch Notice:", _e_mcp_disp)
         
         if search_term:
             yield f"[THINKING]ค้นหาข้อมูลสดจากอินเทอร์เน็ต: \"{search_term}\"[/THINKING]"
