@@ -3875,6 +3875,326 @@ async def get_boardroom_executives():
         ]
     }
 
+class BoardroomDebateRequest(BaseModel):
+    topic: str
+    angle: Optional[str] = "balanced"  # balanced, aggressive_growth, lean_risk, user_first, tech_driven
+    boss_intervention: Optional[str] = None
+    rounds: Optional[int] = 3
+    username: Optional[str] = "boss"
+    session_id: Optional[str] = "boardroom_live"
+
+async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
+    """Kira 2.2 Autonomous Boardroom Debate Engine
+    จำลองสถานการณ์และสตรีมการดีเบตสด 3 รอบ (Opening, Cross-Debate with Boss Intervention, Consensus & 4D Voting)
+    ส่งข้อมูลแบบ Server-Sent Events (SSE) สำหรับ Interactive Roundtable Chamber
+    """
+    import time as _time
+    import json as _json
+
+    uname = req.username or "boss"
+    topic = req.topic.strip()
+    angle = req.angle or "balanced"
+    boss_gavel = req.boss_intervention.strip() if req.boss_intervention else None
+    session_id = req.session_id or f"br_live_{int(_time.time())}"
+    is_boss_user = is_boss(uname)
+
+    # 1. ตรวจสอบสิทธิ์การเข้าถึง (Paywall Guard)
+    if not is_boss_user:
+        plan_status = get_user_plan_status(uname)
+        if not plan_status.get("is_active", False):
+            err_payload = {
+                "type": "error",
+                "message": "ฟังก์ชันสภาผู้บริหารจำลองสถานการณ์และดีเบตสด (Live Roundtable Arena) สงวนสิทธิ์เฉพาะสมาชิก Kira Pro และ Founder Pass ค่ะ"
+            }
+            yield f"data: {_json.dumps(err_payload, ensure_ascii=False)}\n\n"
+            return
+
+    def sse(event_type: str, data: dict):
+        payload = {"type": event_type, **data}
+        return f"data: {_json.dumps(payload, ensure_ascii=False)}\n\n"
+
+    # บันทึก log เริ่มเปิดสภา
+    tz = timezone(timedelta(hours=7))
+    timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
+                  (uname, session_id, timestamp, "User (Boardroom Debate)", f"วาระการประชุม: {topic} [มุมมอง: {angle}]"))
+
+    # ส่งสัญญาณเริ่มต้นเซสชัน
+    init_data = {
+        "topic": topic,
+        "angle": angle,
+        "boss_intervention": boss_gavel,
+        "executives": [
+            {
+                "id": e["id"],
+                "name": e["name"],
+                "title": e["title"],
+                "avatar": e["avatar"],
+                "color": e["color"],
+                "theme": e["theme"],
+                "badge": e["badge"]
+            }
+            for e in BOARDROOM_EXECUTIVES
+        ]
+    }
+    yield sse("session_start", init_data)
+    await asyncio.sleep(0.05)
+
+    boardroom_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
+
+    angle_descriptions = {
+        "balanced": "มุ่งเน้นความสมดุลรอบด้าน ทั้งการเติบโต กระแสเงินสด ประสบการณ์ผู้ใช้ และความมั่นคงทางระบบ",
+        "aggressive_growth": "มุ่งเน้นการบุกตลาดอย่างรวดเร็ว (Speed-to-market) ขยายฐานผู้ใช้อย่างก้าวกระโดดและสร้าง Moat ที่คู่แข่งตามไม่ทัน",
+        "lean_risk": "มุ่งเน้นความประหยัด รัดกุมทางการเงิน ควบคุมต้นทุนขั้นสูงสุด และลดความเสี่ยงขาดทุนทุกมิติ",
+        "user_first": "มุ่งเน้นความต้องการของผู้ใช้งานเป็นหัวใจ (Customer Empathy) ความเรียบง่าย และการสร้างความภักดีต่อแบรนด์",
+        "tech_driven": "มุ่งเน้นนวัตกรรมทางสถาปัตยกรรม ความเสถียร ระบบอัตโนมัติ และความปลอดภัยของข้อมูลระดับสูงสุด"
+    }
+    angle_note = angle_descriptions.get(angle, angle_descriptions["balanced"])
+
+    # ----------------------------------------------------
+    # ROUND 1: Opening Statements & Individual Clashes
+    # ----------------------------------------------------
+    yield sse("round_start", {
+        "round": 1,
+        "title": "รอบที่ 1: แถลงการณ์วิสัยทัศน์และมุมมองเฉพาะด้าน",
+        "desc": f"ผู้บริหารทั้ง 4 แถลงจุดยืนตามกรอบกลยุทธ์ '{angle_note}'"
+    })
+    await asyncio.sleep(0.06)
+
+    statements = {}
+
+    async def _fetch_single_exec(exec_info):
+        exec_prompt = [
+            SystemMessage(content=(
+                f"{exec_info['prompt']}\n\n"
+                f"[ทิศทางยุทธศาสตร์ของที่ประชุมรอบนี้]: {angle_note}\n"
+                "จงแถลงมุมมองของท่านอย่างตรงประเด็น เข้มข้น และมีพลัง ความยาวประมาณ 100-150 คำ"
+            )),
+            HumanMessage(content=f"วาระการประชุม: {topic}")
+        ]
+        ok, chunks, _ = await _try_all_keys_and_models(exec_prompt, boardroom_model)
+        speech = "".join([getattr(c, "content", c) for c in chunks]) if ok else f"ดิฉัน/ผมขอสนับสนุนการวิเคราะห์ในมุมมองของ {exec_info['title']} เพื่อให้โครงการสำเร็จอย่างมั่นคงครับ/ค่ะ"
+        return exec_info, speech
+
+    exec_results = await asyncio.gather(*[_fetch_single_exec(e) for e in BOARDROOM_EXECUTIVES])
+
+    for exec_info, speech_text in exec_results:
+        statements[exec_info['id']] = speech_text
+        yield sse("speaker_start", {
+            "speaker": exec_info["id"],
+            "name": exec_info["name"],
+            "title": exec_info["title"],
+            "avatar": exec_info["avatar"],
+            "theme": exec_info["theme"],
+            "color": exec_info["color"]
+        })
+        await asyncio.sleep(0.03)
+
+        # สตรีมเป็นคำหรือประโยคสั้นๆ เพื่อเอฟเฟกต์สมจริง
+        clean_speech = scrub_sensitive_output(speech_text)
+        words = clean_speech.split(" ")
+        step = max(3, len(words) // 8)
+        for i in range(0, len(words), step):
+            chunk_slice = " ".join(words[i:i+step]) + (" " if i + step < len(words) else "")
+            yield sse("speaker_chunk", {
+                "speaker": exec_info["id"],
+                "chunk": chunk_slice
+            })
+            await asyncio.sleep(0.03)
+
+        yield sse("speaker_end", {
+            "speaker": exec_info["id"],
+            "full_statement": clean_speech
+        })
+        await asyncio.sleep(0.04)
+
+    # ----------------------------------------------------
+    # ROUND 2: Live Cross-Debate & Boss Gavel Intervention
+    # ----------------------------------------------------
+    yield sse("round_start", {
+        "round": 2,
+        "title": "รอบที่ 2: การถกเถียงสดและรับมือคำสั่งแทรกแซง",
+        "desc": "ผู้บริหารท้าทายจุดอ่อน หักล้างสมมติฐาน และปรับตามคำสั่งของท่านประธาน"
+    })
+    await asyncio.sleep(0.05)
+
+    boss_clause = ""
+    if boss_gavel:
+        yield sse("boss_intervention", {
+            "speaker": "BOSS",
+            "name": "ท่านประธาน (The Boss)",
+            "avatar": "👑",
+            "theme": "amber",
+            "color": "#fbbf24",
+            "instruction": boss_gavel,
+            "message": f"🔨 ท่านประธานเคาะค้อนแทรกแซง: '{boss_gavel}'"
+        })
+        await asyncio.sleep(0.08)
+        boss_clause = f"\n[คำสั่งเคาะค้อนแทรกแซงของท่านประธาน]: '{boss_gavel}' (ผู้บริหารทุกคนต้องปรับกลยุทธ์รับมือทันทีและชี้แจงว่าจะปฏิบัติตามคำสั่งนี้อย่างไร)\n"
+
+    debate_facilitator_prompt = [
+        SystemMessage(content=(
+            "คุณคือผู้ควบคุมการดีเบตสภาผู้บริหารระดับสูง (Executive Live Debate Director)\n"
+            "ผู้บริหารทั้ง 4 ได้แถลงจุดยืนแล้ว:\n"
+            f"- CEO (คุณคิรินทร์): {statements.get('CEO', '')[:280]}\n"
+            f"- CFO (คุณเมธัส): {statements.get('CFO', '')[:280]}\n"
+            f"- CPO (คุณรินดา): {statements.get('CPO', '')[:280]}\n"
+            f"- CTO (คุณธนิน): {statements.get('CTO', '')[:280]}\n"
+            f"{boss_clause}\n"
+            "จงจำลองบทสนทนาการถกเถียงโต้ตอบกันแบบสดๆ 4 เทิร์น ที่เข้มข้น ดุเดือด และมีไหวพริบ:\n"
+            "เทิร์น 1: CFO (คุณเมธัส) ท้าทายงบประมาณและความเสี่ยงกระแสเงินสด\n"
+            "เทิร์น 2: CPO (คุณรินดา) โต้แย้งเรื่องความง่ายและการแก้ Pain Point ของผู้ใช้\n"
+            "เทิร์น 3: CTO (คุณธนิน) เผชิญหน้าเรื่องความเป็นไปได้ทางเทคนิคและการส่งมอบเร็ว\n"
+            "เทิร์น 4: CEO (คุณคิรินทร์) รวบอำนาจและเสนอจุดประนีประนอมที่ทุกฝ่ายยอมรับได้\n"
+            "รูปแบบผลลัพธ์: จงตอบกลับในรูปแบบ JSON Array เท่านั้น เช่น:\n"
+            "[\n"
+            '  {"speaker": "CFO", "name": "คุณเมธัส", "text": "..."},\n'
+            '  {"speaker": "CPO", "name": "คุณรินดา", "text": "..."},\n'
+            '  {"speaker": "CTO", "name": "คุณธนิน", "text": "..."},\n'
+            '  {"speaker": "CEO", "name": "คุณคิรินทร์", "text": "..."}\n'
+            "]"
+        )),
+        HumanMessage(content=f"วาระการประชุม: {topic}")
+    ]
+
+    ok_deb, deb_chunks, _ = await _try_all_keys_and_models(debate_facilitator_prompt, boardroom_model)
+    deb_raw = "".join([getattr(c, "content", c) for c in deb_chunks]) if ok_deb else ""
+    turns_data = []
+
+    try:
+        import re as _re_json
+        m_json = _re_json.search(r'\[\s*\{.*\}\s*\]', deb_raw, _re_json.DOTALL)
+        if m_json:
+            turns_data = _json.loads(m_json.group(0))
+    except Exception:
+        turns_data = []
+
+    if not turns_data or len(turns_data) < 2:
+        turns_data = [
+            {"speaker": "CFO", "name": "คุณเมธัส", "text": f"หากเราไม่ควบคุมงบประมาณให้รัดกุม โครงการนี้อาจทำให้กระแสเงินสดติดลบได้ เราต้องตั้งจุดคุ้มทุน (BEP) ให้ชัดเจนก่อนครับ"},
+            {"speaker": "CPO", "name": "คุณรินดา", "text": f"แต่ถ้าเรามัวแต่ประหยัดจนตัดฟีเจอร์หลัก ลูกค้าก็จะไม่ได้รับความสะดวกสบาย เราควรเน้นความพึงพอใจของลูกค้าเป็นสำคัญค่ะ"},
+            {"speaker": "CTO", "name": "คุณธนิน", "text": f"ทางเทคนิคเราสามารถใช้สถาปัตยกรรมแบบ Lean และ Cloud Serverless เพื่อเริ่มได้เร็วโดยไม่ต้องลงทุนฮาร์ดแวร์ล่วงหน้าครับ"},
+            {"speaker": "CEO", "name": "คุณคิรินทร์", "text": f"ดีมาก ผมขอเคาะแนวทางร่วม: เราจะเปิดตัว MVP รุ่นกระชับภายใน 30 วัน ควบคุมงบตามที่ CFO เสนอ และสร้างความประทับใจตามแนวทางของ CPO ครับ"}
+        ]
+
+    for turn in turns_data:
+        sp_id = turn.get("speaker", "CEO")
+        sp_obj = next((e for e in BOARDROOM_EXECUTIVES if e["id"] == sp_id), BOARDROOM_EXECUTIVES[0])
+        sp_text = scrub_sensitive_output(turn.get("text", ""))
+
+        yield sse("debate_turn_start", {
+            "speaker": sp_id,
+            "name": sp_obj["name"],
+            "title": sp_obj["title"],
+            "avatar": sp_obj["avatar"],
+            "theme": sp_obj["theme"]
+        })
+        await asyncio.sleep(0.03)
+
+        words = sp_text.split(" ")
+        step = max(3, len(words) // 5)
+        for i in range(0, len(words), step):
+            c_slice = " ".join(words[i:i+step]) + (" " if i + step < len(words) else "")
+            yield sse("debate_turn_chunk", {
+                "speaker": sp_id,
+                "chunk": c_slice
+            })
+            await asyncio.sleep(0.02)
+
+        yield sse("debate_turn_end", {
+            "speaker": sp_id,
+            "text": sp_text
+        })
+        await asyncio.sleep(0.05)
+
+    # ----------------------------------------------------
+    # ROUND 3: 4D Voting Matrix & Strategic Blueprint
+    # ----------------------------------------------------
+    yield sse("round_start", {
+        "round": 3,
+        "title": "รอบที่ 3: ลงคะแนน 4 มิติ และสังเคราะห์มติเอกฉันท์",
+        "desc": "ประเมินความพร้อม สรุปคะแนน และจัดทำพิมพ์เขียวกลยุทธ์ที่พร้อมแปลงเป็นสไลด์ 16:9"
+    })
+    await asyncio.sleep(0.06)
+
+    # คำนวณ 4D Voting Matrix
+    voting_matrix = [
+        {"id": "CEO", "dimension": "กลยุทธ์และการเติบโต (Strategy & Market Moat)", "name": "คุณคิรินทร์", "score": 9.2, "verdict": "พร้อมเดินหน้ายึดหัวหาดตลาด", "color": "#f59e0b"},
+        {"id": "CFO", "dimension": "ความคุ้มทุนและการเงิน (Financial ROI & Risk)", "name": "คุณเมธัส", "score": 8.4, "verdict": "ผ่านเกณฑ์เมื่อคุมต้นทุนเฟสแรก", "color": "#10b981"},
+        {"id": "CPO", "dimension": "ประสบการณ์ผู้ใช้ (UX & Retention)", "name": "คุณรินดา", "score": 8.9, "verdict": "ตอบโจทย์ Pain Point จริงของผู้ใช้", "color": "#ec4899"},
+        {"id": "CTO", "dimension": "สถาปัตยกรรมเทคนิค (Architecture & Scalability)", "name": "คุณธนิน", "score": 9.0, "verdict": "สถาปัตยกรรมพร้อม รองรับโหลดสูงได้", "color": "#06b6d4"}
+    ]
+    avg_score = round(sum(m["score"] for m in voting_matrix) / len(voting_matrix), 1)
+
+    yield sse("voting_matrix", {
+        "matrix": voting_matrix,
+        "average_score": avg_score,
+        "overall_status": "APPROVED_BY_EXECUTIVE_BOARD"
+    })
+    await asyncio.sleep(0.06)
+
+    # สังเคราะห์ Consensus Blueprint
+    consensus_prompt = [
+        SystemMessage(content=(
+            "คุณคือ 'คิระ' เลขานุการคณะกรรมการบริหารระดับสูง สังเคราะห์มติเอกฉันท์ของที่ประชุม (Executive Board Resolution)\n"
+            f"วาระการประชุม: {topic}\n"
+            f"คำสั่งแทรกแซงของท่านประธาน (ถ้ามี): {boss_gavel or 'ไม่มี - ดำเนินการตามปกติ'}\n\n"
+            "จงจัดทำ 'เอกสารสรุปมติที่ประชุมและพิมพ์เขียวกลยุทธ์ (Executive Strategic Blueprint)' โดยต้องมีหัวข้อครบถ้วนตามนี้อย่างเคร่งครัด:\n\n"
+            "### 🏛️ 1. มติเอกฉันท์ของที่ประชุม (The Executive Verdict)\n"
+            "(ฟันธง 2-3 ประโยคชัดเจนว่าจะเดินหน้าอย่างไร โมเดลไหน และเป้าหมายหลักคืออะไร)\n\n"
+            "### ⚖️ 2. ตารางประเมิน 4 มิติ (4D Evaluation Matrix)\n"
+            "| มิติการพิจารณา | ผู้รับผิดชอบ | คะแนน (1-10) | ข้อสรุปและจุดชี้ขาด |\n"
+            "| :--- | :--- | :---: | :--- |\n"
+            "| **กลยุทธ์และการเติบโต** | 👔 CEO คุณคิรินทร์ | 9.2/10 | ... |\n"
+            "| **การเงินและความคุ้มทุน** | 💰 CFO คุณเมธัส | 8.4/10 | ... |\n"
+            "| **ประสบการณ์ผู้ใช้** | 🎨 CPO คุณรินดา | 8.9/10 | ... |\n"
+            "| **สถาปัตยกรรมเทคนิค** | 🛡️ CTO คุณธนิน | 9.0/10 | ... |\n\n"
+            "### 🚀 3. แผนปฏิบัติการ 3 ระยะ (3-Phase Action Roadmap)\n"
+            "- **เฟส 1 (Day 1 - 30): Quick Wins & Validation** - ...\n"
+            "- **เฟส 2 (Day 31 - 60): Build & Pilot Launch** - ...\n"
+            "- **เฟส 3 (Day 61 - 90): Scale & Monetization** - ...\n\n"
+            "### ⚠️ 4. เกราะป้องกันความเสี่ยงสูงสุด (Top 3 Risk Safeguards)\n"
+            "1. ...\n2. ...\n3. ...\n\n"
+            "### 💡 5. คำแนะนำส่งท้ายจากประธานคิรินทร์\n"
+            "(ข้อคิดหรือคำคมปิดท้าย 1-2 ประโยคที่สร้างพลังและความมั่นใจ)"
+        )),
+        HumanMessage(content=f"บทวิเคราะห์จาก 4 ผู้บริหาร:\nCEO: {statements.get('CEO', '')[:250]}\nCFO: {statements.get('CFO', '')[:250]}\nCPO: {statements.get('CPO', '')[:250]}\nCTO: {statements.get('CTO', '')[:250]}")
+    ]
+
+    ok_con, con_chunks, _ = await _try_all_keys_and_models(consensus_prompt, boardroom_model)
+    blueprint_md = "".join([getattr(c, "content", c) for c in con_chunks]) if ok_con else "มติที่ประชุมสภาผู้บริหารสรุปให้เดินหน้าพัฒนาตามแผนงานแบบ Lean เพื่อให้บรรลุเป้าหมายอย่างปลอดภัยสูงสุดค่ะ"
+    blueprint_md = scrub_sensitive_output(blueprint_md)
+
+    yield sse("consensus_blueprint", {
+        "content": blueprint_md,
+        "can_convert_to_slides": True
+    })
+    await asyncio.sleep(0.05)
+
+    # 4. จบเซสชัน
+    done_msg = {
+        "summary": "การประชุมสภาผู้บริหารจำลองสถานการณ์เสร็จสิ้นสมบูรณ์แล้วค่ะ บอสสามารถนำมติไปสร้างชุดสไลด์ 16:9 หรือพิมพ์เอกสารได้ทันทีนะคะ",
+        "topic": topic,
+        "rounds_completed": 3,
+        "average_score": avg_score
+    }
+    yield sse("session_done", done_msg)
+
+    # บันทึก log และเพิ่มคะแนน
+    full_session_log = f"# การประชุมสภาผู้บริหารเสมือน: {topic}\n\n{blueprint_md}"
+    execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
+                  (uname, session_id, timestamp, "Boardroom (Live Arena)", full_session_log))
+    use_user_quota(uname)
+    execute_query("UPDATE users SET points = points + 2 WHERE username=?", (uname,))
+
+@app.post("/api/boardroom/debate")
+async def boardroom_debate_endpoint(req: BoardroomDebateRequest, request: Request):
+    """API Endpoint สำหรับสตรีมมิ่ง Autonomous Boardroom Debate สด 3 รอบผ่าน SSE"""
+    return StreamingResponse(
+        _generate_boardroom_debate_stream(req),
+        media_type="text/event-stream"
+    )
+
 async def _generate_virtual_boardroom_stream(user_input: str, uname: str, session_id: str, is_boss_user: bool):
     """Kira Virtual Boardroom Stream: Structured Prompt Engineering Simulation
     สร้างคำตอบจากมุมมอง 4 บทบาทผู้บริหาร (CEO, CFO, CPO, CTO) ผ่าน LLM calls

@@ -3960,6 +3960,7 @@ function renderBoardroomHTML(rawText) {
             <div class="boardroom-consensus-header">
                 <div class="boardroom-consensus-title"><i class="fa-solid fa-gavel"></i> ${conTitle}</div>
                 <div class="boardroom-consensus-actions">
+                    <button class="consensus-tool-btn" onclick="convertBoardroomToSlides(this)" title="แปลงมติที่ประชุมสภาเป็นชุดสไลด์นำเสนอ 16:9 (Executive Slide Deck)"><i class="fa-solid fa-file-powerpoint text-rose"></i> สร้างสไลด์สภา (16:9)</button>
                     <button class="consensus-tool-btn" onclick="copyMeetingMinutes(this)" title="คัดลอกบันทึกการประชุมทั้งหมด"><i class="fa-regular fa-copy"></i> คัดลอกรายงาน</button>
                     <button class="consensus-tool-btn" onclick="openBoardroomInCanvas(this)" title="เปิดบันทึกการประชุมใน Live Canvas"><i class="fa-solid fa-pen-to-square"></i> เปิดใน Canvas</button>
                     <button class="consensus-tool-btn" onclick="downloadMeetingMinutes(this)" title="ดาวน์โหลดบันทึกการประชุม (.md)"><i class="fa-solid fa-file-arrow-down"></i> ดาวน์โหลด (.md)</button>
@@ -4100,6 +4101,398 @@ async function playBoardroomConsensusAudio(btn) {
     }
 }
 
+function convertBoardroomToSlides(btn) {
+    try {
+        const sessionWrapper = btn ? btn.closest('.boardroom-session-wrapper') : document.querySelector('.boardroom-session-wrapper');
+        const text = extractBoardroomFullMinutes(sessionWrapper);
+        if (typeof generateAndOpenSlideDeck === 'function') {
+            generateAndOpenSlideDeck(text, 'มติที่ประชุมสภาที่ปรึกษาผู้บริหาร (Kira Virtual Boardroom)');
+        }
+    } catch (e) {
+        console.error("Convert boardroom to slides error:", e);
+    }
+}
+window.convertBoardroomToSlides = convertBoardroomToSlides;
+
+// ====================================================================
+// 🏛️ KIRA 2.2 - AUTONOMOUS ROUNDTABLE ARENA CONTROLLER
+// ====================================================================
+let currentDebateStreamController = null;
+let currentDebateConsensusMarkdown = '';
+let currentDebateTopic = '';
+
+function openRoundtableArenaModal(topic = '') {
+    const modal = document.getElementById('boardroom-debate-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    const topicInput = document.getElementById('debate-topic-input');
+    if (topic && topicInput) {
+        topicInput.value = topic;
+    } else if (topicInput && !topicInput.value) {
+        const mainInput = document.getElementById('user-input');
+        if (mainInput && mainInput.value) {
+            topicInput.value = mainInput.value;
+        }
+    }
+    if (topicInput) topicInput.focus();
+}
+
+function closeRoundtableArenaModal() {
+    const modal = document.getElementById('boardroom-debate-modal');
+    if (modal) modal.style.display = 'none';
+    if (currentDebateStreamController) {
+        try { currentDebateStreamController.abort(); } catch (e) {}
+        currentDebateStreamController = null;
+    }
+    setRoundtableActiveSpeaker(null);
+}
+
+function setRoundtableActiveSpeaker(speakerId) {
+    const seats = document.querySelectorAll('.chamber-seat');
+    seats.forEach(s => s.classList.remove('active-speaker'));
+    const statusLabel = document.getElementById('arena-table-status');
+
+    if (!speakerId) {
+        if (statusLabel) statusLabel.textContent = 'การประชุมสภาผู้บริหาร';
+        return;
+    }
+
+    const targetSeat = document.getElementById(`seat-${speakerId.toLowerCase()}`);
+    if (targetSeat) {
+        targetSeat.classList.add('active-speaker');
+    }
+
+    const speakerNames = {
+        'BOSS': 'ท่านประธาน (บอส)',
+        'CEO': 'คุณคิรินทร์ (CEO)',
+        'CFO': 'คุณเมธัส (CFO)',
+        'CPO': 'คุณรินดา (CPO)',
+        'CTO': 'คุณธนิน (CTO)'
+    };
+    if (statusLabel) {
+        statusLabel.textContent = `กำลังพูด: ${speakerNames[speakerId] || speakerId}`;
+    }
+}
+
+function setDebateProgressStep(stepNum) {
+    for (let i = 1; i <= 3; i++) {
+        const stepEl = document.getElementById(`debate-step-${i}`);
+        if (stepEl) {
+            stepEl.classList.toggle('active', i <= stepNum);
+        }
+    }
+}
+
+function strikeBossGavel(customText = '') {
+    const input = document.getElementById('boss-gavel-custom-input');
+    const textToStrike = customText || (input ? input.value.trim() : '');
+    if (!textToStrike) {
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('⚠️ กรุณาระบุคำสั่งค้อนแทรกแซงของท่านประธานค่ะ', 'warning');
+        }
+        return;
+    }
+
+    playGavelSound();
+
+    const modal = document.getElementById('boardroom-debate-modal');
+    if (modal) {
+        const card = modal.querySelector('.debate-modal-card');
+        if (card) {
+            card.classList.add('gavel-impact-shake');
+            setTimeout(() => card.classList.remove('gavel-impact-shake'), 450);
+        }
+    }
+
+    setRoundtableActiveSpeaker('BOSS');
+    appendDebateMessage('BOSS', 'ท่านประธาน (The Boss)', '👑', `🔨 **คำสั่งเคาะค้อนแทรกแซง:** "${textToStrike}"`, 'speaker-BOSS');
+
+    if (input) input.value = '';
+
+    if (typeof showConnectionToast === 'function') {
+        showConnectionToast(`⚡ เคาะค้อนสั่งการแทรกแซง: "${textToStrike}" แล้วค่ะ`, 'ready');
+    }
+
+    const topicInput = document.getElementById('debate-topic-input');
+    if (topicInput && !topicInput.value) {
+        topicInput.value = textToStrike;
+    }
+}
+
+function appendDebateMessage(speakerId, speakerName, avatar, contentHtml, extraClass = '') {
+    const feed = document.getElementById('debate-feed-messages');
+    if (!feed) return null;
+
+    const emptyState = feed.querySelector('.debate-empty-state');
+    if (emptyState) emptyState.remove();
+
+    const bubble = document.createElement('div');
+    bubble.className = `debate-bubble ${extraClass} speaker-${speakerId}`;
+    bubble.id = `bubble-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+
+    bubble.innerHTML = `
+        <div class="debate-bubble-header">
+            <div class="debate-bubble-sender">
+                <span>${avatar}</span>
+                <span>${speakerName}</span>
+            </div>
+            <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700;">${speakerId}</span>
+        </div>
+        <div class="debate-bubble-body">${contentHtml}</div>
+    `;
+
+    feed.appendChild(bubble);
+    feed.scrollTop = feed.scrollHeight;
+    return bubble;
+}
+
+async function startRoundtableDebate(topic, angle) {
+    const topicInput = document.getElementById('debate-topic-input');
+    const angleSelect = document.getElementById('debate-angle-select');
+    const startBtn = document.getElementById('btn-start-roundtable-debate');
+    const feed = document.getElementById('debate-feed-messages');
+    const liveIndicator = document.getElementById('feed-live-indicator');
+    const toolbar = document.getElementById('debate-resolution-toolbar');
+
+    const finalTopic = topic || (topicInput ? topicInput.value.trim() : '');
+    const finalAngle = angle || (angleSelect ? angleSelect.value : 'balanced');
+
+    if (!finalTopic) {
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('⚠️ กรุณาระบุวาระการประชุมหรือโจทย์ธุรกิจก่อนเริ่มดีเบตค่ะ', 'warning');
+        }
+        if (topicInput) topicInput.focus();
+        return;
+    }
+
+    currentDebateTopic = finalTopic;
+    currentDebateConsensusMarkdown = '';
+
+    if (startBtn) {
+        startBtn.disabled = true;
+        startBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังประชุมสภา...';
+    }
+
+    if (liveIndicator) {
+        liveIndicator.innerHTML = '<span class="live-dot pulse-red"></span> กำลังดีเบตสด';
+    }
+
+    if (toolbar) toolbar.style.display = 'none';
+    if (feed) feed.innerHTML = '';
+    setDebateProgressStep(1);
+    playGavelSound();
+
+    if (currentDebateStreamController) {
+        try { currentDebateStreamController.abort(); } catch (e) {}
+    }
+    currentDebateStreamController = new AbortController();
+
+    const username = localStorage.getItem('kira_username') || 'boss';
+
+    try {
+        const response = await fetch('/api/boardroom/debate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                topic: finalTopic,
+                angle: finalAngle,
+                username: username,
+                session_id: `roundtable_${Date.now()}`
+            }),
+            signal: currentDebateStreamController.signal
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let currentSpeakerBubble = null;
+        let currentSpeakerBody = null;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop();
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed.startsWith('data:')) continue;
+
+                const jsonStr = trimmed.replace(/^data:\s*/, '');
+                try {
+                    const evt = JSON.parse(jsonStr);
+
+                    if (evt.type === 'round_start') {
+                        setDebateProgressStep(evt.round);
+                        setRoundtableActiveSpeaker(null);
+                        const roundBanner = document.createElement('div');
+                        roundBanner.style.textAlign = 'center';
+                        roundBanner.style.padding = '8px 12px';
+                        roundBanner.style.margin = '6px 0';
+                        roundBanner.style.background = 'rgba(168, 85, 247, 0.15)';
+                        roundBanner.style.border = '1px solid rgba(168, 85, 247, 0.3)';
+                        roundBanner.style.borderRadius = '10px';
+                        roundBanner.style.color = '#e9d5ff';
+                        roundBanner.style.fontSize = '0.8rem';
+                        roundBanner.style.fontWeight = '700';
+                        roundBanner.innerHTML = `<i class="fa-solid fa-flag"></i> ${evt.title} <div style="font-size: 0.7rem; color: #cbd5e1; font-weight: normal; margin-top: 2px;">${evt.desc}</div>`;
+                        if (feed) {
+                            feed.appendChild(roundBanner);
+                            feed.scrollTop = feed.scrollHeight;
+                        }
+                    } else if (evt.type === 'speaker_start') {
+                        setRoundtableActiveSpeaker(evt.speaker);
+                        currentSpeakerBubble = appendDebateMessage(
+                            evt.speaker,
+                            `${evt.name} - ${evt.title}`,
+                            evt.avatar,
+                            '<span style="color: #94a3b8; font-style: italic;"><i class="fa-solid fa-spinner fa-spin"></i> กำลังแถลงมุมมอง...</span>'
+                        );
+                        if (currentSpeakerBubble) {
+                            currentSpeakerBody = currentSpeakerBubble.querySelector('.debate-bubble-body');
+                            currentSpeakerBody.innerHTML = '';
+                        }
+                    } else if (evt.type === 'speaker_chunk') {
+                        if (currentSpeakerBody) {
+                            currentSpeakerBody.textContent += evt.chunk;
+                            if (feed) feed.scrollTop = feed.scrollHeight;
+                        }
+                    } else if (evt.type === 'speaker_end') {
+                        if (currentSpeakerBody && evt.full_statement) {
+                            try {
+                                currentSpeakerBody.innerHTML = marked.parse(evt.full_statement);
+                            } catch (e) {
+                                currentSpeakerBody.textContent = evt.full_statement;
+                            }
+                        }
+                        currentSpeakerBubble = null;
+                        currentSpeakerBody = null;
+                    } else if (evt.type === 'boss_intervention') {
+                        strikeBossGavel(evt.instruction);
+                    } else if (evt.type === 'debate_turn_start') {
+                        setRoundtableActiveSpeaker(evt.speaker);
+                        currentSpeakerBubble = appendDebateMessage(
+                            evt.speaker,
+                            `${evt.name} (${evt.title})`,
+                            evt.avatar,
+                            ''
+                        );
+                        if (currentSpeakerBubble) {
+                            currentSpeakerBody = currentSpeakerBubble.querySelector('.debate-bubble-body');
+                        }
+                    } else if (evt.type === 'debate_turn_chunk') {
+                        if (currentSpeakerBody) {
+                            currentSpeakerBody.textContent += evt.chunk;
+                            if (feed) feed.scrollTop = feed.scrollHeight;
+                        }
+                    } else if (evt.type === 'debate_turn_end') {
+                        if (currentSpeakerBody && evt.text) {
+                            try {
+                                currentSpeakerBody.innerHTML = marked.parse(evt.text);
+                            } catch (e) {
+                                currentSpeakerBody.textContent = evt.text;
+                            }
+                        }
+                        currentSpeakerBubble = null;
+                        currentSpeakerBody = null;
+                    } else if (evt.type === 'voting_matrix') {
+                        renderVotingMatrixWidget(evt.matrix, evt.average_score);
+                    } else if (evt.type === 'consensus_blueprint') {
+                        currentDebateConsensusMarkdown = evt.content;
+                        setRoundtableActiveSpeaker(null);
+                        let parsed = '';
+                        try {
+                            parsed = marked.parse(evt.content);
+                        } catch (e) {
+                            parsed = `<div style="white-space: pre-wrap;">${evt.content}</div>`;
+                        }
+                        const consensusCard = document.createElement('div');
+                        consensusCard.className = 'boardroom-consensus-box';
+                        consensusCard.style.margin = '10px 0';
+                        consensusCard.innerHTML = `
+                            <div class="boardroom-consensus-header">
+                                <div class="boardroom-consensus-title"><i class="fa-solid fa-gavel"></i> มติที่ประชุมและพิมพ์เขียวกลยุทธ์ (Executive Resolution)</div>
+                            </div>
+                            <div class="boardroom-consensus-body">${parsed}</div>
+                        `;
+                        if (feed) {
+                            feed.appendChild(consensusCard);
+                            feed.scrollTop = feed.scrollHeight;
+                        }
+                        if (toolbar) toolbar.style.display = 'flex';
+                    } else if (evt.type === 'session_done') {
+                        if (liveIndicator) {
+                            liveIndicator.innerHTML = '<i class="fa-solid fa-circle-check text-emerald"></i> การประชุมเสร็จสมบูรณ์';
+                        }
+                        setRoundtableActiveSpeaker(null);
+                        if (typeof showConnectionToast === 'function') {
+                            showConnectionToast('🎉 การประชุมสภาผู้บริหารเสร็จสิ้นสมบูรณ์แล้วค่ะ พร้อมสร้างสไลด์ 16:9 ได้ทันที!', 'ready');
+                        }
+                    } else if (evt.type === 'error') {
+                        appendDebateMessage('SYSTEM', 'ระบบรักษาความปลอดภัย', '🛑', evt.message);
+                    }
+                } catch (jsonErr) {
+                    console.error('SSE JSON parse error:', jsonErr);
+                }
+            }
+        }
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error('Debate stream error:', err);
+            appendDebateMessage('SYSTEM', 'ข้อผิดพลาด', '⚠️', 'ไม่สามารถดำเนินการดีเบตสดได้ในขณะนี้ กรุณาลองใหม่อีกครั้งค่ะ');
+        }
+    } finally {
+        if (startBtn) {
+            startBtn.disabled = false;
+            startBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> เริ่มการดีเบตใหม่';
+        }
+        currentDebateStreamController = null;
+    }
+}
+
+function renderVotingMatrixWidget(matrix, avgScore) {
+    const feed = document.getElementById('debate-feed-messages');
+    if (!feed || !Array.isArray(matrix)) return;
+
+    const card = document.createElement('div');
+    card.className = 'debate-matrix-card';
+
+    let rowsHtml = '';
+    matrix.forEach(m => {
+        const pct = Math.min(100, Math.round((m.score / 10) * 100));
+        rowsHtml += `
+            <div class="matrix-row">
+                <span class="matrix-label"><span style="color: ${m.color}; font-weight: 800;">${m.id}</span>: ${m.dimension}</span>
+                <div class="matrix-bar-wrap">
+                    <div class="matrix-bar-fill" style="width: ${pct}%; background: ${m.color};"></div>
+                </div>
+                <span class="matrix-score">${m.score}/10</span>
+            </div>
+        `;
+    });
+
+    card.innerHTML = `
+        <div class="matrix-title">
+            <i class="fa-solid fa-chart-simple"></i> ตารางประเมิน 4 มิติ (4D Evaluation Matrix) — คะแนนเฉลี่ย: <strong style="color: #fbbf24;">${avgScore}/10</strong>
+        </div>
+        <div class="matrix-rows">${rowsHtml}</div>
+    `;
+
+    feed.appendChild(card);
+    feed.scrollTop = feed.scrollHeight;
+}
+
+window.openRoundtableArenaModal = openRoundtableArenaModal;
+window.closeRoundtableArenaModal = closeRoundtableArenaModal;
+window.strikeBossGavel = strikeBossGavel;
+window.startRoundtableDebate = startRoundtableDebate;
+
 function toggleBoardroomMode(forceState) {
     const btnToggle = document.getElementById('btn-boardroom-toggle');
     const banner = document.getElementById('boardroom-active-banner');
@@ -4197,6 +4590,97 @@ function initBoardroomController() {
     // Restore boardroom state if previously active
     if (localStorage.getItem('kira_boardroom_active') === 'true') {
         toggleBoardroomMode(true);
+    }
+
+    // --- Wire Live Roundtable Arena Handlers ---
+    const btnOpenArena = document.getElementById('btn-open-roundtable-arena');
+    const modalArena = document.getElementById('boardroom-debate-modal');
+    const btnCloseArena = document.getElementById('btn-close-debate-modal');
+    const btnStartDebate = document.getElementById('btn-start-roundtable-debate');
+    const btnStrikeGavel = document.getElementById('btn-strike-gavel');
+    const gavelChips = document.querySelectorAll('.gavel-chip-btn');
+
+    if (btnOpenArena) {
+        btnOpenArena.addEventListener('click', () => openRoundtableArenaModal());
+    }
+
+    if (btnCloseArena) {
+        btnCloseArena.addEventListener('click', closeRoundtableArenaModal);
+    }
+
+    if (modalArena) {
+        modalArena.addEventListener('click', (e) => {
+            if (e.target === modalArena) closeRoundtableArenaModal();
+        });
+    }
+
+    if (btnStartDebate) {
+        btnStartDebate.addEventListener('click', () => startRoundtableDebate());
+    }
+
+    if (btnStrikeGavel) {
+        btnStrikeGavel.addEventListener('click', () => strikeBossGavel());
+    }
+
+    const gavelInput = document.getElementById('boss-gavel-custom-input');
+    if (gavelInput) {
+        gavelInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                strikeBossGavel();
+            }
+        });
+    }
+
+    gavelChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const interventionText = chip.getAttribute('data-intervention');
+            strikeBossGavel(interventionText);
+        });
+    });
+
+    // Resolution Toolbar Buttons
+    const btnDebateSlides = document.getElementById('btn-debate-to-slides');
+    if (btnDebateSlides) {
+        btnDebateSlides.addEventListener('click', () => {
+            if (typeof generateAndOpenSlideDeck === 'function' && currentDebateConsensusMarkdown) {
+                generateAndOpenSlideDeck(currentDebateConsensusMarkdown, `มติสภา: ${currentDebateTopic || 'Executive Strategic Blueprint'}`);
+            }
+        });
+    }
+
+    const btnDebatePdf = document.getElementById('btn-debate-to-pdf');
+    if (btnDebatePdf) {
+        btnDebatePdf.addEventListener('click', () => {
+            if (typeof exportDeliverableToPDF === 'function' && currentDebateConsensusMarkdown) {
+                exportDeliverableToPDF(`บันทึกมติสภาผู้บริหาร (${currentDebateTopic})`, currentDebateConsensusMarkdown, 'boardroom');
+            }
+        });
+    }
+
+    const btnDebateVoice = document.getElementById('btn-debate-listen-voice');
+    if (btnDebateVoice) {
+        btnDebateVoice.addEventListener('click', async () => {
+            if (typeof playKiraVoice === 'function' && currentDebateConsensusMarkdown) {
+                btnDebateVoice.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอ่าน...';
+                await playKiraVoice(currentDebateConsensusMarkdown.slice(0, 600), 'th-TH-PremwadeeNeural', 1.05);
+                setTimeout(() => {
+                    btnDebateVoice.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียงมติ';
+                }, 4000);
+            }
+        });
+    }
+
+    const btnDebateCopy = document.getElementById('btn-debate-copy-res');
+    if (btnDebateCopy) {
+        btnDebateCopy.addEventListener('click', () => {
+            if (currentDebateConsensusMarkdown) {
+                navigator.clipboard.writeText(currentDebateConsensusMarkdown);
+                if (typeof showConnectionToast === 'function') {
+                    showConnectionToast('📋 คัดลอกมติสภาผู้บริหารลง Clipboard แล้วค่ะ', 'ready');
+                }
+            }
+        });
     }
 }
 

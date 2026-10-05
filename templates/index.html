@@ -11,7 +11,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=20">
+    <link rel="stylesheet" href="/static/style.css?v=21">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -437,6 +437,13 @@
                                         <span class="tool-item-desc">ระดมสมอง 4 ผู้บริหารระดับสูง</span>
                                     </div>
                                 </button>
+                                <button class="tools-menu-item" type="button" onclick="if (typeof openRoundtableArenaModal === 'function') openRoundtableArenaModal();" title="ห้องประชุมโต๊ะกลมจำลองดีเบตสด (Live Executive Roundtable)">
+                                    <span class="tool-item-icon icon-purple"><i class="fa-solid fa-microphone-lines"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">ห้องดีเบตสภาสด</span>
+                                        <span class="tool-item-desc">จำลองดีเบต 4 ผู้บริหารพร้อมเคาะค้อนแทรกแซง</span>
+                                    </div>
+                                </button>
                                 <button class="tools-menu-item" type="button" onclick="document.getElementById('btn-task-matrix-toggle').click();" title="กระดานภารกิจและดราฟต์ชิ้นงาน">
                                     <span class="tool-item-icon icon-blue"><i class="fa-solid fa-list-check"></i></span>
                                     <div class="tool-item-info">
@@ -582,6 +589,9 @@
                     </div>
                 </div>
                 <div class="boardroom-banner-actions">
+                    <button id="btn-open-roundtable-arena" class="boardroom-action-btn debate-live-btn" title="เปิดห้องประชุมโต๊ะกลมจำลองดีเบตสด (Live Roundtable Arena)">
+                        <i class="fa-solid fa-microphone-lines"></i> <span>ดีเบตสด</span>
+                    </button>
                     <button id="btn-boardroom-info" class="boardroom-action-btn" title="ทำความรู้จัก 4 ผู้บริหารประจำห้องประชุม">
                         <i class="fa-solid fa-circle-question"></i> <span>ข้อมูลสภา</span>
                     </button>
@@ -1650,6 +1660,196 @@
         </div>
     </div>
 
+    <!-- 🏛️ Kira Executive Roundtable Arena & Live Debate Modal -->
+    <div id="boardroom-debate-modal" class="modal-overlay" style="display: none; z-index: 1092;">
+        <div class="debate-modal-card glass-panel">
+            <!-- Modal Header -->
+            <div class="debate-modal-header">
+                <div class="debate-header-left">
+                    <div class="debate-header-badge">
+                        <span class="live-dot pulse-red"></span> LIVE ROUNDTABLE ARENA
+                    </div>
+                    <h2 class="debate-header-title">สภาผู้บริหารจำลองสถานการณ์และดีเบตสด</h2>
+                    <p class="debate-header-desc">วิเคราะห์เชิงลึก ถกเถียงสด 4 มุมมอง พร้อมแท่นเคาะค้อนสั่งการของท่านประธาน</p>
+                </div>
+                <div class="debate-header-actions">
+                    <button id="btn-close-debate-modal" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <!-- Setup / Topic Bar -->
+            <div class="debate-setup-bar">
+                <div class="debate-input-group">
+                    <label for="debate-topic-input"><i class="fa-solid fa-bullseye"></i> วาระการประชุม / โจทย์ธุรกิจ:</label>
+                    <input type="text" id="debate-topic-input" class="debate-topic-input" placeholder="เช่น แผนการเปิดตัวผลิตภัณฑ์ใหม่ใน 30 วัน, การลดงบประมาณ 50%, หรือกลยุทธ์เจาะตลาด B2B...">
+                </div>
+                <div class="debate-angle-group">
+                    <label for="debate-angle-select"><i class="fa-solid fa-compass"></i> มุมมองยุทธศาสตร์:</label>
+                    <select id="debate-angle-select" class="debate-angle-select">
+                        <option value="balanced" selected>⚖️ สมดุลย์รอบด้าน (Balanced Focus)</option>
+                        <option value="aggressive_growth">🚀 บุกตลาดดุดัน (Hyper-Growth & Moat)</option>
+                        <option value="lean_risk">🛡️ ประหยัด & ปลอดภัยสูงสุด (Ultra-Lean & Safe)</option>
+                        <option value="user_first">❤️ ลูกค้าและประสบการณ์นำ (Customer Empathy)</option>
+                        <option value="tech_driven">⚡ นวัตกรรมและระบบทนทาน (Tech & Scalability)</option>
+                    </select>
+                </div>
+                <button id="btn-start-roundtable-debate" class="debate-start-btn">
+                    <i class="fa-solid fa-play"></i> เริ่มการดีเบตสด
+                </button>
+            </div>
+
+            <!-- Debate Progress Indicator -->
+            <div class="debate-progress-indicator">
+                <div class="progress-step active" id="debate-step-1">
+                    <span class="p-num">1</span>
+                    <span class="p-label">แถลงการณ์เปิดมุมมอง</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step" id="debate-step-2">
+                    <span class="p-num">2</span>
+                    <span class="p-label">ถกเถียง & รับมือค้อนสั่งการ</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step" id="debate-step-3">
+                    <span class="p-num">3</span>
+                    <span class="p-label">ลงคะแนน 4 มิติ & มติสภา</span>
+                </div>
+            </div>
+
+            <!-- Main Chamber Layout: Split View (Roundtable Arena Left, Live Feed Right) -->
+            <div class="debate-main-chamber">
+                <!-- Left: Visual Roundtable Arena -->
+                <div class="roundtable-arena-view">
+                    <div class="roundtable-circle-container">
+                        <!-- Neon Hologram Table -->
+                        <div class="roundtable-table-surface">
+                            <div class="table-inner-glow"></div>
+                            <div class="table-hologram-logo">
+                                <i class="fa-solid fa-users-viewfinder"></i>
+                                <span class="table-status-label" id="arena-table-status">พร้อมเปิดวาระการประชุม</span>
+                            </div>
+                        </div>
+
+                        <!-- 5 Seats: Boss Head, CEO Left-Top, CFO Left-Bottom, CPO Right-Bottom, CTO Right-Top -->
+                        <!-- Seat 0: Boss (Crown) -->
+                        <div class="chamber-seat seat-boss" id="seat-boss" data-speaker="BOSS">
+                            <div class="seat-aura aura-gold"></div>
+                            <div class="seat-avatar">👑</div>
+                            <div class="seat-info">
+                                <span class="seat-name">ท่านประธาน</span>
+                                <span class="seat-role">บอส (Head of Table)</span>
+                            </div>
+                            <div class="seat-mic-wave"><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span></div>
+                        </div>
+
+                        <!-- Seat 1: CEO Kirin -->
+                        <div class="chamber-seat seat-ceo" id="seat-ceo" data-speaker="CEO">
+                            <div class="seat-aura aura-yellow"></div>
+                            <div class="seat-avatar">👔</div>
+                            <div class="seat-info">
+                                <span class="seat-name">คุณคิรินทร์</span>
+                                <span class="seat-role">CEO & Strategist</span>
+                            </div>
+                            <div class="seat-mic-wave"><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span></div>
+                        </div>
+
+                        <!-- Seat 2: CFO Methas -->
+                        <div class="chamber-seat seat-cfo" id="seat-cfo" data-speaker="CFO">
+                            <div class="seat-aura aura-green"></div>
+                            <div class="seat-avatar">💰</div>
+                            <div class="seat-info">
+                                <span class="seat-name">คุณเมธัส</span>
+                                <span class="seat-role">CFO & Risk Lead</span>
+                            </div>
+                            <div class="seat-mic-wave"><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span></div>
+                        </div>
+
+                        <!-- Seat 3: CPO Rinda -->
+                        <div class="chamber-seat seat-cpo" id="seat-cpo" data-speaker="CPO">
+                            <div class="seat-aura aura-pink"></div>
+                            <div class="seat-avatar">🎨</div>
+                            <div class="seat-info">
+                                <span class="seat-name">คุณรินดา</span>
+                                <span class="seat-role">CPO & UX Director</span>
+                            </div>
+                            <div class="seat-mic-wave"><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span></div>
+                        </div>
+
+                        <!-- Seat 4: CTO Thanin -->
+                        <div class="chamber-seat seat-cto" id="seat-cto" data-speaker="CTO">
+                            <div class="seat-aura aura-cyan"></div>
+                            <div class="seat-avatar">🛡️</div>
+                            <div class="seat-info">
+                                <span class="seat-name">คุณธนิน</span>
+                                <span class="seat-role">CTO & Systems Architect</span>
+                            </div>
+                            <div class="seat-mic-wave"><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span></div>
+                        </div>
+                    </div>
+
+                    <!-- Boss Gavel Intervention Station (แท่นเคาะค้อนของท่านประธาน) -->
+                    <div class="boss-gavel-station">
+                        <div class="gavel-station-header">
+                            <span class="gavel-title"><i class="fa-solid fa-gavel text-amber"></i> แท่นเคาะค้อนสั่งการของท่านประธาน (Boss Gavel)</span>
+                            <span class="gavel-sub">เคาะเพื่อบังคับให้ 4 ผู้บริหารแก้กลยุทธ์รับมือทันที</span>
+                        </div>
+                        <div class="gavel-quick-actions">
+                            <button type="button" class="gavel-chip-btn" data-intervention="ตัดงบประมาณลง 50% ทันที และต้องถึงจุดคุ้มทุน (BEP) ใน 6 เดือน">
+                                ⚡ ลดงบ 50%
+                            </button>
+                            <button type="button" class="gavel-chip-btn" data-intervention="ต้องเปิดตัวเวอร์ชันแรกให้ลูกค้าใช้งานจริงได้ภายใน 30 วัน">
+                                ⏱️ ส่งมอบใน 30 วัน
+                            </button>
+                            <button type="button" class="gavel-chip-btn" data-intervention="ปรับทิศทางเจาะกลุ่มลูกค้าองค์กรระดับพรีเมียม (B2B Enterprise) เท่านั้น">
+                                🎯 เจาะ B2B Enterprise
+                            </button>
+                            <button type="button" class="gavel-chip-btn" data-intervention="ความเสถียรและความปลอดภัยของข้อมูลต้องเป็นอันดับหนึ่ง ห้ามมีดาวน์ไทม์เด็ดขาด">
+                                🛡️ ความมั่นคงปลอดภัย 100%
+                            </button>
+                        </div>
+                        <div class="gavel-input-row">
+                            <input type="text" id="boss-gavel-custom-input" class="gavel-custom-input" placeholder="พิมพ์คำสั่งค้อนแทรกแซงของท่านประธาน...">
+                            <button type="button" id="btn-strike-gavel" class="gavel-strike-btn" title="เคาะค้อนแทรกแซงการดีเบต">
+                                <i class="fa-solid fa-gavel"></i> เคาะค้อนสั่งการ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Live Debate Feed & Transcript -->
+                <div class="debate-feed-view">
+                    <div class="debate-feed-header">
+                        <span class="feed-title"><i class="fa-solid fa-comments"></i> บันทึกการถกเถียงสด (Live Feed)</span>
+                        <span class="feed-badge" id="feed-live-indicator"><i class="fa-solid fa-circle text-emerald"></i> รอเริ่มการดีเบต</span>
+                    </div>
+
+                    <div class="debate-feed-scroll" id="debate-feed-messages">
+                        <div class="debate-empty-state">
+                            <i class="fa-solid fa-users-viewfinder"></i>
+                            <p>กรอกวาระการประชุมหรือเลือกมุมมองยุทธศาสตร์ด้านบน<br>แล้วกด <strong>"เริ่มการดีเบตสด"</strong> เพื่อเปิดสภาค่ะ</p>
+                        </div>
+                    </div>
+
+                    <!-- Consensus & Export Toolbar (แสดงเมื่อดีเบตจบ) -->
+                    <div class="debate-resolution-toolbar" id="debate-resolution-toolbar" style="display: none;">
+                        <button type="button" class="res-btn btn-make-slides" id="btn-debate-to-slides" title="แปลงมติที่ประชุมสภาเป็นชุดสไลด์นำเสนอระดับผู้บริหาร 16:9">
+                            <i class="fa-solid fa-file-powerpoint text-rose"></i> สร้างสไลด์สภา (16:9)
+                        </button>
+                        <button type="button" class="res-btn btn-export-pdf" id="btn-debate-to-pdf" title="พิมพ์รายงานสรุปมติสภาผู้บริหาร A4">
+                            <i class="fa-solid fa-print"></i> พิมพ์ / PDF
+                        </button>
+                        <button type="button" class="res-btn btn-listen-voice" id="btn-debate-listen-voice" title="ฟังเสียงอ่านมติที่ประชุม">
+                            <i class="fa-solid fa-volume-high"></i> ฟังเสียงมติ
+                        </button>
+                        <button type="button" class="res-btn btn-copy-res" id="btn-debate-copy-res" title="คัดลอกมติสภา">
+                            <i class="fa-regular fa-copy"></i> คัดลอกมติ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 📋 Kira Omni-Task & Autonomous Execution Suite Modal -->
     <div id="task-matrix-modal" class="modal-overlay task-matrix-modal-overlay" style="display: none; z-index: 1095;">
         <div class="task-matrix-card glass-panel">
@@ -2215,6 +2415,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=35"></script>
+    <script src="/static/script.js?v=36"></script>
 </body>
 </html>
