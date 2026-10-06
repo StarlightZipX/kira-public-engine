@@ -8519,7 +8519,7 @@ function openOfflineVaultModal(targetTab = 'catalog') {
     if (!modal) return;
     modal.style.display = 'flex';
     switchVaultTab(targetTab);
-    loadVaultData(true);
+    loadVaultData(false);
 }
 
 function closeOfflineVaultModal() {
@@ -8553,7 +8553,7 @@ function switchVaultTab(tabKey) {
     }
 }
 
-async function loadVaultData(silent = false) {
+async function loadVaultData(isManual = false) {
     // 1. Load local cache first for instant responsiveness
     vaultCatalogCache = getLocalVaultItems();
     vaultOutboxCache = getLocalVaultOutbox();
@@ -8561,9 +8561,9 @@ async function loadVaultData(silent = false) {
     renderVaultOutbox();
     updateVaultPillAndBadgeUI();
 
-    // 2. If online, perform background sync with server
+    // 2. If online, perform background sync with server (silent background by default)
     if (navigator.onLine) {
-        await triggerVaultSync(silent);
+        await triggerVaultSync(isManual);
     }
 }
 
@@ -8571,7 +8571,13 @@ async function triggerVaultSync(isManual = false) {
     if (isVaultSyncing) return;
     if (!navigator.onLine) {
         if (isManual) {
-            alert('ระบบกำลังทำงานในโหมด Offline Vault ค่ะ เมื่อเชื่อมต่อสัญญาณอินเทอร์เน็ต ระบบจะทำการซิงก์ข้อมูลขึ้น Cloud ให้อัตโนมัติทันทีค่ะ');
+            const syncBtn = document.getElementById('btn-vault-manual-sync');
+            const btnSpan = syncBtn ? syncBtn.querySelector('span') : null;
+            if (btnSpan) {
+                const orig = btnSpan.textContent;
+                btnSpan.textContent = 'โหมดออฟไลน์ (Local Vault) ✓';
+                setTimeout(() => { if (btnSpan) btnSpan.textContent = orig; }, 3000);
+            }
         }
         return;
     }
@@ -8579,6 +8585,7 @@ async function triggerVaultSync(isManual = false) {
     isVaultSyncing = true;
     const syncBtn = document.getElementById('btn-vault-manual-sync');
     const syncIcon = syncBtn ? syncBtn.querySelector('i') : null;
+    const syncSpan = syncBtn ? syncBtn.querySelector('span') : null;
     if (syncIcon) syncIcon.classList.add('fa-spin');
 
     try {
@@ -8626,14 +8633,17 @@ async function triggerVaultSync(isManual = false) {
             renderVaultOutbox();
             updateVaultPillAndBadgeUI();
 
-            if (isManual) {
-                alert(data.message || 'ซิงก์ข้อมูลคลังนิรภัยกับคลาวด์สำเร็จเรียบร้อยแล้วค่ะ');
+            if (isManual && syncSpan) {
+                const origText = syncSpan.textContent;
+                syncSpan.textContent = 'ซิงก์สำเร็จเรียบร้อย ✓';
+                setTimeout(() => { if (syncSpan) syncSpan.textContent = origText; }, 3000);
             }
         }
     } catch (err) {
         console.warn("Vault sync warning:", err);
-        if (isManual) {
-            alert('ไม่สามารถซิงก์ข้อมูลกับ Cloud ได้ในขณะนี้ค่ะ: ' + err.message);
+        if (isManual && syncSpan) {
+            syncSpan.textContent = 'ซิงก์ไม่สำเร็จ (ลองใหม่)';
+            setTimeout(() => { if (syncSpan) syncSpan.textContent = 'ซิงก์ข้อมูลทันที'; }, 3000);
         }
     } finally {
         isVaultSyncing = false;
@@ -9003,7 +9013,7 @@ function clearVaultCachePrompt() {
 
     alert('ล้างแคชออฟไลน์ในเครื่องเรียบร้อยแล้วค่ะ');
     if (navigator.onLine) {
-        loadVaultData(true);
+        loadVaultData(false);
     }
 }
 
@@ -9214,7 +9224,7 @@ function initOfflineVaultController() {
 
     // 11. Initial State Setup
     updateVaultConnectivityUI(navigator.onLine);
-    loadVaultData(true);
+    loadVaultData(false);
 
     // Expose Global Vault Interface
     window.openOfflineVaultModal = openOfflineVaultModal;
