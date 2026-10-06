@@ -11,7 +11,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=23">
+    <link rel="stylesheet" href="/static/style.css?v=24">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -387,14 +387,14 @@
                         <span class="pro-sparkle-dot"></span>
                     </button>
 
-                    <!-- Virtual Boardroom Quick Toggle -->
-                    <button title="เปิดสภาที่ปรึกษาเสมือน Kira 2.1 Boardroom" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn">
+                    <!-- Virtual Boardroom Quick Toggle (Consolidated into Tools dropdown & Model selector) -->
+                    <button title="เปิดสภาที่ปรึกษาเสมือน Kira 2.1 Boardroom" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn" style="display: none;">
                         <i class="fa-solid fa-users-viewfinder"></i>
                         <span class="boardroom-btn-text">สภา</span>
                     </button>
 
-                    <!-- 📋 Kira Omni-Task & Matrix Button -->
-                    <button title="เปิดกระดานจัดการภารกิจและร่างชิ้นงาน" id="btn-task-matrix-toggle" class="header-action-btn task-matrix-btn">
+                    <!-- 📋 Kira Omni-Task & Matrix Button (Consolidated into Tools dropdown) -->
+                    <button title="เปิดกระดานจัดการภารกิจและร่างชิ้นงาน" id="btn-task-matrix-toggle" class="header-action-btn task-matrix-btn" style="display: none;">
                         <i class="fa-solid fa-list-check"></i>
                         <span class="task-matrix-btn-text">งาน</span>
                         <span id="task-matrix-badge" class="task-matrix-badge" style="display: none;">0</span>
@@ -413,8 +413,8 @@
                         <span class="pwa-header-text">ติดตั้งแอป</span>
                     </button>
 
-                    <!-- 🛡️ Executive Offline Vault & Network Sync Pill -->
-                    <button id="btn-vault-network-pill" class="header-action-btn vault-network-pill online" title="สถานะการเชื่อมต่อและคลังนิรภัยออฟไลน์ (คลิกเพื่อเปิด Vault)">
+                    <!-- 🛡️ Executive Offline Vault & Network Sync Pill (Only displays when offline or pending sync) -->
+                    <button id="btn-vault-network-pill" class="header-action-btn vault-network-pill online" title="สถานะการเชื่อมต่อและคลังนิรภัยออฟไลน์ (คลิกเพื่อเปิด Vault)" style="display: none;">
                         <span class="vault-status-dot"></span>
                         <span class="vault-pill-text" id="vault-pill-status-text">Online</span>
                         <span class="vault-pending-count" id="vault-pending-count" style="display: none;">0</span>
@@ -2815,6 +2815,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=39"></script>
+    <script src="/static/script.js?v=40"></script>
 </body>
 </html>

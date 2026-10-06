@@ -1288,7 +1288,7 @@ function attachDeliverablesBar(contentDiv, textContent) {
 
     const feedbackUI = document.createElement('div');
     feedbackUI.className = 'feedback-ui';
-    feedbackUI.style.cssText = 'margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 6px; justify-content: flex-start; align-items: center; flex-wrap: wrap; font-size: 0.8rem;';
+    feedbackUI.style.cssText = 'margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.06); display: flex; gap: 6px; justify-content: flex-start; align-items: center; flex-wrap: wrap; font-size: 0.8rem;';
 
     // 1. Quick Copy
     const copyMsgBtn = document.createElement('button');
@@ -1302,73 +1302,7 @@ function attachDeliverablesBar(contentDiv, textContent) {
         setTimeout(() => { copyMsgBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก'; }, 2000);
     };
 
-    // 2. 1-Click Clean Executive Report
-    const cleanReportBtn = document.createElement('button');
-    cleanReportBtn.className = 'deliverable-btn deliverable-highlight';
-    cleanReportBtn.innerHTML = '<i class="fa-solid fa-file-signature text-cyan"></i> สรุปส่งงาน';
-    cleanReportBtn.title = 'จัดฟอร์แมตรายงานสรุปผู้บริหารและคัดลอกลง Clipboard ทันที';
-    cleanReportBtn.onclick = () => {
-        const clean = formatExecutiveDeliverable(textContent);
-        navigator.clipboard.writeText(clean);
-        cleanReportBtn.innerHTML = '<i class="fa-solid fa-circle-check text-green"></i> สรุปรายงานแล้ว!';
-        if (typeof showConnectionToast === 'function') {
-            showConnectionToast('📑 จัดฟอร์แมตรายงานผู้บริหารและคัดลอกลง Clipboard เรียบร้อยแล้วค่ะ', 'ready');
-        }
-        setTimeout(() => { cleanReportBtn.innerHTML = '<i class="fa-solid fa-file-signature text-cyan"></i> สรุปส่งงาน'; }, 2500);
-    };
-
-    // 3. Download Report as Markdown/Doc
-    const downloadReportBtn = document.createElement('button');
-    downloadReportBtn.className = 'deliverable-btn';
-    downloadReportBtn.innerHTML = '<i class="fa-solid fa-file-arrow-down text-purple"></i> ดาวน์โหลด (.md)';
-    downloadReportBtn.title = 'ดาวน์โหลดรายงานสรุปงานเป็นไฟล์ Markdown';
-    downloadReportBtn.onclick = () => {
-        const clean = formatExecutiveDeliverable(textContent);
-        const blob = new Blob([clean], { type: 'text/markdown;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const filename = `Kira_Executive_Report_${new Date().toISOString().slice(0, 10)}.md`;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
-
-    // 3.5. Print & PDF Export (Executive & Silver Deliverable)
-    const pdfReportBtn = document.createElement('button');
-    pdfReportBtn.className = 'deliverable-btn deliverable-pdf-btn';
-    pdfReportBtn.innerHTML = '<i class="fa-solid fa-print text-emerald"></i> พิมพ์ / PDF';
-    pdfReportBtn.title = 'พิมพ์เอกสารหรือบันทึกเป็น PDF สวยงามแบบ A4 พร้อมหัวจดหมายทางการ';
-    pdfReportBtn.onclick = () => {
-        exportDeliverableToPDF('เอกสารส่งงาน (Executive Deliverable)', textContent, 'executive');
-    };
-
-    // 3.6. Executive Slide Deck Studio (16:9 Keynote Presentation)
-    const slideDeckBtn = document.createElement('button');
-    slideDeckBtn.className = 'deliverable-btn deliverable-slide-btn';
-    slideDeckBtn.innerHTML = '<i class="fa-solid fa-file-powerpoint text-rose"></i> สร้างสไลด์ (16:9)';
-    slideDeckBtn.title = 'แปลงเนื้อหาคำตอบนี้เป็นชุดสไลด์พรีเซนต์ระดับผู้บริหาร 16:9 (Executive Slide Deck)';
-    slideDeckBtn.onclick = () => {
-        if (typeof generateAndOpenSlideDeck === 'function') {
-            generateAndOpenSlideDeck(textContent);
-        }
-    };
-
-    // 4. Open in Live Canvas Document
-    const canvasDocBtn = document.createElement('button');
-    canvasDocBtn.className = 'deliverable-btn';
-    canvasDocBtn.innerHTML = '<i class="fa-solid fa-pen-to-square text-amber"></i> เปิดใน Canvas';
-    canvasDocBtn.title = 'เปิดเอกสารนี้ใน Live Canvas เพื่อตรวจงานหรือแก้ไข';
-    canvasDocBtn.onclick = () => {
-        const clean = formatExecutiveDeliverable(textContent);
-        if (typeof openInLiveCanvas === 'function') {
-            openInLiveCanvas('เอกสารส่งงาน (Executive Deliverable)', clean, 'document');
-        }
-    };
-
-    // 5. Natural Voice Speaker
+    // 2. Natural Voice Speaker
     const speakerBtn = document.createElement('button');
     speakerBtn.className = 'deliverable-btn';
     speakerBtn.title = 'ฟังเสียงคิระอ่านคำตอบนี้ (Natural Voice)';
@@ -1379,7 +1313,131 @@ function attachDeliverablesBar(contentDiv, textContent) {
         }
     };
 
-    // 6. Like, Dislike & Review
+    // 3. Compact Consolidated Studio & Tools Dropdown Menu (เครื่องมือสร้างสรรค์ & ส่งงาน ▾)
+    const toolsWrap = document.createElement('div');
+    toolsWrap.className = 'msg-tools-dropdown-wrapper';
+
+    const toolsBtn = document.createElement('button');
+    toolsBtn.className = 'deliverable-btn deliverable-tools-trigger';
+    toolsBtn.title = 'เครื่องมือสร้างสรรค์และส่งออกงาน (สไลด์ 16:9, รายงาน, PDF, Canvas, คลังนิรภัย)';
+    toolsBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>เครื่องมือ</span> <i class="fa-solid fa-chevron-down" style="font-size: 0.65em; opacity: 0.7;"></i>';
+
+    const toolsMenu = document.createElement('div');
+    toolsMenu.className = 'msg-tools-dropdown-menu';
+    toolsMenu.style.display = 'none';
+
+    const createToolItem = (iconHtml, labelText, onClick) => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'msg-tools-item';
+        item.innerHTML = `${iconHtml} <span>${labelText}</span>`;
+        item.onclick = (e) => {
+            e.stopPropagation();
+            toolsMenu.style.display = 'none';
+            onClick();
+        };
+        return item;
+    };
+
+    // A. สรุปส่งงาน (Clean Report)
+    toolsMenu.appendChild(createToolItem(
+        '<i class="fa-solid fa-file-signature text-cyan"></i>',
+        'สรุปส่งงาน (Clean Report)',
+        () => {
+            const clean = formatExecutiveDeliverable(textContent);
+            navigator.clipboard.writeText(clean);
+            if (typeof showConnectionToast === 'function') {
+                showConnectionToast('📑 จัดฟอร์แมตรายงานผู้บริหารและคัดลอกลง Clipboard เรียบร้อยแล้วค่ะ', 'ready');
+            }
+        }
+    ));
+
+    // B. สร้างสไลด์ (16:9)
+    toolsMenu.appendChild(createToolItem(
+        '<i class="fa-solid fa-file-powerpoint text-rose"></i>',
+        'สร้างสไลด์ Keynote (16:9)',
+        () => {
+            if (typeof generateAndOpenSlideDeck === 'function') {
+                generateAndOpenSlideDeck(textContent);
+            }
+        }
+    ));
+
+    // C. พิมพ์ / บันทึก PDF
+    toolsMenu.appendChild(createToolItem(
+        '<i class="fa-solid fa-print text-emerald"></i>',
+        'พิมพ์ / ส่งออก PDF A4',
+        () => {
+            exportDeliverableToPDF('เอกสารส่งงาน (Executive Deliverable)', textContent, 'executive');
+        }
+    ));
+
+    // D. เปิดใน Live Canvas
+    toolsMenu.appendChild(createToolItem(
+        '<i class="fa-solid fa-pen-to-square text-amber"></i>',
+        'เปิดแก้ไขใน Live Canvas',
+        () => {
+            const clean = formatExecutiveDeliverable(textContent);
+            if (typeof openInLiveCanvas === 'function') {
+                openInLiveCanvas('เอกสารส่งงาน (Executive Deliverable)', clean, 'document');
+            }
+        }
+    ));
+
+    // E. บันทึกลงคลังนิรภัย (Executive Offline Vault)
+    toolsMenu.appendChild(createToolItem(
+        '<i class="fa-solid fa-shield-halved text-emerald"></i>',
+        'บันทึกลง Offline Vault',
+        () => {
+            if (typeof saveToOfflineVault === 'function') {
+                const title = textContent.slice(0, 40).replace(/[#*`\n]/g, ' ').trim() || 'บันทึกคำตอบ';
+                saveToOfflineVault('memo', title, textContent, false);
+                if (typeof showConnectionToast === 'function') {
+                    showConnectionToast('🛡️ บันทึกลง Executive Offline Vault เรียบร้อยแล้วค่ะ', 'ready');
+                }
+            }
+        }
+    ));
+
+    // F. ดาวน์โหลด (.md)
+    toolsMenu.appendChild(createToolItem(
+        '<i class="fa-solid fa-file-arrow-down text-purple"></i>',
+        'ดาวน์โหลดไฟล์ Markdown (.md)',
+        () => {
+            const clean = formatExecutiveDeliverable(textContent);
+            const blob = new Blob([clean], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Kira_Report_${new Date().toISOString().slice(0, 10)}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    ));
+
+    // G. รีวิวข้อเสนอแนะ
+    toolsMenu.appendChild(createToolItem(
+        '<i class="fa-solid fa-comment-dots text-sky"></i>',
+        'รีวิวและให้ข้อเสนอแนะ',
+        () => {
+            if (typeof openReviewModal === 'function') openReviewModal(textContent);
+        }
+    ));
+
+    toolsBtn.onclick = (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.msg-tools-dropdown-menu').forEach(m => {
+            if (m !== toolsMenu) m.style.display = 'none';
+        });
+        toolsMenu.style.display = (toolsMenu.style.display === 'none') ? 'flex' : 'none';
+    };
+
+    toolsWrap.appendChild(toolsBtn);
+    toolsWrap.appendChild(toolsMenu);
+
+    // 4. Like & Dislike
     const likeBtn = document.createElement('button');
     likeBtn.className = 'deliverable-btn icon-only';
     likeBtn.title = 'ชอบคำตอบนี้';
@@ -1404,24 +1462,12 @@ function attachDeliverablesBar(contentDiv, textContent) {
         likeBtn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
     };
 
-    const reviewBtn = document.createElement('button');
-    reviewBtn.className = 'deliverable-btn icon-only';
-    reviewBtn.title = 'รีวิวและให้ข้อเสนอแนะ';
-    reviewBtn.innerHTML = '<i class="fa-solid fa-comment-dots"></i>';
-    reviewBtn.onclick = () => {
-        if (typeof openReviewModal === 'function') openReviewModal(textContent);
-    };
-
+    // Build Minimal Toolbar
     feedbackUI.appendChild(copyMsgBtn);
-    feedbackUI.appendChild(cleanReportBtn);
-    feedbackUI.appendChild(downloadReportBtn);
-    feedbackUI.appendChild(pdfReportBtn);
-    feedbackUI.appendChild(slideDeckBtn);
-    feedbackUI.appendChild(canvasDocBtn);
     feedbackUI.appendChild(speakerBtn);
+    feedbackUI.appendChild(toolsWrap);
     feedbackUI.appendChild(likeBtn);
     feedbackUI.appendChild(dislikeBtn);
-    feedbackUI.appendChild(reviewBtn);
 
     contentDiv.appendChild(feedbackUI);
     return { feedbackUI, speakerBtn };
@@ -4705,6 +4751,9 @@ function initToolsDropdownController() {
             if (!wrapper.contains(e.target)) {
                 wrapper.classList.remove('open');
             }
+        }
+        if (!e.target.closest('.msg-tools-dropdown-wrapper')) {
+            document.querySelectorAll('.msg-tools-dropdown-menu').forEach(m => m.style.display = 'none');
         }
     });
 
@@ -8467,14 +8516,21 @@ function updateVaultConnectivityUI(isOnline) {
     const pendingCount = outbox.length;
 
     if (pill) {
-        if (isConn) {
-            pill.classList.remove('offline');
-            pill.classList.add('online');
-            if (pillText) pillText.textContent = 'Online';
+        if (isConn && pendingCount === 0) {
+            // When fully online and healthy, keep header clean & uncluttered
+            pill.style.display = 'none';
         } else {
-            pill.classList.remove('online');
-            pill.classList.add('offline');
-            if (pillText) pillText.textContent = 'Offline';
+            // Show only when offline or pending sync items exist
+            pill.style.display = 'inline-flex';
+            if (isConn) {
+                pill.classList.remove('offline');
+                pill.classList.add('online');
+                if (pillText) pillText.textContent = `รอซิงก์ (${pendingCount})`;
+            } else {
+                pill.classList.remove('online');
+                pill.classList.add('offline');
+                if (pillText) pillText.textContent = 'Offline';
+            }
         }
     }
 
