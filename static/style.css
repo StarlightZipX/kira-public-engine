@@ -2286,6 +2286,35 @@ body.light-mode .msg-tools-item:hover {
     color: #0f172a;
 }
 
+/* Review & Feedback Button (Prominent & Accessible) */
+.deliverable-btn.review-action-btn {
+    color: #cbd5e1;
+    border-color: rgba(168, 85, 247, 0.25);
+    background: rgba(168, 85, 247, 0.06);
+}
+
+.deliverable-btn.review-action-btn:hover {
+    color: #f3e8ff;
+    border-color: #a855f7;
+    background: rgba(168, 85, 247, 0.18);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.25);
+    transform: translateY(-1px);
+}
+
+body.light-theme .deliverable-btn.review-action-btn,
+body.light-mode .deliverable-btn.review-action-btn {
+    background: #fdf4ff !important;
+    border-color: #f0abfc !important;
+    color: #9333ea !important;
+}
+
+body.light-theme .deliverable-btn.review-action-btn:hover,
+body.light-mode .deliverable-btn.review-action-btn:hover {
+    background: #fae8ff !important;
+    border-color: #c084fc !important;
+    color: #7e22ce !important;
+}
+
 /* --- Knowledge Graph Mind-Map Modal --- */
 .graph-modal-content {
     width: 85vw !important;
@@ -9585,34 +9614,73 @@ body.mode-silver-care .welcome-subtitle {
    ========================================================================== */
 .live-voice-btn {
     position: relative;
-    background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(236, 72, 153, 0.15)) !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 5px;
+    padding: 0.32rem 0.65rem !important;
+    border-radius: 8px !important;
+    font-size: 0.8rem !important;
+    line-height: 1.2 !important;
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.12), rgba(236, 72, 153, 0.12)) !important;
     border: 1px solid rgba(244, 63, 94, 0.35) !important;
     color: #fb7185 !important;
     font-weight: 600 !important;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.live-voice-btn i {
+    font-size: 0.78rem !important;
+}
+
+.live-voice-btn .live-voice-btn-text {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
 }
 
 .live-voice-btn:hover {
-    background: linear-gradient(135deg, rgba(244, 63, 94, 0.28), rgba(236, 72, 153, 0.28)) !important;
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.25), rgba(236, 72, 153, 0.25)) !important;
     border-color: #f43f5e !important;
     color: #ffffff !important;
-    box-shadow: 0 0 16px rgba(244, 63, 94, 0.4) !important;
+    box-shadow: 0 0 14px rgba(244, 63, 94, 0.35) !important;
     transform: translateY(-1px);
 }
 
 .live-voice-pulse-dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: #f43f5e;
-    box-shadow: 0 0 8px #f43f5e;
+    box-shadow: 0 0 6px #f43f5e;
     display: inline-block;
     animation: liveVoiceDotPulse 1.6s infinite ease-in-out;
 }
 
 @keyframes liveVoiceDotPulse {
     0%, 100% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.6); opacity: 1; box-shadow: 0 0 12px #f43f5e; }
+    50% { transform: scale(1.5); opacity: 1; box-shadow: 0 0 10px #f43f5e; }
+}
+
+body.light-theme .live-voice-btn,
+body.light-mode .live-voice-btn {
+    background: #ffe4e6 !important;
+    border: 1px solid #fecdd3 !important;
+    color: #e11d48 !important;
+}
+
+body.light-theme .live-voice-btn:hover,
+body.light-mode .live-voice-btn:hover {
+    background: #fecdd3 !important;
+    border-color: #fb7185 !important;
+    color: #be123c !important;
+}
+
+body.oled-theme .live-voice-btn,
+body.oled-mode .live-voice-btn {
+    background: rgba(244, 63, 94, 0.15) !important;
+    border: 1px solid rgba(244, 63, 94, 0.45) !important;
+    color: #fb7185 !important;
 }
 
 /* Live Voice Overlay & Card */

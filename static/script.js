@@ -1417,15 +1417,6 @@ function attachDeliverablesBar(contentDiv, textContent) {
         }
     ));
 
-    // G. รีวิวข้อเสนอแนะ
-    toolsMenu.appendChild(createToolItem(
-        '<i class="fa-solid fa-comment-dots text-sky"></i>',
-        'รีวิวและให้ข้อเสนอแนะ',
-        () => {
-            if (typeof openReviewModal === 'function') openReviewModal(textContent);
-        }
-    ));
-
     toolsBtn.onclick = (e) => {
         e.stopPropagation();
         document.querySelectorAll('.msg-tools-dropdown-menu').forEach(m => {
@@ -1462,12 +1453,22 @@ function attachDeliverablesBar(contentDiv, textContent) {
         likeBtn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
     };
 
+    // 5. Prominent Outside Review & Feedback Button (หาง่าย ชัดเจน ไม่ต้องค้นหาในเมนู)
+    const reviewBtn = document.createElement('button');
+    reviewBtn.className = 'deliverable-btn review-action-btn';
+    reviewBtn.title = 'รีวิวและให้ข้อเสนอแนะเกี่ยวกับคำตอบนี้';
+    reviewBtn.innerHTML = '<i class="fa-solid fa-comment-dots text-purple"></i> <span>รีวิว</span>';
+    reviewBtn.onclick = () => {
+        if (typeof openReviewModal === 'function') openReviewModal(textContent);
+    };
+
     // Build Minimal Toolbar
     feedbackUI.appendChild(copyMsgBtn);
     feedbackUI.appendChild(speakerBtn);
     feedbackUI.appendChild(toolsWrap);
     feedbackUI.appendChild(likeBtn);
     feedbackUI.appendChild(dislikeBtn);
+    feedbackUI.appendChild(reviewBtn);
 
     contentDiv.appendChild(feedbackUI);
     return { feedbackUI, speakerBtn };
