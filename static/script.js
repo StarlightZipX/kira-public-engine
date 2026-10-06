@@ -1340,7 +1340,7 @@ function attachDeliverablesBar(contentDiv, textContent) {
     };
 
     // A. สรุปส่งงาน (Clean Report)
-    toolsMenu.appendChild(createToolItem(
+    const cleanReportBtn = createToolItem(
         '<i class="fa-solid fa-file-signature text-cyan"></i>',
         'สรุปส่งงาน (Clean Report)',
         () => {
@@ -1350,10 +1350,11 @@ function attachDeliverablesBar(contentDiv, textContent) {
                 showConnectionToast('📑 จัดฟอร์แมตรายงานผู้บริหารและคัดลอกลง Clipboard เรียบร้อยแล้วค่ะ', 'ready');
             }
         }
-    ));
+    );
+    toolsMenu.appendChild(cleanReportBtn);
 
     // B. สร้างสไลด์ (16:9)
-    toolsMenu.appendChild(createToolItem(
+    const slideDeckBtn = createToolItem(
         '<i class="fa-solid fa-file-powerpoint text-rose"></i>',
         'สร้างสไลด์ Keynote (16:9)',
         () => {
@@ -1361,19 +1362,22 @@ function attachDeliverablesBar(contentDiv, textContent) {
                 generateAndOpenSlideDeck(textContent);
             }
         }
-    ));
+    );
+    toolsMenu.appendChild(slideDeckBtn);
 
     // C. พิมพ์ / บันทึก PDF
-    toolsMenu.appendChild(createToolItem(
+    const pdfReportBtn = createToolItem(
         '<i class="fa-solid fa-print text-emerald"></i>',
         'พิมพ์ / ส่งออก PDF A4',
         () => {
             exportDeliverableToPDF('เอกสารส่งงาน (Executive Deliverable)', textContent, 'executive');
         }
-    ));
+    );
+    pdfReportBtn.className += ' deliverable-pdf-btn';
+    toolsMenu.appendChild(pdfReportBtn);
 
     // D. เปิดใน Live Canvas
-    toolsMenu.appendChild(createToolItem(
+    const canvasDocBtn = createToolItem(
         '<i class="fa-solid fa-pen-to-square text-amber"></i>',
         'เปิดแก้ไขใน Live Canvas',
         () => {
@@ -1382,10 +1386,11 @@ function attachDeliverablesBar(contentDiv, textContent) {
                 openInLiveCanvas('เอกสารส่งงาน (Executive Deliverable)', clean, 'document');
             }
         }
-    ));
+    );
+    toolsMenu.appendChild(canvasDocBtn);
 
     // E. บันทึกลงคลังนิรภัย (Executive Offline Vault)
-    toolsMenu.appendChild(createToolItem(
+    const vaultSaveBtn = createToolItem(
         '<i class="fa-solid fa-shield-halved text-emerald"></i>',
         'บันทึกลง Offline Vault',
         () => {
@@ -1397,10 +1402,11 @@ function attachDeliverablesBar(contentDiv, textContent) {
                 }
             }
         }
-    ));
+    );
+    toolsMenu.appendChild(vaultSaveBtn);
 
     // F. ดาวน์โหลด (.md)
-    toolsMenu.appendChild(createToolItem(
+    const downloadReportBtn = createToolItem(
         '<i class="fa-solid fa-file-arrow-down text-purple"></i>',
         'ดาวน์โหลดไฟล์ Markdown (.md)',
         () => {
@@ -1415,7 +1421,8 @@ function attachDeliverablesBar(contentDiv, textContent) {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
-    ));
+    );
+    toolsMenu.appendChild(downloadReportBtn);
 
     toolsBtn.onclick = (e) => {
         e.stopPropagation();
