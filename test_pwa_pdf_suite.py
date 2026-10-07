@@ -25,6 +25,16 @@ def test_pwa_endpoints():
     assert len(manifest_data.get("icons", [])) >= 2
     print("✅ /manifest.json verified with standalone display & icons!")
 
+    # 3. Test /api/system/version (New Update Detection Endpoint)
+    res_ver = client.get("/api/system/version")
+    assert res_ver.status_code == 200, f"/api/system/version failed with status {res_ver.status_code}"
+    ver_data = res_ver.json()
+    assert ver_data.get("status") == "success"
+    assert "version" in ver_data
+    assert "build_id" in ver_data
+    assert "Cache-Control" in res_ver.headers
+    print(f"✅ /api/system/version endpoint verified (version: {ver_data.get('version')}, build: {ver_data.get('build_id')})!")
+
 def test_pwa_html_elements():
     with open("templates/index.html", "r", encoding="utf-8") as f:
         html = f.read()
@@ -35,19 +45,27 @@ def test_pwa_html_elements():
     assert 'id="ios-pwa-modal"' in html, "Missing #ios-pwa-modal in index.html"
     assert 'rel="manifest"' in html, "Missing rel=manifest in index.html"
     assert 'name="apple-mobile-web-app-capable"' in html, "Missing apple-mobile-web-app-capable in index.html"
-    print("✅ index.html PWA elements & iOS guide modal verified!")
+    
+    # System Update Notification Modal & Chip
+    assert 'id="kira-update-modal"' in html, "Missing #kira-update-modal in index.html"
+    assert 'id="btn-kira-update-now"' in html, "Missing #btn-kira-update-now in index.html"
+    assert 'id="btn-kira-update-later"' in html, "Missing #btn-kira-update-later in index.html"
+    assert 'id="kira-update-chip"' in html, "Missing #kira-update-chip in index.html"
+    assert 'name="kira-build-id"' in html, "Missing meta name=kira-build-id in index.html"
+    print("✅ index.html PWA elements, update modal & floating chip verified!")
 
 def test_pwa_and_pdf_scripts():
     with open("static/script.js", "r", encoding="utf-8") as f:
         js = f.read()
 
     assert "function initPWAController" in js, "Missing initPWAController in script.js"
+    assert "function initKiraUpdateController" in js, "Missing initKiraUpdateController in script.js"
     assert "function exportDeliverableToPDF" in js, "Missing exportDeliverableToPDF in script.js"
     assert "function exportBoardroomToPDF" in js, "Missing exportBoardroomToPDF in script.js"
     assert "exportBoardroomToPDF(this)" in js, "Missing exportBoardroomToPDF call in script.js"
     assert "pdfReportBtn" in js, "Missing pdfReportBtn in script.js"
     assert "initPWAController();" in js, "Missing initPWAController() call in script.js"
-    print("✅ script.js PWA controller and PDF export functions verified!")
+    print("✅ script.js PWA controller, update controller, and PDF export functions verified!")
 
 def test_pwa_and_print_styles():
     with open("static/style.css", "r", encoding="utf-8") as f:
@@ -56,13 +74,15 @@ def test_pwa_and_print_styles():
     assert ".pwa-header-install-btn" in css, "Missing .pwa-header-install-btn in style.css"
     assert ".pwa-install-banner" in css, "Missing .pwa-install-banner in style.css"
     assert ".ios-pwa-card" in css, "Missing .ios-pwa-card in style.css"
+    assert ".kira-update-card" in css, "Missing .kira-update-card in style.css"
+    assert ".kira-update-chip" in css, "Missing .kira-update-chip in style.css"
     assert "@media print" in css, "Missing @media print in style.css"
     assert ".deliverable-pdf-btn" in css, "Missing .deliverable-pdf-btn in style.css"
-    print("✅ style.css PWA components and print styles verified!")
+    print("✅ style.css PWA components, update modal, and print styles verified!")
 
 if __name__ == "__main__":
     test_pwa_endpoints()
     test_pwa_html_elements()
     test_pwa_and_pdf_scripts()
     test_pwa_and_print_styles()
-    print("\n🎉 ALL PWA & PDF/PRINT EXPORT TESTS PASSED PERFECTLY! 🚀")
+    print("\n🎉 ALL PWA, SYSTEM UPDATE & PDF/PRINT EXPORT TESTS PASSED PERFECTLY! 🚀")

@@ -1,8 +1,8 @@
 // ====================================================================
-// 🚀 Kira AI Progressive Web App - Service Worker (v2.3-VaultSync)
+// 🚀 Kira AI Progressive Web App - Service Worker (v2.4-UpdatePrompt)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.3';
+const CACHE_NAME = 'kira-ai-cache-v2.4';
 const STATIC_ASSETS = [
     '/',
     '/static/style.css',
@@ -15,14 +15,14 @@ const STATIC_ASSETS = [
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 
-// Install: Cache critical App Shell assets
+// Install: Cache critical App Shell assets (wait for user confirmation or activation)
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(STATIC_ASSETS).catch((err) => {
                 console.warn('[Kira SW] Non-critical asset cache skip:', err);
             });
-        }).then(() => self.skipWaiting())
+        })
     );
 });
 

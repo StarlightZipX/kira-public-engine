@@ -11,13 +11,15 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=25">
+    <link rel="stylesheet" href="/static/style.css?v=26">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kira AI">
+    <meta name="kira-build-id" content="{{ build_id or 'kira-v2.4.0' }}">
+    <meta name="kira-app-version" content="{{ app_version or '2.4.0' }}">
     <link rel="apple-touch-icon" href="/static/images/kira_logo.png?v=6">
     <link rel="icon" type="image/png" href="/static/images/kira_logo.png?v=6">
     <!-- MathJax for LaTeX Rendering -->
@@ -2809,12 +2811,73 @@
         </div>
     </div>
 
+    <!-- 🚀 Kira AI System Update Notification Modal (กล่องข้อความแจ้งเตือนการอัปเดตระบบ) -->
+    <div id="kira-update-modal" class="modal-overlay kira-update-overlay" style="display: none; z-index: 1250;">
+        <div class="kira-update-card">
+            <!-- Close Button -->
+            <button id="btn-kira-update-close" class="kira-update-close-btn" title="ปิดไว้ก่อน">&times;</button>
+            
+            <!-- Header with Glowing Avatar & Pulse Badge -->
+            <div class="kira-update-header">
+                <div class="kira-update-avatar-wrap">
+                    <img src="/static/images/kira_avatar.jpg?v=5" alt="Kira AI" class="kira-update-avatar" onerror="this.src='/static/images/kira_logo.png?v=6'">
+                    <span class="kira-update-avatar-glow"></span>
+                    <span class="kira-update-sparkle"><i class="fa-solid fa-sparkles"></i></span>
+                </div>
+                <div class="kira-update-badge">
+                    <span class="pulse-indicator"></span>
+                    <span>มีการอัปเดตใหม่</span>
+                    <span class="kira-version-tag" id="kira-new-version-tag">v2.4</span>
+                </div>
+            </div>
+
+            <!-- Title & Kira Dialogue -->
+            <div class="kira-update-content">
+                <h3 class="kira-update-title" id="kira-update-title">✨ Kira AI พร้อมให้อัปเดตแล้วค่ะ!</h3>
+                <p class="kira-update-desc" id="kira-update-desc">
+                    เรียน ท่านผู้ใช้งานและบอสคะ ขณะนี้ระบบ <strong>Kira AI</strong> ได้รับการปรับปรุงประสิทธิภาพ เพิ่มฟังก์ชันการทำงานใหม่ และยกระดับความฉลาดเรียบร้อยแล้วค่ะ
+                </p>
+                <div class="kira-update-quote-box">
+                    <i class="fa-solid fa-quote-left quote-icon"></i>
+                    <p class="kira-update-quote-text">
+                        "ตอนนี้ระบบพร้อมอัปเดตแล้วค่ะ คุณต้องการรีเฟรชหน้าเว็บเพื่อเริ่มใช้งานเวอร์ชันใหม่ตอนนี้เลยไหมคะ? ข้อมูลและบทสนทนาของคุณยังคงปลอดภัยค่ะ 🌸"
+                    </p>
+                </div>
+                <div class="kira-update-highlights">
+                    <div class="highlight-item"><i class="fa-solid fa-bolt-lightning text-cyan"></i> <span>โหลดเร็วและเสถียรยิ่งขึ้น</span></div>
+                    <div class="highlight-item"><i class="fa-solid fa-brain text-violet"></i> <span>สมองกล AI ฉลาดแม่นยำกว่าเดิม</span></div>
+                    <div class="highlight-item"><i class="fa-solid fa-shield-halved text-emerald"></i> <span>ซิงค์ความปลอดภัยอัตโนมัติ</span></div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="kira-update-actions">
+                <button type="button" id="btn-kira-update-later" class="btn-update-secondary">
+                    <i class="fa-regular fa-clock"></i> ไว้ทีหลัง
+                </button>
+                <button type="button" id="btn-kira-update-now" class="btn-update-primary">
+                    <i class="fa-solid fa-arrows-rotate"></i> อัปเดตทันที
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🌟 Floating Update Indicator Chip (Shown when user chooses 'ไว้ทีหลัง') -->
+    <div id="kira-update-chip" class="kira-update-chip" style="display: none;">
+        <div class="update-chip-inner" id="kira-update-chip-btn" title="คลิกเพื่อเปิดกล่องข้อความอัปเดตระบบ">
+            <span class="chip-pulse-dot"></span>
+            <span class="chip-icon"><i class="fa-solid fa-sparkles"></i></span>
+            <span class="chip-text">มีอัปเดตใหม่รออยู่</span>
+            <span class="chip-action"><i class="fa-solid fa-chevron-up"></i></span>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=42"></script>
+    <script src="/static/script.js?v=43"></script>
 </body>
 </html>

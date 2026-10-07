@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 1200px;
+            height: 1200px;
+            background: #080d1a;
+            color: #f8fafc;
+            font-family: 'Prompt', 'Leelawadee UI', sans-serif;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 50px 60px;
+        }
+
+        .ambient-glow-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 900px;
+            height: 900px;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.14) 0%, rgba(139, 92, 246, 0.09) 50%, rgba(0,0,0,0) 70%);
+            filter: blur(100px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Top Header */
+        .top-header {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+        }
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            padding: 8px 22px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #38bdf8;
+            margin-bottom: 12px;
+        }
+        .main-title {
+            font-size: 38px;
+            font-weight: 700;
+            line-height: 1.25;
+            color: #ffffff;
+        }
+        .main-title span.grad {
+            background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sub-title {
+            font-size: 18px;
+            color: #94a3b8;
+            margin-top: 6px;
+            font-weight: 300;
+        }
+
+        /* 4-Quadrant Grid */
+        .grid-matrix {
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 22px;
+            margin: 25px 0;
+            flex-grow: 1;
+        }
+        .quad-card {
+            background: rgba(15, 23, 42, 0.78);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 26px 26px;
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+        .quad-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+        }
+        .q1::before { background: linear-gradient(90deg, #38bdf8, #0284c7); }
+        .q2::before { background: linear-gradient(90deg, #a855f7, #6366f1); }
+        .q3::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+        .q4::before { background: linear-gradient(90deg, #10b981, #06b6d4); }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .q-num {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .card-top h3 {
+            font-size: 21px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .q-items {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .q-items li {
+            font-size: 15px;
+            color: #cbd5e1;
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .q-check {
+            width: 17px;
+            height: 17px;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+        .q1 .q-check { fill: #38bdf8; }
+        .q2 .q-check { fill: #c084fc; }
+        .q3 .q-check { fill: #fbbf24; }
+        .q4 .q-check { fill: #34d399; }
+
+        /* Privacy Banner Box */
+        .privacy-box {
+            position: relative;
+            z-index: 10;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 18px;
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        }
+        .p-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            flex-shrink: 0;
+        }
+        .p-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: #38bdf8;
+        }
+        .p-content h4 {
+            font-size: 17.5px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 3px;
+        }
+        .p-content p {
+            font-size: 14.5px;
+            color: #94a3b8;
+            line-height: 1.45;
+        }
+        .p-content p strong {
+            color: #38bdf8;
+        }
+
+        /* Bottom Footer */
+        .bottom-bar {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .bottom-bar strong {
+            color: #34d399;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow-center"></div>
+
+    <div class="top-header">
+        <div class="brand-badge">
+            <span>Kira AI Capability Matrix</span>
+        </div>
+        <h2 class="main-title">4 ศักยภาพหลักของ <span class="grad">Kira AI</span> ที่ตอบโจทย์การทำงานจริง</h2>
+        <p class="sub-title">ครบวงจรตั้งแต่การคิดวิเคราะห์ ระดมสมอง วางแผน ส่งมอบชิ้นงาน และรักษาความปลอดภัย</p>
+    </div>
+
+    <div class="grid-matrix">
+        <!-- Q1 -->
+        <div class="quad-card q1">
+            <div>
+                <div class="card-top">
+                    <div class="q-num">1</div>
+                    <h3>สมองกลหลายชั้น (Multi-Brain)</h3>
+                </div>
+                <ul class="q-items">
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Kira Flash:</strong> ความเร็วสูงสำหรับงานทั่วไป ถามไว ตอบไว</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Kira Reasoning:</strong> คิดวิเคราะห์เชิงลึก วางแผนซับซ้อนอย่างเป็นระบบ</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Failover อัตโนมัติ:</strong> สลับโหนดอัตโนมัติ ใช้งานได้ต่อเนื่องไร้รอยต่อ</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quad-card q2">
+            <div>
+                <div class="card-top">
+                    <div class="q-num">2</div>
+                    <h3>สภาผู้บริหารเสมือน (Boardroom)</h3>
+                </div>
+                <ul class="q-items">
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>4 ผู้บริหารจำลอง:</strong> CEO, CFO, CMO, CTO ช่วยคิดรอบมิติ</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Roundtable Debate:</strong> ดีเบตถกเถียงหาข้อสรุปที่ดีที่สุดเพื่อองค์กร</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Boss Gavel:</strong> บอสสามารถเคาะคำตัดสินสั่งการได้ 100%</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quad-card q3">
+            <div>
+                <div class="card-top">
+                    <div class="q-num">3</div>
+                    <h3>สตูดิโอส่งงานด่วน (Deliverable)</h3>
+                </div>
+                <ul class="q-items">
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>สร้างสไลด์ Keynote 16:9:</strong> ส่งมอบพร้อมนำเสนอทันที</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>พิมพ์ / ส่งออก PDF A4:</strong> จัดฟอร์แมตเอกสารมาตรฐานอย่างคมชัด</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Live Canvas:</strong> ตรวจทานและแก้ไขงานสดในที่เดียว</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="quad-card q4">
+            <div>
+                <div class="card-top">
+                    <div class="q-num">4</div>
+                    <h3>คลังนิรภัย & โหมดปรับตามวัย</h3>
+                </div>
+                <ul class="q-items">
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Offline Vault:</strong> จดโน้ตและอ่านเอกสารได้แม้ไม่มีเน็ต</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>PWA Mobile App:</strong> ติดตั้งลงมือถือเหมือนแอปแท้</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Silver Care Mode:</strong> โหมดวัยเก๋าอุ่นใจ ตัวหนังสือใหญ่สั่งด้วยเสียง</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Box -->
+    <div class="privacy-box">
+        <div class="p-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+        </div>
+        <div class="p-content">
+            <h4>คำมั่นสัญญาด้านความเป็นส่วนตัว (Zero Conversation Training Policy)</h4>
+            <p>ข้อความการสนทนาของท่าน <strong>จะไม่ถูกนำไปใช้เทรนหรือฝึกสอน AI เด็ดขาด</strong> โดยข้อมูลที่จะนำมาใช้ปรับปรุงระบบจะมาจากข้อเสนอแนะที่ท่านตั้งใจกดส่งผ่านปุ่ม <strong>"รีวิว"</strong> เท่านั้น เพื่อให้ท่านใช้งานได้อย่างมั่นใจและปลอดภัย 100%</p>
+        </div>
+    </div>
+
+    <div class="bottom-bar">
+        <span>Kira AI Public System • ปัญญาประดิษฐ์เพื่อคนไทย</span>
+        <span>ใช้งานฟรี <strong>15 โควต้า/วัน</strong> • แผนเริ่มต้นเพียง 39 บาท</span>
+    </div>
+</body>
+</html>

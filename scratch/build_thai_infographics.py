@@ -1,0 +1,822 @@
+import os
+import subprocess
+import time
+
+CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+OUTPUT_DIR = os.path.abspath("static/images")
+SCRATCH_DIR = os.path.abspath("scratch")
+os.makedirs(SCRATCH_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# 1. HTML Template for 16:9 Banner (1920x1080)
+HTML_16X9 = """<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 1920px;
+            height: 1080px;
+            background: #080d1a;
+            color: #f8fafc;
+            font-family: 'Prompt', 'Leelawadee UI', sans-serif;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 55px 75px;
+        }
+
+        .ambient-glow-1 {
+            position: absolute;
+            top: -150px;
+            left: 20%;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.18) 0%, rgba(6, 182, 212, 0) 70%);
+            filter: blur(80px);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .ambient-glow-2 {
+            position: absolute;
+            bottom: -150px;
+            right: 15%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.18) 0%, rgba(139, 92, 246, 0) 70%);
+            filter: blur(90px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .brand-logo {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #0284c7, #8b5cf6);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 35px rgba(6, 182, 212, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+        .brand-logo svg {
+            width: 38px;
+            height: 38px;
+            fill: #ffffff;
+        }
+        .brand-text h1 {
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 40%, #93c5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.1;
+        }
+        .brand-text p {
+            font-size: 19px;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .header-badges {
+            display: flex;
+            gap: 15px;
+        }
+        .pill-badge {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 10px 22px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .pill-badge.highlight {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #34d399;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        /* Hero Pitch */
+        .hero-pitch {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            margin: 20px 0 10px 0;
+        }
+        .hero-pitch h2 {
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1.25;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+        .hero-pitch h2 span.gradient {
+            background: linear-gradient(135deg, #38bdf8 0%, #a855f7 60%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-pitch p {
+            font-size: 21px;
+            color: #cbd5e1;
+            font-weight: 300;
+            max-width: 1250px;
+            margin: 0 auto;
+        }
+
+        /* 4 Core Pillars Grid */
+        .grid-pillars {
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-top: 10px;
+        }
+        .pillar-card {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 30px 26px;
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+        .pillar-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+        }
+        .pillar-card.card-1::before { background: linear-gradient(90deg, #38bdf8, #0284c7); }
+        .pillar-card.card-2::before { background: linear-gradient(90deg, #a855f7, #6366f1); }
+        .pillar-card.card-3::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+        .pillar-card.card-4::before { background: linear-gradient(90deg, #10b981, #06b6d4); }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        .icon-box {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-box svg {
+            width: 28px;
+            height: 28px;
+        }
+        .card-1 .icon-box { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); }
+        .card-1 .icon-box svg { fill: #38bdf8; }
+        .card-2 .icon-box { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); }
+        .card-2 .icon-box svg { fill: #c084fc; }
+        .card-3 .icon-box { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); }
+        .card-3 .icon-box svg { fill: #fbbf24; }
+        .card-4 .icon-box { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); }
+        .card-4 .icon-box svg { fill: #34d399; }
+
+        .card-title-box h3 {
+            font-size: 21px;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.2;
+        }
+        .card-title-box span {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+            margin-top: 10px;
+        }
+        .feature-list li {
+            font-size: 15.5px;
+            color: #cbd5e1;
+            line-height: 1.45;
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+        }
+        .check-icon {
+            width: 17px;
+            height: 17px;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+        .card-1 .check-icon { fill: #38bdf8; }
+        .card-2 .check-icon { fill: #c084fc; }
+        .card-3 .check-icon { fill: #fbbf24; }
+        .card-4 .check-icon { fill: #34d399; }
+
+        /* Trust & Privacy Guarantee Footer */
+        .trust-footer {
+            position: relative;
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 20px;
+            padding: 18px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+        .trust-privacy {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .shield-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            flex-shrink: 0;
+        }
+        .shield-icon svg {
+            width: 26px;
+            height: 26px;
+            fill: #38bdf8;
+        }
+        .trust-text h4 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 2px;
+        }
+        .trust-text p {
+            font-size: 15px;
+            color: #94a3b8;
+        }
+        .trust-text p strong {
+            color: #38bdf8;
+        }
+
+        .cta-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .free-quota-badge {
+            font-size: 16px;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+        .free-quota-badge strong {
+            color: #fbbf24;
+        }
+        .btn-launch {
+            background: linear-gradient(135deg, #0284c7, #6366f1);
+            color: #ffffff;
+            font-size: 17px;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-launch svg {
+            width: 16px;
+            height: 16px;
+            fill: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow-1"></div>
+    <div class="ambient-glow-2"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="brand-group">
+            <div class="brand-logo">
+                <svg viewBox="0 0 24 24"><path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/></svg>
+            </div>
+            <div class="brand-text">
+                <h1>Kira AI System</h1>
+                <p>ระบบปัญญาประดิษฐ์ผู้ช่วยส่วนตัวระดับพรีเมียม (Public & Executive Engine)</p>
+            </div>
+        </div>
+        <div class="header-badges">
+            <div class="pill-badge highlight">
+                <span class="dot"></span>
+                <span>ระบบออนไลน์ 100% พร้อมใช้งาน</span>
+            </div>
+            <div class="pill-badge">
+                <span>ภาษาไทยธรรมชาติ 100%</span>
+            </div>
+            <div class="pill-badge">
+                <span>ความปลอดภัยข้อมูลสูงสุด</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Pitch -->
+    <div class="hero-pitch">
+        <h2>ผู้ช่วย AI ที่ไม่ได้แค่ตอบคำถาม แต่พร้อมส่งมอบ <span class="gradient">"ชิ้นงานจริง"</span> ให้คุณ</h2>
+        <p>หมดปัญหาการนั่งก๊อปปี้ข้อความไปจัดหน้า คิระเปลี่ยนบทสนทนาและการสั่งงานให้กลายเป็นสไลด์ รายงาน และผลงานเสร็จสมบูรณ์ทันที</p>
+    </div>
+
+    <!-- 4 Core Pillars Grid -->
+    <div class="grid-pillars">
+        <!-- Card 1 -->
+        <div class="pillar-card card-1">
+            <div>
+                <div class="card-header">
+                    <div class="icon-box">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 3.84 2.16 7.18 5.34 8.86.37.19.78-.12.78-.54v-1.74c0-.38-.26-.71-.62-.83A6.994 6.994 0 0 1 4 12c0-4.41 3.59-8 8-8s8 3.59 8 8c0 2.21-.9 4.21-2.35 5.66-.27.27-.42.64-.42 1.02v1.74c0 .42.41.73.78.54C19.84 19.18 22 15.84 22 12c0-5.52-4.48-10-10-10z"/></svg>
+                    </div>
+                    <div class="card-title-box">
+                        <h3>สมองกลหลายชั้น</h3>
+                        <span>Multi-Brain Architecture</span>
+                    </div>
+                </div>
+                <ul class="feature-list">
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Kira Flash:</strong> ประมวลผลไว ตอบเร็ว สำหรับงานประจำวัน</span></li>
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Kira Reasoning:</strong> คิดเชิงลึกเป็นขั้นตอน วิเคราะห์โจทย์ยาก</span></li>
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>ระบบสำรองหลายชั้น:</strong> สลับโหนดอัตโนมัติ ใช้งานได้ต่อเนื่องไร้สะดุด</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="pillar-card card-2">
+            <div>
+                <div class="card-header">
+                    <div class="icon-box">
+                        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    </div>
+                    <div class="card-title-box">
+                        <h3>สภาที่ปรึกษาเสมือน</h3>
+                        <span>Virtual Boardroom</span>
+                    </div>
+                </div>
+                <ul class="feature-list">
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>4 ผู้บริหารจำลอง:</strong> CEO, CFO, CMO, CTO ช่วยคิดรอบด้าน</span></li>
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Roundtable Debate:</strong> ดีเบตถกเถียงหาข้อสรุปและแนวทางที่ดีที่สุด</span></li>
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Boss Intervention:</strong> แทรกแซงสั่งการหรือเคาะคำตัดสินได้ตลอดเวลา</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="pillar-card card-3">
+            <div>
+                <div class="card-header">
+                    <div class="icon-box">
+                        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                    </div>
+                    <div class="card-title-box">
+                        <h3>สตูดิโอส่งงานในคลิกเดียว</h3>
+                        <span>Deliverable Studio</span>
+                    </div>
+                </div>
+                <ul class="feature-list">
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>สร้างสไลด์ Keynote (16:9):</strong> พรีเซนต์ได้ทันที ไม่ต้องทำเอง</span></li>
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>พิมพ์ / ส่งออก PDF A4:</strong> จัดฟอร์แมตเอกสารมาตรฐานอย่างสวยงาม</span></li>
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Live Canvas:</strong> ตรวจสอบ แก้ไข และเขียนงานสดในหน้าต่างเดียวกัน</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="pillar-card card-4">
+            <div>
+                <div class="card-header">
+                    <div class="icon-box">
+                        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+                    </div>
+                    <div class="card-title-box">
+                        <h3>คลังออฟไลน์ & ดูแลทุกวัย</h3>
+                        <span>Offline Vault & Adaptive</span>
+                    </div>
+                </div>
+                <ul class="feature-list">
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Offline Vault:</strong> ทำงาน บันทึก และค้นหาเอกสารได้แม้ไม่มีเน็ต</span></li>
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>PWA Mobile App:</strong> ติดตั้งลงสมาร์ตโฟนและคอมได้ทันที</span></li>
+                    <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Silver Care Mode:</strong> โหมดวัยเก๋าอุ่นใจ ตัวหนังสือใหญ่สั่งด้วยเสียง</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trust & Privacy Guarantee Footer -->
+    <div class="trust-footer">
+        <div class="trust-privacy">
+            <div class="shield-icon">
+                <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+            </div>
+            <div class="trust-text">
+                <h4>นโยบายความเป็นส่วนตัวสูงสุด (Zero Conversation Training Policy)</h4>
+                <p>ข้อความการสนทนาของทุกท่าน <strong>จะไม่ถูกนำไปใช้เทรนหรือบันทึกฝึกสอน AI เด็ดขาด</strong> โดยข้อมูลที่จะนำไปปรับปรุงระบบจะมาจาก <strong>"รีวิว"</strong> ที่ผู้ใช้ตั้งใจกดส่งเท่านั้น</p>
+            </div>
+        </div>
+        <div class="cta-group">
+            <div class="free-quota-badge">
+                ใช้งานฟรี <strong>15 โควต้า/วัน</strong>
+            </div>
+            <div class="btn-launch">
+                <span>เริ่มต้นใช้งานทันที</span>
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+        </div>
+    </div>
+</body>
+</html>"""
+
+# 2. HTML Template for 1:1 Square Capability & Privacy Matrix (1200x1200)
+HTML_1X1 = """<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 1200px;
+            height: 1200px;
+            background: #080d1a;
+            color: #f8fafc;
+            font-family: 'Prompt', 'Leelawadee UI', sans-serif;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 50px 60px;
+        }
+
+        .ambient-glow-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 900px;
+            height: 900px;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.14) 0%, rgba(139, 92, 246, 0.09) 50%, rgba(0,0,0,0) 70%);
+            filter: blur(100px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Top Header */
+        .top-header {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+        }
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            padding: 8px 22px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #38bdf8;
+            margin-bottom: 12px;
+        }
+        .main-title {
+            font-size: 38px;
+            font-weight: 700;
+            line-height: 1.25;
+            color: #ffffff;
+        }
+        .main-title span.grad {
+            background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sub-title {
+            font-size: 18px;
+            color: #94a3b8;
+            margin-top: 6px;
+            font-weight: 300;
+        }
+
+        /* 4-Quadrant Grid */
+        .grid-matrix {
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 22px;
+            margin: 25px 0;
+            flex-grow: 1;
+        }
+        .quad-card {
+            background: rgba(15, 23, 42, 0.78);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 26px 26px;
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+        .quad-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+        }
+        .q1::before { background: linear-gradient(90deg, #38bdf8, #0284c7); }
+        .q2::before { background: linear-gradient(90deg, #a855f7, #6366f1); }
+        .q3::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+        .q4::before { background: linear-gradient(90deg, #10b981, #06b6d4); }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .q-num {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .card-top h3 {
+            font-size: 21px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .q-items {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .q-items li {
+            font-size: 15px;
+            color: #cbd5e1;
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .q-check {
+            width: 17px;
+            height: 17px;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+        .q1 .q-check { fill: #38bdf8; }
+        .q2 .q-check { fill: #c084fc; }
+        .q3 .q-check { fill: #fbbf24; }
+        .q4 .q-check { fill: #34d399; }
+
+        /* Privacy Banner Box */
+        .privacy-box {
+            position: relative;
+            z-index: 10;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 18px;
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        }
+        .p-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            flex-shrink: 0;
+        }
+        .p-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: #38bdf8;
+        }
+        .p-content h4 {
+            font-size: 17.5px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 3px;
+        }
+        .p-content p {
+            font-size: 14.5px;
+            color: #94a3b8;
+            line-height: 1.45;
+        }
+        .p-content p strong {
+            color: #38bdf8;
+        }
+
+        /* Bottom Footer */
+        .bottom-bar {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .bottom-bar strong {
+            color: #34d399;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow-center"></div>
+
+    <div class="top-header">
+        <div class="brand-badge">
+            <span>Kira AI Capability Matrix</span>
+        </div>
+        <h2 class="main-title">4 ศักยภาพหลักของ <span class="grad">Kira AI</span> ที่ตอบโจทย์การทำงานจริง</h2>
+        <p class="sub-title">ครบวงจรตั้งแต่การคิดวิเคราะห์ ระดมสมอง วางแผน ส่งมอบชิ้นงาน และรักษาความปลอดภัย</p>
+    </div>
+
+    <div class="grid-matrix">
+        <!-- Q1 -->
+        <div class="quad-card q1">
+            <div>
+                <div class="card-top">
+                    <div class="q-num">1</div>
+                    <h3>สมองกลหลายชั้น (Multi-Brain)</h3>
+                </div>
+                <ul class="q-items">
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Kira Flash:</strong> ความเร็วสูงสำหรับงานทั่วไป ถามไว ตอบไว</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Kira Reasoning:</strong> คิดวิเคราะห์เชิงลึก วางแผนซับซ้อนอย่างเป็นระบบ</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Failover อัตโนมัติ:</strong> สลับโหนดอัตโนมัติ ใช้งานได้ต่อเนื่องไร้รอยต่อ</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quad-card q2">
+            <div>
+                <div class="card-top">
+                    <div class="q-num">2</div>
+                    <h3>สภาผู้บริหารเสมือน (Boardroom)</h3>
+                </div>
+                <ul class="q-items">
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>4 ผู้บริหารจำลอง:</strong> CEO, CFO, CMO, CTO ช่วยคิดรอบมิติ</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Roundtable Debate:</strong> ดีเบตถกเถียงหาข้อสรุปที่ดีที่สุดเพื่อองค์กร</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Boss Gavel:</strong> บอสสามารถเคาะคำตัดสินสั่งการได้ 100%</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quad-card q3">
+            <div>
+                <div class="card-top">
+                    <div class="q-num">3</div>
+                    <h3>สตูดิโอส่งงานด่วน (Deliverable)</h3>
+                </div>
+                <ul class="q-items">
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>สร้างสไลด์ Keynote 16:9:</strong> ส่งมอบพร้อมนำเสนอทันที</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>พิมพ์ / ส่งออก PDF A4:</strong> จัดฟอร์แมตเอกสารมาตรฐานอย่างคมชัด</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Live Canvas:</strong> ตรวจทานและแก้ไขงานสดในที่เดียว</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="quad-card q4">
+            <div>
+                <div class="card-top">
+                    <div class="q-num">4</div>
+                    <h3>คลังนิรภัย & โหมดปรับตามวัย</h3>
+                </div>
+                <ul class="q-items">
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Offline Vault:</strong> จดโน้ตและอ่านเอกสารได้แม้ไม่มีเน็ต</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>PWA Mobile App:</strong> ติดตั้งลงมือถือเหมือนแอปแท้</span></li>
+                    <li><svg class="q-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span><strong>Silver Care Mode:</strong> โหมดวัยเก๋าอุ่นใจ ตัวหนังสือใหญ่สั่งด้วยเสียง</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Box -->
+    <div class="privacy-box">
+        <div class="p-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+        </div>
+        <div class="p-content">
+            <h4>คำมั่นสัญญาด้านความเป็นส่วนตัว (Zero Conversation Training Policy)</h4>
+            <p>ข้อความการสนทนาของท่าน <strong>จะไม่ถูกนำไปใช้เทรนหรือฝึกสอน AI เด็ดขาด</strong> โดยข้อมูลที่จะนำมาใช้ปรับปรุงระบบจะมาจากข้อเสนอแนะที่ท่านตั้งใจกดส่งผ่านปุ่ม <strong>"รีวิว"</strong> เท่านั้น เพื่อให้ท่านใช้งานได้อย่างมั่นใจและปลอดภัย 100%</p>
+        </div>
+    </div>
+
+    <div class="bottom-bar">
+        <span>Kira AI Public System • ปัญญาประดิษฐ์เพื่อคนไทย</span>
+        <span>ใช้งานฟรี <strong>15 โควต้า/วัน</strong> • แผนเริ่มต้นเพียง 39 บาท</span>
+    </div>
+</body>
+</html>"""
+
+file_16x9 = os.path.join(SCRATCH_DIR, "infographic_16x9.html")
+file_1x1 = os.path.join(SCRATCH_DIR, "infographic_1x1.html")
+
+with open(file_16x9, "w", encoding="utf-8") as f:
+    f.write(HTML_16X9)
+
+with open(file_1x1, "w", encoding="utf-8") as f:
+    f.write(HTML_1X1)
+
+target_16x9 = os.path.join(OUTPUT_DIR, "kira_launch_banner_th_16x9.png")
+target_1x1 = os.path.join(OUTPUT_DIR, "kira_features_matrix_th_1x1.png")
+
+print(f"Generating updated 16:9 banner: {target_16x9}...")
+subprocess.run([
+    CHROME_PATH,
+    "--headless=new",
+    "--disable-gpu",
+    "--no-sandbox",
+    "--window-size=1920,1080",
+    f"--screenshot={target_16x9}",
+    f"file:///{file_16x9.replace(os.sep, '/')}"
+], check=True)
+
+print(f"Generating updated 1:1 matrix: {target_1x1}...")
+subprocess.run([
+    CHROME_PATH,
+    "--headless=new",
+    "--disable-gpu",
+    "--no-sandbox",
+    "--window-size=1200,1200",
+    f"--screenshot={target_1x1}",
+    f"file:///{file_1x1.replace(os.sep, '/')}"
+], check=True)
+
+print("Both Thai infographics successfully updated with standalone SVGs!")

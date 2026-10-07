@@ -6034,6 +6034,192 @@ function initSubscriptionController() {
 }
 
 // ====================================================================
+// 🚀 Kira AI System Update Notification & Seamless Reload Engine
+// ====================================================================
+function initKiraUpdateController() {
+    const updateModal = document.getElementById('kira-update-modal');
+    const updateChip = document.getElementById('kira-update-chip');
+    const btnUpdateNow = document.getElementById('btn-kira-update-now');
+    const btnUpdateLater = document.getElementById('btn-kira-update-later');
+    const btnUpdateClose = document.getElementById('btn-kira-update-close');
+    const chipBtn = document.getElementById('kira-update-chip-btn');
+    const versionTag = document.getElementById('kira-new-version-tag');
+
+    let waitingWorker = null;
+
+    // Show Update Modal Dialog
+    function showUpdatePrompt(options = {}) {
+        const postponedUntil = sessionStorage.getItem('kira_update_postponed_until');
+        const now = Date.now();
+        if (!options.force && postponedUntil && now < parseInt(postponedUntil, 10)) {
+            if (updateChip) updateChip.style.display = 'block';
+            return;
+        }
+
+        if (options.worker) {
+            waitingWorker = options.worker;
+        }
+
+        if (options.version && versionTag) {
+            const vText = String(options.version);
+            versionTag.textContent = vText.startsWith('v') ? vText : `v${vText}`;
+        }
+
+        if (updateModal) {
+            updateModal.style.display = 'flex';
+        }
+        if (updateChip) {
+            updateChip.style.display = 'none';
+        }
+    }
+
+    // Dismiss / Postpone Update Dialog
+    function dismissUpdatePrompt() {
+        if (updateModal) {
+            updateModal.style.display = 'none';
+        }
+        // Postpone for 15 minutes in this tab session
+        sessionStorage.setItem('kira_update_postponed_until', (Date.now() + 15 * 60 * 1000).toString());
+        // Reveal subtle floating chip so user can update whenever ready
+        if (updateChip) {
+            updateChip.style.display = 'block';
+        }
+    }
+
+    // Execute Immediate Update
+    function executeUpdate() {
+        if (btnUpdateNow) {
+            btnUpdateNow.disabled = true;
+            btnUpdateNow.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปเดตระบบ...';
+        }
+
+        sessionStorage.setItem('kira_just_updated', '1');
+        sessionStorage.removeItem('kira_update_postponed_until');
+
+        if (waitingWorker) {
+            try {
+                waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+            } catch (e) {
+                console.warn('Worker postMessage error:', e);
+            }
+        }
+
+        // Purge old caches and reload
+        if ('caches' in window) {
+            caches.keys().then((keys) => {
+                return Promise.all(keys.map((key) => caches.delete(key)));
+            }).catch((err) => {
+                console.warn('Cache purge error:', err);
+            }).finally(() => {
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 300);
+            });
+        } else {
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 300);
+        }
+    }
+
+    // Button event listeners
+    if (btnUpdateNow) {
+        btnUpdateNow.addEventListener('click', executeUpdate);
+    }
+    if (btnUpdateLater) {
+        btnUpdateLater.addEventListener('click', dismissUpdatePrompt);
+    }
+    if (btnUpdateClose) {
+        btnUpdateClose.addEventListener('click', dismissUpdatePrompt);
+    }
+    if (chipBtn) {
+        chipBtn.addEventListener('click', () => {
+            showUpdatePrompt({ force: true });
+        });
+    }
+
+    // Close on backdrop click
+    if (updateModal) {
+        updateModal.addEventListener('click', (e) => {
+            if (e.target === updateModal) {
+                dismissUpdatePrompt();
+            }
+        });
+    }
+
+    // Listen for Service Worker Controller Change
+    let refreshing = false;
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                sessionStorage.setItem('kira_just_updated', '1');
+                window.location.reload();
+            }
+        });
+    }
+
+    // Backend Build Poller
+    const metaBuildId = document.querySelector('meta[name="kira-build-id"]')?.getAttribute('content');
+    let currentBuildId = metaBuildId || null;
+
+    async function checkBackendVersion() {
+        try {
+            const res = await fetch('/api/system/version?_t=' + Date.now(), { cache: 'no-store' });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!currentBuildId && data.build_id) {
+                currentBuildId = data.build_id;
+            } else if (data.build_id && currentBuildId && data.build_id !== currentBuildId) {
+                console.log('🚀 Kira Update Detected from backend! Current:', currentBuildId, 'New:', data.build_id);
+                showUpdatePrompt({
+                    version: data.version,
+                    release_name: data.release_name
+                });
+            }
+        } catch (e) {
+            // Silently ignore network errors
+        }
+    }
+
+    // Initial check to store baseline build ID
+    if (!currentBuildId) {
+        checkBackendVersion();
+    }
+
+    // Periodic check every 3 minutes
+    setInterval(checkBackendVersion, 3 * 60 * 1000);
+
+    // Check on tab focus or visibility return
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            checkBackendVersion();
+        }
+    });
+    window.addEventListener('focus', checkBackendVersion);
+
+    // Welcome-back toast after reload
+    if (sessionStorage.getItem('kira_just_updated') === '1') {
+        sessionStorage.removeItem('kira_just_updated');
+        setTimeout(() => {
+            if (typeof showConnectionToast === 'function') {
+                showConnectionToast('✨ อัปเดต Kira AI เรียบร้อยแล้วค่ะ! พร้อมให้บริการคุณแล้วนะคะ 🌸', 'ready');
+                if (typeof hideConnectionToast === 'function') hideConnectionToast(4500);
+            }
+        }, 1200);
+    }
+
+    const controllerObj = {
+        showUpdatePrompt,
+        setWaitingWorker: (worker) => { waitingWorker = worker; }
+    };
+    window.kiraUpdateController = controllerObj;
+    window.triggerKiraUpdatePrompt = (opts) => showUpdatePrompt(Object.assign({ force: true }, opts));
+    return controllerObj;
+}
+window.initKiraUpdateController = initKiraUpdateController;
+
+// ====================================================================
 // 📱 Progressive Web App (PWA) Controller & Installation Logic
 // ====================================================================
 
@@ -6049,16 +6235,57 @@ function initPWAController() {
     const iosGotitBtn = document.getElementById('ios-pwa-gotit-btn');
     const pwaMenuStatus = document.getElementById('pwa-menu-status');
 
-    // 1. Register Service Worker
+    // Initialize System Update Engine
+    const updateController = initKiraUpdateController();
+
+    // 1. Register Service Worker & Handle Updates
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
+            const handleRegistration = (reg) => {
+                console.log('🌸 Kira PWA Service Worker Registered! Scope:', reg.scope);
+                window.kiraServiceWorkerRegistration = reg;
+
+                // Check if worker already waiting
+                if (reg.waiting && navigator.serviceWorker.controller) {
+                    updateController.setWaitingWorker(reg.waiting);
+                    updateController.showUpdatePrompt({ worker: reg.waiting });
+                }
+
+                // Listen for new worker installed
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    if (!newWorker) return;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed') {
+                            if (navigator.serviceWorker.controller) {
+                                // New update found and ready!
+                                updateController.setWaitingWorker(newWorker);
+                                updateController.showUpdatePrompt({ worker: newWorker });
+                            } else {
+                                // First install, activate immediately
+                                newWorker.postMessage({ type: 'SKIP_WAITING' });
+                            }
+                        }
+                    });
+                });
+
+                // Periodic check for SW update (every 10 minutes)
+                setInterval(() => {
+                    reg.update().catch(() => {});
+                }, 10 * 60 * 1000);
+
+                // Check on tab focus
+                window.addEventListener('focus', () => {
+                    reg.update().catch(() => {});
+                });
+            };
+
             navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                .then((reg) => {
-                    console.log('🌸 Kira PWA Service Worker Registered! Scope:', reg.scope);
-                })
+                .then(handleRegistration)
                 .catch((err) => {
                     console.warn('PWA /sw.js registration attempt failed, trying fallback:', err);
                     navigator.serviceWorker.register('/static/sw.js', { scope: '/' })
+                        .then(handleRegistration)
                         .catch((fallbackErr) => console.warn('PWA fallback SW registration error:', fallbackErr));
                 });
         });

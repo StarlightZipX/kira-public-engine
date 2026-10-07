@@ -115,7 +115,14 @@ templates = Jinja2Templates(directory=templates_dir)
 async def get_service_worker():
     sw_path = os.path.join(static_dir, "sw.js")
     if os.path.exists(sw_path):
-        return FileResponse(sw_path, media_type="application/javascript", headers={"Service-Worker-Allowed": "/"})
+        return FileResponse(
+            sw_path, 
+            media_type="application/javascript", 
+            headers={
+                "Service-Worker-Allowed": "/",
+                "Cache-Control": "no-cache, no-store, must-revalidate"
+            }
+        )
     raise HTTPException(status_code=404, detail="Service worker not found")
 
 @app.get("/manifest.json")
@@ -124,6 +131,22 @@ async def get_manifest():
     if os.path.exists(manifest_path):
         return FileResponse(manifest_path, media_type="application/manifest+json")
     raise HTTPException(status_code=404, detail="Manifest not found")
+
+# --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
+KIRA_SYSTEM_VERSION = "2.4.0"
+APP_START_TIME = int(time.time())
+APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
+
+@app.get("/api/system/version")
+async def get_system_version():
+    return JSONResponse({
+        "status": "success",
+        "version": KIRA_SYSTEM_VERSION,
+        "build_id": APP_BUILD_ID,
+        "timestamp": APP_START_TIME,
+        "release_name": "Kira Executive Intelligence Update",
+        "message": "ระบบ Kira AI พร้อมอัปเดตเป็นเวอร์ชันล่าสุดแล้วค่ะ 🌸"
+    }, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
 # --- Model Context Protocol (MCP) Hub Integration (Kira 2.2 Phase 2) ---
 from mcp_hub import mcp_router, init_mcp_tables, auto_detect_and_dispatch_mcp
@@ -1715,7 +1738,15 @@ async def get_system_providers(request: Request):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
+    return templates.TemplateResponse(
+        request=request, 
+        name="index.html", 
+        context={
+            "request": request,
+            "build_id": APP_BUILD_ID,
+            "app_version": KIRA_SYSTEM_VERSION
+        }
+    )
 
 # ========== OAuth 2.0 Multi-Platform Social Login Helpers & Endpoints ==========
 def _clean_oauth_states():

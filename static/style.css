@@ -9466,6 +9466,385 @@ body.mode-silver-care .welcome-subtitle {
 }
 
 /* ====================================================================
+   🚀 Kira AI System Update Notification Modal & Floating Chip
+   ==================================================================== */
+.kira-update-overlay {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: rgba(3, 7, 18, 0.78);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 1250;
+    animation: kiraFadeIn 0.25s ease-out;
+}
+
+@keyframes kiraFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.kira-update-card {
+    background: linear-gradient(155deg, rgba(15, 23, 42, 0.98), rgba(11, 15, 25, 0.96));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.85), 0 0 35px rgba(56, 189, 248, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    border-radius: 22px;
+    max-width: 500px;
+    width: 92%;
+    position: relative;
+    padding: 26px 24px;
+    color: #f8fafc;
+    animation: kiraPopIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+}
+
+@keyframes kiraPopIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.kira-update-close-btn {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.kira-update-close-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+    transform: rotate(90deg);
+}
+
+.kira-update-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.kira-update-avatar-wrap {
+    position: relative;
+    width: 58px;
+    height: 58px;
+    flex-shrink: 0;
+}
+
+.kira-update-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    object-fit: cover;
+    border: 2px solid rgba(56, 189, 248, 0.5);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.kira-update-avatar-glow {
+    position: absolute;
+    inset: -3px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #0ea5e9, #a855f7);
+    z-index: -1;
+    opacity: 0.6;
+    filter: blur(6px);
+    animation: avatarPulseGlow 3s infinite alternate ease-in-out;
+}
+
+@keyframes avatarPulseGlow {
+    from { opacity: 0.3; transform: scale(0.96); }
+    to { opacity: 0.8; transform: scale(1.04); }
+}
+
+.kira-update-sparkle {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #38bdf8, #818cf8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 0.65rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    border: 2px solid #0f172a;
+}
+
+.kira-update-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #38bdf8;
+}
+
+.pulse-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 10px #34d399;
+    animation: pulseDot 1.5s infinite;
+}
+
+@keyframes pulseDot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.5; }
+}
+
+.kira-version-tag {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.kira-update-title {
+    font-size: 1.22rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+    line-height: 1.35;
+    background: linear-gradient(135deg, #ffffff 40%, #7dd3fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.kira-update-desc {
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    line-height: 1.55;
+    margin: 0 0 12px 0;
+}
+
+.kira-update-quote-box {
+    position: relative;
+    background: rgba(56, 189, 248, 0.05);
+    border-left: 3px solid #38bdf8;
+    border-radius: 0 12px 12px 0;
+    padding: 10px 14px 10px 32px;
+    margin: 12px 0 16px 0;
+}
+
+.quote-icon {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 0.82rem;
+    color: #38bdf8;
+    opacity: 0.7;
+}
+
+.kira-update-quote-text {
+    margin: 0;
+    font-size: 0.84rem;
+    color: #e2e8f0;
+    line-height: 1.5;
+    font-style: italic;
+}
+
+.kira-update-highlights {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 14px 0 20px 0;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 10px 14px;
+}
+
+.highlight-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: #cbd5e1;
+}
+
+.highlight-item i {
+    font-size: 0.85rem;
+    width: 16px;
+    text-align: center;
+}
+
+.text-cyan { color: #38bdf8 !important; }
+.text-violet { color: #c084fc !important; }
+
+.kira-update-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn-update-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #94a3b8;
+    padding: 9px 18px;
+    border-radius: 10px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-update-secondary:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.btn-update-primary {
+    background: linear-gradient(135deg, #0284c7, #38bdf8, #6366f1);
+    background-size: 200% auto;
+    border: none;
+    color: #ffffff;
+    padding: 10px 22px;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.45);
+    transition: all 0.25s ease;
+}
+
+.btn-update-primary:hover {
+    background-position: right center;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(14, 165, 233, 0.65);
+}
+
+.btn-update-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Floating Update Indicator Chip */
+.kira-update-chip {
+    position: fixed;
+    bottom: 85px;
+    right: 22px;
+    z-index: 1060;
+    animation: chipFadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes chipFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.update-chip-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(15, 23, 42, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 30px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.2);
+    color: #f8fafc;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.update-chip-inner:hover {
+    transform: translateY(-2px);
+    border-color: #38bdf8;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 22px rgba(56, 189, 248, 0.35);
+}
+
+.chip-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 8px #34d399;
+    animation: pulseDot 1.5s infinite;
+}
+
+.chip-icon {
+    color: #38bdf8;
+    font-size: 0.85rem;
+}
+
+.chip-action {
+    color: #94a3b8;
+    font-size: 0.72rem;
+    margin-left: 2px;
+}
+
+@media (max-width: 600px) {
+    .kira-update-card {
+        padding: 20px 16px;
+        border-radius: 18px;
+    }
+    .kira-update-actions {
+        flex-direction: column-reverse;
+        width: 100%;
+        gap: 8px;
+    }
+    .btn-update-primary,
+    .btn-update-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+    .kira-update-chip {
+        bottom: 78px;
+        right: 14px;
+    }
+}
+
+/* ====================================================================
    🖨️ High-Contrast Deliverables Print & PDF Styles
    ==================================================================== */
 
