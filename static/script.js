@@ -1313,13 +1313,24 @@ function attachDeliverablesBar(contentDiv, textContent) {
         }
     };
 
-    // 3. Compact Consolidated Studio & Tools Dropdown Menu (เครื่องมือสร้างสรรค์ & ส่งงาน ▾)
+    // 3. Interactive Visual Mind Map Button (ผังความคิด)
+    const mindMapBtn = document.createElement('button');
+    mindMapBtn.className = 'deliverable-btn mindmap-btn';
+    mindMapBtn.title = 'แปลงคำตอบนี้เป็นผังความคิดแบบโต้ตอบ (Interactive Visual Mind Map)';
+    mindMapBtn.innerHTML = '<i class="fa-solid fa-diagram-project text-cyan"></i> ผังความคิด';
+    mindMapBtn.onclick = () => {
+        if (typeof openKiraMindMap === 'function') {
+            openKiraMindMap(textContent);
+        }
+    };
+
+    // 4. Compact Consolidated Studio & Tools Dropdown Menu (เครื่องมือสร้างสรรค์ & ส่งงาน ▾)
     const toolsWrap = document.createElement('div');
     toolsWrap.className = 'msg-tools-dropdown-wrapper';
 
     const toolsBtn = document.createElement('button');
     toolsBtn.className = 'deliverable-btn deliverable-tools-trigger';
-    toolsBtn.title = 'เครื่องมือสร้างสรรค์และส่งออกงาน (สไลด์ 16:9, รายงาน, PDF, Canvas, คลังนิรภัย)';
+    toolsBtn.title = 'เครื่องมือสร้างสรรค์และส่งออกงาน (ผังความคิด, สไลด์ 16:9, รายงาน, PDF, Canvas, คลังนิรภัย)';
     toolsBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>เครื่องมือ</span> <i class="fa-solid fa-chevron-down" style="font-size: 0.65em; opacity: 0.7;"></i>';
 
     const toolsMenu = document.createElement('div');
@@ -1353,7 +1364,19 @@ function attachDeliverablesBar(contentDiv, textContent) {
     );
     toolsMenu.appendChild(cleanReportBtn);
 
-    // B. สร้างสไลด์ (16:9)
+    // B. ผังความคิด (Visual Mind Map)
+    const mindMapToolBtn = createToolItem(
+        '<i class="fa-solid fa-diagram-project text-cyan"></i>',
+        'ผังความคิด (Visual Mind Map)',
+        () => {
+            if (typeof openKiraMindMap === 'function') {
+                openKiraMindMap(textContent);
+            }
+        }
+    );
+    toolsMenu.appendChild(mindMapToolBtn);
+
+    // C. สร้างสไลด์ (16:9)
     const slideDeckBtn = createToolItem(
         '<i class="fa-solid fa-file-powerpoint text-rose"></i>',
         'สร้างสไลด์ Keynote (16:9)',
@@ -1365,7 +1388,7 @@ function attachDeliverablesBar(contentDiv, textContent) {
     );
     toolsMenu.appendChild(slideDeckBtn);
 
-    // C. พิมพ์ / บันทึก PDF
+    // D. พิมพ์ / บันทึก PDF
     const pdfReportBtn = createToolItem(
         '<i class="fa-solid fa-print text-emerald"></i>',
         'พิมพ์ / ส่งออก PDF A4',
@@ -1376,7 +1399,7 @@ function attachDeliverablesBar(contentDiv, textContent) {
     pdfReportBtn.className += ' deliverable-pdf-btn';
     toolsMenu.appendChild(pdfReportBtn);
 
-    // D. เปิดใน Live Canvas
+    // E. เปิดใน Live Canvas
     const canvasDocBtn = createToolItem(
         '<i class="fa-solid fa-pen-to-square text-amber"></i>',
         'เปิดแก้ไขใน Live Canvas',
@@ -1389,7 +1412,7 @@ function attachDeliverablesBar(contentDiv, textContent) {
     );
     toolsMenu.appendChild(canvasDocBtn);
 
-    // E. บันทึกลงคลังนิรภัย (Executive Offline Vault)
+    // F. บันทึกลงคลังนิรภัย (Executive Offline Vault)
     const vaultSaveBtn = createToolItem(
         '<i class="fa-solid fa-shield-halved text-emerald"></i>',
         'บันทึกลง Offline Vault',
@@ -1405,7 +1428,7 @@ function attachDeliverablesBar(contentDiv, textContent) {
     );
     toolsMenu.appendChild(vaultSaveBtn);
 
-    // F. ดาวน์โหลด (.md)
+    // G. ดาวน์โหลด (.md)
     const downloadReportBtn = createToolItem(
         '<i class="fa-solid fa-file-arrow-down text-purple"></i>',
         'ดาวน์โหลดไฟล์ Markdown (.md)',
@@ -1435,7 +1458,7 @@ function attachDeliverablesBar(contentDiv, textContent) {
     toolsWrap.appendChild(toolsBtn);
     toolsWrap.appendChild(toolsMenu);
 
-    // 4. Like & Dislike
+    // 5. Like & Dislike
     const likeBtn = document.createElement('button');
     likeBtn.className = 'deliverable-btn icon-only';
     likeBtn.title = 'ชอบคำตอบนี้';
@@ -1460,7 +1483,7 @@ function attachDeliverablesBar(contentDiv, textContent) {
         likeBtn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
     };
 
-    // 5. Prominent Outside Review & Feedback Button (หาง่าย ชัดเจน ไม่ต้องค้นหาในเมนู)
+    // 6. Prominent Outside Review & Feedback Button
     const reviewBtn = document.createElement('button');
     reviewBtn.className = 'deliverable-btn review-action-btn';
     reviewBtn.title = 'รีวิวและให้ข้อเสนอแนะเกี่ยวกับคำตอบนี้';
@@ -1469,9 +1492,10 @@ function attachDeliverablesBar(contentDiv, textContent) {
         if (typeof openReviewModal === 'function') openReviewModal(textContent);
     };
 
-    // Build Minimal Toolbar
+    // Build Toolbar
     feedbackUI.appendChild(copyMsgBtn);
     feedbackUI.appendChild(speakerBtn);
+    feedbackUI.appendChild(mindMapBtn);
     feedbackUI.appendChild(toolsWrap);
     feedbackUI.appendChild(likeBtn);
     feedbackUI.appendChild(dislikeBtn);
@@ -7803,6 +7827,540 @@ function printSlideDeck() {
 }
 
 // =========================================================================
+// 🧠 Kira Living Mind Map & Interactive Visual Graph Engine
+// =========================================================================
+let currentMindMapTree = null;
+let currentMindMapRawText = '';
+let mindMapScale = 0.85;
+let mindMapPanX = 0;
+let mindMapPanY = 0;
+let isMindMapPanning = false;
+let mindMapStartX = 0;
+let mindMapStartY = 0;
+
+const MINDMAP_PALETTES = [
+    { name: 'cyan', color: '#38bdf8', glow: 'rgba(56, 189, 248, 0.35)', icon: 'fa-bolt' },
+    { name: 'violet', color: '#c084fc', glow: 'rgba(192, 132, 252, 0.35)', icon: 'fa-brain' },
+    { name: 'emerald', color: '#34d399', glow: 'rgba(52, 211, 153, 0.35)', icon: 'fa-leaf' },
+    { name: 'amber', color: '#fbbf24', glow: 'rgba(251, 191, 36, 0.35)', icon: 'fa-star' },
+    { name: 'rose', color: '#fb7185', glow: 'rgba(251, 113, 133, 0.35)', icon: 'fa-gem' },
+    { name: 'blue', color: '#60a5fa', glow: 'rgba(96, 165, 250, 0.35)', icon: 'fa-circle-nodes' }
+];
+
+function initKiraMindMapController() {
+    const modal = document.getElementById('kira-mindmap-modal');
+    const btnClose = document.getElementById('btn-mindmap-close');
+    const btnZoomIn = document.getElementById('btn-mindmap-zoom-in');
+    const btnZoomOut = document.getElementById('btn-mindmap-zoom-out');
+    const btnZoomReset = document.getElementById('btn-mindmap-zoom-reset');
+    const btnExportPng = document.getElementById('btn-mindmap-export-png');
+    const btnCopyOutline = document.getElementById('btn-mindmap-copy-outline');
+    const btnAiRefine = document.getElementById('btn-mindmap-ai-refine');
+    const viewport = document.getElementById('mindmap-viewport');
+
+    if (!modal || !viewport) return;
+
+    if (btnClose) {
+        btnClose.addEventListener('click', closeKiraMindMap);
+    }
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeKiraMindMap();
+    });
+
+    if (btnZoomIn) {
+        btnZoomIn.addEventListener('click', () => {
+            mindMapScale = Math.min(2.5, mindMapScale + 0.15);
+            applyMindMapTransform();
+        });
+    }
+
+    if (btnZoomOut) {
+        btnZoomOut.addEventListener('click', () => {
+            mindMapScale = Math.max(0.35, mindMapScale - 0.15);
+            applyMindMapTransform();
+        });
+    }
+
+    if (btnZoomReset) {
+        btnZoomReset.addEventListener('click', centerMindMap);
+    }
+
+    if (btnExportPng) {
+        btnExportPng.addEventListener('click', exportMindMapPNG);
+    }
+
+    if (btnCopyOutline) {
+        btnCopyOutline.addEventListener('click', copyMindMapOutline);
+    }
+
+    if (btnAiRefine) {
+        btnAiRefine.addEventListener('click', refineMindMapWithAI);
+    }
+
+    // Viewport Drag & Pan
+    viewport.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.mindmap-node') || e.target.closest('.mindmap-floating-controls')) return;
+        isMindMapPanning = true;
+        mindMapStartX = e.clientX - mindMapPanX;
+        mindMapStartY = e.clientY - mindMapPanY;
+        viewport.classList.add('is-panning');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isMindMapPanning) return;
+        mindMapPanX = e.clientX - mindMapStartX;
+        mindMapPanY = e.clientY - mindMapStartY;
+        applyMindMapTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isMindMapPanning) {
+            isMindMapPanning = false;
+            viewport.classList.remove('is-panning');
+        }
+    });
+
+    // Touch Support
+    viewport.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.mindmap-node') || e.target.closest('.mindmap-floating-controls')) return;
+        if (e.touches.length === 1) {
+            isMindMapPanning = true;
+            mindMapStartX = e.touches[0].clientX - mindMapPanX;
+            mindMapStartY = e.touches[0].clientY - mindMapPanY;
+        }
+    }, { passive: true });
+
+    viewport.addEventListener('touchmove', (e) => {
+        if (!isMindMapPanning || e.touches.length !== 1) return;
+        mindMapPanX = e.touches[0].clientX - mindMapStartX;
+        mindMapPanY = e.touches[0].clientY - mindMapStartY;
+        applyMindMapTransform();
+    }, { passive: true });
+
+    viewport.addEventListener('touchend', () => {
+        isMindMapPanning = false;
+    });
+
+    // Wheel Zoom
+    viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomDelta = e.deltaY < 0 ? 0.1 : -0.1;
+        const newScale = Math.min(2.5, Math.max(0.35, mindMapScale + zoomDelta));
+        
+        const rect = viewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        mindMapPanX -= (mouseX - mindMapPanX) * (newScale / mindMapScale - 1);
+        mindMapPanY -= (mouseY - mindMapPanY) * (newScale / mindMapScale - 1);
+        mindMapScale = newScale;
+
+        applyMindMapTransform();
+    }, { passive: false });
+}
+
+function applyMindMapTransform() {
+    const canvas = document.getElementById('mindmap-canvas');
+    if (canvas) {
+        canvas.style.transform = `translate(${mindMapPanX}px, ${mindMapPanY}px) scale(${mindMapScale})`;
+    }
+}
+
+function centerMindMap() {
+    const viewport = document.getElementById('mindmap-viewport');
+    if (!viewport) return;
+    const vW = viewport.clientWidth || 900;
+    const vH = viewport.clientHeight || 600;
+
+    // Center is (1800, 1200)
+    mindMapScale = vW < 600 ? 0.55 : 0.85;
+    mindMapPanX = vW / 2 - 1800 * mindMapScale;
+    mindMapPanY = vH / 2 - 1200 * mindMapScale;
+    applyMindMapTransform();
+}
+
+function openKiraMindMap(rawContent) {
+    if (!rawContent || !rawContent.trim()) {
+        alert('ไม่มีเนื้อหาสำหรับการสร้างผังความคิดค่ะ');
+        return;
+    }
+
+    currentMindMapRawText = rawContent;
+    const modal = document.getElementById('kira-mindmap-modal');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+
+    // Parse text to hierarchical mind map tree
+    currentMindMapTree = parseTextToMindMapTree(rawContent);
+
+    // Render tree onto SVG & HTML layer
+    renderMindMap(currentMindMapTree);
+
+    // Initial center
+    setTimeout(centerMindMap, 50);
+
+    if (typeof showConnectionToast === 'function') {
+        showConnectionToast('🧠 เปิดผังความคิด Kira Neural Map เรียบร้อยแล้วค่ะ', 'ready');
+    }
+}
+window.openKiraMindMap = openKiraMindMap;
+
+function closeKiraMindMap() {
+    const modal = document.getElementById('kira-mindmap-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+// 🌿 Client-side Markdown to MindMap Tree Parser
+function parseTextToMindMapTree(rawText) {
+    let text = rawText
+        .replace(/\[THINKING\].*?\[\/THINKING\]/gs, '')
+        .replace(/<think>.*?<\/think>/gs, '')
+        .trim();
+
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+    // 1. Determine Title (Root)
+    let title = 'Kira Neural Insights';
+    const firstHeader = lines.find(l => l.startsWith('#'));
+    if (firstHeader) {
+        title = firstHeader.replace(/^#+\s*/, '').replace(/[*_#`]/g, '').trim();
+    } else if (lines.length > 0) {
+        const candidate = lines[0].replace(/[*_#`]/g, '').trim();
+        if (candidate.length <= 40) title = candidate;
+        else title = candidate.slice(0, 35) + '...';
+    }
+
+    // 2. Extract Branches & Leaves
+    const branches = [];
+    let currentBranch = null;
+
+    lines.forEach((line) => {
+        if (line.replace(/^#+\s*/, '').trim() === title) return;
+
+        const isHeader = /^#{1,4}\s+/.test(line);
+        const isNumbered = /^[0-9]+[.)]\s+\*?/.test(line);
+        const isBoldLead = /^[-*•]\s+\*\*(.+?)\*\*[:：]?/.test(line) || /^\*\*(.+?)\*\*[:：]?$/.test(line);
+
+        if (isHeader || isNumbered || (isBoldLead && (!currentBranch || currentBranch.children.length >= 2))) {
+            let bTitle = line
+                .replace(/^#{1,4}\s+/, '')
+                .replace(/^[0-9]+[.)]\s+/, '')
+                .replace(/^[-*•]\s+/, '')
+                .replace(/[*_#`]/g, '')
+                .trim();
+            
+            if (bTitle.includes(':') && bTitle.length > 30) {
+                bTitle = bTitle.split(':')[0].trim();
+            } else if (bTitle.includes('：') && bTitle.length > 30) {
+                bTitle = bTitle.split('：')[0].trim();
+            }
+
+            if (bTitle.length > 40) bTitle = bTitle.slice(0, 38) + '...';
+
+            currentBranch = {
+                id: 'branch_' + branches.length,
+                title: bTitle,
+                children: [],
+                collapsed: false
+            };
+            branches.push(currentBranch);
+        } else if (/^[-*•]\s+/.test(line) || /^[0-9]+[.)]\s+/.test(line)) {
+            let leafText = line.replace(/^[-*•0-9.)]+\s+/, '').replace(/[*_#`]/g, '').trim();
+            if (leafText.length > 60) leafText = leafText.slice(0, 58) + '...';
+
+            if (!currentBranch) {
+                currentBranch = {
+                    id: 'branch_' + branches.length,
+                    title: 'ประเด็นสำคัญ',
+                    children: [],
+                    collapsed: false
+                };
+                branches.push(currentBranch);
+            }
+            if (currentBranch.children.length < 5) {
+                currentBranch.children.push({
+                    id: currentBranch.id + '_leaf_' + currentBranch.children.length,
+                    title: leafText
+                });
+            }
+        } else if (line.length > 10 && line.length < 90) {
+            if (currentBranch && currentBranch.children.length < 4) {
+                let leafText = line.replace(/[*_#`]/g, '').trim();
+                if (leafText.length > 55) leafText = leafText.slice(0, 52) + '...';
+                currentBranch.children.push({
+                    id: currentBranch.id + '_leaf_' + currentBranch.children.length,
+                    title: leafText
+                });
+            }
+        }
+    });
+
+    if (branches.length === 0) {
+        branches.push({
+            id: 'branch_0',
+            title: 'สาระสำคัญ',
+            children: [
+                { id: 'b0_l0', title: 'การวิเคราะห์และคำแนะนำ' },
+                { id: 'b0_l1', title: 'แนวทางปฏิบัติตามมติ' }
+            ],
+            collapsed: false
+        });
+        branches.push({
+            id: 'branch_1',
+            title: 'ผลลัพธ์ที่คาดหวัง',
+            children: [
+                { id: 'b1_l0', title: 'ความคุ้มค่าและประสิทธิภาพ' },
+                { id: 'b1_l1', title: 'การดำเนินการขั้นต่อไป' }
+            ],
+            collapsed: false
+        });
+    }
+
+    const finalBranches = branches.slice(0, 6);
+    finalBranches.forEach((b, idx) => {
+        b.color = MINDMAP_PALETTES[idx % MINDMAP_PALETTES.length];
+        b.side = idx % 2 === 0 ? 'right' : 'left';
+    });
+
+    return {
+        title: title,
+        branches: finalBranches
+    };
+}
+
+// 🎨 Render MindMap on Virtual Canvas (3600 x 2400)
+function renderMindMap(tree) {
+    if (!tree) return;
+
+    const svg = document.getElementById('mindmap-svg');
+    const nodesLayer = document.getElementById('mindmap-nodes-layer');
+    const titleEl = document.getElementById('mindmap-title');
+    const statsEl = document.getElementById('mindmap-stats');
+
+    if (!svg || !nodesLayer) return;
+
+    svg.innerHTML = '';
+    nodesLayer.innerHTML = '';
+
+    if (titleEl) titleEl.textContent = tree.title || 'ผังความคิดสรุปบทสนทนา';
+
+    let totalLeaves = 0;
+    tree.branches.forEach(b => totalLeaves += (b.children?.length || 0));
+    if (statsEl) statsEl.textContent = `${tree.branches.length} กิ่งหลัก • ${totalLeaves} ข้อย่อย`;
+
+    const rootX = 1800;
+    const rootY = 1200;
+
+    // 1. Render Root Node
+    const rootEl = document.createElement('div');
+    rootEl.className = 'mindmap-node level-0';
+    rootEl.style.left = `${rootX}px`;
+    rootEl.style.top = `${rootY}px`;
+    rootEl.innerHTML = `<i class="fa-solid fa-sparkles text-amber"></i> <span>${escapeHtml(tree.title)}</span>`;
+    rootEl.title = 'หัวข้อแกนกลาง';
+    rootEl.onclick = centerMindMap;
+    nodesLayer.appendChild(rootEl);
+
+    const rightBranches = tree.branches.filter(b => b.side === 'right');
+    const leftBranches = tree.branches.filter(b => b.side === 'left');
+
+    function renderBranchGroup(branchList, isRight) {
+        const count = branchList.length;
+        const totalHeight = Math.max(300, count * 180);
+        const startY = rootY - (totalHeight / 2) + 90;
+
+        branchList.forEach((b, idx) => {
+            const bY = count === 1 ? rootY : startY + (idx * (totalHeight / Math.max(1, count - 1)));
+            const bX = isRight ? rootX + 340 : rootX - 340;
+
+            drawBezierConnector(rootX, rootY, bX, bY, b.color.color, 3, svg);
+
+            const bEl = document.createElement('div');
+            bEl.className = `mindmap-node level-1 ${b.collapsed ? 'is-collapsed' : ''}`;
+            bEl.style.left = `${bX}px`;
+            bEl.style.top = `${bY}px`;
+            bEl.style.setProperty('--branch-color', b.color.color);
+            bEl.style.setProperty('--branch-glow', b.color.glow);
+            
+            const badgeCount = b.children ? b.children.length : 0;
+            bEl.innerHTML = `
+                <i class="fa-solid ${b.color.icon} node-icon"></i>
+                <span>${escapeHtml(b.title)}</span>
+                ${badgeCount > 0 ? `<span class="node-badge">${badgeCount}</span>` : ''}
+            `;
+            bEl.title = 'คลิกเพื่อย่อหรือขยายข้อย่อย';
+            bEl.onclick = (e) => {
+                e.stopPropagation();
+                b.collapsed = !b.collapsed;
+                renderMindMap(tree);
+            };
+            nodesLayer.appendChild(bEl);
+
+            if (!b.collapsed && b.children && b.children.length > 0) {
+                const leafCount = b.children.length;
+                const leafTotalH = Math.max(120, leafCount * 65);
+                const leafStartY = bY - (leafTotalH / 2) + 32;
+
+                b.children.forEach((leaf, lIdx) => {
+                    const lY = leafCount === 1 ? bY : leafStartY + (lIdx * (leafTotalH / Math.max(1, leafCount - 1)));
+                    const lX = isRight ? bX + 270 : bX - 270;
+
+                    drawBezierConnector(bX, bY, lX, lY, b.color.color, 1.8, svg, true);
+
+                    const lEl = document.createElement('div');
+                    lEl.className = 'mindmap-node level-2';
+                    lEl.style.left = `${lX}px`;
+                    lEl.style.top = `${lY}px`;
+                    lEl.style.setProperty('--branch-color', b.color.color);
+                    lEl.textContent = leaf.title;
+                    nodesLayer.appendChild(lEl);
+                });
+            }
+        });
+    }
+
+    renderBranchGroup(rightBranches, true);
+    renderBranchGroup(leftBranches, false);
+}
+
+function drawBezierConnector(x1, y1, x2, y2, color, strokeWidth, svgEl, isSub = false) {
+    const dx = x2 - x1;
+    const cx1 = x1 + dx * 0.5;
+    const cy1 = y1;
+    const cx2 = x1 + dx * 0.5;
+    const cy2 = y2;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`);
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', strokeWidth.toString());
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('opacity', isSub ? '0.65' : '0.9');
+    path.setAttribute('class', 'mindmap-path');
+    svgEl.appendChild(path);
+}
+
+async function exportMindMapPNG() {
+    const btn = document.getElementById('btn-mindmap-export-png');
+    if (!btn) return;
+    const origHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> บันทึกภาพ...';
+    btn.disabled = true;
+
+    try {
+        const viewport = document.getElementById('mindmap-viewport');
+        if (!viewport) throw new Error('Viewport not found');
+
+        centerMindMap();
+        await new Promise(r => setTimeout(r, 200));
+
+        if (typeof html2canvas === 'undefined') {
+            throw new Error('ไม่พบไลบรารี html2canvas ค่ะ');
+        }
+
+        const canvas = await html2canvas(viewport, {
+            backgroundColor: '#070b14',
+            scale: 2,
+            useCORS: true,
+            logging: false
+        });
+
+        const dataUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        const safeTitle = (currentMindMapTree?.title || 'Kira_MindMap').replace(/[^\wก-๙]/g, '_').slice(0, 25);
+        a.download = `Kira_MindMap_${safeTitle}_${Date.now()}.png`;
+        a.href = dataUrl;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('📸 บันทึกภาพ Mind Map ความละเอียดสูงเรียบร้อยแล้วค่ะ!', 'ready');
+        }
+    } catch (err) {
+        console.error('MindMap export error:', err);
+        alert('เกิดข้อผิดพลาดในการบันทึกภาพค่ะ: ' + err.message);
+    } finally {
+        btn.innerHTML = origHtml;
+        btn.disabled = false;
+    }
+}
+
+function copyMindMapOutline() {
+    if (!currentMindMapTree) return;
+    let outline = `# 🧠 ${currentMindMapTree.title}\n\n`;
+    currentMindMapTree.branches.forEach((b, i) => {
+        outline += `${i + 1}. 📌 **${b.title}**\n`;
+        if (b.children && b.children.length > 0) {
+            b.children.forEach(c => {
+                outline += `   • ${c.title}\n`;
+            });
+        }
+        outline += '\n';
+    });
+
+    navigator.clipboard.writeText(outline);
+    if (typeof showConnectionToast === 'function') {
+        showConnectionToast('📋 คัดลอกโครงสร้าง Mind Map ลง Clipboard แล้วค่ะ', 'ready');
+    }
+}
+
+async function refineMindMapWithAI() {
+    if (!currentMindMapRawText) return;
+
+    const loader = document.getElementById('mindmap-loader');
+    const btn = document.getElementById('btn-mindmap-ai-refine');
+    if (loader) loader.style.display = 'flex';
+    if (btn) btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/generate-mindmap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: currentMindMapRawText })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success' && data.mindmap) {
+            const aiData = data.mindmap;
+            const newTree = {
+                title: aiData.title || currentMindMapTree?.title || 'Kira AI Neural Map',
+                branches: (aiData.nodes || []).map((n, idx) => ({
+                    id: 'ai_branch_' + idx,
+                    title: n.title,
+                    children: (n.children || []).map((c, cIdx) => ({
+                        id: `ai_b${idx}_c${cIdx}`,
+                        title: c.title
+                    })),
+                    color: MINDMAP_PALETTES[idx % MINDMAP_PALETTES.length],
+                    side: idx % 2 === 0 ? 'right' : 'left',
+                    collapsed: false
+                }))
+            };
+
+            currentMindMapTree = newTree;
+            renderMindMap(currentMindMapTree);
+            centerMindMap();
+
+            if (typeof showConnectionToast === 'function') {
+                showConnectionToast('✨ สมองกล AI ปรับผังความคิดให้กระชับคมชัดเรียบร้อยแล้วค่ะ!', 'ready');
+            }
+        } else {
+            alert('สมองกลยังไม่สามารถจัดผังใหม่ได้ในขณะนี้ กำลังใช้ผังมาตรฐานเดิมค่ะ');
+        }
+    } catch (err) {
+        console.warn('AI Refine error:', err);
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อสมองกล AI ค่ะ: ' + err.message);
+    } finally {
+        if (loader) loader.style.display = 'none';
+        if (btn) btn.disabled = false;
+    }
+}
+window.initKiraMindMapController = initKiraMindMapController;
+
+// =========================================================================
 // 🎙️ Kira Real-Time Two-Way Live Voice Assistant (Continuous Loop)
 // =========================================================================
 let liveVoiceRecognition = null;
@@ -9552,6 +10110,7 @@ function initKiraApp() {
     try { initSpeechRecognition(); } catch (e) { console.error("Speech recognition init error:", e); }
     try { initLiveVoiceAssistant(); } catch (e) { console.error("Live voice init error:", e); }
     try { initSlideDeckStudio(); } catch (e) { console.error("Slide deck studio init error:", e); }
+    try { initKiraMindMapController(); } catch (e) { console.error("Mind Map controller init error:", e); }
     try { initSubscriptionController(); } catch (e) { console.error("Subscription controller init error:", e); }
     try { initPWAController(); } catch (e) { console.error("PWA controller init error:", e); }
     try { initMCPHubController(); } catch (e) { console.error("MCP Hub controller init error:", e); }

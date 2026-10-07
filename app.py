@@ -148,6 +148,62 @@ async def get_system_version():
         "message": "ระบบ Kira AI พร้อมอัปเดตเป็นเวอร์ชันล่าสุดแล้วค่ะ 🌸"
     }, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
+# --- Interactive Visual Mind Map AI Structuring API ---
+class MindMapRequest(BaseModel):
+    content: str
+    max_branches: Optional[int] = 6
+
+@app.post("/api/generate-mindmap")
+async def generate_mindmap(payload: MindMapRequest):
+    text = payload.content.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Content cannot be empty")
+    
+    try:
+        from langchain_groq import ChatGroq
+        import re
+        active_model = globals().get("PREFERRED_FLASH", "openai/gpt-oss-20b")
+        llm = ChatGroq(
+            temperature=0.2,
+            model_name=active_model,
+            groq_api_key=API_KEYS[0] if API_KEYS else None,
+            max_tokens=900
+        )
+        prompt = f"""คุณคือผู้เชี่ยวชาญด้านการจัดทำแผนผังความคิด (Mind Map Architect)
+กรุณาวิเคราะห์ข้อความต่อไปนี้ แล้วแปลงเป็นโครงสร้างต้นไม้ (Mind Map Tree) เป็นภาษาไทยในรูปแบบ JSON เท่านั้น โดยมีรูปแบบ:
+{{
+  "title": "หัวข้อหลักใจความสำคัญ (สั้น กระชับ)",
+  "nodes": [
+    {{
+      "title": "ชื่อกิ่งหลัก (เช่น ประเด็นสำคัญ, กลยุทธ์, ขั้นตอน)",
+      "children": [
+        {{"title": "หัวข้อย่อยสั้นๆ 1"}},
+        {{"title": "หัวข้อย่อยสั้นๆ 2"}}
+      ]
+    }}
+  ]
+}}
+
+กฎ:
+1. ตอบเป็น JSON ภาษาไทยที่ถูกต้องเท่านั้น ห้ามใส่คำบรรยายอื่นนอก JSON
+2. แตกกิ่งหลักไม่เกิน 5-6 กิ่ง แต่ละกิ่งย่อยมี 2-4 หัวข้อ
+
+ข้อความที่ต้องแปลง:
+{text[:3500]}"""
+        response = await asyncio.to_thread(llm.invoke, prompt)
+        resp_text = response.content.strip()
+        if "```" in resp_text:
+            resp_text = re.sub(r"```(?:json)?", "", resp_text).strip()
+        data = json.loads(resp_text)
+        return JSONResponse({"status": "success", "mindmap": data})
+    except Exception as e:
+        print(f"MindMap AI generation note: {e}")
+        return JSONResponse({
+            "status": "fallback",
+            "message": "Local heuristic fallback active",
+            "error": str(e)
+        })
+
 # --- Model Context Protocol (MCP) Hub Integration (Kira 2.2 Phase 2) ---
 from mcp_hub import mcp_router, init_mcp_tables, auto_detect_and_dispatch_mcp
 app.include_router(mcp_router)

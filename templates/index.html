@@ -11,7 +11,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=26">
+    <link rel="stylesheet" href="/static/style.css?v=27">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -2747,6 +2747,68 @@
         </div>
     </div>
 
+    <!-- 🧠 Kira Living Mind Map & Interactive Visual Graph Modal -->
+    <div id="kira-mindmap-modal" class="modal-overlay kira-mindmap-overlay" style="display: none; z-index: 1220;">
+        <div class="kira-mindmap-container">
+            <!-- Mind Map Top Toolbar -->
+            <div class="mindmap-top-bar">
+                <div class="mindmap-title-wrap">
+                    <div class="mindmap-badge"><i class="fa-solid fa-diagram-project"></i> <span>Kira Neural Map</span></div>
+                    <h3 id="mindmap-title" class="mindmap-title">ผังความคิดสรุปบทสนทนา</h3>
+                    <span id="mindmap-stats" class="mindmap-stats-pill">0 กิ่ง • 0 ข้อย่อย</span>
+                </div>
+                <div class="mindmap-actions-group">
+                    <button type="button" id="btn-mindmap-ai-refine" class="mindmap-bar-btn secondary" title="ให้สมองกล AI จัดโครงสร้างเชิงลึกใหม่">
+                        <i class="fa-solid fa-wand-magic-sparkles text-cyan"></i> <span>AI ปรับผัง</span>
+                    </button>
+                    <button type="button" id="btn-mindmap-export-png" class="mindmap-bar-btn highlight" title="ส่งออกเป็นภาพ PNG คุณภาพสูงสำหรับแชร์ลงโซเชียล">
+                        <i class="fa-solid fa-camera"></i> <span>บันทึกภาพ PNG</span>
+                    </button>
+                    <button type="button" id="btn-mindmap-copy-outline" class="mindmap-bar-btn secondary" title="คัดลอกโครงร่างข้อความ">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                    <button type="button" id="btn-mindmap-close" class="mindmap-close-btn" title="ปิดหน้าต่าง">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mind Map Canvas Viewport Area -->
+            <div id="mindmap-viewport" class="mindmap-viewport">
+                <!-- Background Grid -->
+                <div class="mindmap-grid-bg"></div>
+                <div class="mindmap-watermark">KIRA AI • NEURAL MIND MAP</div>
+
+                <!-- Floating Zoom Controls -->
+                <div class="mindmap-floating-controls">
+                    <button type="button" id="btn-mindmap-zoom-in" class="mindmap-ctrl-btn" title="ขยายมุมมอง (Zoom In)"><i class="fa-solid fa-plus"></i></button>
+                    <button type="button" id="btn-mindmap-zoom-reset" class="mindmap-ctrl-btn" title="จัดกึ่งกลาง (Reset View)"><i class="fa-solid fa-arrows-to-dot"></i></button>
+                    <button type="button" id="btn-mindmap-zoom-out" class="mindmap-ctrl-btn" title="ย่อมุมมอง (Zoom Out)"><i class="fa-solid fa-minus"></i></button>
+                </div>
+
+                <!-- Scalable & Draggable Canvas -->
+                <div id="mindmap-canvas" class="mindmap-canvas">
+                    <svg id="mindmap-svg" class="mindmap-svg"></svg>
+                    <div id="mindmap-nodes-layer" class="mindmap-nodes-layer"></div>
+                </div>
+
+                <!-- Loading State Overlay -->
+                <div id="mindmap-loader" class="mindmap-loader" style="display: none;">
+                    <div class="loader-spinner"></div>
+                    <span id="mindmap-loader-text">กำลังวิเคราะห์และสร้างผังความคิด...</span>
+                </div>
+            </div>
+
+            <!-- Mind Map Footer / Tips -->
+            <div class="mindmap-footer">
+                <div class="mindmap-tip">
+                    <i class="fa-solid fa-lightbulb text-amber"></i>
+                    <span>คลิกโหนดเพื่อย่อ-ขยาย • ลากเมาส์/นิ้วเพื่อเลื่อนจอ • เลื่อน Scroll เพื่อซูม • กด "บันทึกภาพ PNG" เพื่อเซฟไปโพสต์แชร์ได้ทันที</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Zoom Slip Lightbox Modal -->
     <div id="slip-lightbox-modal" class="modal-overlay" style="display: none; z-index: 1120;">
         <div class="slip-lightbox-content">
@@ -2878,6 +2940,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=43"></script>
+    <script src="/static/script.js?v=44"></script>
 </body>
 </html>

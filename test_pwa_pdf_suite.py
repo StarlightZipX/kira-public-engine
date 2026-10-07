@@ -35,6 +35,13 @@ def test_pwa_endpoints():
     assert "Cache-Control" in res_ver.headers
     print(f"✅ /api/system/version endpoint verified (version: {ver_data.get('version')}, build: {ver_data.get('build_id')})!")
 
+    # 4. Test /api/generate-mindmap (New Living Mind Map Endpoint)
+    res_mindmap = client.post("/api/generate-mindmap", json={"content": "ทดสอบการสร้างผังความคิด Mind Map ของ Kira AI"})
+    assert res_mindmap.status_code == 200, f"/api/generate-mindmap failed with status {res_mindmap.status_code}"
+    mindmap_data = res_mindmap.json()
+    assert "status" in mindmap_data
+    print(f"✅ /api/generate-mindmap endpoint verified (status: {mindmap_data.get('status')})!")
+
 def test_pwa_html_elements():
     with open("templates/index.html", "r", encoding="utf-8") as f:
         html = f.read()
@@ -52,7 +59,13 @@ def test_pwa_html_elements():
     assert 'id="btn-kira-update-later"' in html, "Missing #btn-kira-update-later in index.html"
     assert 'id="kira-update-chip"' in html, "Missing #kira-update-chip in index.html"
     assert 'name="kira-build-id"' in html, "Missing meta name=kira-build-id in index.html"
-    print("✅ index.html PWA elements, update modal & floating chip verified!")
+
+    # Living Mind Map Modal
+    assert 'id="kira-mindmap-modal"' in html, "Missing #kira-mindmap-modal in index.html"
+    assert 'id="mindmap-viewport"' in html, "Missing #mindmap-viewport in index.html"
+    assert 'id="mindmap-canvas"' in html, "Missing #mindmap-canvas in index.html"
+    assert 'id="btn-mindmap-export-png"' in html, "Missing #btn-mindmap-export-png in index.html"
+    print("✅ index.html PWA elements, update modal & Mind Map modal verified!")
 
 def test_pwa_and_pdf_scripts():
     with open("static/script.js", "r", encoding="utf-8") as f:
@@ -60,12 +73,16 @@ def test_pwa_and_pdf_scripts():
 
     assert "function initPWAController" in js, "Missing initPWAController in script.js"
     assert "function initKiraUpdateController" in js, "Missing initKiraUpdateController in script.js"
+    assert "function initKiraMindMapController" in js, "Missing initKiraMindMapController in script.js"
+    assert "function openKiraMindMap" in js, "Missing openKiraMindMap in script.js"
+    assert "mindmap-btn" in js, "Missing mindmap-btn in script.js"
     assert "function exportDeliverableToPDF" in js, "Missing exportDeliverableToPDF in script.js"
     assert "function exportBoardroomToPDF" in js, "Missing exportBoardroomToPDF in script.js"
     assert "exportBoardroomToPDF(this)" in js, "Missing exportBoardroomToPDF call in script.js"
     assert "pdfReportBtn" in js, "Missing pdfReportBtn in script.js"
     assert "initPWAController();" in js, "Missing initPWAController() call in script.js"
-    print("✅ script.js PWA controller, update controller, and PDF export functions verified!")
+    assert "initKiraMindMapController();" in js, "Missing initKiraMindMapController() call in script.js"
+    print("✅ script.js PWA controller, update controller, Mind Map engine and PDF export verified!")
 
 def test_pwa_and_print_styles():
     with open("static/style.css", "r", encoding="utf-8") as f:
@@ -76,13 +93,15 @@ def test_pwa_and_print_styles():
     assert ".ios-pwa-card" in css, "Missing .ios-pwa-card in style.css"
     assert ".kira-update-card" in css, "Missing .kira-update-card in style.css"
     assert ".kira-update-chip" in css, "Missing .kira-update-chip in style.css"
+    assert ".kira-mindmap-container" in css, "Missing .kira-mindmap-container in style.css"
+    assert ".mindmap-node" in css, "Missing .mindmap-node in style.css"
     assert "@media print" in css, "Missing @media print in style.css"
     assert ".deliverable-pdf-btn" in css, "Missing .deliverable-pdf-btn in style.css"
-    print("✅ style.css PWA components, update modal, and print styles verified!")
+    print("✅ style.css PWA components, update modal, Mind Map styles and print styles verified!")
 
 if __name__ == "__main__":
     test_pwa_endpoints()
     test_pwa_html_elements()
     test_pwa_and_pdf_scripts()
     test_pwa_and_print_styles()
-    print("\n🎉 ALL PWA, SYSTEM UPDATE & PDF/PRINT EXPORT TESTS PASSED PERFECTLY! 🚀")
+    print("\n🎉 ALL TESTS (PWA, UPDATE MODAL, MIND MAP, PDF EXPORT) PASSED PERFECTLY! 🚀")
