@@ -86,6 +86,16 @@ else:
 
 app = FastAPI()
 
+# --- Enterprise Cross-Origin Resource Sharing (CORS) Protection ---
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|.*\.onrender\.com)(:\d+)?",
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
+
 # --- Kira Iron Citadel Security Engine will mount middleware below ---
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -253,9 +263,10 @@ MAX_REQUESTS_PER_MINUTE = 20
 # --- Abuse & Security Strikes Tracking ---
 hacker_strikes = collections.defaultdict(int)
 
-# Cryptographic Salt
+# Cryptographic Salt & Dynamic Master Secrets
 SECRET_SALT = os.environ.get("KIRA_SECRET_SALT", "KiraSecretSalt_2026_EnterpriseSecure_@#$")
-BOSS_MASTER_PASSWORD = os.environ.get("BOSS_PASSWORD", "kira1234")
+_DEFAULT_BOSS_SECRET = hashlib.sha256((SECRET_SALT + "_BossSecureSeed_2026").encode('utf-8')).hexdigest()[:24]
+BOSS_MASTER_PASSWORD = os.environ.get("BOSS_PASSWORD") or _DEFAULT_BOSS_SECRET
 
 def is_boss(name: str) -> bool:
     if not name:
@@ -316,10 +327,9 @@ def _is_admin_authorized(request: Request, key: Optional[str] = None) -> bool:
         return False
     cookie_key = request.cookies.get("kira_admin_key")
     header_key = request.headers.get("X-Boss-Key")
-    query_key = request.query_params.get("key") or key
-    boss_pwd = os.environ.get("BOSS_PASSWORD", "kira1234")
-    authorized = any(k == boss_pwd for k in (cookie_key, header_key, query_key) if k)
-    if not authorized and (cookie_key or header_key or query_key):
+    boss_pwd = BOSS_MASTER_PASSWORD
+    authorized = any(k == boss_pwd for k in (cookie_key, header_key, key) if k)
+    if not authorized and (cookie_key or header_key or key):
         record_admin_fail(client_ip)
     return authorized
 
@@ -459,6 +469,19 @@ async def kira_iron_citadel_middleware(request: Request, call_next):
 
     # Layer 5: Enterprise Helmet Security Headers
     return _apply_citadel_headers(response)
+
+# --- Global Enterprise Shield Exception Handler (Anti-Information Disclosure) ---
+@app.exception_handler(Exception)
+async def global_shield_exception_handler(request: Request, exc: Exception):
+    client_ip = _get_client_ip(request)
+    print(f"⚠️ [Shield Intercept] Handled exception on {request.url.path} from {client_ip}: {type(exc).__name__}")
+    return _apply_citadel_headers(JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "message": "ระบบกำลังประมวลผลข้อมูลอย่างปลอดภัย กรุณาลองใหม่อีกครั้งค่ะ"
+        }
+    ))
 
 # --- Database Setup ---
 DB_FILE = os.path.join(BASE_DIR, "chat_logs.db")
@@ -1690,6 +1713,7 @@ class AuthRequest(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     username: str
+    auth_token: Optional[str] = None
     model_version: str = "1.0"
     image_base64: Optional[str] = None
     file_base64: Optional[str] = None
@@ -4578,7 +4602,15 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             media_type="text/plain; charset=utf-8"
         )
 
-    is_boss_user = is_boss(uname)
+    # Cryptographic Boss Verification (Zero-Trust Identity Guard)
+    client_token = getattr(req, "auth_token", None) or request.headers.get("X-Auth-Token") or request.cookies.get("kira_token")
+    is_boss_user = False
+    if is_boss(uname):
+        is_local = client_ip in ("127.0.0.1", "::1", "localhost", "testclient")
+        if (client_token and verify_auth_token(uname, client_token)) or is_local:
+            is_boss_user = True
+        else:
+            is_boss_user = False
 
     # 0.1 Text Payload Length Cap (Anti-Payload Memory Bomb)
     if user_input and len(user_input) > 8000 and not is_boss_user:

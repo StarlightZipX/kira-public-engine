@@ -1675,12 +1675,17 @@ async function sendMessage() {
         const persona = document.getElementById('persona-select') ? document.getElementById('persona-select').value : "default";
         const isBoardroomActive = (localStorage.getItem('kira_boardroom_active') === 'true') || (modelVersion === 'boardroom');
 
+        const authToken = localStorage.getItem('kira_auth_token') || '';
         const response = await fetch('/api/chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Auth-Token': authToken
+            },
             body: JSON.stringify({
                 message: text || 'ช่วยวิเคราะห์และตรวจสอบภาพนี้อย่างละเอียด',
                 username: currentUser,
+                auth_token: authToken,
                 model_version: isBoardroomActive ? "boardroom" : modelVersion,
                 boardroom_mode: isBoardroomActive,
                 image_base64: imgBase64ToSend,

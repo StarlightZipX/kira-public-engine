@@ -122,6 +122,19 @@ def test_iron_citadel_security():
     assert res_ua.status_code == 403, f"Expected 403 on sqlmap UA, got {res_ua.status_code}"
     print("✅ Iron Citadel: Malicious scanner User-Agent blocked with 403!")
 
+    # 4. Test CORS Protection on Render Domain
+    res_cors = client.options("/api/system/version", headers={
+        "Origin": "https://kira-public-engine.onrender.com",
+        "Access-Control-Request-Method": "GET"
+    })
+    assert res_cors.headers.get("access-control-allow-origin") == "https://kira-public-engine.onrender.com"
+    print("✅ Iron Citadel: Enterprise CORS policy verified!")
+
+    # 5. Test Admin Endpoint Protection (Unauthenticated Access Blocked)
+    res_admin = client.get("/api/admin/orders", headers={"CF-Connecting-IP": "198.51.100.55"})
+    assert res_admin.status_code in (401, 403, 302, 404), f"Expected unauthorized, got {res_admin.status_code}"
+    print("✅ Iron Citadel: Admin Fortress access control verified!")
+
 if __name__ == "__main__":
     test_pwa_endpoints()
     test_pwa_html_elements()
