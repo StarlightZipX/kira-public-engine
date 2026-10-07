@@ -86,16 +86,7 @@ else:
 
 app = FastAPI()
 
-# --- HTTP Security Headers Middleware (Helmet Shield) ---
-@app.middleware("http")
-async def add_security_headers(request: Request, call_next):
-    response = await call_next(request)
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "SAMEORIGIN"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    return response
+# --- Kira Iron Citadel Security Engine will mount middleware below ---
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -154,10 +145,15 @@ class MindMapRequest(BaseModel):
     max_branches: Optional[int] = 6
 
 @app.post("/api/generate-mindmap")
-async def generate_mindmap(payload: MindMapRequest):
+async def generate_mindmap(payload: MindMapRequest, request: Request):
+    client_ip = _get_client_ip(request)
+    if is_rate_limited(client_ip):
+        return JSONResponse({"status": "error", "message": "คำขอบ่อยเกินไป กรุณารอสักครู่ค่ะ"}, status_code=429)
     text = payload.content.strip()
     if not text:
         raise HTTPException(status_code=400, detail="Content cannot be empty")
+    if len(text) > 25000:
+        text = text[:25000]
     
     try:
         from langchain_groq import ChatGroq
@@ -297,13 +293,35 @@ def _get_client_ip(request: Request) -> str:
         return x_forwarded.split(",")[0].strip()
     return request.client.host if request.client else "unknown"
 
+# --- Admin Brute-Force Shield (Anti-Credential Stuffing) ---
+admin_failed_attempts = collections.defaultdict(list)
+MAX_ADMIN_FAILS_PER_10MIN = 5
+
+def record_admin_fail(client_ip: str):
+    now = time.time()
+    admin_failed_attempts[client_ip] = [ts for ts in admin_failed_attempts[client_ip] if now - ts < 600]
+    admin_failed_attempts[client_ip].append(now)
+    if len(admin_failed_attempts[client_ip]) >= MAX_ADMIN_FAILS_PER_10MIN:
+        record_ip_strike(client_ip, "Admin Brute-Force Attempt")
+
+def is_admin_locked_out(client_ip: str) -> bool:
+    now = time.time()
+    recent = [ts for ts in admin_failed_attempts[client_ip] if now - ts < 600]
+    return len(recent) >= MAX_ADMIN_FAILS_PER_10MIN
+
 def _is_admin_authorized(request: Request, key: Optional[str] = None) -> bool:
-    """ตรวจสอบสิทธิ์ผู้ดูแลระบบ/ผู้สร้าง (Creator Guard)"""
+    """ตรวจสอบสิทธิ์ผู้ดูแลระบบ/ผู้สร้าง (Creator Guard) พร้อม Brute-force Lockout"""
+    client_ip = _get_client_ip(request)
+    if is_admin_locked_out(client_ip):
+        return False
     cookie_key = request.cookies.get("kira_admin_key")
     header_key = request.headers.get("X-Boss-Key")
     query_key = request.query_params.get("key") or key
     boss_pwd = os.environ.get("BOSS_PASSWORD", "kira1234")
-    return any(k == boss_pwd for k in (cookie_key, header_key, query_key) if k)
+    authorized = any(k == boss_pwd for k in (cookie_key, header_key, query_key) if k)
+    if not authorized and (cookie_key or header_key or query_key):
+        record_admin_fail(client_ip)
+    return authorized
 
 def _check_rate_limit(client_ip: str, history_dict: collections.defaultdict, max_per_min: int) -> bool:
     current_time = time.time()
@@ -326,6 +344,8 @@ def is_tts_rate_limited(client_ip: str) -> bool:
 # --- Persistent IP Blacklist & Hacker Strike Management ---
 def record_ip_strike(client_ip: str, reason: str = "Prompt Injection / Malicious Action"):
     """บันทึก Strike ของ IP ลง Memory และ Database เพื่อผลการแบนถาวร"""
+    if not client_ip or client_ip in ("127.0.0.1", "::1", "localhost", "testclient"):
+        return
     hacker_strikes[client_ip] += 1
     tz = timezone(timedelta(hours=7))
     ts = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
@@ -341,6 +361,8 @@ def record_ip_strike(client_ip: str, reason: str = "Prompt Injection / Malicious
 
 def is_ip_blacklisted(client_ip: str) -> bool:
     """ตรวจสอบว่า IP นี้ติดแบล็กลิสต์ระดับ Tarpit หรือไม่ (>=3 strikes)"""
+    if not client_ip or client_ip in ("127.0.0.1", "::1", "localhost", "testclient"):
+        return False
     if hacker_strikes[client_ip] >= 3:
         return True
     try:
@@ -370,6 +392,73 @@ def scrub_sensitive_output(text: str) -> str:
     for pat, rep in patterns:
         scrubbed = re.sub(pat, rep, scrubbed)
     return scrubbed
+
+# =========================================================================
+# 🏰 KIRA IRON CITADEL: Enterprise Multi-Layered Security Engine
+# =========================================================================
+import re as _re_sec
+
+SCANNER_PATH_PATTERNS = [
+    r'\.env(?:\.|$|\/)', r'\.git(?:\.|$|\/)', r'wp-admin', r'wp-login', r'wp-content',
+    r'phpmyadmin', r'xmlrpc\.php', r'cgi-bin', r'actuator', r'swagger',
+    r'\.aws', r'credentials', r'dump\.sql', r'backup\.sql', r'config\.json',
+    r'\.svn', r'\.htaccess', r'shell\.php', r'eval-stdin\.php', r'boaform'
+]
+
+SCANNER_UA_PATTERNS = [
+    r'sqlmap', r'nikto', r'masscan', r'wpscan', r'dirbuster', r'acunetix',
+    r'nmap', r'gobuster', r'zgrab', r'havij', r'hydra', r'burpcollaborator'
+]
+
+def _apply_citadel_headers(resp):
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["X-Frame-Options"] = "SAMEORIGIN"
+    resp.headers["X-XSS-Protection"] = "1; mode=block"
+    resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    resp.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
+    resp.headers["X-Permitted-Cross-Domain-Policies"] = "none"
+    resp.headers["Permissions-Policy"] = "camera=(self), microphone=(self), geolocation=()"
+    return resp
+
+@app.middleware("http")
+async def kira_iron_citadel_middleware(request: Request, call_next):
+    client_ip = _get_client_ip(request)
+    path = request.url.path.lower()
+    user_agent = request.headers.get("user-agent", "").lower()
+    
+    # Layer 1: Tarpit Delay on Blacklisted IPs (2.5s delay, exhausts attacker's resources)
+    if is_ip_blacklisted(client_ip):
+        await asyncio.sleep(2.5)
+        return _apply_citadel_headers(JSONResponse(
+            {"status": "blocked", "detail": "Access denied: IP flagged by security guardrail."},
+            status_code=403
+        ))
+
+    # Layer 2: Exploit Scanner User-Agent Drop
+    if any(_re_sec.search(pat, user_agent) for pat in SCANNER_UA_PATTERNS):
+        record_ip_strike(client_ip, f"Scanner UA: {user_agent[:40]}")
+        return _apply_citadel_headers(JSONResponse({"status": "blocked", "detail": "Forbidden scanner agent."}, status_code=403))
+
+    # Layer 3: Vulnerability / Exploit Probe Target Drop
+    if any(_re_sec.search(pat, path) for pat in SCANNER_PATH_PATTERNS):
+        record_ip_strike(client_ip, f"Vulnerability Probe: {path[:40]}")
+        return _apply_citadel_headers(JSONResponse({"status": "blocked", "detail": "Forbidden probe target."}, status_code=403))
+
+    # Layer 4: Global Payload Size Guard (Anti-DoS / Payload Bomb)
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            if int(content_length) > 12 * 1024 * 1024:
+                return _apply_citadel_headers(JSONResponse({"status": "rejected", "detail": "Payload too large (Max 12MB)."}, status_code=413))
+        except ValueError:
+            pass
+
+    # Process Request
+    response = await call_next(request)
+
+    # Layer 5: Enterprise Helmet Security Headers
+    return _apply_citadel_headers(response)
 
 # --- Database Setup ---
 DB_FILE = os.path.join(BASE_DIR, "chat_logs.db")
@@ -4491,6 +4580,13 @@ async def chat_endpoint(req: ChatRequest, request: Request):
 
     is_boss_user = is_boss(uname)
 
+    # 0.1 Text Payload Length Cap (Anti-Payload Memory Bomb)
+    if user_input and len(user_input) > 8000 and not is_boss_user:
+        return StreamingResponse(
+            iter(["🛑 **[Kira Security Guard]**\n\n⚠️ ข้อความมีความยาวเกินกำหนด (จำกัดไม่เกิน 8,000 ตัวอักษรต่อรอบ เพื่อป้องกันการโอเวอร์โหลดของระบบสมองกลค่ะ)"]),
+            media_type="text/plain; charset=utf-8"
+        )
+
     # 3. IP Blacklist Guard (Immediate Drop - No resource-wasting tarpit)
     if is_ip_blacklisted(client_ip):
         return StreamingResponse(
@@ -4516,6 +4612,9 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         r'dan\s+mode',
         r'developer\s+mode',
         r'unrestricted\s+mode',
+        r'system\s*override',
+        r'prompt\s*leak',
+        r'override\s*system',
         r'ขอดูคำสั่ง',
         r'ลืมคำสั่ง',
         r'พิมพ์คำสั่งก่อนหน้า',
@@ -4525,6 +4624,9 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         r'bypass\s+safety',
         r'disregard\s+(?:all\s+)?rules',
         r'repeat\s+(?:the\s+)?words\s+above',
+        r'ข้ามกฎความปลอดภัย',
+        r'แสดงข้อความลับ',
+        r'เปิดเผย\s*system\s*prompt',
     ]
     is_injection = any(_re_inj.search(pattern, user_input.lower()) for pattern in injection_patterns)
     if is_injection:

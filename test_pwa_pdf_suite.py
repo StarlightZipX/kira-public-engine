@@ -99,9 +99,33 @@ def test_pwa_and_print_styles():
     assert ".deliverable-pdf-btn" in css, "Missing .deliverable-pdf-btn in style.css"
     print("✅ style.css PWA components, update modal, Mind Map styles and print styles verified!")
 
+def test_iron_citadel_security():
+    client = TestClient(app)
+    
+    # 1. Test Security Headers on Clean Legitimate Request
+    res_headers = client.get("/api/system/version", headers={"CF-Connecting-IP": "203.0.113.195"})
+    assert res_headers.status_code == 200, f"Expected 200, got {res_headers.status_code}"
+    assert res_headers.headers.get("x-content-type-options") == "nosniff"
+    assert res_headers.headers.get("x-frame-options") == "SAMEORIGIN"
+    assert "strict-transport-security" in res_headers.headers
+    assert res_headers.headers.get("cross-origin-opener-policy") == "same-origin-allow-popups"
+    assert "permissions-policy" in res_headers.headers
+    print("✅ Iron Citadel: Enterprise Helmet Security Headers verified!")
+
+    # 2. Test Scanner Vulnerability Probe Blocker (.env probe)
+    res_probe = client.get("/.env", headers={"CF-Connecting-IP": "198.51.100.99"})
+    assert res_probe.status_code == 403, f"Expected 403 on /.env probe, got {res_probe.status_code}"
+    print("✅ Iron Citadel: Malicious vulnerability probe blocked with 403!")
+
+    # 3. Test Malicious Scanner User-Agent Blocker (sqlmap)
+    res_ua = client.get("/sw.js", headers={"User-Agent": "sqlmap/1.6#stable", "CF-Connecting-IP": "198.51.100.99"})
+    assert res_ua.status_code == 403, f"Expected 403 on sqlmap UA, got {res_ua.status_code}"
+    print("✅ Iron Citadel: Malicious scanner User-Agent blocked with 403!")
+
 if __name__ == "__main__":
     test_pwa_endpoints()
     test_pwa_html_elements()
     test_pwa_and_pdf_scripts()
     test_pwa_and_print_styles()
-    print("\n🎉 ALL TESTS (PWA, UPDATE MODAL, MIND MAP, PDF EXPORT) PASSED PERFECTLY! 🚀")
+    test_iron_citadel_security()
+    print("\n🎉 ALL TESTS (PWA, UPDATE MODAL, MIND MAP, PDF EXPORT, IRON CITADEL SHIELD) PASSED PERFECTLY! 🚀")
