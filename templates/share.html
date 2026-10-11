@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} | Kira AI</title>
+    
+    <!-- OpenGraph Social Meta Tags (Facebook, Discord, LinkedIn) -->
+    <meta property="og:site_name" content="Kira AI - Next-Gen Intelligence">
+    <meta property="og:title" content="{{ title }} | สร้างโดย Kira AI">
+    <meta property="og:description" content="{{ excerpt }}">
+    <meta property="og:url" content="{{ share_url }}">
+    <meta property="og:type" content="article">
+    <meta property="og:image" content="{{ request.base_url }}static/images/kira_logo.png?v=6">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ title }} | Kira AI">
+    <meta name="twitter:description" content="{{ excerpt }}">
+    <meta name="twitter:image" content="{{ request.base_url }}static/images/kira_logo.png?v=6">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Highlight.js for Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+    <style>
+        :root {
+            --bg-base: #060913;
+            --bg-card: rgba(15, 23, 42, 0.75);
+            --bg-card-hover: rgba(30, 41, 59, 0.85);
+            --border-glass: rgba(56, 189, 248, 0.2);
+            --border-glass-glow: rgba(56, 189, 248, 0.45);
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.35);
+            --accent-purple: #818cf8;
+            --accent-pink: #f472b6;
+            --accent-amber: #fbbf24;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --font-family: 'Plus Jakarta Sans', 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(129, 140, 248, 0.08) 0%, transparent 40%);
+        }
+
+        /* Top Bar */
+        .share-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: rgba(6, 9, 19, 0.82);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .share-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .share-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            object-fit: cover;
+            box-shadow: 0 0 15px var(--primary-glow);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .brand-text h1 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .brand-badge {
+            font-size: 0.65rem;
+            padding: 2px 7px;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: #7dd3fc;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-cta {
+            background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.6);
+            background: linear-gradient(135deg, #0369a1 0%, #1d4ed8 100%);
+        }
+
+        .btn-action {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Hero Banner */
+        .share-hero {
+            max-width: 1000px;
+            margin: 32px auto 20px auto;
+            padding: 0 20px;
+            width: 100%;
+        }
+
+        .share-meta-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .meta-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 4px 12px;
+            border-radius: 999px;
+        }
+
+        .meta-pill.type-canvas {
+            color: #38bdf8;
+            border-color: rgba(56, 189, 248, 0.3);
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .meta-pill.type-chat {
+            color: #a78bfa;
+            border-color: rgba(167, 139, 250, 0.3);
+            background: rgba(167, 139, 250, 0.1);
+        }
+
+        .share-title-text {
+            font-size: 1.85rem;
+            font-weight: 800;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        /* Main Container */
+        .share-content-container {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto 100px auto;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        /* Chat Timeline View */
+        .chat-stream-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .message-bubble {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .message-avatar.user-avatar {
+            background: #0284c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        .message-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message-sender {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message-sender.kira-sender {
+            color: #38bdf8;
+        }
+
+        .message-text {
+            font-size: 0.98rem;
+            line-height: 1.7;
+            color: #e2e8f0;
+            word-break: break-word;
+        }
+
+        .message-text p {
+            margin-bottom: 12px;
+        }
+
+        .message-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-text pre {
+            background: #090e17;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 14px 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.88rem;
+        }
+
+        .message-text code {
+            font-family: 'Fira Code', monospace;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            color: #38bdf8;
+        }
+
+        .message-text pre code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .message-text ul, .message-text ol {
+            margin: 10px 0 10px 24px;
+        }
+
+        .message-text li {
+            margin-bottom: 6px;
+        }
+
+        .message-text blockquote {
+            border-left: 4px solid #38bdf8;
+            background: rgba(56, 189, 248, 0.06);
+            padding: 10px 16px;
+            border-radius: 0 10px 10px 0;
+            margin: 12px 0;
+            color: #cbd5e1;
+        }
+
+        .message-text table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+        }
+
+        .message-text th, .message-text td {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 14px;
+            text-align: left;
+        }
+
+        .message-text th {
+            background: rgba(255, 255, 255, 0.05);
+            color: #38bdf8;
+        }
+
+        /* Canvas Live View Card */
+        .canvas-stream-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            min-height: 640px;
+        }
+
+        .canvas-toolbar {
+            background: rgba(15, 23, 42, 0.95);
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .canvas-tabs {
+            display: flex;
+            gap: 6px;
+        }
+
+        .canvas-tab-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .canvas-tab-btn.active {
+            background: rgba(56, 189, 248, 0.18);
+            border-color: rgba(56, 189, 248, 0.4);
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        .canvas-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .canvas-frame-wrap {
+            flex: 1;
+            position: relative;
+            min-height: 580px;
+            background: #090e1a;
+        }
+
+        #shared-canvas-iframe {
+            width: 100%;
+            height: 100%;
+            min-height: 580px;
+            border: none;
+            display: block;
+        }
+
+        #shared-code-view {
+            display: none;
+            padding: 20px;
+            overflow: auto;
+            max-height: 700px;
+            background: #070b14;
+        }
+
+        #shared-code-view pre {
+            margin: 0;
+            background: transparent;
+            border: none;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Sticky Bottom Floating Conversion Bar */
+        .viral-floating-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 40px);
+            max-width: 900px;
+            z-index: 90;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 20px;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(56, 189, 248, 0.2);
+            animation: slideUpFloat 0.5s ease-out;
+        }
+
+        @keyframes slideUpFloat {
+            from {
+                transform: translate(-50%, 40px);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        .viral-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bar-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        .bar-info h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 2px;
+        }
+
+        .bar-info p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .viral-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Social Share Modal Overlay */
+        .share-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .share-modal-box {
+            background: #0f172a;
+            border: 1px solid var(--border-glass-glow);
+            border-radius: 20px;
+            max-width: 480px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .social-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .social-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 8px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f8fafc;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .social-btn i {
+            font-size: 1.5rem;
+        }
+
+        .social-btn.fb:hover { background: #1877f2; border-color: #1877f2; }
+        .social-btn.tw:hover { background: #000000; border-color: #ffffff; }
+        .social-btn.line:hover { background: #06c755; border-color: #06c755; }
+        .social-btn.copy:hover { background: #0284c7; border-color: #0284c7; }
+
+        .link-copy-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #070b14;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin-top: 14px;
+        }
+
+        .link-copy-box input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .share-header { padding: 12px 16px; }
+            .share-title-text { font-size: 1.4rem; }
+            .chat-stream-card { padding: 16px; }
+            .viral-floating-bar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 12px 16px;
+                bottom: 12px;
+                width: calc(100% - 24px);
+            }
+            .viral-bar-left { justify-content: center; text-align: center; }
+            .viral-bar-right { justify-content: center; }
+            .btn-cta { justify-content: center; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="share-header">
+        <a href="/" class="share-brand" title="กลับสู่หน้าหลัก Kira AI">
+            <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo" class="share-logo">
+            <div class="brand-text">
+                <h1>Kira AI <span class="brand-badge">PUBLIC SHARE</span></h1>
+            </div>
+        </a>
+
+        <div class="header-actions">
+            <button class="btn-action" onclick="openShareModal()" title="แชร์ต่อ (Share)">
+                <i class="fa-solid fa-share-nodes"></i> <span>แชร์</span>
+            </button>
+            <a href="/?ref=viral_share_{{ share_id }}" class="btn-cta">
+                <i class="fa-solid fa-sparkles"></i> <span>คุยกับ Kira AI</span>
+            </a>
+        </div>
+    </header>
+
+    {% if not_found %}
+    <!-- 404 Not Found State -->
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; text-align: center;">
+        <div style="max-width: 480px; background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 24px; padding: 40px 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+            <i class="fa-solid fa-link-slash" style="font-size: 3.5rem; color: #f43f5e; margin-bottom: 20px;"></i>
+            <h2 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 10px;">ไม่พบข้อมูลที่แชร์ค่ะ</h2>
+            <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6; margin-bottom: 24px;">
+                ลิงก์บทสนทนาหรือผลงานนี้อาจหมดอายุ หรือถูกนำออกจากระบบแล้วค่ะ บอสและผู้ใช้สามารถเข้าสู่ระบบและเริ่มคุยกับ Kira ใหม่ได้เสมอนะคะ 🌸
+            </p>
+            <a href="/" class="btn-cta" style="padding: 12px 24px; font-size: 1rem;">
+                <i class="fa-solid fa-house"></i> กลับสู่หน้าหลัก Kira AI
+            </a>
+        </div>
+    </div>
+    {% else %}
+
+    <!-- Hero Title & Metadata -->
+    <section class="share-hero">
+        <div class="share-meta-row">
+            {% if share_type == 'canvas' %}
+            <span class="meta-pill type-canvas"><i class="fa-solid fa-laptop-code"></i> Interactive Canvas</span>
+            {% else %}
+            <span class="meta-pill type-chat"><i class="fa-solid fa-comments"></i> AI Conversation</span>
+            {% endif %}
+            <span class="meta-pill"><i class="fa-regular fa-user"></i> {{ author_display_name }}</span>
+            <span class="meta-pill"><i class="fa-regular fa-clock"></i> {{ created_at }}</span>
+            <span class="meta-pill"><i class="fa-regular fa-eye"></i> {{ views_count }} ครั้ง</span>
+        </div>
+        <h2 class="share-title-text">{{ title }}</h2>
+    </section>
+
+    <!-- Main Content Stream -->
+    <main class="share-content-container">
+        
+        {% if share_type == 'canvas' %}
+        <!-- Canvas Mode Presentation -->
+        <div class="canvas-stream-card">
+            <div class="canvas-toolbar">
+                <div class="canvas-tabs">
+                    <button id="tab-btn-preview" class="canvas-tab-btn active" onclick="switchCanvasView('preview')">
+                        <i class="fa-solid fa-eye"></i> พรีวิวสด (Preview)
+                    </button>
+                    <button id="tab-btn-code" class="canvas-tab-btn" onclick="switchCanvasView('code')">
+                        <i class="fa-solid fa-code"></i> ซอร์สโค้ด (Source Code)
+                    </button>
+                </div>
+                <div class="canvas-actions">
+                    <button class="btn-action" onclick="copyCanvasCode()" title="คัดลอกโค้ด">
+                        <i class="fa-regular fa-copy"></i> <span id="copy-text">คัดลอก</span>
+                    </button>
+                    <button class="btn-action" onclick="downloadCanvasFile()" title="ดาวน์โหลด HTML">
+                        <i class="fa-solid fa-download"></i> ดาวน์โหลด
+                    </button>
+                </div>
+            </div>
+
+            <div class="canvas-frame-wrap">
+                <iframe id="shared-canvas-iframe" sandbox="allow-scripts allow-modals allow-forms allow-popups allow-same-origin" title="Live Preview"></iframe>
+                <div id="shared-code-view">
+                    <pre><code id="shared-code-block" class="language-html"></code></pre>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Chat Mode Presentation -->
+        <div class="chat-stream-card" id="chat-stream-card">
+            <!-- Messages will be rendered via JS for markdown & code highlighting -->
+        </div>
+        {% endif %}
+
+    </main>
+
+    <!-- Bottom Sticky Viral Call-to-Action -->
+    <div class="viral-floating-bar">
+        <div class="viral-bar-left">
+            <img src="/static/images/kira_avatar.jpg?v=5" alt="Kira Avatar" class="bar-avatar" onerror="this.src='/static/images/kira_logo.png?v=6'">
+            <div class="bar-info">
+                <h4>สร้างผลงานและบทสนทนานี้ด้วย Kira AI ✨</h4>
+                <p>ผู้ช่วย AI อัจฉริยะ รองรับเขียนโค้ด วิเคราะห์กลยุทธ์ และทำงานอัตโนมัติ</p>
+            </div>
+        </div>
+        <div class="viral-bar-right">
+            <a href="/?ref=viral_share_{{ share_id }}" class="btn-cta">
+                <i class="fa-solid fa-bolt-lightning"></i> ลองคุยกับ Kira AI ฟรี
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Social Share Modal -->
+    <div id="social-share-modal" class="share-modal-overlay">
+        <div class="share-modal-box">
+            <button class="modal-close-btn" onclick="closeShareModal()">&times;</button>
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 6px; color: #fff;">
+                <i class="fa-solid fa-share-nodes text-cyan"></i> แชร์บทสนทนานี้
+            </h3>
+            <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 18px;">
+                ส่งต่อผลงานและบทสนทนาอัจฉริยะให้เพื่อนและเพื่อนร่วมงาน
+            </p>
+
+            <div class="social-grid">
+                <a id="btn-share-fb" href="#" target="_blank" class="social-btn fb">
+                    <i class="fa-brands fa-facebook"></i>
+                    <span>Facebook</span>
+                </a>
+                <a id="btn-share-tw" href="#" target="_blank" class="social-btn tw">
+                    <i class="fa-brands fa-x-twitter"></i>
+                    <span>X (Twitter)</span>
+                </a>
+                <a id="btn-share-line" href="#" target="_blank" class="social-btn line">
+                    <i class="fa-brands fa-line"></i>
+                    <span>LINE</span>
+                </a>
+                <button onclick="copyCurrentShareLink()" class="social-btn copy">
+                    <i class="fa-regular fa-copy"></i>
+                    <span id="quick-copy-label">คัดลอกลิงก์</span>
+                </button>
+            </div>
+
+            <div class="link-copy-box">
+                <input type="text" id="share-link-input" value="{{ share_url }}" readonly>
+                <button class="btn-cta" style="padding: 6px 12px; font-size: 0.8rem;" onclick="copyCurrentShareLink()">
+                    Copy
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Injection for Client Side Rendering -->
+    <script id="shared-data-payload" type="application/json">
+        {{ raw_content_json | safe }}
+    </script>
+
+    <script>
+        const shareType = "{{ share_type }}";
+        const shareUrl = "{{ share_url }}";
+        const shareTitle = "{{ title }}";
+        let rawPayload = null;
+
+        try {
+            const rawEl = document.getElementById('shared-data-payload');
+            if (rawEl) {
+                rawPayload = JSON.parse(rawEl.textContent);
+            }
+        } catch (e) {
+            console.error("Payload parse error:", e);
+        }
+
+        // Configure Social Links
+        const encodedUrl = encodeURIComponent(shareUrl);
+        const encodedTitle = encodeURIComponent(`${shareTitle} - สร้างสรรค์โดย Kira AI`);
+        
+        const fbBtn = document.getElementById('btn-share-fb');
+        if (fbBtn) fbBtn.href = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+
+        const twBtn = document.getElementById('btn-share-tw');
+        if (twBtn) twBtn.href = `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`;
+
+        const lineBtn = document.getElementById('btn-share-line');
+        if (lineBtn) lineBtn.href = `https://social-plugins.line.me/lineit/share?url=${encodedUrl}`;
+
+        function openShareModal() {
+            document.getElementById('social-share-modal').style.display = 'flex';
+        }
+
+        function closeShareModal() {
+            document.getElementById('social-share-modal').style.display = 'none';
+        }
+
+        function copyCurrentShareLink() {
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                const label = document.getElementById('quick-copy-label');
+                if (label) {
+                    label.textContent = "คัดลอกแล้ว!";
+                    setTimeout(() => label.textContent = "คัดลอกลิงก์", 2000);
+                }
+            });
+        }
+
+        // Render Canvas Artifact if Canvas Mode
+        if (shareType === 'canvas') {
+            const iframe = document.getElementById('shared-canvas-iframe');
+            const codeBlock = document.getElementById('shared-code-block');
+            
+            let codeContent = typeof rawPayload === 'string' ? rawPayload : (rawPayload.code || JSON.stringify(rawPayload, null, 2));
+            
+            // Format HTML wrapper if not complete
+            let fullHtml = codeContent;
+            if (!codeContent.toLowerCase().includes('<!doctype') && !codeContent.toLowerCase().includes('<html')) {
+                fullHtml = `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kira Live Canvas</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }</style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4">
+    ${codeContent}
+</body>
+</html>`;
+            }
+
+            if (iframe) iframe.srcdoc = fullHtml;
+            if (codeBlock) {
+                codeBlock.textContent = codeContent;
+                hljs.highlightElement(codeBlock);
+            }
+
+            window.switchCanvasView = function(view) {
+                const tabPreview = document.getElementById('tab-btn-preview');
+                const tabCode = document.getElementById('tab-btn-code');
+                const previewFrame = document.getElementById('shared-canvas-iframe');
+                const codeView = document.getElementById('shared-code-view');
+
+                if (view === 'preview') {
+                    tabPreview.classList.add('active');
+                    tabCode.classList.remove('active');
+                    previewFrame.style.display = 'block';
+                    codeView.style.display = 'none';
+                } else {
+                    tabCode.classList.add('active');
+                    tabPreview.classList.remove('active');
+                    previewFrame.style.display = 'none';
+                    codeView.style.display = 'block';
+                }
+            };
+
+            window.copyCanvasCode = function() {
+                navigator.clipboard.writeText(codeContent).then(() => {
+                    const textSpan = document.getElementById('copy-text');
+                    if (textSpan) {
+                        textSpan.textContent = "คัดลอกแล้ว!";
+                        setTimeout(() => textSpan.textContent = "คัดลอก", 2000);
+                    }
+                });
+            };
+
+            window.downloadCanvasFile = function() {
+                const blob = new Blob([codeContent], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `kira_shared_canvas_${Date.now()}.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+        }
+
+        // Render Chat Conversation Timeline
+        if (shareType === 'chat' && Array.isArray(rawPayload)) {
+            const chatContainer = document.getElementById('chat-stream-card');
+            if (chatContainer) {
+                marked.setOptions({
+                    highlight: function(code, lang) {
+                        if (lang && hljs.getLanguage(lang)) {
+                            return hljs.highlight(code, { language: lang }).value;
+                        }
+                        return hljs.highlightAuto(code).value;
+                    },
+                    breaks: true
+                });
+
+                rawPayload.forEach(msg => {
+                    const role = msg.role || 'user';
+                    const isKira = role === 'assistant' || role === 'bot';
+                    const content = msg.content || '';
+
+                    const bubble = document.createElement('div');
+                    bubble.className = 'message-bubble';
+
+                    const avatarHtml = isKira 
+                        ? `<img src="/static/images/kira_avatar.jpg?v=5" alt="Kira" class="message-avatar" onerror="this.src='/static/images/kira_logo.png?v=6'">`
+                        : `<div class="message-avatar user-avatar"><i class="fa-solid fa-user"></i></div>`;
+
+                    const senderName = isKira ? 'Kira AI' : 'ผู้ใช้งาน (User)';
+                    const senderClass = isKira ? 'kira-sender' : '';
+
+                    // Clean thinking tags if present
+                    let displayContent = content;
+                    let thinkingHtml = '';
+                    if (displayContent.includes('[THINKING_START]') && displayContent.includes('[THINKING_END]')) {
+                        const thinkMatch = displayContent.match(/\[THINKING_START\]([\s\S]*?)\[THINKING_END\]/);
+                        if (thinkMatch) {
+                            const thinkText = thinkMatch[1].trim();
+                            thinkingHtml = `<details style="margin-bottom: 12px; background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.25); border-radius: 10px; padding: 10px 14px; font-size: 0.85rem; color: #7dd3fc;">
+                                <summary style="cursor: pointer; font-weight: 600;"><i class="fa-solid fa-brain"></i> กระบวนการคิดและการวิเคราะห์ของคิระ</summary>
+                                <div style="margin-top: 8px; color: #cbd5e1; white-space: pre-wrap;">${thinkText}</div>
+                            </details>`;
+                            displayContent = displayContent.replace(/\[THINKING_START\][\s\S]*?\[THINKING_END\]/, '').trim();
+                        }
+                    }
+
+                    const parsedMarkdown = marked.parse(displayContent);
+
+                    bubble.innerHTML = `
+                        ${avatarHtml}
+                        <div class="message-body">
+                            <div class="message-sender ${senderClass}">${senderName}</div>
+                            ${thinkingHtml}
+                            <div class="message-text">${parsedMarkdown}</div>
+                        </div>
+                    `;
+
+                    chatContainer.appendChild(bubble);
+                });
+            }
+        }
+    </script>
+    {% endif %}
+
+</body>
+</html>

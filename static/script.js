@@ -2404,41 +2404,151 @@ async function playKiraVoice(text, btn) {
 }
 
 // =========================================================================
-// 🎨 2. Live Interactive Code Canvas & Artifacts
+// 🎨 2. Live Interactive Code Canvas & Next-Gen Split Workspace Suite
 // =========================================================================
-// =========================================================================
-// 🎨 2. Live Interactive Code Canvas & Artifacts Version Control
-// =========================================================================
+const appContainerEl = document.getElementById('app-container');
 const artifactsDrawer = document.getElementById('artifacts-drawer');
 const artifactsIframe = document.getElementById('artifacts-iframe');
 const artifactsName = document.getElementById('artifacts-name');
+const artifactTypeBadge = document.getElementById('artifact-type-badge');
 const artifactsVersionsContainer = document.getElementById('artifacts-versions');
-const btnCloseArtifact = document.getElementById('btn-close-artifact');
+
+// Panes
+const canvasPreviewPane = document.getElementById('canvas-preview-pane');
+const canvasCodePane = document.getElementById('canvas-code-pane');
+const canvasConsolePane = document.getElementById('canvas-console-pane');
+
+// Mode Tabs
+const btnTabPreview = document.getElementById('btn-tab-preview');
+const btnTabCode = document.getElementById('btn-tab-code');
+const btnTabConsole = document.getElementById('btn-tab-console');
+
+// Layout & Viewport Toggles
+const btnCanvasSplit = document.getElementById('btn-canvas-split');
+const btnCanvasMaximize = document.getElementById('btn-canvas-maximize');
 const btnViewportDesktop = document.getElementById('btn-viewport-desktop');
 const btnViewportMobile = document.getElementById('btn-viewport-mobile');
+const btnInspectCanvas = document.getElementById('btn-inspect-canvas');
+const btnShareCanvas = document.getElementById('btn-share-canvas');
 const btnDownloadArtifact = document.getElementById('btn-download-artifact');
+const btnCloseArtifact = document.getElementById('btn-close-artifact');
 
+// Code Editor & Console Elements
+const canvasCodeEditor = document.getElementById('canvas-code-editor');
+const btnCopyCanvasCode = document.getElementById('btn-copy-canvas-code');
+const btnApplyCanvasCode = document.getElementById('btn-apply-canvas-code');
+const canvasConsoleLogs = document.getElementById('canvas-console-logs');
+const btnClearCanvasConsole = document.getElementById('btn-clear-canvas-console');
 
-if (btnCloseArtifact) {
-    btnCloseArtifact.addEventListener('click', () => {
-        artifactsDrawer.classList.remove('open');
+// Inline AI Prompt Dock Elements
+const canvasAiPromptInput = document.getElementById('canvas-ai-prompt-input');
+const btnCanvasSendPrompt = document.getElementById('btn-canvas-send-prompt');
+
+// Canvas State Management
+let artifactVersions = [];
+let activeVersionId = null;
+let currentArtifactCode = '';
+let currentArtifactTitle = 'Live Code Canvas';
+let isCanvasSplitMode = true; // 50/50 split workspace on desktop
+let isCanvasMaximized = false;
+
+// Update Canvas Layout (Split / Maximize / Responsive)
+function updateCanvasLayout() {
+    if (!artifactsDrawer || !appContainerEl) return;
+
+    if (!artifactsDrawer.classList.contains('open')) {
+        appContainerEl.classList.remove('split-workspace-active');
+        artifactsDrawer.classList.remove('maximized');
+        return;
+    }
+
+    if (isCanvasMaximized) {
+        artifactsDrawer.classList.add('maximized');
+        appContainerEl.classList.remove('split-workspace-active');
+        if (btnCanvasMaximize) btnCanvasMaximize.classList.add('active');
+        if (btnCanvasSplit) btnCanvasSplit.classList.remove('active');
+    } else if (isCanvasSplitMode && window.innerWidth >= 992) {
+        artifactsDrawer.classList.remove('maximized');
+        appContainerEl.classList.add('split-workspace-active');
+        if (btnCanvasSplit) btnCanvasSplit.classList.add('active');
+        if (btnCanvasMaximize) btnCanvasMaximize.classList.remove('active');
+    } else {
+        artifactsDrawer.classList.remove('maximized');
+        appContainerEl.classList.remove('split-workspace-active');
+        if (btnCanvasSplit) btnCanvasSplit.classList.remove('active');
+        if (btnCanvasMaximize) btnCanvasMaximize.classList.remove('active');
+    }
+}
+
+// Window resize listener to adapt layout dynamically
+window.addEventListener('resize', () => {
+    if (artifactsDrawer && artifactsDrawer.classList.contains('open')) {
+        updateCanvasLayout();
+    }
+});
+
+// Tab Switcher (Preview / Code / Console)
+function switchCanvasTab(tab) {
+    if (!btnTabPreview || !btnTabCode || !btnTabConsole) return;
+
+    btnTabPreview.classList.toggle('active', tab === 'preview');
+    btnTabCode.classList.toggle('active', tab === 'code');
+    btnTabConsole.classList.toggle('active', tab === 'console');
+
+    if (canvasPreviewPane) canvasPreviewPane.style.display = tab === 'preview' ? 'block' : 'none';
+    if (canvasCodePane) canvasCodePane.style.display = tab === 'code' ? 'flex' : 'none';
+    if (canvasConsolePane) canvasConsolePane.style.display = tab === 'console' ? 'flex' : 'none';
+
+    if (tab === 'code' && canvasCodeEditor) {
+        canvasCodeEditor.value = currentArtifactCode;
+    }
+}
+
+if (btnTabPreview) btnTabPreview.addEventListener('click', () => switchCanvasTab('preview'));
+if (btnTabCode) btnTabCode.addEventListener('click', () => switchCanvasTab('code'));
+if (btnTabConsole) btnTabConsole.addEventListener('click', () => switchCanvasTab('console'));
+
+// Split & Maximize Button Listeners
+if (btnCanvasSplit) {
+    btnCanvasSplit.addEventListener('click', () => {
+        isCanvasMaximized = false;
+        isCanvasSplitMode = true;
+        updateCanvasLayout();
     });
 }
 
+if (btnCanvasMaximize) {
+    btnCanvasMaximize.addEventListener('click', () => {
+        isCanvasMaximized = !isCanvasMaximized;
+        updateCanvasLayout();
+    });
+}
+
+// Close Canvas
+if (btnCloseArtifact) {
+    btnCloseArtifact.addEventListener('click', () => {
+        artifactsDrawer.classList.remove('open');
+        isCanvasMaximized = false;
+        updateCanvasLayout();
+    });
+}
+
+// Viewport Switcher (Desktop / Mobile)
 if (btnViewportDesktop && btnViewportMobile) {
     btnViewportDesktop.addEventListener('click', () => {
         btnViewportDesktop.classList.add('active');
         btnViewportMobile.classList.remove('active');
-        artifactsIframe.classList.remove('mobile-view');
+        if (artifactsIframe) artifactsIframe.classList.remove('mobile-view');
     });
 
     btnViewportMobile.addEventListener('click', () => {
         btnViewportMobile.classList.add('active');
         btnViewportDesktop.classList.remove('active');
-        artifactsIframe.classList.add('mobile-view');
+        if (artifactsIframe) artifactsIframe.classList.add('mobile-view');
     });
 }
 
+// Download HTML Artifact
 if (btnDownloadArtifact) {
     btnDownloadArtifact.addEventListener('click', () => {
         if (!currentArtifactCode) return;
@@ -2456,13 +2566,181 @@ if (btnDownloadArtifact) {
     });
 }
 
+// Copy Code from Code Editor
+if (btnCopyCanvasCode) {
+    btnCopyCanvasCode.addEventListener('click', () => {
+        if (!currentArtifactCode) return;
+        navigator.clipboard.writeText(currentArtifactCode).then(() => {
+            btnCopyCanvasCode.innerHTML = '<i class="fa-solid fa-check"></i> คัดลอกแล้ว';
+            setTimeout(() => {
+                btnCopyCanvasCode.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอกโค้ด';
+            }, 2000);
+        });
+    });
+}
+
+// Apply Manual Edits from In-Canvas Code Editor
+if (btnApplyCanvasCode) {
+    btnApplyCanvasCode.addEventListener('click', () => {
+        if (!canvasCodeEditor) return;
+        const editedCode = canvasCodeEditor.value.trim();
+        if (!editedCode) return;
+
+        currentArtifactCode = editedCode;
+        
+        // Wrap with console interceptor
+        let fullHtml = buildCanvasHtmlWrapper(editedCode, currentArtifactTitle);
+
+        const newVersionId = artifactVersions.length + 1;
+        const newVersion = {
+            id: newVersionId,
+            label: `v${newVersionId} (แก้ไข)`,
+            code: editedCode,
+            fullHtml: fullHtml,
+            timestamp: new Date()
+        };
+        artifactVersions.push(newVersion);
+        activeVersionId = newVersionId;
+
+        renderArtifactVersion(activeVersionId);
+        switchCanvasTab('preview');
+        appendCanvasLog('info', `[Kira Canvas] ทำการรันและอัปเดตเวอร์ชันใหม่ v${newVersionId} สำเร็จ`);
+        playKiraSound('receive');
+    });
+}
+
+// Clear Console Logs
+if (btnClearCanvasConsole) {
+    btnClearCanvasConsole.addEventListener('click', () => {
+        if (canvasConsoleLogs) {
+            canvasConsoleLogs.innerHTML = '<div class="console-log-item info"><i class="fa-solid fa-circle-info"></i> ล้างบันทึก Console เรียบร้อย</div>';
+        }
+    });
+}
+
+// Append Console Log
+function appendCanvasLog(level, message) {
+    if (!canvasConsoleLogs) return;
+    const item = document.createElement('div');
+    item.className = `console-log-item ${level}`;
+    const icon = level === 'error' ? 'fa-circle-xmark' : level === 'warn' ? 'fa-triangle-exclamation' : 'fa-circle-info';
+    const now = new Date().toLocaleTimeString();
+    item.innerHTML = `<span style="opacity:0.6;font-size:0.75rem;">[${now}]</span> <i class="fa-solid ${icon}"></i> <span>${escapeHtml(String(message))}</span>`;
+    canvasConsoleLogs.appendChild(item);
+    canvasConsoleLogs.scrollTop = canvasConsoleLogs.scrollHeight;
+}
+
+// Helper to escape HTML for console
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Listen to console messages from sandboxed iframe
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.source === 'KIRA_CANVAS_IFRAME') {
+        appendCanvasLog(event.data.level || 'info', event.data.message || '');
+    }
+});
+
+// Build Safe HTML Wrapper with Console Interception
+function buildCanvasHtmlWrapper(code, title = 'Live Preview') {
+    const isMermaid = title.toLowerCase().includes('mermaid') || 
+                      code.trim().startsWith('graph ') || 
+                      code.trim().startsWith('flowchart ') || 
+                      code.trim().startsWith('sequenceDiagram ') || 
+                      code.trim().startsWith('classDiagram ') || 
+                      code.trim().startsWith('stateDiagram') || 
+                      code.trim().startsWith('erDiagram');
+
+    const consoleScript = `
+    <script>
+    (function() {
+        const _log = console.log;
+        const _warn = console.warn;
+        const _error = console.error;
+        function sendToParent(type, args) {
+            try {
+                window.parent.postMessage({
+                    source: 'KIRA_CANVAS_IFRAME',
+                    level: type,
+                    message: Array.from(args).map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+                }, '*');
+            } catch(e) {}
+        }
+        console.log = function(...args) { _log.apply(console, args); sendToParent('info', args); };
+        console.warn = function(...args) { _warn.apply(console, args); sendToParent('warn', args); };
+        console.error = function(...args) { _error.apply(console, args); sendToParent('error', args); };
+        window.onerror = function(msg, url, line) {
+            sendToParent('error', ['JavaScript Error: ' + msg + ' (Line: ' + line + ')']);
+        };
+    })();
+    <\/script>`;
+
+    if (isMermaid) {
+        return `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kira Mermaid Diagram</title>
+    ${consoleScript}
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\/script>
+    <style>
+        body { margin: 0; padding: 2rem; background: #0f172a; color: #f8fafc; font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .mermaid { background: rgba(30, 41, 59, 0.7); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 100%; overflow: auto; }
+    </style>
+</head>
+<body>
+    <div class="mermaid">
+${code}
+    </div>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    <\/script>
+</body>
+</html>`;
+    }
+
+    if (!code.toLowerCase().includes('<!doctype') && !code.toLowerCase().includes('<html')) {
+        return `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kira Live Canvas</title>
+    ${consoleScript}
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4">
+    ${code}
+</body>
+</html>`;
+    }
+
+    // Inject console script into existing HTML head or body
+    if (code.includes('</head>')) {
+        return code.replace('</head>', `${consoleScript}</head>`);
+    } else if (code.includes('<body')) {
+        return code.replace('<body', `${consoleScript}<body`);
+    }
+    return consoleScript + code;
+}
+
+// Render Specific Artifact Version
 function renderArtifactVersion(versionId) {
     const version = artifactVersions.find(v => v.id === versionId);
     if (!version) return;
     
     activeVersionId = versionId;
     currentArtifactCode = version.code;
-    artifactsIframe.srcdoc = version.fullHtml;
+    if (artifactsIframe) artifactsIframe.srcdoc = version.fullHtml;
+    if (canvasCodeEditor) canvasCodeEditor.value = version.code;
     
     // Update version pills in header
     if (artifactsVersionsContainer) {
@@ -2478,10 +2756,13 @@ function renderArtifactVersion(versionId) {
     }
 }
 
+// Open Artifacts in Canvas & Activate Split Workspace
 function openArtifacts(code, title = 'Live Preview') {
     if (!artifactsDrawer || !artifactsIframe) return;
+    currentArtifactTitle = title;
     if (artifactsName) artifactsName.textContent = title;
     
+    // Detect Artifact Type
     const isMermaid = title.toLowerCase().includes('mermaid') || 
                       code.trim().startsWith('graph ') || 
                       code.trim().startsWith('flowchart ') || 
@@ -2489,53 +2770,27 @@ function openArtifacts(code, title = 'Live Preview') {
                       code.trim().startsWith('classDiagram ') || 
                       code.trim().startsWith('stateDiagram') || 
                       code.trim().startsWith('erDiagram');
+    const isSvg = code.trim().startsWith('<svg') || title.toLowerCase().includes('svg');
 
-    // Inject full HTML wrapper if code is just a fragment or mermaid
-    let fullHtml = code;
-    if (isMermaid) {
-        fullHtml = `
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kira Mermaid Diagram</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <style>
-        body { margin: 0; padding: 2rem; background: #0f172a; color: #f8fafc; font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
-        .mermaid { background: rgba(30, 41, 59, 0.7); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 100%; overflow: auto; }
-    </style>
-</head>
-<body>
-    <div class="mermaid">
-${code}
-    </div>
-    <script>
-        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-    </script>
-</body>
-</html>`;
-    } else if (!code.toLowerCase().includes('<!doctype') && !code.toLowerCase().includes('<html')) {
-        fullHtml = `
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kira Live Canvas</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    </style>
-</head>
-<body class="bg-slate-50 text-slate-800 p-4">
-    ${code}
-</body>
-</html>`;
+    if (artifactTypeBadge) {
+        if (isMermaid) {
+            artifactTypeBadge.textContent = 'DIAGRAM';
+            artifactTypeBadge.style.color = '#c084fc';
+            artifactTypeBadge.style.borderColor = 'rgba(192, 132, 252, 0.4)';
+        } else if (isSvg) {
+            artifactTypeBadge.textContent = 'SVG GRAPHIC';
+            artifactTypeBadge.style.color = '#f472b6';
+            artifactTypeBadge.style.borderColor = 'rgba(244, 114, 182, 0.4)';
+        } else {
+            artifactTypeBadge.textContent = 'WEB APP';
+            artifactTypeBadge.style.color = '#38bdf8';
+            artifactTypeBadge.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+        }
     }
-    
-    // Version History Management: Check if this exact code already exists in history
+
+    const fullHtml = buildCanvasHtmlWrapper(code, title);
+
+    // Version History Management
     let existingVersion = artifactVersions.find(v => v.code.trim() === code.trim());
     if (!existingVersion) {
         const newVersionId = artifactVersions.length + 1;
@@ -2553,9 +2808,49 @@ ${code}
     }
     
     renderArtifactVersion(activeVersionId);
+    switchCanvasTab('preview');
     artifactsDrawer.classList.add('open');
+    updateCanvasLayout();
+
+    appendCanvasLog('info', `[Kira Canvas] เปิดการแสดงผล: ${title} (v${activeVersionId})`);
 }
 
+// Inline AI Prompting for Canvas ("Ask Kira to Edit Canvas")
+function sendCanvasPromptToAI() {
+    if (!canvasAiPromptInput || !userInput) return;
+    const promptText = canvasAiPromptInput.value.trim();
+    if (!promptText) return;
+
+    const structuredPrompt = `ฉันต้องการให้คิระช่วยปรับแต่งชิ้นงาน Canvas "${currentArtifactTitle}" (เวอร์ชัน v${activeVersionId}):\n\n🎯 สิ่งที่ต้องการให้แก้ไข: ${promptText}\n\n📄 ซอร์สโค้ดปัจจุบัน:\n\`\`\`html\n${currentArtifactCode}\n\`\`\`\n\nช่วยปรับปรุงโค้ดทั้งหมดให้เสร็จสมบูรณ์ และส่งกลับมาเป็นบล็อกโค้ดแบบเต็มให้ด้วยนะคะ 🌸`;
+
+    canvasAiPromptInput.value = '';
+    userInput.value = structuredPrompt;
+    userInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+    // Auto-switch to preview so user sees Kira streaming
+    switchCanvasTab('preview');
+
+    // Trigger Chat Send
+    if (typeof sendMessage === 'function') {
+        sendMessage();
+    } else if (sendBtn) {
+        sendBtn.click();
+    }
+}
+
+if (btnCanvasSendPrompt) {
+    btnCanvasSendPrompt.addEventListener('click', sendCanvasPromptToAI);
+}
+if (canvasAiPromptInput) {
+    canvasAiPromptInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendCanvasPromptToAI();
+        }
+    });
+}
+
+// Attach Code Actions (Copy & Live Canvas Preview) to chat blocks
 function applyCodeActions(container) {
     if (!container) return;
     
@@ -2604,12 +2899,359 @@ function applyCodeActions(container) {
         } else if (isHtmlOrWeb) {
             const previewBtn = document.createElement('button');
             previewBtn.className = 'btn-run-code';
-            previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> พรีวิวสด (Live Canvas)';
-            previewBtn.onclick = () => openArtifacts(codeText, 'Live Web Artifact');
+            previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> พรีวิวสด (Interactive Canvas)';
+            previewBtn.onclick = () => openArtifacts(codeText, 'Interactive Live Artifact');
             actionBar.appendChild(previewBtn);
         }
         
         pre.parentElement.insertBefore(actionBar, pre);
+    });
+}
+
+// =========================================================================
+// 🚀 2.5 Social Viral Share Engine & Viral Social Card Generator
+// =========================================================================
+const shareModal = document.getElementById('share-modal');
+const btnCloseShareModal = document.getElementById('btn-close-share-modal');
+const btnShareChatHeader = document.getElementById('btn-share-chat');
+const btnToolsViralShare = document.getElementById('btn-tools-viral-share');
+const btnToolsOpenCanvas = document.getElementById('btn-tools-open-canvas');
+
+const shareTabChat = document.getElementById('share-tab-chat');
+const shareTabCanvas = document.getElementById('share-tab-canvas');
+const shareTitleInput = document.getElementById('share-title-input');
+const shareLinkResult = document.getElementById('share-link-result');
+const btnCopyShareUrl = document.getElementById('btn-copy-share-url');
+
+const btnModalShareFb = document.getElementById('btn-modal-share-fb');
+const btnModalShareTw = document.getElementById('btn-modal-share-tw');
+const btnModalShareLine = document.getElementById('btn-modal-share-line');
+
+const btnDownloadViralCard = document.getElementById('btn-download-viral-card');
+const viralCardCanvas = document.getElementById('viral-card-canvas');
+
+let activeShareMode = 'chat'; // 'chat' or 'canvas'
+let currentGeneratedShareUrl = '';
+
+// Open Share Modal Function
+async function openShareModal(targetType = 'chat') {
+    if (!shareModal) return;
+    activeShareMode = targetType;
+
+    // Update active tab styling
+    if (shareTabChat && shareTabCanvas) {
+        shareTabChat.classList.toggle('active', targetType === 'chat');
+        shareTabCanvas.classList.toggle('active', targetType === 'canvas');
+    }
+
+    // Auto-detect Title and Content
+    let shareTitle = 'บทสนทนาอัจฉริยะกับ Kira AI';
+    let shareContent = null;
+    let quoteSnippet = 'ร่วมสัมผัสประสบการณ์ทำงานและวิเคราะห์ข้อมูลด้วย Kira AI ระบบปัญญาประดิษฐ์อัจฉริยะ';
+
+    if (targetType === 'canvas') {
+        shareTitle = currentArtifactTitle || 'ผลงาน Interactive Canvas';
+        shareContent = {
+            title: shareTitle,
+            code: currentArtifactCode || '<!-- Kira Canvas Empty -->',
+            version: activeVersionId || 1
+        };
+        quoteSnippet = `ผลงานอินเทอร์แอคทีฟ Canvas: ${shareTitle}`;
+    } else {
+        // Collect chat messages from chatBox
+        const messages = [];
+        const msgDivs = chatBox.querySelectorAll('.message');
+        msgDivs.forEach(div => {
+            const isUser = div.classList.contains('user');
+            const contentDiv = div.querySelector('.message-content');
+            if (contentDiv) {
+                const text = contentDiv.innerText.trim();
+                messages.push({
+                    role: isUser ? 'user' : 'assistant',
+                    content: text
+                });
+            }
+        });
+
+        if (messages.length > 0) {
+            shareContent = messages;
+            // Get first user question as topic
+            const firstUser = messages.find(m => m.role === 'user');
+            if (firstUser && firstUser.content) {
+                shareTitle = firstUser.content.slice(0, 50).replace(/\n/g, ' ');
+            }
+            // Get assistant reply for quote snippet
+            const assistantMsg = messages.find(m => m.role === 'assistant');
+            if (assistantMsg && assistantMsg.content) {
+                quoteSnippet = assistantMsg.content.slice(0, 160).replace(/\n/g, ' ').replace(/[#*`]/g, '');
+            }
+        } else {
+            shareContent = [{ role: 'assistant', content: 'สวัสดีค่ะ! คิระพร้อมช่วยเหลือทุกงานของคุณค่ะ 🌸' }];
+        }
+    }
+
+    if (shareTitleInput) shareTitleInput.value = shareTitle;
+    if (shareLinkResult) shareLinkResult.value = 'กำลังสร้างลิงก์แชร์...';
+
+    shareModal.style.display = 'flex';
+
+    // Call API to create public share snapshot
+    try {
+        const uName = currentUser || localStorage.getItem('kira_username') || 'ผู้ใช้ทั่วไป';
+        const res = await fetch('/api/share/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: uName,
+                title: shareTitle,
+                share_type: targetType,
+                content: shareContent,
+                author_display_name: uName
+            })
+        });
+
+        const data = await res.json();
+        if (data.status === 'success') {
+            currentGeneratedShareUrl = window.location.origin + data.share_url;
+            if (shareLinkResult) shareLinkResult.value = currentGeneratedShareUrl;
+
+            // Configure Social Links
+            const encUrl = encodeURIComponent(currentGeneratedShareUrl);
+            const encTitle = encodeURIComponent(`${shareTitle} - สร้างสรรค์โดย Kira AI ✨`);
+            if (btnModalShareFb) btnModalShareFb.href = `https://www.facebook.com/sharer/sharer.php?u=${encUrl}`;
+            if (btnModalShareTw) btnModalShareTw.href = `https://twitter.com/intent/tweet?text=${encTitle}&url=${encUrl}`;
+            if (btnModalShareLine) btnModalShareLine.href = `https://social-plugins.line.me/lineit/share?url=${encUrl}`;
+
+            // Draw Viral Social Image Card
+            drawViralSocialCard(shareTitle, quoteSnippet, currentGeneratedShareUrl, uName);
+        } else {
+            if (shareLinkResult) shareLinkResult.value = 'สร้างลิงก์ไม่สำเร็จ กรุณาลองใหม่';
+        }
+    } catch (e) {
+        console.error("Create share snapshot error:", e);
+        if (shareLinkResult) shareLinkResult.value = window.location.href;
+    }
+}
+
+// Draw 1200x630 Viral Social Image Card on HTML5 Canvas
+function drawViralSocialCard(title, snippet, shareUrl, authorName) {
+    if (!viralCardCanvas) return;
+    const ctx = viralCardCanvas.getContext('2d');
+    const width = viralCardCanvas.width;
+    const height = viralCardCanvas.height;
+
+    // 1. Deep Space Cyber Gradient Background
+    const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+    bgGrad.addColorStop(0, '#060913');
+    bgGrad.addColorStop(0.5, '#0b1120');
+    bgGrad.addColorStop(1, '#1e1b4b');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    // 2. Radial Glow Orbs
+    const glow1 = ctx.createRadialGradient(200, 150, 20, 200, 150, 450);
+    glow1.addColorStop(0, 'rgba(56, 189, 248, 0.25)');
+    glow1.addColorStop(1, 'rgba(56, 189, 248, 0)');
+    ctx.fillStyle = glow1;
+    ctx.fillRect(0, 0, width, height);
+
+    const glow2 = ctx.createRadialGradient(width - 250, height - 150, 20, width - 250, height - 150, 400);
+    glow2.addColorStop(0, 'rgba(168, 85, 247, 0.22)');
+    glow2.addColorStop(1, 'rgba(168, 85, 247, 0)');
+    ctx.fillStyle = glow2;
+    ctx.fillRect(0, 0, width, height);
+
+    // 3. Glowing Border
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(20, 20, width - 40, height - 40);
+
+    // 4. Header Branding (Kira AI Logo & Badge)
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 34px -apple-system, sans-serif';
+    ctx.fillText('✨ KIRA AI', 60, 90);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '600 20px -apple-system, sans-serif';
+    ctx.fillText('• NEXT-GEN ARTIFICIAL INTELLIGENCE', 240, 88);
+
+    // Tag Pill
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
+    ctx.fillRect(width - 320, 58, 260, 42);
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(width - 320, 58, 260, 42);
+
+    ctx.fillStyle = '#7dd3fc';
+    ctx.font = 'bold 18px -apple-system, sans-serif';
+    ctx.fillText('VERIFIED ARTIFACT', width - 280, 85);
+
+    // Divider
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(60, 125);
+    ctx.lineTo(width - 60, 125);
+    ctx.stroke();
+
+    // 5. Main Title (Word Wrap)
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 44px -apple-system, sans-serif';
+    wrapCanvasText(ctx, title, 60, 195, width - 120, 55, 2);
+
+    // 6. Quote Card Box
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+    ctx.fillRect(60, 310, width - 120, 190);
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(60, 310, width - 120, 190);
+
+    // Cyan accent bar on quote
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(60, 310, 8, 190);
+
+    // Quote text
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '26px -apple-system, sans-serif';
+    wrapCanvasText(ctx, `"${snippet}"`, 95, 365, width - 180, 38, 3);
+
+    // 7. Footer Row (Author & Watermark)
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '22px -apple-system, sans-serif';
+    ctx.fillText(`👤 แชร์โดย: ${authorName || 'Kira AI Creator'} • 📅 ${new Date().toLocaleDateString('th-TH')}`, 60, 555);
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText('🔗 kira-public-engine.onrender.com', width - 440, 555);
+}
+
+// Word Wrap helper for Canvas 2D
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+    const words = text.split(' ');
+    let line = '';
+    let linesDrawn = 0;
+
+    for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line, x, y);
+            line = words[n] + ' ';
+            y += lineHeight;
+            linesDrawn++;
+            if (linesDrawn >= maxLines - 1) {
+                // Last line ellipsis
+                const remaining = words.slice(n).join(' ');
+                let lastLine = remaining;
+                while (ctx.measureText(lastLine + '...').width > maxWidth && lastLine.length > 0) {
+                    lastLine = lastLine.slice(0, -1);
+                }
+                ctx.fillText(lastLine + '...', x, y);
+                return;
+            }
+        } else {
+            line = testLine;
+        }
+    }
+    ctx.fillText(line, x, y);
+}
+
+// Download Viral Card PNG
+if (btnDownloadViralCard && viralCardCanvas) {
+    btnDownloadViralCard.addEventListener('click', () => {
+        viralCardCanvas.toBlob((blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `kira_ai_viral_card_${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            playKiraSound('receive');
+        }, 'image/png');
+    });
+}
+
+// 1-Click Copy Public Share URL
+if (btnCopyShareUrl && shareLinkResult) {
+    btnCopyShareUrl.addEventListener('click', () => {
+        const urlToCopy = shareLinkResult.value;
+        if (!urlToCopy || urlToCopy.startsWith('กำลัง')) return;
+        navigator.clipboard.writeText(urlToCopy).then(() => {
+            btnCopyShareUrl.innerHTML = '<i class="fa-solid fa-check"></i> คัดลอกแล้ว!';
+            playKiraSound('receive');
+            setTimeout(() => {
+                btnCopyShareUrl.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
+            }, 2500);
+        });
+    });
+}
+
+// Share Tab Toggles
+if (shareTabChat) {
+    shareTabChat.addEventListener('click', () => openShareModal('chat'));
+}
+if (shareTabCanvas) {
+    shareTabCanvas.addEventListener('click', () => openShareModal('canvas'));
+}
+
+// Header & Tools Triggers
+if (btnShareChatHeader) {
+    btnShareChatHeader.addEventListener('click', () => openShareModal('chat'));
+}
+if (btnShareCanvas) {
+    btnShareCanvas.addEventListener('click', () => openShareModal('canvas'));
+}
+if (btnToolsViralShare) {
+    btnToolsViralShare.addEventListener('click', () => {
+        const dropdown = document.getElementById('tools-dropdown-menu');
+        if (dropdown) dropdown.classList.remove('show');
+        openShareModal('chat');
+    });
+}
+if (btnToolsOpenCanvas) {
+    btnToolsOpenCanvas.addEventListener('click', () => {
+        const dropdown = document.getElementById('tools-dropdown-menu');
+        if (dropdown) dropdown.classList.remove('show');
+        if (currentArtifactCode) {
+            artifactsDrawer.classList.add('open');
+            updateCanvasLayout();
+        } else {
+            // Open with sample interactive widget
+            openArtifacts(`
+<div class="max-w-md mx-auto bg-slate-900 text-white p-6 rounded-2xl shadow-2xl border border-sky-500/30">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xl">K</div>
+        <div>
+            <h3 class="font-bold text-sky-400 text-lg">Kira Interactive Canvas</h3>
+            <p class="text-xs text-slate-400">ยินดีต้อนรับสู่ห้องทำงานคู่ขนานระดับอัจฉริยะ</p>
+        </div>
+    </div>
+    <p class="text-sm text-slate-300 mb-4 leading-relaxed">
+        คุณสามารถสั่งให้คิระสร้างเว็บแอพพลิเคชัน แดชบอร์ด ผังไดอะแกรม หรือเอกสารสรุป แล้วทดสอบใช้งานที่นี่ได้สดๆ ทันทีค่ะ ✨
+    </p>
+    <div class="flex gap-2">
+        <button onclick="alert('สวัสดีค่ะ! ระบบตอบสนองสมบูรณ์แบบค่ะ 🌸')" class="flex-1 bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-xl text-sm transition shadow-lg shadow-sky-500/30">
+            ทดสอบคลิก
+        </button>
+    </div>
+</div>`, 'Kira Interactive Workspace');
+        }
+    });
+}
+
+// Close Share Modal
+if (btnCloseShareModal) {
+    btnCloseShareModal.addEventListener('click', () => {
+        if (shareModal) shareModal.style.display = 'none';
+    });
+}
+if (shareModal) {
+    shareModal.addEventListener('click', (e) => {
+        if (e.target === shareModal) shareModal.style.display = 'none';
     });
 }
 

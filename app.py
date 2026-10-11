@@ -706,6 +706,22 @@ def init_db():
         except Exception as _e_vault:
             print("Vault Tables Init Error:", _e_vault)
 
+        # Initialize Social Viral Share Snapshots Table
+        try:
+            execute_query('''CREATE TABLE IF NOT EXISTS shared_snapshots
+                         (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                          share_id TEXT UNIQUE,
+                          username TEXT,
+                          title TEXT,
+                          share_type TEXT DEFAULT 'chat',
+                          content TEXT,
+                          author_display_name TEXT,
+                          views_count INTEGER DEFAULT 0,
+                          created_at TEXT)''')
+            execute_query('''CREATE INDEX IF NOT EXISTS idx_shared_share_id ON shared_snapshots (share_id)''')
+        except Exception as _e_share:
+            print("Shared Snapshots Table Init Error:", _e_share)
+
     except Exception as e:
         print("DB Init Error:", e)
 
@@ -1837,6 +1853,14 @@ class SubscriptionRejectRequest(BaseModel):
     order_id: str
     admin_username: Optional[str] = "boss"
     reason: Optional[str] = "สลิปไม่ถูกต้องหรือยอดเงินไม่ตรง"
+
+# --- 🚀 Social Viral Share Suite Models ---
+class ShareCreateRequest(BaseModel):
+    username: Optional[str] = "guest"
+    title: Optional[str] = "บทสนทนาอัจฉริยะกับ Kira AI"
+    share_type: Optional[str] = "chat" # "chat" or "canvas"
+    content: Any # JSON dict, list, or string
+    author_display_name: Optional[str] = None
 
 # --- Endpoints ---
 @app.get("/api/health")
@@ -5792,6 +5816,147 @@ async def reject_subscription_order(req: SubscriptionRejectRequest):
         "order_status": "rejected",
         "message": f"ปฏิเสธคำสั่งซื้อ {req.order_id} เรียบร้อยแล้วค่ะ"
     }
+
+# ====================================================================
+# 🚀 Kira Social Viral Share Engine Endpoints
+# ====================================================================
+@app.post("/api/share/create")
+async def create_share_snapshot(req: ShareCreateRequest):
+    """สร้าง Public Snapshot สำหรับแชร์บทสนทนาหรือผลงาน Canvas สู่โซเชียล"""
+    try:
+        share_id = "sh_" + secrets.token_hex(5) # e.g. sh_9a1f4b2c1d
+        tz = timezone(timedelta(hours=7))
+        now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Serialize content cleanly to json string if dict/list
+        content_str = json.dumps(req.content, ensure_ascii=False) if not isinstance(req.content, str) else req.content
+        
+        author_name = req.author_display_name or req.username or "ผู้ใช้งาน Kira AI"
+        title = req.title.strip() if req.title else "บทสนทนาและผลงานอัจฉริยะ Kira AI"
+        
+        execute_query("""
+            INSERT INTO shared_snapshots (share_id, username, title, share_type, content, author_display_name, views_count, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, 0, ?)
+        """, (share_id, req.username or "guest", title, req.share_type or "chat", content_str, author_name, now_str))
+        
+        return {
+            "status": "success",
+            "share_id": share_id,
+            "share_url": f"/share/{share_id}",
+            "title": title,
+            "share_type": req.share_type or "chat"
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"ไม่สามารถสร้างการแชร์ได้: {str(e)}"}
+
+@app.get("/api/share/{share_id}")
+async def get_share_data(share_id: str):
+    """ดึงข้อมูล Snapshot ในรูปแบบ JSON API พร้อมนับสถิติยอดชม"""
+    row = execute_query("""
+        SELECT share_id, username, title, share_type, content, author_display_name, views_count, created_at
+        FROM shared_snapshots WHERE share_id = ?
+    """, (share_id,), fetch='one')
+    
+    if not row:
+        raise HTTPException(status_code=404, detail="ไม่พบข้อมูลที่แชร์ หรือลิงก์นี้หมดอายุแล้ว")
+        
+    # Increment view counter
+    try:
+        execute_query("UPDATE shared_snapshots SET views_count = views_count + 1 WHERE share_id = ?", (share_id,))
+    except Exception:
+        pass
+        
+    try:
+        parsed_content = json.loads(row[4])
+    except Exception:
+        parsed_content = row[4]
+        
+    return {
+        "status": "success",
+        "share_id": row[0],
+        "username": row[1],
+        "title": row[2],
+        "share_type": row[3],
+        "content": parsed_content,
+        "author_display_name": row[5] or row[1],
+        "views_count": (row[6] or 0) + 1,
+        "created_at": row[7]
+    }
+
+@app.get("/share/{share_id}", response_class=HTMLResponse)
+async def view_shared_snapshot(request: Request, share_id: str):
+    """หน้า Public Web สำหรับแสดงบทสนทนาหรือผลงาน Canvas ที่แชร์มา พร้อม Meta Tags สำหรับ Facebook/Twitter"""
+    row = execute_query("""
+        SELECT share_id, username, title, share_type, content, author_display_name, views_count, created_at
+        FROM shared_snapshots WHERE share_id = ?
+    """, (share_id,), fetch='one')
+    
+    if not row:
+        return templates.TemplateResponse(
+            request=request,
+            name="share.html",
+            context={
+                "request": request,
+                "not_found": True,
+                "share_id": share_id,
+                "title": "ไม่พบข้อมูลที่แชร์ | Kira AI",
+                "excerpt": "ลิงก์นี้อาจหมดอายุหรือไม่ถูกต้อง",
+                "content": None,
+                "raw_content_json": "null",
+                "share_type": "unknown",
+                "author_display_name": "Kira AI",
+                "views_count": 0,
+                "created_at": "",
+                "share_url": str(request.url)
+            },
+            status_code=404
+        )
+        
+    # Increment view counter
+    try:
+        execute_query("UPDATE shared_snapshots SET views_count = views_count + 1 WHERE share_id = ?", (share_id,))
+    except Exception:
+        pass
+        
+    raw_content = row[4]
+    try:
+        parsed_content = json.loads(raw_content)
+    except Exception:
+        parsed_content = raw_content
+
+    # Excerpt for meta description
+    excerpt = ""
+    if row[3] == 'chat' and isinstance(parsed_content, list):
+        for msg in parsed_content:
+            if isinstance(msg, dict) and msg.get('role') == 'assistant':
+                c = msg.get('content', '')
+                clean_c = c.replace('#', '').replace('*', '').replace('`', '').strip()
+                excerpt = clean_c[:180].replace('\n', ' ')
+                break
+    elif row[3] == 'canvas':
+        excerpt = f"ผลงานอินเทอร์แอคทีฟ Interactive Canvas: {row[2]}"
+    if not excerpt:
+        excerpt = f"ดูผลงานและบทสนทนาอัจฉริยะที่แชร์ผ่าน Kira AI โดย {row[5] or row[1]}"
+
+    return templates.TemplateResponse(
+        request=request,
+        name="share.html",
+        context={
+            "request": request,
+            "not_found": False,
+            "share_id": row[0],
+            "username": row[1],
+            "title": row[2] or "บทสนทนาและผลงาน Kira AI",
+            "share_type": row[3],
+            "content": parsed_content,
+            "raw_content_json": json.dumps(parsed_content, ensure_ascii=False) if not isinstance(parsed_content, str) else json.dumps({"raw": parsed_content}),
+            "author_display_name": row[5] or row[1] or "Kira Creator",
+            "views_count": (row[6] or 0) + 1,
+            "created_at": row[7],
+            "excerpt": excerpt,
+            "share_url": str(request.url)
+        }
+    )
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8000))
