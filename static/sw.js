@@ -2,7 +2,7 @@
 // 🚀 Kira AI Progressive Web App - Service Worker (v2.4-UpdatePrompt)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.4';
+const CACHE_NAME = 'kira-ai-cache-v2.5';
 const STATIC_ASSETS = [
     '/',
     '/static/style.css',
@@ -72,7 +72,8 @@ self.addEventListener('fetch', (event) => {
         request.method !== 'GET' || 
         url.pathname.startsWith('/api/') || 
         url.pathname.startsWith('/auth/') ||
-        url.pathname.startsWith('/admin')
+        url.pathname.startsWith('/admin') ||
+        url.pathname.startsWith('/share/')
     ) {
         return; // Normal network request
     }

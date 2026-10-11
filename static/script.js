@@ -2609,6 +2609,25 @@ if (btnApplyCanvasCode) {
     });
 }
 
+// In-Canvas Code Editor Keyboard Shortcuts (Tab Indent & Ctrl+S / Cmd+S Apply)
+if (canvasCodeEditor) {
+    canvasCodeEditor.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+            e.preventDefault();
+            if (btnApplyCanvasCode) btnApplyCanvasCode.click();
+            return;
+        }
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = canvasCodeEditor.selectionStart;
+            const end = canvasCodeEditor.selectionEnd;
+            const val = canvasCodeEditor.value;
+            canvasCodeEditor.value = val.substring(0, start) + '  ' + val.substring(end);
+            canvasCodeEditor.selectionStart = canvasCodeEditor.selectionEnd = start + 2;
+        }
+    });
+}
+
 // Clear Console Logs
 if (btnClearCanvasConsole) {
     btnClearCanvasConsole.addEventListener('click', () => {
@@ -3187,6 +3206,18 @@ if (btnCopyShareUrl && shareLinkResult) {
                 btnCopyShareUrl.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
             }, 2500);
         });
+    });
+}
+
+// Live Realtime Preview on Share Title Input
+if (shareTitleInput) {
+    shareTitleInput.addEventListener('input', () => {
+        const newTitle = shareTitleInput.value.trim() || 'ผลงานอัจฉริยะกับ Kira AI';
+        const uName = currentUser || localStorage.getItem('kira_username') || 'ผู้ใช้ทั่วไป';
+        const snippet = activeShareMode === 'canvas' 
+            ? `ผลงานอินเทอร์แอคทีฟ Canvas: ${newTitle}` 
+            : 'ร่วมสัมผัสประสบการณ์ทำงานและวิเคราะห์ข้อมูลด้วย Kira AI ระบบปัญญาประดิษฐ์อัจฉริยะ';
+        drawViralSocialCard(newTitle, snippet, currentGeneratedShareUrl, uName);
     });
 }
 

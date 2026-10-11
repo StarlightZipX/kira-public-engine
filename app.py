@@ -134,7 +134,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.4.0"
+KIRA_SYSTEM_VERSION = "2.5.0"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -145,8 +145,8 @@ async def get_system_version():
         "version": KIRA_SYSTEM_VERSION,
         "build_id": APP_BUILD_ID,
         "timestamp": APP_START_TIME,
-        "release_name": "Kira Executive Intelligence Update",
-        "message": "ระบบ Kira AI พร้อมอัปเดตเป็นเวอร์ชันล่าสุดแล้วค่ะ 🌸"
+        "release_name": "Kira Next-Gen Canvas & Viral Share Edition",
+        "message": "ระบบ Kira AI v2.5 พร้อม Interactive Canvas & Viral Share Engine อัปเดตเรียบร้อยแล้วค่ะ 🌸"
     }, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
 # --- Interactive Visual Mind Map AI Structuring API ---

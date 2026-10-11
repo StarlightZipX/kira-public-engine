@@ -515,6 +515,29 @@
             gap: 10px;
         }
 
+        .bar-close-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94a3b8;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 1;
+            transition: all 0.2s;
+            margin-left: 4px;
+        }
+
+        .bar-close-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
         /* Social Share Modal Overlay */
         .share-modal-overlay {
             position: fixed;
@@ -717,7 +740,7 @@
     </main>
 
     <!-- Bottom Sticky Viral Call-to-Action -->
-    <div class="viral-floating-bar">
+    <div class="viral-floating-bar" id="viral-floating-bar">
         <div class="viral-bar-left">
             <img src="/static/images/kira_avatar.jpg?v=5" alt="Kira Avatar" class="bar-avatar" onerror="this.src='/static/images/kira_logo.png?v=6'">
             <div class="bar-info">
@@ -729,6 +752,7 @@
             <a href="/?ref=viral_share_{{ share_id }}" class="btn-cta">
                 <i class="fa-solid fa-bolt-lightning"></i> ลองคุยกับ Kira AI ฟรี
             </a>
+            <button type="button" class="bar-close-btn" onclick="document.getElementById('viral-floating-bar').style.display='none'" title="ปิดแถบข้อความ">&times;</button>
         </div>
     </div>
 
