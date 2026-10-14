@@ -10876,6 +10876,33 @@ const KIRA_I18N = {
         stt_lang_title: "음성 인식 언어 (Voice Input STT)",
         stt_lang_desc: "마이크 입력을 처리할 기본 언어 설정",
         toast_lang_switched: "언어가 한국어로 변경되었습니다"
+    },
+    ja: {
+        code: "JA",
+        flag: "🇯🇵",
+        name: "日本語",
+        share: "共有",
+        tools: "ツール",
+        live_voice: "音声対話",
+        new_chat: "新しいチャット",
+        no_history: "履歴はありません",
+        mode_general: "一般",
+        mode_executive: "エグゼクティブ",
+        mode_silver: "シニア",
+        tab_preview: "プレビュー",
+        tab_code: "コード",
+        tab_console: "コンソール",
+        copy_code: "コードをコピー",
+        apply_code: "実行・プレビュー更新",
+        clear_logs: "ログをクリア",
+        input_placeholder: "Kiraにメッセージを入力... (Shift+Enterで改行、Ctrl+Vで画像貼付)",
+        settings_voice_label: "AI音声エンジン (Natural Voice Engine)",
+        test_listen: "音声を試聴",
+        speech_rate_title: "音声読み上げ速度 (Speech Rate):",
+        speech_rate_desc: "お好みに合わせて読み上げ速度を調節します",
+        stt_lang_title: "音声入力言語 (Voice Input STT)",
+        stt_lang_desc: "マイク入力で使用する主言語",
+        toast_lang_switched: "言語を 日本語 に切り替えました"
     }
 };
 
@@ -10932,6 +10959,9 @@ function setKiraLanguage(lang, syncVoice = true, showNotification = false) {
         } else if (lang === 'ko') {
             targetStt = 'ko-KR';
             targetVoice = 'ko-KR-SunHiNeural';
+        } else if (lang === 'ja') {
+            targetStt = 'ja-JP';
+            targetVoice = 'ja-JP-NanamiNeural';
         }
 
         try {
