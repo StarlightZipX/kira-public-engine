@@ -11,7 +11,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=28">
+    <link rel="stylesheet" href="/static/style.css?v=29">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -287,11 +287,11 @@
             </div>
             
             <button class="new-chat-btn">
-                <i class="fa-solid fa-plus"></i> แชทใหม่
+                <i class="fa-solid fa-plus"></i> <span data-i18n="new_chat">แชทใหม่</span>
             </button>
             
             <div class="chat-history" id="chat-history">
-                <p class="history-title">ยังไม่มีประวัติการแชท</p>
+                <p class="history-title" data-i18n="no_history">ยังไม่มีประวัติการแชท</p>
                 <!-- History items will be injected here -->
             </div>
             
@@ -355,13 +355,13 @@
                     <div class="user-mode-switcher-wrapper" id="user-mode-switcher-wrapper">
                         <div class="user-mode-pill-group" id="header-user-mode-group">
                             <button type="button" class="mode-pill-btn active" data-mode="general" title="โหมดทั่วไป (General): ทำงานและถามตอบทั่วไป">
-                                <i class="fa-solid fa-house"></i> <span>ทั่วไป</span>
+                                <i class="fa-solid fa-house"></i> <span data-i18n="mode_general">ทั่วไป</span>
                             </button>
                             <button type="button" class="mode-pill-btn" data-mode="executive" title="โหมดผู้บริหาร (Executive): กลยุทธ์ สัญญา ส่งงานในคลิกเดียว">
-                                <i class="fa-solid fa-briefcase"></i> <span>ผู้บริหาร</span>
+                                <i class="fa-solid fa-briefcase"></i> <span data-i18n="mode_executive">ผู้บริหาร</span>
                             </button>
                             <button type="button" class="mode-pill-btn silver-mode-btn" data-mode="silver_care" title="โหมดวัยเก๋าอุ่นใจ (Silver Care): ตัวหนังสือใหญ่พิเศษ สั่งด้วยเสียง 100% ดูแลสุขภาพและย่อยเรื่องยาก">
-                                <i class="fa-solid fa-heart-pulse"></i> <span>วัยเก๋า</span>
+                                <i class="fa-solid fa-heart-pulse"></i> <span data-i18n="mode_silver">วัยเก๋า</span>
                             </button>
                         </div>
                     </div>
@@ -392,8 +392,35 @@
                     <!-- 📤 Social Viral Share Button -->
                     <button title="แชร์บทสนทนาสู่โซเชียล & สร้างการ์ดไวรัล (Viral Share)" id="btn-share-chat" class="header-action-btn share-chat-btn">
                         <i class="fa-solid fa-share-nodes text-cyan"></i>
-                        <span class="share-btn-text">แชร์</span>
+                        <span class="share-btn-text" data-i18n="share">แชร์</span>
                     </button>
+
+                    <!-- 🌐 Multi-Language Switcher (TH / EN / ZH / KO) -->
+                    <div class="lang-switch-wrapper" id="lang-switch-wrapper">
+                        <button type="button" id="btn-lang-switcher" class="header-action-btn lang-trigger-btn" title="เปลี่ยนภาษาของระบบ (Change Language)">
+                            <i class="fa-solid fa-globe text-cyan"></i>
+                            <span class="current-lang-code" id="current-lang-code">TH</span>
+                            <i class="fa-solid fa-chevron-down lang-caret"></i>
+                        </button>
+                        <div class="lang-dropdown-menu" id="lang-dropdown-menu" style="display: none;">
+                            <button type="button" class="lang-menu-item active" data-lang="th">
+                                <span class="lang-flag">🇹🇭</span>
+                                <span class="lang-label">ไทย (TH)</span>
+                            </button>
+                            <button type="button" class="lang-menu-item" data-lang="en">
+                                <span class="lang-flag">🇺🇸</span>
+                                <span class="lang-label">English (EN)</span>
+                            </button>
+                            <button type="button" class="lang-menu-item" data-lang="zh">
+                                <span class="lang-flag">🇨🇳</span>
+                                <span class="lang-label">中文 (ZH)</span>
+                            </button>
+                            <button type="button" class="lang-menu-item" data-lang="ko">
+                                <span class="lang-flag">🇰🇷</span>
+                                <span class="lang-label">한국어 (KO)</span>
+                            </button>
+                        </div>
+                    </div>
 
                     <!-- Virtual Boardroom Quick Toggle (Consolidated into Tools dropdown & Model selector) -->
                     <button title="เปิดสภาที่ปรึกษาเสมือน Kira 2.1 Boardroom" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn" style="display: none;">
@@ -411,7 +438,7 @@
                     <!-- 🎙️ Kira Real-Time Live Voice Assistant Button -->
                     <button title="เปิดโหมดสนทนาด้วยเสียงสดสองทิศทาง (Kira Live Voice)" id="btn-live-voice" class="header-action-btn live-voice-btn">
                         <i class="fa-solid fa-microphone-lines text-rose"></i>
-                        <span class="live-voice-btn-text">คุยสด</span>
+                        <span class="live-voice-btn-text" data-i18n="live_voice">คุยสด</span>
                         <span class="live-voice-pulse-dot"></span>
                     </button>
 
@@ -432,7 +459,7 @@
                     <div class="tools-dropdown-wrapper" id="tools-dropdown-wrapper">
                         <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" title="ศูนย์รวมฟีเจอร์และเครื่องมือ">
                             <i class="fa-solid fa-toolbox"></i>
-                            <span class="tools-btn-text">เครื่องมือ</span>
+                            <span class="tools-btn-text" data-i18n="tools">เครื่องมือ</span>
                             <i class="fa-solid fa-chevron-down tools-caret"></i>
                         </button>
                         <div class="tools-dropdown-menu" id="tools-dropdown-menu">
@@ -719,9 +746,9 @@
             
             <!-- Canvas View Mode Switcher (Preview / Code / Console) -->
             <div class="canvas-mode-tabs" id="canvas-mode-tabs">
-                <button id="btn-tab-preview" class="canvas-tab-btn active" title="พรีวิวชิ้นงาน"><i class="fa-solid fa-eye"></i> พรีวิว</button>
-                <button id="btn-tab-code" class="canvas-tab-btn" title="ดูและแก้ไขซอร์สโค้ด"><i class="fa-solid fa-code"></i> โค้ด</button>
-                <button id="btn-tab-console" class="canvas-tab-btn" title="คอนโซล / บันทึกการทำงาน"><i class="fa-solid fa-terminal"></i> Console</button>
+                <button id="btn-tab-preview" class="canvas-tab-btn active" title="พรีวิวชิ้นงาน"><i class="fa-solid fa-eye"></i> <span data-i18n="tab_preview">พรีวิว</span></button>
+                <button id="btn-tab-code" class="canvas-tab-btn" title="ดูและแก้ไขซอร์สโค้ด"><i class="fa-solid fa-code"></i> <span data-i18n="tab_code">โค้ด</span></button>
+                <button id="btn-tab-console" class="canvas-tab-btn" title="คอนโซล / บันทึกการทำงาน"><i class="fa-solid fa-terminal"></i> <span data-i18n="tab_console">Console</span></button>
             </div>
 
             <div class="artifacts-actions">
@@ -747,8 +774,8 @@
                 <div class="code-editor-header">
                     <span class="code-editor-file"><i class="fa-solid fa-file-code text-cyan"></i> source.html</span>
                     <div class="code-editor-actions">
-                        <button id="btn-copy-canvas-code" class="code-action-btn"><i class="fa-regular fa-copy"></i> คัดลอกโค้ด</button>
-                        <button id="btn-apply-canvas-code" class="code-action-btn primary"><i class="fa-solid fa-play"></i> รัน & บันทึกพรีวิว</button>
+                        <button id="btn-copy-canvas-code" class="code-action-btn"><i class="fa-regular fa-copy"></i> <span data-i18n="copy_code">คัดลอกโค้ด</span></button>
+                        <button id="btn-apply-canvas-code" class="code-action-btn primary" title="รันโค้ดทันที (Ctrl+S / Cmd+S)"><i class="fa-solid fa-play"></i> <span data-i18n="apply_code">รัน & อัปเดตพรีวิว</span></button>
                     </div>
                 </div>
                 <textarea id="canvas-code-editor" class="canvas-code-editor" spellcheck="false" placeholder="โค้ดจะแสดงที่นี่ สามารถพิมพ์แก้ไขได้สดๆ..."></textarea>
@@ -758,7 +785,7 @@
             <div id="canvas-console-pane" class="canvas-pane" style="display: none;">
                 <div class="console-header">
                     <span><i class="fa-solid fa-terminal text-green"></i> Live Console Output & Logs</span>
-                    <button id="btn-clear-canvas-console" class="code-action-btn"><i class="fa-solid fa-trash-can"></i> ล้างบันทึก</button>
+                    <button id="btn-clear-canvas-console" class="code-action-btn"><i class="fa-solid fa-trash-can"></i> <span data-i18n="clear_logs">ล้างบันทึก</span></button>
                 </div>
                 <div id="canvas-console-logs" class="canvas-console-logs">
                     <div class="console-log-item info"><i class="fa-solid fa-circle-info"></i> ระบบ Kira Live Console พร้อมทำงาน</div>
@@ -1269,16 +1296,28 @@
                         </div>
 
                         <div class="settings-group">
-                            <label class="settings-label">เลือกน้ำเสียง AI (Natural Voice Engine)</label>
+                            <label class="settings-label" data-i18n="settings_voice_label">เลือกน้ำเสียง AI (Natural Voice Engine)</label>
                             <div class="voice-selector-row">
                                 <select id="setting-voice-name" class="settings-select" style="flex: 1;">
-                                    <option value="th-TH-PremwadeeNeural" selected>เปรมวดี (Premwadee) - หญิงไทย น้ำเสียงนุ่มนวล</option>
-                                    <option value="th-TH-NiwatNeural">นิวัต (Niwat) - ชายไทย สุภาพ น่าเชื่อถือ</option>
-                                    <option value="en-US-JennyNeural">Jenny - หญิงอเมริกัน คล่องแคล่ว ทันสมัย</option>
-                                    <option value="en-US-GuyNeural">Guy - ชายอเมริกัน สุภาพ มืออาชีพ</option>
+                                    <optgroup label="🇹🇭 ภาษาไทย (Thai)">
+                                        <option value="th-TH-PremwadeeNeural" selected>เปรมวดี (Premwadee) - หญิงไทย น้ำเสียงนุ่มนวล</option>
+                                        <option value="th-TH-NiwatNeural">นิวัต (Niwat) - ชายไทย สุภาพ น่าเชื่อถือ</option>
+                                    </optgroup>
+                                    <optgroup label="🇺🇸 English (US)">
+                                        <option value="en-US-JennyNeural">Jenny - หญิงอเมริกัน คล่องแคล่ว ทันสมัย</option>
+                                        <option value="en-US-GuyNeural">Guy - ชายอเมริกัน สุภาพ มืออาชีพ</option>
+                                    </optgroup>
+                                    <optgroup label="🇨🇳 中文 (Chinese)">
+                                        <option value="zh-CN-XiaoxiaoNeural">晓晓 (Xiaoxiao) - หญิงจีน นุ่มนวลเป็นธรรมชาติ</option>
+                                        <option value="zh-CN-YunxiNeural">云希 (Yunxi) - ชายจีน มืออาชีพน่าเชื่อถือ</option>
+                                    </optgroup>
+                                    <optgroup label="🇰🇷 한국어 (Korean)">
+                                        <option value="ko-KR-SunHiNeural">선희 (SunHi) - หญิงเกาหลี ไพเราะอ่อนหวาน</option>
+                                        <option value="ko-KR-InJoonNeural">인준 (InJoon) - ชายเกาหลี สุภาพนุ่มนวล</option>
+                                    </optgroup>
                                 </select>
                                 <button type="button" class="btn-action-sm secondary" id="btn-preview-voice" title="ทดสอบฟังเสียง">
-                                    <i class="fa-solid fa-play"></i> ทดลองฟัง
+                                    <i class="fa-solid fa-play"></i> <span data-i18n="test_listen">ทดลองฟัง</span>
                                 </button>
                             </div>
                         </div>
@@ -1286,27 +1325,29 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">ความเร็วการพูด (Speech Rate): <span id="speech-rate-val" class="text-cyan">1.0x</span></strong>
-                                    <p class="setting-desc">ปรับสปีดการอ่านให้ช้าลงหรือเร็วขึ้นตามความต้องการ</p>
+                                    <strong class="setting-title" data-i18n="speech_rate_title">ความเร็วการพูด (Speech Rate): <span id="speech-rate-val" class="text-cyan">1.0x</span></strong>
+                                    <p class="setting-desc" data-i18n="speech_rate_desc">ปรับสปีดการอ่านให้ช้าลงหรือเร็วขึ้นตามความต้องการ</p>
                                 </div>
                             </div>
                             <input type="range" id="setting-speech-rate" min="0.8" max="1.5" step="0.1" value="1.0" class="kira-range-slider">
                             <div class="slider-marks">
-                                <span>0.8x (ช้า)</span>
-                                <span>1.0x (ปกติ)</span>
-                                <span>1.5x (เร็ว)</span>
+                                <span>0.8x</span>
+                                <span>1.0x</span>
+                                <span>1.5x</span>
                             </div>
                         </div>
 
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">ภาษาสำหรับการสั่งงานด้วยเสียง (Voice Input STT)</strong>
-                                    <p class="setting-desc">ภาษาหลักที่ใช้ในการฟังเสียงพูดผ่านไมโครโฟน</p>
+                                    <strong class="setting-title" data-i18n="stt_lang_title">ภาษาสำหรับการสั่งงานด้วยเสียง (Voice Input STT)</strong>
+                                    <p class="setting-desc" data-i18n="stt_lang_desc">ภาษาหลักที่ใช้ในการฟังเสียงพูดผ่านไมโครโฟน</p>
                                 </div>
                                 <select id="setting-stt-lang" class="settings-select">
-                                    <option value="th-TH" selected>ภาษาไทย (th-TH)</option>
-                                    <option value="en-US">English (en-US)</option>
+                                    <option value="th-TH" selected>🇹🇭 ภาษาไทย (th-TH)</option>
+                                    <option value="en-US">🇺🇸 English (en-US)</option>
+                                    <option value="zh-CN">🇨🇳 中文 - 普通话 (zh-CN)</option>
+                                    <option value="ko-KR">🇰🇷 한국어 (ko-KR)</option>
                                 </select>
                             </div>
                         </div>
@@ -3079,6 +3120,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=46"></script>
+    <script src="/static/script.js?v=47"></script>
 </body>
 </html>

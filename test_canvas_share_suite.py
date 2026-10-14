@@ -6,12 +6,15 @@ import unittest.mock as mock
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
 
+import requests
+import unittest.mock as mock
+
 # Mock requests.get during app import to skip Groq network probe
 mock_groq_resp = mock.MagicMock()
 mock_groq_resp.status_code = 200
 mock_groq_resp.json.return_value = {"data": [{"id": "llama3-8b-8192"}, {"id": "llama3-70b-8192"}]}
 
-with mock.patch("requests.get", return_value=mock_groq_resp):
+with mock.patch.object(requests, "get", return_value=mock_groq_resp):
     from app import app, init_db, execute_query
 
 from fastapi.testclient import TestClient
@@ -120,7 +123,34 @@ def run_tests():
     assert "btn-tab-code" in index_html, "Missing btn-tab-code in index.html"
     assert "canvas-ai-prompt-bar" in index_html, "Missing canvas-ai-prompt-bar in index.html"
     assert "btn-tools-viral-share" in index_html, "Missing btn-tools-viral-share in index.html"
-    print("  ✅ All Interactive Canvas & Viral Share UI components verified in index.html")
+    # 7. Verify System Version & Service Worker Cache
+    print("\n[7/8] Verifying System Version (v2.5.0) and Service Worker...")
+    r_ver = client.get("/api/system/version")
+    assert r_ver.status_code == 200
+    ver_data = r_ver.json()
+    assert ver_data.get("version") == "2.5.0", f"Unexpected version: {ver_data}"
+    assert "Canvas & Viral Share" in ver_data.get("release_name", "")
+    print(f"  ✅ System API Version verified: {ver_data.get('version')} ({ver_data.get('release_name')})")
+
+    with open("static/sw.js", "r", encoding="utf-8") as f:
+        sw_content = f.read()
+    assert "kira-ai-cache-v2.5" in sw_content, "Service Worker CACHE_NAME not updated to v2.5"
+    assert "url.pathname.startsWith('/share/')" in sw_content, "Service Worker does not bypass /share/ URLs"
+    print("  ✅ Service Worker cache bumped to v2.5 and /share/ dynamic bypass active")
+
+    # 8. Verify i18n Switcher and Multi-language Components
+    print("\n[8/8] Verifying i18n Switcher & Multi-language Components...")
+    assert "btn-lang-switcher" in index_html, "Missing btn-lang-switcher in index.html"
+    assert "lang-dropdown-menu" in index_html, "Missing lang-dropdown-menu in index.html"
+    assert "data-i18n=" in index_html, "Missing data-i18n attributes in index.html"
+    assert "setting-stt-lang" in index_html, "Missing setting-stt-lang in index.html"
+
+    with open("static/script.js", "r", encoding="utf-8") as f:
+        script_content = f.read()
+    assert "const KIRA_I18N =" in script_content, "Missing KIRA_I18N in script.js"
+    assert "setKiraLanguage" in script_content, "Missing setKiraLanguage in script.js"
+    assert "initKiraI18n" in script_content, "Missing initKiraI18n in script.js"
+    print("  ✅ Multi-Language Engine (TH/EN/ZH/KO) & Voice STT Sync verified in script.js")
 
     print("\n==================================================")
     print("🎉 ALL TESTS PASSED SUCCESSFULLY! (100% VERIFIED)")

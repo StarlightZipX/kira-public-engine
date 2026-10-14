@@ -5511,7 +5511,7 @@ function initSpeechRecognition() {
 
     try {
         speechRecognition = new SpeechRec();
-        speechRecognition.lang = 'th-TH';
+        speechRecognition.lang = localStorage.getItem('kira_stt_lang') || document.getElementById('setting-stt-lang')?.value || 'th-TH';
         speechRecognition.continuous = false;
         speechRecognition.interimResults = false;
 
@@ -9113,7 +9113,7 @@ function initLiveVoiceAssistant() {
 
         try {
             liveVoiceRecognition = new SpeechRec();
-            liveVoiceRecognition.lang = 'th-TH';
+            liveVoiceRecognition.lang = localStorage.getItem('kira_stt_lang') || document.getElementById('setting-stt-lang')?.value || 'th-TH';
             liveVoiceRecognition.continuous = false;
             liveVoiceRecognition.interimResults = true;
 
@@ -10766,16 +10766,270 @@ function initOfflineVaultController() {
 }
 
 // =========================================================================
+// 🌐 KIRA MULTI-LANGUAGE ENGINE (i18n: TH / EN / ZH / KO)
+// =========================================================================
+const KIRA_I18N = {
+    th: {
+        code: "TH",
+        flag: "🇹🇭",
+        name: "ภาษาไทย",
+        share: "แชร์",
+        tools: "เครื่องมือ",
+        live_voice: "คุยสด",
+        new_chat: "แชทใหม่",
+        no_history: "ยังไม่มีประวัติการแชท",
+        mode_general: "ทั่วไป",
+        mode_executive: "ผู้บริหาร",
+        mode_silver: "วัยเก๋า",
+        tab_preview: "พรีวิว",
+        tab_code: "โค้ด",
+        tab_console: "Console",
+        copy_code: "คัดลอกโค้ด",
+        apply_code: "รัน & อัปเดตพรีวิว",
+        clear_logs: "ล้างบันทึก",
+        input_placeholder: "พิมพ์ข้อความหา Kira... (Shift+Enter ขึ้นบรรทัดใหม่, Ctrl+V วางรูป)",
+        settings_voice_label: "เลือกน้ำเสียง AI (Natural Voice Engine)",
+        test_listen: "ทดลองฟัง",
+        speech_rate_title: "ความเร็วการพูด (Speech Rate):",
+        speech_rate_desc: "ปรับสปีดการอ่านให้ช้าลงหรือเร็วขึ้นตามความต้องการ",
+        stt_lang_title: "ภาษาสำหรับการสั่งงานด้วยเสียง (Voice Input STT)",
+        stt_lang_desc: "ภาษาหลักที่ใช้ในการฟังเสียงพูดผ่านไมโครโฟน",
+        toast_lang_switched: "เปลี่ยนภาษาเป็น ภาษาไทย เรียบร้อยค่ะ"
+    },
+    en: {
+        code: "EN",
+        flag: "🇺🇸",
+        name: "English",
+        share: "Share",
+        tools: "Tools",
+        live_voice: "Live Voice",
+        new_chat: "New Chat",
+        no_history: "No chat history yet",
+        mode_general: "General",
+        mode_executive: "Executive",
+        mode_silver: "Silver Care",
+        tab_preview: "Preview",
+        tab_code: "Code",
+        tab_console: "Console",
+        copy_code: "Copy Code",
+        apply_code: "Run & Update",
+        clear_logs: "Clear Logs",
+        input_placeholder: "Type a message to Kira... (Shift+Enter for newline, Ctrl+V to paste image)",
+        settings_voice_label: "AI Voice Model (Natural Voice Engine)",
+        test_listen: "Preview Voice",
+        speech_rate_title: "Speech Rate:",
+        speech_rate_desc: "Adjust AI reading speed according to preference",
+        stt_lang_title: "Voice Input Language (Speech-to-Text STT)",
+        stt_lang_desc: "Primary language for microphone voice transcription",
+        toast_lang_switched: "Language switched to English successfully"
+    },
+    zh: {
+        code: "ZH",
+        flag: "🇨🇳",
+        name: "中文",
+        share: "分享",
+        tools: "工具箱",
+        live_voice: "实时语音",
+        new_chat: "新对话",
+        no_history: "暂无聊天记录",
+        mode_general: "常规",
+        mode_executive: "高管",
+        mode_silver: "关怀",
+        tab_preview: "预览",
+        tab_code: "代码",
+        tab_console: "控制台",
+        copy_code: "复制源码",
+        apply_code: "运行并更新",
+        clear_logs: "清除日志",
+        input_placeholder: "输入消息与 Kira 交流... (Shift+Enter 换行，Ctrl+V 粘贴图片)",
+        settings_voice_label: "AI 语音模型 (Natural Voice Engine)",
+        test_listen: "试听声音",
+        speech_rate_title: "语速调节 (Speech Rate):",
+        speech_rate_desc: "根据个人偏好调节语音朗读语速",
+        stt_lang_title: "语音识别语言 (Voice Input STT)",
+        stt_lang_desc: "麦克风语音输入的识别语言",
+        toast_lang_switched: "语言已切换为 中文"
+    },
+    ko: {
+        code: "KO",
+        flag: "🇰🇷",
+        name: "한국어",
+        share: "공유",
+        tools: "도구함",
+        live_voice: "실시간 대화",
+        new_chat: "새 채팅",
+        no_history: "채팅 기록이 없습니다",
+        mode_general: "일반",
+        mode_executive: "임원진",
+        mode_silver: "시니어",
+        tab_preview: "미리보기",
+        tab_code: "코드",
+        tab_console: "콘솔",
+        copy_code: "코드 복사",
+        apply_code: "실행 및 반영",
+        clear_logs: "로그 삭제",
+        input_placeholder: "Kira에게 메시지를 입력하세요... (줄바꿈 Shift+Enter, 붙여넣기 Ctrl+V)",
+        settings_voice_label: "AI 음성 엔진 (Natural Voice Engine)",
+        test_listen: "미리 듣기",
+        speech_rate_title: "음성 속도 (Speech Rate):",
+        speech_rate_desc: "취향에 맞게 음성 읽기 속도를 조절하세요",
+        stt_lang_title: "음성 인식 언어 (Voice Input STT)",
+        stt_lang_desc: "마이크 입력을 처리할 기본 언어 설정",
+        toast_lang_switched: "언어가 한국어로 변경되었습니다"
+    }
+};
+
+function setKiraLanguage(lang, syncVoice = true, showNotification = false) {
+    if (!KIRA_I18N[lang]) lang = 'th';
+    const dict = KIRA_I18N[lang];
+
+    // 1. Save to persistent storage
+    try {
+        localStorage.setItem('kira_ui_lang', lang);
+    } catch (e) {}
+
+    // 2. Update Header Pill
+    const codeEl = document.getElementById('current-lang-code');
+    const flagEl = document.getElementById('current-lang-flag');
+    if (codeEl) codeEl.textContent = dict.code;
+    if (flagEl) flagEl.textContent = dict.flag;
+
+    // 3. Update Dropdown Menu active states
+    document.querySelectorAll('.lang-menu-item').forEach(item => {
+        const itemLang = item.getAttribute('data-lang');
+        if (itemLang === lang) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+
+    // 4. Translate all [data-i18n] elements
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+            el.textContent = dict[key];
+        }
+    });
+
+    // 5. Update Input placeholder
+    const userInput = document.getElementById('user-input');
+    if (userInput && dict.input_placeholder) {
+        userInput.setAttribute('placeholder', dict.input_placeholder);
+    }
+
+    // 6. Voice & STT Synchronization (Intelligent Auto-Config)
+    if (syncVoice) {
+        let targetStt = 'th-TH';
+        let targetVoice = 'th-TH-PremwadeeNeural';
+
+        if (lang === 'en') {
+            targetStt = 'en-US';
+            targetVoice = 'en-US-JennyNeural';
+        } else if (lang === 'zh') {
+            targetStt = 'zh-CN';
+            targetVoice = 'zh-CN-XiaoxiaoNeural';
+        } else if (lang === 'ko') {
+            targetStt = 'ko-KR';
+            targetVoice = 'ko-KR-SunHiNeural';
+        }
+
+        try {
+            localStorage.setItem('kira_stt_lang', targetStt);
+            localStorage.setItem('kira_voice_name', targetVoice);
+        } catch (e) {}
+
+        const sttSelect = document.getElementById('setting-stt-lang');
+        if (sttSelect) sttSelect.value = targetStt;
+
+        const voiceSelect = document.getElementById('setting-voice-name');
+        if (voiceSelect) voiceSelect.value = targetVoice;
+
+        if (window.speechRecognition) {
+            window.speechRecognition.lang = targetStt;
+        }
+        if (window.liveVoiceRecognition) {
+            liveVoiceRecognition.lang = targetStt;
+        }
+    }
+
+    // 7. Close Dropdown Menu
+    const wrapper = document.getElementById('lang-switch-wrapper');
+    const menu = document.getElementById('lang-dropdown-menu');
+    if (wrapper) wrapper.classList.remove('open');
+    if (menu) menu.style.display = 'none';
+
+    // 8. Notification
+    if (showNotification && typeof showToast === 'function') {
+        showToast(dict.toast_lang_switched, 'success');
+    }
+}
+
+function initKiraI18n() {
+    const triggerBtn = document.getElementById('btn-lang-switcher');
+    const wrapper = document.getElementById('lang-switch-wrapper');
+    const menu = document.getElementById('lang-dropdown-menu');
+
+    if (triggerBtn && wrapper && menu) {
+        triggerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = wrapper.classList.contains('open');
+            if (isOpen) {
+                wrapper.classList.remove('open');
+                menu.style.display = 'none';
+            } else {
+                // Close tools menu if open
+                const toolsMenu = document.getElementById('tools-dropdown-menu');
+                if (toolsMenu) toolsMenu.style.display = 'none';
+                wrapper.classList.add('open');
+                menu.style.display = 'flex';
+            }
+        });
+
+        document.querySelectorAll('.lang-menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const targetLang = item.getAttribute('data-lang');
+                if (targetLang) {
+                    setKiraLanguage(targetLang, true, true);
+                }
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!wrapper.contains(e.target)) {
+                wrapper.classList.remove('open');
+                menu.style.display = 'none';
+            }
+        });
+    }
+
+    // Load initial language from localStorage or default to Thai
+    let initialLang = 'th';
+    try {
+        initialLang = localStorage.getItem('kira_ui_lang') || 'th';
+    } catch (e) {}
+    setKiraLanguage(initialLang, false, false);
+}
+
+// Expose globally
+window.setKiraLanguage = setKiraLanguage;
+window.initKiraI18n = initKiraI18n;
+
+// =========================================================================
 // 🚀 Master Application Lifecycle Initialization
 // =========================================================================
 function initKiraApp() {
     console.log("⚡ [Kira AI] Initializing all subsystems & controllers...");
 
-    // 1. Session & Auth Guards
+    // 1. Multi-Language & Internationalization
+    try { initKiraI18n(); } catch (e) { console.error("i18n init error:", e); }
+
+    // 2. Session & Auth Guards
     try { checkSession(); } catch (e) { console.error("Session check init error:", e); }
     try { checkPendingOAuthMessage(); } catch (e) { console.error("OAuth check error:", e); }
 
-    // 2. Interactive Controls & Dropdowns
+    // 3. Interactive Controls & Dropdowns
     try { initToolsDropdownController(); } catch (e) { console.error("Tools dropdown init error:", e); }
     try { initSettingsModalEventListeners(); } catch (e) { console.error("Settings modal init error:", e); }
     try { initUserModeController(); } catch (e) { console.error("User mode controller init error:", e); }
