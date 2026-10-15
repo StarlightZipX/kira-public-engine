@@ -11042,9 +11042,293 @@ function initKiraI18n() {
     setKiraLanguage(initialLang, false, false);
 }
 
+// =========================================================================
+// 🎓 Kira Academic & Study Co-Pilot Controller
+// =========================================================================
+function initStudyHubController() {
+    console.log("🎓 [Study Co-Pilot] Initializing Academic Suite...");
+
+    const modal = document.getElementById('study-hub-modal');
+    if (!modal) return;
+
+    const btnToolsStudyHub = document.getElementById('btn-tools-study-hub');
+    const btnOpenChip = document.getElementById('btn-open-study-hub-chip');
+    const btnCloseModal = document.getElementById('btn-close-study-hub');
+    const tabBtns = document.querySelectorAll('.study-tab-btn');
+    const chipBtns = document.querySelectorAll('.study-chip[data-study-action]');
+    const btnPaste = document.getElementById('btn-paste-study-content');
+    const btnGenerate = document.getElementById('btn-generate-study');
+    const subjectInput = document.getElementById('study-subject-input');
+    const contentInput = document.getElementById('study-content-input');
+    const diffSelect = document.getElementById('study-difficulty-select');
+    const resultContainer = document.getElementById('study-result-container');
+    const outputActions = document.getElementById('study-output-actions');
+    const btnCopyResult = document.getElementById('btn-copy-study-result');
+    const btnStudyToCanvas = document.getElementById('btn-study-to-canvas');
+    const btnStudyToMindmap = document.getElementById('btn-study-to-mindmap');
+
+    let currentAction = 'summarize';
+    let lastResultMarkdown = '';
+
+    const placeholders = {
+        summarize: "วางเนื้อหาจากสไลด์ PDF, ข้อความเลกเชอร์ หรือบทเรียนที่ต้องการสรุปเป็น 3 ระดับ (TL;DR, แก่นความรู้, จุดออกสอบ)...",
+        exam_prep: "วางเนื้อหาบทเรียนที่ต้องการให้คิระเก็งข้อสอบ 5 ข้อ (ทั้งปรนัยและอัตนัย) พร้อมเฉลยละเอียดและเหตุผล...",
+        flashcards: "วางคำศัพท์ ทฤษฎี หรือเนื้อหาสำคัญที่ต้องการแปลงเป็นการ์ดคำถาม-คำตอบ (Flashcards) สำหรับติวหน้าห้องสอบ...",
+        polish_report: "วางเนื้อหาบทความ รายงาน หรือร่างงานวิจัยที่ต้องการให้คิระช่วยตรวจไวยากรณ์และขัดเกลาเป็นภาษาวิชาการ...",
+        problem_solver: "วางโจทย์คณิตศาสตร์ วิทยาศาสตร์ หรือคำถามโค้ดโปรแกรมมิ่งที่ต้องการให้อธิบายวิธีทำทีละขั้นตอน..."
+    };
+
+    function openStudyHub(action) {
+        if (action) {
+            switchStudyTab(action);
+        }
+        modal.style.display = 'flex';
+        // Auto-fill from user-input if user typed something in chat
+        const chatInput = document.getElementById('user-input');
+        if (chatInput && chatInput.value.trim() && (!contentInput.value || !contentInput.value.trim())) {
+            contentInput.value = chatInput.value.trim();
+        }
+    }
+
+    function closeStudyHub() {
+        modal.style.display = 'none';
+    }
+
+    function switchStudyTab(tabAction) {
+        currentAction = tabAction;
+        tabBtns.forEach(btn => {
+            if (btn.getAttribute('data-tab') === tabAction) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        if (contentInput && placeholders[tabAction]) {
+            contentInput.placeholder = placeholders[tabAction];
+        }
+    }
+
+    // Modal triggers
+    if (btnToolsStudyHub) {
+        btnToolsStudyHub.addEventListener('click', () => {
+            const toolsMenu = document.getElementById('tools-dropdown-menu');
+            if (toolsMenu) toolsMenu.style.display = 'none';
+            openStudyHub('summarize');
+        });
+    }
+
+    if (btnOpenChip) {
+        btnOpenChip.addEventListener('click', () => {
+            openStudyHub('summarize');
+        });
+    }
+
+    if (btnCloseModal) {
+        btnCloseModal.addEventListener('click', closeStudyHub);
+    }
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeStudyHub();
+        }
+    });
+
+    // Quick chips
+    chipBtns.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const action = chip.getAttribute('data-study-action');
+            openStudyHub(action);
+        });
+    });
+
+    // Tabs
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action = btn.getAttribute('data-tab');
+            switchStudyTab(action);
+        });
+    });
+
+    // Paste button
+    if (btnPaste) {
+        btnPaste.addEventListener('click', async () => {
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const text = await navigator.clipboard.readText();
+                    if (text) {
+                        contentInput.value = text;
+                        if (typeof showKiraToast === 'function') {
+                            showKiraToast("วางข้อความจากคลิปบอร์ดแล้วค่ะ 📋", "success");
+                        }
+                    }
+                } else {
+                    contentInput.focus();
+                }
+            } catch (err) {
+                console.warn("Clipboard paste error:", err);
+                contentInput.focus();
+            }
+        });
+    }
+
+    // Generate Action
+    if (btnGenerate) {
+        btnGenerate.addEventListener('click', async () => {
+            const text = contentInput.value.trim();
+            if (!text) {
+                if (typeof showKiraToast === 'function') {
+                    showKiraToast("กรุณาวางเนื้อหาบทเรียนหรือโจทย์ที่ต้องการวิเคราะห์ก่อนนะคะ 🌸", "warning");
+                } else {
+                    alert("กรุณาระบุเนื้อหาบทเรียนก่อนค่ะ");
+                }
+                contentInput.focus();
+                return;
+            }
+
+            btnGenerate.disabled = true;
+            btnGenerate.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>คิระกำลังวิเคราะห์...</span>';
+            resultContainer.innerHTML = `
+                <div class="study-placeholder">
+                    <i class="fa-solid fa-brain fa-bounce text-cyan" style="font-size: 2.8rem; margin-bottom: 14px;"></i>
+                    <p style="color: #38bdf8; font-weight: 600;">คิระกำลังประมวลผลบทเรียนอย่างละเอียด...</p>
+                    <p style="font-size: 0.8rem; color: #94a3b8;">วิเคราะห์แก่นความรู้ ถอดรหัสโครงสร้าง และจัดเตรียมข้อมูลการเรียน</p>
+                </div>
+            `;
+            if (outputActions) outputActions.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/study/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: currentAction,
+                        content: text,
+                        difficulty: diffSelect ? diffSelect.value : 'intermediate',
+                        subject: subjectInput ? (subjectInput.value.trim() || 'ทั่วไป') : 'ทั่วไป',
+                        username: (window.currentUser && window.currentUser.username) ? window.currentUser.username : 'student'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success' && data.result_markdown) {
+                    lastResultMarkdown = data.result_markdown;
+                    let renderedHtml = data.result_markdown;
+                    if (typeof marked !== 'undefined' && marked.parse) {
+                        renderedHtml = marked.parse(data.result_markdown);
+                    }
+                    resultContainer.innerHTML = renderedHtml;
+                    if (outputActions) outputActions.style.display = 'flex';
+                    if (typeof showKiraToast === 'function') {
+                        showKiraToast("ประมวลผลบทเรียนสำเร็จแล้วค่ะ พร้อมติวเข้ม! 🎓", "success");
+                    }
+                } else {
+                    throw new Error(data.message || "เกิดข้อผิดพลาดในการประมวลผล");
+                }
+            } catch (err) {
+                console.error("Study generate error:", err);
+                resultContainer.innerHTML = `
+                    <div class="study-placeholder" style="color: #f87171;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem; margin-bottom: 12px;"></i>
+                        <p>เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้งค่ะ</p>
+                        <p style="font-size: 0.75rem; color: #94a3b8;">${err.message}</p>
+                    </div>
+                `;
+            } finally {
+                btnGenerate.disabled = false;
+                btnGenerate.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>เริ่มประมวลผล</span>';
+            }
+        });
+    }
+
+    // Action: Copy Result
+    if (btnCopyResult) {
+        btnCopyResult.addEventListener('click', async () => {
+            if (!lastResultMarkdown) return;
+            try {
+                await navigator.clipboard.writeText(lastResultMarkdown);
+                if (typeof showKiraToast === 'function') {
+                    showKiraToast("คัดลอกบทเรียนลงคลิปบอร์ดแล้วค่ะ 📋", "success");
+                }
+            } catch (e) {
+                console.error("Copy failed:", e);
+            }
+        });
+    }
+
+    // Action: Study Result to Canvas
+    if (btnStudyToCanvas) {
+        btnStudyToCanvas.addEventListener('click', () => {
+            if (!lastResultMarkdown) return;
+            closeStudyHub();
+            
+            const title = (subjectInput && subjectInput.value.trim()) ? subjectInput.value.trim() : "บันทึกการเรียนรู้ Kira Study Co-Pilot";
+            let htmlDoc = `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 28px; line-height: 1.7; color: #1e293b; background: #f8fafc; }
+        .study-header { border-bottom: 2px solid #0284c7; padding-bottom: 14px; margin-bottom: 24px; }
+        h1, h2, h3 { color: #0f172a; }
+        h1 { font-size: 1.6rem; color: #0284c7; }
+        table { width: 100%; border-collapse: collapse; margin: 18px 0; background: #fff; }
+        th, td { border: 1px solid #cbd5e1; padding: 10px 14px; text-align: left; }
+        th { background: #e0f2fe; color: #0369a1; font-weight: 600; }
+        code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #0f766e; }
+        blockquote { border-left: 4px solid #38bdf8; margin: 16px 0; padding-left: 14px; color: #475569; background: #f0f9ff; padding: 10px 14px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="study-header">
+        <h1>🎓 ${title}</h1>
+        <p>สร้างโดย <strong>Kira Study Co-Pilot</strong> เมื่อ ${new Date().toLocaleString('th-TH')}</p>
+    </div>
+    <div class="study-content">
+        ${typeof marked !== 'undefined' ? marked.parse(lastResultMarkdown) : lastResultMarkdown.replace(/\n/g, '<br>')}
+    </div>
+</body>
+</html>`;
+
+            if (typeof openLiveCanvasWithCode === 'function') {
+                openLiveCanvasWithCode(htmlDoc, title);
+            } else {
+                const drawer = document.getElementById('artifacts-drawer');
+                const iframe = document.getElementById('artifacts-iframe');
+                if (drawer && iframe) {
+                    iframe.srcdoc = htmlDoc;
+                    drawer.classList.add('open');
+                    document.body.classList.add('split-workspace-active');
+                }
+            }
+
+            if (typeof showKiraToast === 'function') {
+                showKiraToast("เปิดเอกสารบทเรียนใน Interactive Canvas เรียบร้อยค่ะ 💻", "success");
+            }
+        });
+    }
+
+    // Action: Study Result to Mind Map
+    if (btnStudyToMindmap) {
+        btnStudyToMindmap.addEventListener('click', () => {
+            if (!lastResultMarkdown) return;
+            closeStudyHub();
+            if (typeof openKiraMindMap === 'function') {
+                openKiraMindMap(lastResultMarkdown);
+            } else {
+                if (typeof showKiraToast === 'function') {
+                    showKiraToast("กำลังสร้างผังความคิด...", "info");
+                }
+            }
+        });
+    }
+}
+
 // Expose globally
 window.setKiraLanguage = setKiraLanguage;
 window.initKiraI18n = initKiraI18n;
+window.initStudyHubController = initStudyHubController;
 
 // =========================================================================
 // 🚀 Master Application Lifecycle Initialization
@@ -11073,6 +11357,7 @@ function initKiraApp() {
     try { initLiveVoiceAssistant(); } catch (e) { console.error("Live voice init error:", e); }
     try { initSlideDeckStudio(); } catch (e) { console.error("Slide deck studio init error:", e); }
     try { initKiraMindMapController(); } catch (e) { console.error("Mind Map controller init error:", e); }
+    try { initStudyHubController(); } catch (e) { console.error("Study Hub controller init error:", e); }
     try { initSubscriptionController(); } catch (e) { console.error("Subscription controller init error:", e); }
     try { initPWAController(); } catch (e) { console.error("PWA controller init error:", e); }
     try { initMCPHubController(); } catch (e) { console.error("MCP Hub controller init error:", e); }

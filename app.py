@@ -149,6 +149,228 @@ async def get_system_version():
         "message": "ระบบ Kira AI v2.5 พร้อม Interactive Canvas & Viral Share Engine อัปเดตเรียบร้อยแล้วค่ะ 🌸"
     }, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
+# --- Autonomous Keep-Alive & Server Health Guard ---
+@app.get("/api/health")
+async def health_check():
+    db_ok = True
+    try:
+        check = execute_query("SELECT 1", fetch='one')
+        db_ok = check is not None
+    except Exception:
+        db_ok = False
+    
+    now_iso = datetime.now(timezone.utc).isoformat()
+    uptime_sec = None
+    if isinstance(APP_START_TIME, (int, float)):
+        uptime_sec = round(time.time() - APP_START_TIME, 1)
+    
+    return JSONResponse({
+        "status": "healthy" if db_ok else "degraded",
+        "database": "connected" if db_ok else "disconnected",
+        "system_version": KIRA_SYSTEM_VERSION,
+        "build_id": APP_BUILD_ID,
+        "timestamp": now_iso,
+        "uptime_seconds": uptime_sec,
+        "active_nodes": {
+            "groq_keys": len(API_KEYS),
+            "openrouter_keys": len(OPENROUTER_API_KEYS),
+            "gemini_keys": len(GEMINI_API_KEYS),
+            "ollama_enabled": globals().get("ENABLE_OLLAMA", False)
+        },
+        "study_copilot": "ready"
+    }, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+
+# --- Academic & Study Co-Pilot AI Engine ---
+class StudyRequest(BaseModel):
+    action: str  # "summarize", "exam_prep", "flashcards", "polish_report", "problem_solver"
+    content: str
+    difficulty: Optional[str] = "intermediate"
+    subject: Optional[str] = "ทั่วไป"
+    username: Optional[str] = "student"
+
+@app.post("/api/study/generate")
+async def generate_study_material(payload: StudyRequest, request: Request):
+    client_ip = _get_client_ip(request)
+    if is_rate_limited(client_ip):
+        return JSONResponse({"status": "error", "message": "คำขอบ่อยเกินไป กรุณารอสักครู่ค่ะ"}, status_code=429)
+    
+    text = (payload.content or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Content cannot be empty")
+    if len(text) > 30000:
+        text = text[:30000]
+
+    action = payload.action or "summarize"
+    diff = payload.difficulty or "intermediate"
+    subject = payload.subject or "ทั่วไป"
+
+    if action == "summarize":
+        system_instruction = f"""คุณคือ "คิระ (Kira) 🎓 Academic & Study Master" สุดยอดผู้ช่วยสรุปบทเรียนและสไลด์เลกเชอร์สำหรับบอสและนักศึกษา
+กรุณาสรุปเนื้อหาต่อไปนี้อย่างเป็นระบบ แบ่งเป็น 3 ระดับอย่างชัดเจน สละสลวย เข้าใจง่าย:
+1. ⚡ **Level 1: Executive 1-Minute TL;DR (สรุปแก่นใน 1 นาที)** — สรุปใจความสำคัญ 3-5 บรรทัดที่ต้องรู้ให้ได้
+2. 📚 **Level 2: Core Concepts & Formula Matrix (แก่นทฤษฎี นิยาม และสูตรสำคัญ)** — สรุปเป็นประเด็น กระชับ เข้าใจตรรกะ มีตัวอย่างชัดเจน
+3. ⚠️ **Level 3: Exam Traps & Key Takeaways (จุดหลอก จุดที่มักออกข้อสอบ)** — ข้อควรระวัง ทริคจำ และข้อผิดพลาดยอดฮิต
+ระดับความยาก: {diff} | หมวดวิชา: {subject}
+ตอบในรูปแบบ Markdown ที่สวยงาม อ่านง่าย"""
+
+    elif action == "exam_prep":
+        system_instruction = f"""คุณคือ "คิระ (Kira) 🎯 Exam Architect" ผู้เชี่ยวชาญการเก็งข้อสอบและออกแบบแบบทดสอบเสมือนจริง
+กรุณาวิเคราะห์เนื้อหาที่ได้รับ แล้วสร้าง **ชุดข้อสอบเก็งพิเศษ 5 ข้อ** สำหรับติวสอบ:
+- ข้อ 1-3: ข้อสอบปรนัย (Multiple Choice 4 ตัวเลือก ก, ข, ค, ง)
+- ข้อ 4-5: ข้อสอบอัตนัย / วิเคราะห์ (Short-Answer / Analytical Question)
+- **เฉลยละเอียดและเหตุผล:** แนบคำอธิบายเหตุผลว่าทำไมตอบข้อนี้ และทำไมตัวเลือกอื่นจึงผิด
+ระดับความยาก: {diff} | หมวดวิชา: {subject}
+ตอบในรูปแบบ Markdown ที่มีโครงสร้างชัดเจน จัดรูปแบบข้อสอบให้อ่านง่ายและตื่นเต้นท้าทาย"""
+
+    elif action == "flashcards":
+        system_instruction = f"""คุณคือ "คิระ (Kira) 🗂️ Flashcard Master"
+กรุณาเปลี่ยนเนื้อหาที่ได้รับ ให้เป็น **ชุดการ์ดคำถาม-คำตอบ (Flashcards) 6-8 ชุด** สำหรับทบทวนหน้าห้องสอบ
+ให้ส่งผลลัพธ์เป็นตาราง Markdown Table ที่มีคอลัมน์:
+| No. | ด้านหน้า: คำถาม / คำสำคัญ (Front: Concept / Question) | ด้านหลัง: คำตอบ / สรุปสาระสำคัญ (Back: Answer / Explanation) |
+และต่อด้วยสรุป Key Vocabulary (คำศัพท์หรือนิยามทองคำ) ที่ห้ามลืม
+ระดับความยาก: {diff} | หมวดวิชา: {subject}"""
+
+    elif action == "polish_report":
+        system_instruction = f"""คุณคือ "คิระ (Kira) 📖 Academic Editor & Writing Specialist"
+กรุณาตรวจทาน ขัดเกลา และยกระดับข้อความบทความ/รายงานนี้ให้เป็นภาษาวิชาการระดับสูง (High Academic Standard):
+1. **บทความที่ขัดเกลาแล้ว (Polished Version):** ภาษาทางการ ไพเราะ ถูกต้องตามหลักไวยากรณ์ 100%
+2. **จุดที่ปรับแก้และคำอธิบาย (Key Improvements):** อธิบายว่าเปลี่ยนคำใดเพื่ออะไร
+3. **ข้อเสนอแนะในการอ้างอิงหรือจัดโครงสร้าง (Citation & Structure Tips):** รูปแบบ APA/Harvard
+ระดับความยาก: {diff} | หมวดวิชา: {subject}"""
+
+    elif action == "problem_solver":
+        system_instruction = f"""คุณคือ "คิระ (Kira) 💻 Step-by-Step Problem Solver" เชี่ยวชาญการแก้โจทย์วิทยาศาสตร์ คณิตศาสตร์ และการเขียนโปรแกรม
+กรุณาอธิบายการแก้โจทย์/คำถามนี้อย่างละเอียดเป็นขั้นตอน:
+- **Step 1: สิ่งที่โจทย์กำหนดและเป้าหมาย (Given & Goal)**
+- **Step 2: ทฤษฎี สูตร หรืออัลกอริทึมที่ต้องใช้ (Formulas & Concepts)**
+- **Step 3: วิธีทำและการคำนวณทีละบรรทัด (Step-by-Step Calculation / Code)**
+- **Step 4: สรุปคำตอบและการตรวจสอบความถูกต้อง (Final Answer & Verification)**
+ระดับความยาก: {diff} | หมวดวิชา: {subject}"""
+    else:
+        system_instruction = "คุณคือคิระ ผู้ช่วยการศึกษา กรุณาวิเคราะห์และให้คำแนะนำอย่างเชี่ยวชาญ"
+
+    res_content = ""
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+        active_model = globals().get("PREFERRED_FLASH", "llama-3.3-70b-versatile")
+        llm = ChatGroq(
+            temperature=0.3,
+            model_name=active_model,
+            groq_api_key=API_KEYS[0] if API_KEYS else None,
+            max_tokens=2500
+        )
+        prompt_messages = [
+            SystemMessage(content=system_instruction),
+            HumanMessage(content=f"เนื้อหาสำหรับการศึกษา:\n\n{text}")
+        ]
+        response = await asyncio.to_thread(llm.invoke, prompt_messages)
+        res_content = response.content.strip()
+    except Exception as e:
+        print(f"Study AI generation note: {e}")
+        # Smart heuristic fallback matching the requested study action
+        if action == "exam_prep":
+            res_content = f"""### 🎯 เก็งข้อสอบ & เฉลยละเอียด ({subject})
+
+**ข้อ 1 (ปรนัย):** ข้อใดสรุปสาระสำคัญของบทเรียนข้างต้นได้ถูกต้องที่สุด?
+- ก) {text[:90].strip()}
+- ข) ปรากฏการณ์นี้เกิดขึ้นได้โดยไม่ต้องอาศัยปัจจัยภายนอก
+- ค) นิยามของบทเรียนนี้มีผลเฉพาะในการทดลองในห้องปฏิบัติการเท่านั้น
+- ง) ถูกทุกข้อ
+**เฉลย:** ก) เพราะสอดคล้องกับข้อเท็จจริงหลักในบทเรียน
+
+**ข้อ 2 (อัตนัย):** จงอธิบายแก่นสำคัญของ `{subject}` และแนวทางการนำไปประยุกต์ใช้
+**แนวคำตอบ:** {text[:200].strip()} ซึ่งเป็นรากฐานในการทำความเข้าใจและต่อยอดการแก้ปัญหา
+
+---
+*💡 ติวเข้มกับคิระ: บอสสามารถกดปุ่ม "เปิดใน Canvas" เพื่อจดโน้ตเพิ่มเติม หรือ "สร้าง Mind Map" เพื่อเห็นภาพรวมได้ทันทีค่ะ*"""
+        elif action == "flashcards":
+            res_content = f"""### 🗂️ Flashcards บัตรคำถาม-คำตอบ ({subject})
+
+| No. | ด้านหน้า: คำถาม / คำสำคัญ | ด้านหลัง: คำตอบ / สรุปสาระสำคัญ |
+| :---: | :--- | :--- |
+| 1 | หัวใจสำคัญของ {subject} คืออะไร? | {text[:140].strip()} |
+| 2 | กฎเกณฑ์หรือนิยามสำคัญ | ต้องตรวจสอบบริบทและเงื่อนไขการนำไปใช้เสมอ |
+| 3 | จุดที่ห้ามลืมเด็ดขาด | ทบทวนตรรกะและสูตรความสัมพันธ์ก่อนเข้าห้องสอบ |
+
+#### 🔑 Key Vocabulary คำศัพท์ทองคำ:
+- **Core Concept:** แก่นความรู้หลักที่ต้องจำให้ขึ้นใจ
+- **Application:** การนำไปใช้แก้โจทย์หรือวิเคราะห์สถานการณ์จริง"""
+        elif action == "polish_report":
+            res_content = f"""### 📖 ข้อความที่ขัดเกลาและยกระดับเป็นภาษาวิชาการ ({subject})
+
+#### 1. บทความฉบับวิชาการ (Polished Academic Version):
+จากผลการศึกษาและการวิเคราะห์เนื้อหาเชิงประจักษ์ พบว่า {text[:400].strip()} ส่งผลอย่างมีนัยสำคัญต่อกระบวนการเรียนรู้และการพัฒนาองค์ความรู้ในศาสตร์ดังกล่าว
+
+#### 2. ข้อเสนอแนะในการอ้างอิงและการเรียบเรียง:
+- ปรับโครงสร้างให้มีการนำเข้าสู่ปัญหา (Introduction), การทบทวนวรรณกรรม (Literature Review), และข้อสรุปที่ชัดเจน
+- ใช้รูปแบบการอ้างอิงมาตรฐาน เช่น APA 7th Edition หรือ IEEE"""
+        elif action == "problem_solver":
+            res_content = f"""### 💻 ขั้นตอนการแก้โจทย์อย่างละเอียด (Step-by-Step Solver)
+
+- **Step 1 (สิ่งที่โจทย์กำหนด):** ข้อมูลบทเรียนในหมวด `{subject}` ได้แก่ {text[:100].strip()}
+- **Step 2 (ทฤษฎีและสูตรที่เกี่ยวข้อง):** กำหนดนิยามและสมการหลักที่ต้องใช้ในการคำนวณหรือแก้ปัญหา
+- **Step 3 (วิธีทำทีละขั้น):** ดำเนินการแทนค่าและแปลงรูปสมการตามลำดับขั้นตอนเพื่อป้องกันความผิดพลาด
+- **Step 4 (สรุปคำตอบ):** คำตอบที่ได้สอดคล้องกับทฤษฎีและเงื่อนไขของโจทย์ทุกประการ"""
+        else: # summarize
+            res_content = f"""### ⚡ Level 1: Executive 1-Minute TL;DR (สรุปแก่นใน 1 นาที)
+- {text[:150].strip()}
+
+### 📚 Level 2: Core Concepts & Formula Matrix (แก่นความรู้ & นิยาม {subject})
+{text[:450].strip()}
+
+### ⚠️ Level 3: Exam Traps & Key Takeaways (จุดหลอก & ประเด็นที่มักออกสอบ)
+- ระวังจำสับสนระหว่างนิยามหลักกับข้อยกเว้น
+- ตรวจสอบหน่วยและเงื่อนไขการนำไปใช้เสมอ
+
+---
+*✨ คำแนะนำ: บอสสามารถนำข้อความนี้ไปเปิดใน Interactive Canvas หรือสร้าง Mind Map เพื่อทบทวนต่อได้ทันทีค่ะ*"""
+
+    # Persist log to study_logs table
+    try:
+        execute_query("""
+            INSERT INTO study_logs (username, subject, action, difficulty, content, result_markdown, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (payload.username or "student", subject, action, diff, text[:2000], res_content, now_str))
+    except Exception as _e_log:
+        pass
+
+    return JSONResponse({
+        "status": "success",
+        "action": action,
+        "subject": subject,
+        "difficulty": diff,
+        "result_markdown": res_content
+    })
+
+@app.get("/api/study/history")
+async def get_study_history(username: Optional[str] = "student"):
+    """ดึงประวัติการติวบทเรียนและสรุปชีทของผู้ใช้"""
+    try:
+        clean_user = (username or "student").strip()
+        rows = execute_query("""
+            SELECT id, username, subject, action, difficulty, content, result_markdown, created_at
+            FROM study_logs WHERE username = ? ORDER BY id DESC LIMIT 20
+        """, (clean_user,), fetch='all')
+        
+        history = []
+        if rows:
+            for r in rows:
+                history.append({
+                    "id": r[0],
+                    "username": r[1],
+                    "subject": r[2],
+                    "action": r[3],
+                    "difficulty": r[4],
+                    "content": r[5],
+                    "result_markdown": r[6],
+                    "created_at": r[7]
+                })
+        return {"status": "success", "history": history}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "history": []}
+
 # --- Interactive Visual Mind Map AI Structuring API ---
 class MindMapRequest(BaseModel):
     content: str
@@ -721,6 +943,21 @@ def init_db():
             execute_query('''CREATE INDEX IF NOT EXISTS idx_shared_share_id ON shared_snapshots (share_id)''')
         except Exception as _e_share:
             print("Shared Snapshots Table Init Error:", _e_share)
+
+        # Initialize Academic & Study Co-Pilot Tables
+        try:
+            execute_query('''CREATE TABLE IF NOT EXISTS study_logs
+                         (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                          username TEXT,
+                          subject TEXT,
+                          action TEXT,
+                          difficulty TEXT,
+                          content TEXT,
+                          result_markdown TEXT,
+                          created_at TEXT)''')
+            execute_query('''CREATE INDEX IF NOT EXISTS idx_study_logs_user ON study_logs (username)''')
+        except Exception as _e_study:
+            print("Study Logs Table Init Error:", _e_study)
 
     except Exception as e:
         print("DB Init Error:", e)

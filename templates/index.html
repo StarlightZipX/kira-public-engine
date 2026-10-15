@@ -471,6 +471,22 @@
                                 <i class="fa-solid fa-sliders"></i> ศูนย์รวมฟีเจอร์ & เครื่องมือ
                             </div>
                             
+                            <!-- กลุ่ม 0: การศึกษา & ติวสอบอัจฉริยะ (Academic & Study Co-Pilot) -->
+                            <div class="tools-group-section">
+                                <div class="tools-category-label">
+                                    <i class="fa-solid fa-graduation-cap"></i> <span>การศึกษา & ติวสอบ (Study Co-Pilot)</span>
+                                </div>
+                                <button class="tools-menu-item" id="btn-tools-study-hub" type="button" title="ห้องติวเข้มและผู้ช่วยการเรียนอัจฉริยะ (Academic & Study Co-Pilot)">
+                                    <span class="tool-item-icon icon-cyan"><i class="fa-solid fa-graduation-cap"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title">Study Co-Pilot (ห้องติวสอบ)</span>
+                                        <span class="tool-item-desc">สรุปชีทสไลด์ 3 เลเวล, เก็งข้อสอบ, Flashcards, แก้โจทย์</span>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <div class="tools-dropdown-divider"></div>
+
                             <!-- กลุ่ม 1: งาน & กลยุทธ์ -->
                             <div class="tools-group-section">
                                 <div class="tools-category-label">
@@ -710,6 +726,25 @@
                     <img id="image-preview" src="" style="max-height: 80px; border-radius: 4px;">
                     <button id="remove-img-btn" style="position: absolute; top: 0; right: 0; transform: translate(50%, -50%); background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fa-solid fa-xmark"></i></button>
                 </div>
+                <!-- 🎓 Academic & Study Quick Chips -->
+                <div class="study-quick-chips" id="study-quick-chips">
+                    <button type="button" class="study-chip" data-study-action="summarize" title="สรุปชีทสไลด์/เลกเชอร์ 3 ระดับ">
+                        <i class="fa-solid fa-file-lines text-cyan"></i> สรุปสไลด์ 3 เลเวล
+                    </button>
+                    <button type="button" class="study-chip" data-study-action="exam_prep" title="เก็งข้อสอบ 5 ข้อพร้อมเฉลย">
+                        <i class="fa-solid fa-bullseye text-amber"></i> เก็งข้อสอบ & เฉลย
+                    </button>
+                    <button type="button" class="study-chip" data-study-action="flashcards" title="สร้าง Flashcards บัตรคำถามติวสอบ">
+                        <i class="fa-solid fa-layer-group text-purple"></i> Flashcards ทบทวน
+                    </button>
+                    <button type="button" class="study-chip" data-study-action="problem_solver" title="แก้โจทย์วิทย์/คณิต/โค้ด ทีละสเต็ป">
+                        <i class="fa-solid fa-calculator text-emerald"></i> แก้โจทย์ทีละสเต็ป
+                    </button>
+                    <button type="button" class="study-chip hub-trigger" id="btn-open-study-hub-chip" title="เปิดห้องติวเข้มเต็มรูปแบบ">
+                        <i class="fa-solid fa-graduation-cap text-rose"></i> ห้องติวสอบ ✨
+                    </button>
+                </div>
+
                 <div class="input-wrapper" style="position: relative;">
                     <div id="attachment-menu" class="attachment-popup" style="display: none;">
                         <button id="menu-img-btn" class="popup-item"><i class="fa-regular fa-image"></i> รูปภาพ</button>
@@ -3123,12 +3158,107 @@
         </div>
     </div>
 
+    <!-- 🎓 Kira Academic & Study Co-Pilot Modal -->
+    <div id="study-hub-modal" class="kira-modal-overlay" style="display: none;">
+        <div class="study-hub-card">
+            <!-- Modal Header -->
+            <div class="study-hub-header">
+                <div class="study-hub-title-group">
+                    <div class="study-hub-icon-wrap">
+                        <i class="fa-solid fa-graduation-cap text-cyan"></i>
+                    </div>
+                    <div>
+                        <h2 class="study-hub-title">Kira Study Co-Pilot <span class="study-badge">Academic 2.5</span></h2>
+                        <p class="study-hub-subtitle">ผู้ช่วยติวเข้ม สรุปชีทสไลด์ เก็งข้อสอบ และเตรียมความพร้อมก่อนเข้าห้องเรียน</p>
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-study-hub" title="ปิดหน้าต่าง">&times;</button>
+            </div>
+
+            <!-- Tool Mode Tabs -->
+            <div class="study-tabs-nav">
+                <button type="button" class="study-tab-btn active" data-tab="summarize">
+                    <i class="fa-solid fa-file-lines"></i> สรุปสไลด์ 3 เลเวล
+                </button>
+                <button type="button" class="study-tab-btn" data-tab="exam_prep">
+                    <i class="fa-solid fa-bullseye"></i> เก็งข้อสอบ 5 ข้อ
+                </button>
+                <button type="button" class="study-tab-btn" data-tab="flashcards">
+                    <i class="fa-solid fa-layer-group"></i> Flashcards ทบทวน
+                </button>
+                <button type="button" class="study-tab-btn" data-tab="polish_report">
+                    <i class="fa-solid fa-feather-pointed"></i> ขัดเกลารายงาน
+                </button>
+                <button type="button" class="study-tab-btn" data-tab="problem_solver">
+                    <i class="fa-solid fa-calculator"></i> แก้โจทย์ทีละสเต็ป
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="study-hub-body">
+                <!-- Left: Input Control -->
+                <div class="study-input-panel">
+                    <div class="study-form-group">
+                        <label for="study-subject-input"><i class="fa-solid fa-bookmark text-purple"></i> ชื่อวิชา หรือหัวข้อบทเรียน:</label>
+                        <input type="text" id="study-subject-input" class="study-text-input" placeholder="เช่น Computer Science, Macroeconomics, ฟิสิกส์ เรื่องแรงและกลศาสตร์...">
+                    </div>
+                    <div class="study-form-group">
+                        <div class="study-label-row">
+                            <label for="study-content-input"><i class="fa-solid fa-align-left text-cyan"></i> เนื้อหาบทเรียน / ข้อความสไลด์ / โจทย์:</label>
+                            <button type="button" class="study-paste-hint" id="btn-paste-study-content"><i class="fa-regular fa-clipboard"></i> วางข้อความ</button>
+                        </div>
+                        <textarea id="study-content-input" class="study-textarea" rows="8" placeholder="วางเนื้อหาจากสไลด์ PDF, ข้อความเลกเชอร์, การบ้าน หรือโจทย์ที่ต้องการให้คิระช่วยวิเคราะห์..."></textarea>
+                    </div>
+                    <div class="study-options-row">
+                        <div class="study-option-item">
+                            <label for="study-difficulty-select"><i class="fa-solid fa-sliders"></i> ระดับการศึกษา:</label>
+                            <select id="study-difficulty-select" class="study-select">
+                                <option value="basic">ระดับมัธยม / พื้นฐาน (Fundamental)</option>
+                                <option value="intermediate" selected>ระดับมหาวิทยาลัย (Undergraduate)</option>
+                                <option value="advanced">ระดับบัณฑิตศึกษา / เชิงลึก (Advanced)</option>
+                            </select>
+                        </div>
+                        <button type="button" id="btn-generate-study" class="btn-generate-study">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> <span>เริ่มประมวลผล</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Output & Action Workspace -->
+                <div class="study-output-panel">
+                    <div class="study-output-header">
+                        <div class="study-output-title">
+                            <i class="fa-solid fa-sparkles text-amber"></i> ผลลัพธ์การติวเข้ม & สรุปบทเรียน
+                        </div>
+                        <div class="study-output-actions" id="study-output-actions" style="display: none;">
+                            <button type="button" class="study-action-btn" id="btn-copy-study-result" title="คัดลอกผลลัพธ์">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                            <button type="button" class="study-action-btn" id="btn-study-to-canvas" title="เปิดใน Split Canvas เพื่อจดบันทึกและพรีวิวสด">
+                                <i class="fa-solid fa-laptop-code text-cyan"></i> เปิดใน Canvas
+                            </button>
+                            <button type="button" class="study-action-btn" id="btn-study-to-mindmap" title="แปลงเป็นผังความคิด Living Mind Map">
+                                <i class="fa-solid fa-diagram-project text-purple"></i> สร้าง Mind Map
+                            </button>
+                        </div>
+                    </div>
+                    <div class="study-result-container" id="study-result-container">
+                        <div class="study-placeholder">
+                            <i class="fa-solid fa-book-open-reader study-empty-icon"></i>
+                            <p class="study-empty-text">เลือกโหมดที่ต้องการ แล้ววางเนื้อหาบทเรียนเพื่อเริ่มติวเข้มกับคิระได้ทันทีค่ะ 🌸</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=48"></script>
+    <script src="/static/script.js?v=49"></script>
 </body>
 </html>
