@@ -592,50 +592,6 @@ if (btnLogin) {
     });
 }
 
-// 👑 Boss Fast-Pass Quick Login Handler
-const btnBossQuick = document.getElementById('btn-boss-quick-login');
-if (btnBossQuick) {
-    btnBossQuick.addEventListener('click', async () => {
-        const pwd = prompt("👑 กรุณากรอกรหัสผ่านสำหรับบอส (Boss Master Password):", "");
-        if (pwd === null) return;
-        if (!pwd.trim()) {
-            alert("กรุณากรอกรหัสผ่านค่ะ");
-            return;
-        }
-
-        const originalText = btnBossQuick.innerHTML;
-        btnBossQuick.disabled = true;
-        btnBossQuick.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบสิทธิ์บอส...';
-
-        try {
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: "👑 Boss (Owner)", password: pwd.trim() })
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-                localStorage.setItem('kira_username', data.username);
-                if (data.token) {
-                    localStorage.setItem('kira_auth_token', data.token);
-                }
-                localStorage.removeItem('kira_logged_out');
-                currentUser = data.username;
-                hideConnectionToast(500);
-                checkAuth();
-                updateModelUI();
-            } else {
-                alert(data.message || "รหัสผ่านบอสไม่ถูกต้องค่ะ");
-            }
-        } catch (err) {
-            alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้งค่ะ");
-        } finally {
-            btnBossQuick.disabled = false;
-            btnBossQuick.innerHTML = originalText;
-        }
-    });
-}
-
 if (btnRegister) {
     btnRegister.addEventListener('click', async () => {
         const username = regUsernameInput.value.trim();
