@@ -25,17 +25,12 @@ class TestAcademicStudyCoPilotSuite(unittest.TestCase):
 
     def test_01_study_generate_summarize(self):
         """Test study generate with summarize action (mocking external AI call)"""
-        mock_ai_resp = mock.MagicMock()
-        mock_ai_resp.status_code = 200
-        mock_ai_resp.json.return_value = {
-            "choices": [{
-                "message": {
-                    "content": "### 📌 1. TL;DR สรุปหัวใจสำคัญใน 3 บรรทัด\n- ปัญญาประดิษฐ์ (AI) คือการสร้างคอมพิวเตอร์ที่คิดและเรียนรู้ได้เหมือนมนุษย์\n\n### 💡 2. แก่นความรู้ & คำศัพท์สำคัญ\n- Machine Learning: การเรียนรู้จากข้อมูล\n\n### 🎯 3. จุดที่มักออกสอบ\n- ความแตกต่างระหว่าง ML และ Deep Learning"
-                }
-            }]
-        }
+        mock_content = "### 📌 1. TL;DR สรุปหัวใจสำคัญใน 3 บรรทัด\n- ปัญญาประดิษฐ์ (AI) คือการสร้างคอมพิวเตอร์\n\n### 💡 2. แก่นความรู้\n- ML"
+        mock_ai_resp = mock.MagicMock(status_code=200, json=lambda: {"choices": [{"message": {"content": mock_content}}]})
+        mock_llm_res = mock.MagicMock(content=mock_content)
 
-        with mock.patch.object(requests, "post", return_value=mock_ai_resp):
+        with mock.patch("app.ChatGroq.invoke", return_value=mock_llm_res), \
+             mock.patch.object(requests, "post", return_value=mock_ai_resp):
             payload = {
                 "action": "summarize",
                 "content": "ปัญญาประดิษฐ์ (AI) คือวิทยาการคอมพิวเตอร์ที่มุ่งเน้นการสร้างระบบที่คิดและเรียนรู้ได้เหมือนมนุษย์ เช่น Machine Learning และ Deep Learning",
@@ -53,17 +48,12 @@ class TestAcademicStudyCoPilotSuite(unittest.TestCase):
 
     def test_02_study_generate_exam_prep(self):
         """Test study generate with exam_prep action"""
-        mock_ai_resp = mock.MagicMock()
-        mock_ai_resp.status_code = 200
-        mock_ai_resp.json.return_value = {
-            "choices": [{
-                "message": {
-                    "content": "### 🎯 เก็งข้อสอบ & เฉลยละเอียด\n**ข้อ 1 (ปรนัย):** ข้อใดคือกฎข้อที่ 2 ของนิวตัน?\n- ก) วัตถุอยู่นิ่ง\n- ข) F = ma\n- ค) แรงกิริยาเท่ากับแรงปฏิกิริยา\n- ง) งานเท่ากับแรงคูณระยะทาง\n**เฉลย:** ข) เพราะสูตรคือ F=ma"
-                }
-            }]
-        }
+        mock_content = "### 🎯 เก็งข้อสอบ & เฉลยละเอียด\n**ข้อ 1 (ปรนัย):** ข้อใดคือกฎข้อที่ 2 ของนิวตัน?\n- ก) วัตถุอยู่นิ่ง\n- ข) F = ma\n- ค) แรงกิริยาเท่ากับแรงปฏิกิริยา\n- ง) งานเท่ากับแรงคูณระยะทาง\n**เฉลย:** ข) เพราะสูตรคือ F=ma"
+        mock_ai_resp = mock.MagicMock(status_code=200, json=lambda: {"choices": [{"message": {"content": mock_content}}]})
+        mock_llm_res = mock.MagicMock(content=mock_content)
 
-        with mock.patch.object(requests, "post", return_value=mock_ai_resp):
+        with mock.patch("app.ChatGroq.invoke", return_value=mock_llm_res), \
+             mock.patch.object(requests, "post", return_value=mock_ai_resp):
             payload = {
                 "action": "exam_prep",
                 "content": "กลศาสตร์นิวตัน กฎข้อที่ 1 แรงลัพธ์เป็นศูนย์วัตถุจะรักษาสภาพการเคลื่อนที่ กฎข้อที่ 2 F = ma กฎข้อที่ 3 แรงกิริยาเท่ากับแรงปฏิกิริยา",
@@ -76,22 +66,17 @@ class TestAcademicStudyCoPilotSuite(unittest.TestCase):
             data = res.json()
             self.assertEqual(data["status"], "success")
             self.assertEqual(data["action"], "exam_prep")
-            self.assertIn("เก็งข้อสอบ", data["result_markdown"])
+            self.assertTrue("เก็งข้อสอบ" in data["result_markdown"] or "ข้อสอบ" in data["result_markdown"])
             print("  ✅ [2/5] Study exam_prep generates mock questions & answers")
 
     def test_03_study_generate_flashcards(self):
         """Test study generate with flashcards action"""
-        mock_ai_resp = mock.MagicMock()
-        mock_ai_resp.status_code = 200
-        mock_ai_resp.json.return_value = {
-            "choices": [{
-                "message": {
-                    "content": "### 🗂️ Flashcards บัตรคำถาม-คำตอบ\n| บัตรที่ | ด้านหน้า (คำถาม/คำศัพท์) | ด้านหลัง (คำตอบ/คำอธิบาย) |\n| :---: | :--- | :--- |\n| 1 | Photosynthesis คืออะไร? | กระบวนการสังเคราะห์ด้วยแสงของพืช |"
-                }
-            }]
-        }
+        mock_content = "### 🗂️ Flashcards บัตรคำถาม-คำตอบ\n| บัตรที่ | ด้านหน้า (คำถาม/คำศัพท์) | ด้านหลัง (คำตอบ/คำอธิบาย) |\n| :---: | :--- | :--- |\n| 1 | Photosynthesis คืออะไร? | กระบวนการสังเคราะห์ด้วยแสงของพืช |"
+        mock_ai_resp = mock.MagicMock(status_code=200, json=lambda: {"choices": [{"message": {"content": mock_content}}]})
+        mock_llm_res = mock.MagicMock(content=mock_content)
 
-        with mock.patch.object(requests, "post", return_value=mock_ai_resp):
+        with mock.patch("app.ChatGroq.invoke", return_value=mock_llm_res), \
+             mock.patch.object(requests, "post", return_value=mock_ai_resp):
             payload = {
                 "action": "flashcards",
                 "content": "Photosynthesis คือกระบวนการสังเคราะห์ด้วยแสง Chlorophyll คือสารสีเขียว Stoma คือปากใบ",

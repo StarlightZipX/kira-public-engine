@@ -215,7 +215,7 @@ async def generate_study_material(payload: StudyRequest, request: Request):
 
     elif action == "exam_prep":
         system_instruction = f"""คุณคือ "คิระ (Kira) 🎯 Exam Architect" ผู้เชี่ยวชาญการเก็งข้อสอบและออกแบบแบบทดสอบเสมือนจริง
-กรุณาวิเคราะห์เนื้อหาที่ได้รับ แล้วสร้าง **ชุดข้อสอบเก็งพิเศษ 5 ข้อ** สำหรับติวสอบ:
+กรุณาวิเคราะห์เนื้อหาที่ได้รับ แล้วสร้าง **ชุดเก็งข้อสอบ 5 ข้อ** สำหรับติวสอบ โดยให้ขึ้นต้นด้วยหัวข้อ: # 🎯 เก็งข้อสอบ & เฉลยละเอียด
 - ข้อ 1-3: ข้อสอบปรนัย (Multiple Choice 4 ตัวเลือก ก, ข, ค, ง)
 - ข้อ 4-5: ข้อสอบอัตนัย / วิเคราะห์ (Short-Answer / Analytical Question)
 - **เฉลยละเอียดและเหตุผล:** แนบคำอธิบายเหตุผลว่าทำไมตอบข้อนี้ และทำไมตัวเลือกอื่นจึงผิด
@@ -2128,9 +2128,8 @@ class ShareCreateRequest(BaseModel):
     author_display_name: Optional[str] = None
 
 # --- Endpoints ---
-@app.get("/api/health")
 @app.get("/api/ping")
-async def health_check():
+async def ping_check():
     """Kira Instant Health Check & Cold-Start Wakeup Ping Endpoint"""
     tz = timezone(timedelta(hours=7))
     return {

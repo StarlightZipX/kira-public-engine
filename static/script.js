@@ -10777,153 +10777,1108 @@ function initOfflineVaultController() {
 }
 
 // =========================================================================
-// 🌐 KIRA MULTI-LANGUAGE ENGINE (i18n: TH / EN / ZH / KO)
+// =========================================================================
+// 🌐 KIRA COMPREHENSIVE MULTI-LANGUAGE ENGINE (TH / EN / ZH / KO / JA)
 // =========================================================================
 const KIRA_I18N = {
     th: {
         code: "TH",
         flag: "🇹🇭",
         name: "ภาษาไทย",
-        share: "แชร์",
-        tools: "เครื่องมือ",
-        live_voice: "คุยสด",
-        new_chat: "แชทใหม่",
-        no_history: "ยังไม่มีประวัติการแชท",
+        // Header & Navigation
         mode_general: "ทั่วไป",
         mode_executive: "ผู้บริหาร",
         mode_silver: "วัยเก๋า",
+        mode_general_title: "โหมดทั่วไป (General): ทำงานและถามตอบทั่วไป",
+        mode_executive_title: "โหมดผู้บริหาร (Executive): กลยุทธ์ สัญญา ส่งงานในคลิกเดียว",
+        mode_silver_title: "โหมดวัยเก๋าอุ่นใจ (Silver Care): ตัวหนังสือใหญ่พิเศษ สั่งด้วยเสียง 100%",
+        share: "แชร์",
+        share_title: "แชร์บทสนทนาสู่โซเชียล & สร้างการ์ดไวรัล",
+        tools: "เครื่องมือ",
+        tools_title: "ศูนย์รวมฟีเจอร์และเครื่องมือ",
+        live_voice: "คุยสด",
+        live_voice_title: "เปิดโหมดสนทนาด้วยเสียงสดสองทิศทาง (Kira Live Voice)",
+        theme_title: "สลับโหมดกลางวัน/กลางคืน",
+        settings_title: "ตั้งค่าระบบ (Settings)",
+        upgrade_pro_title: "อัปเกรดเป็น Kira Pro / Founder Pass",
+        pwa_install_btn: "ติดตั้งแอป",
+        engine_cloud: "Cloud Engine 2.1",
+        header_boardroom: "สภา",
+        header_task_matrix: "งาน",
+
+        // Sidebar
+        new_chat: "แชทใหม่",
+        no_history: "ยังไม่มีประวัติการแชท",
+        sidebar_persona_label: "สไตล์การตอบ:",
+        persona_formal: "ทางการ สุภาพ",
+        persona_casual: "เป็นกันเอง สบายๆ",
+        persona_direct: "มุ่งเน้นผลลัพธ์ ตรงประเด็น",
+        guide_title: "คู่มือการใช้งาน (Kira Guide)",
+        logout_title: "ออกจากระบบ",
+        toggle_sidebar_title: "เปิด/ปิดแถบเมนูด้านข้าง",
+
+        // Quick Prompts
+        prompt_contract: "ตรวจสัญญา & ความเสี่ยง",
+        prompt_boardroom: "สภาบอร์ดรูม 4 มิติ",
+        prompt_email: "ร่างอีเมลเจรจาธุรกิจ",
+        prompt_strategy: "แผนกลยุทธ์ 30-90-365 วัน",
+        prompt_mermaid: "ออกแบบผัง Mermaid",
+        prompt_polish: "เกลาเอกสารระดับทางการ",
+
+        // Study Quick Chips
+        chip_summarize: "สรุปสไลด์ 3 เลเวล",
+        chip_exam_prep: "เก็งข้อสอบ & เฉลย",
+        chip_flashcards: "Flashcards ทบทวน",
+        chip_problem_solver: "แก้โจทย์ทีละสเต็ป",
+        chip_study_hub: "ห้องติวสอบ ✨",
+
+        // Input & Actions
+        input_placeholder: "พิมพ์ข้อความหรือคำถามถึง Kira 2.1... (Shift+Enter ขึ้นบรรทัดใหม่, Ctrl+V วางรูป)",
+        silver_voice_label: "แตะที่นี่เพื่อพูดคุยกับคิระ (ไม่ต้องพิมพ์คีย์บอร์ดนะคะ)",
+        attach_image: "รูปภาพ",
+        attach_doc: "ไฟล์เอกสาร",
+        mic_title: "พิมพ์ด้วยเสียง",
+        attach_title: "แนบไฟล์หรือรูปภาพ",
+        send_title: "ส่งข้อความ",
+        footer_disclaimer: "Kira อาจให้ข้อมูลที่ไม่ถูกต้องได้ กรุณาตรวจสอบก่อนนำไปใช้งาน",
+        drag_title: "วางรูปภาพที่นี่ (Kira Vision Inspector)",
+        drag_desc: "ปล่อยเพื่อส่งรูปภาพ UI, หน้าจอ หรือ Error Trace ให้คิระวิเคราะห์ทันที",
+
+        // Tools Dropdown
+        tools_header: "ศูนย์รวมฟีเจอร์ & เครื่องมือ",
+        tools_cat_study: "การศึกษา & ติวสอบ (Study Co-Pilot)",
+        tools_study_hub_title: "Study Co-Pilot (ห้องติวสอบ)",
+        tools_study_hub_desc: "สรุปชีทสไลด์ 3 เลเวล, เก็งข้อสอบ, Flashcards, แก้โจทย์",
+        tools_cat_work: "งาน & กลยุทธ์",
+        tools_vault_title: "Executive Offline Vault",
+        tools_vault_desc: "คลังนิรภัยออฟไลน์ & ซิงก์สองทิศทาง PWA",
+        tools_mcp_title: "MCP Integration Hub",
+        tools_mcp_desc: "ศูนย์เชื่อมต่อระบบนิเวศ & เครื่องมือ MCP",
+        tools_boardroom_title: "สภาที่ปรึกษาเสมือน",
+        tools_boardroom_desc: "ระดมสมอง 4 ผู้บริหารระดับสูง (CEO, CFO, CPO, CTO)",
+        tools_roundtable_title: "ห้องดีเบตสภาสด",
+        tools_roundtable_desc: "จำลองดีเบต 4 ผู้บริหารพร้อมเคาะค้อนแทรกแซง",
+        tools_task_matrix_title: "กระดานภารกิจ & ชิ้นงาน",
+        tools_task_matrix_desc: "จัดการ Task Matrix & ดราฟต์อัตโนมัติ",
+        tools_slide_title: "สไลด์พรีเซนต์ (16:9)",
+        tools_slide_desc: "สร้างชุดสไลด์ผู้บริหาร Keynote ในคลิกเดียว",
+        tools_viral_share_title: "แชร์สู่โซเชียล & การ์ดไวรัล",
+        tools_viral_share_desc: "สร้างลิงก์แชร์และดาวน์โหลดการ์ดสรุปสำหรับโซเชียล",
+        tools_canvas_title: "Interactive Canvas",
+        tools_canvas_desc: "ห้องทำงานคู่ขนาน พรีวิวเว็บแอพ และเอกสารสด",
+        tools_export_title: "ส่งออกบทสนทนา / PDF",
+        tools_export_desc: "บันทึกเป็น PDF หรือพิมพ์รายงาน",
+        tools_cat_brain: "สมอง & การสื่อสาร",
+        tools_graph_title: "ผังความจำ (Knowledge Graph)",
+        tools_graph_desc: "ส่องแผนผังความจำส่วนบุคคล",
+        tools_autospeak_title: "อ่านออกเสียงอัตโนมัติ",
+        tools_cat_system: "ระบบ & การช่วยเหลือ",
+        tools_pwa_title: "ติดตั้ง Kira Web App (PWA)",
+        tools_pwa_desc: "ติดตั้งบนมือถือหรือเดสก์ท็อป",
+        tools_guide_title: "คู่มือการใช้งาน (User Guide)",
+        tools_guide_desc: "ทัวร์ระบบและฟีเจอร์เด่น",
+        tools_info_title: "เกี่ยวกับ Kira AI",
+        tools_info_desc: "สถาปัตยกรรม & โมเดล Cloud",
+
+        // Canvas & Drawer
         tab_preview: "พรีวิว",
         tab_code: "โค้ด",
         tab_console: "Console",
+        canvas_split_title: "แบ่งหน้าจอ 50/50 (Split Workspace)",
+        canvas_max_title: "ขยายเต็มจอ (Full Canvas)",
+        canvas_desktop_title: "มุมมองคอมพิวเตอร์ (Desktop)",
+        canvas_mobile_title: "มุมมองมือถือ (Mobile)",
+        canvas_inspect: "ตรวจ Canvas",
         copy_code: "คัดลอกโค้ด",
         apply_code: "รัน & อัปเดตพรีวิว",
         clear_logs: "ล้างบันทึก",
-        input_placeholder: "พิมพ์ข้อความหา Kira... (Shift+Enter ขึ้นบรรทัดใหม่, Ctrl+V วางรูป)",
+        canvas_prompt_placeholder: "สั่งให้ Kira ปรับแต่งโค้ดชิ้นนี้... (เช่น เปลี่ยนปุ่มเป็นสีฟ้า, เพิ่มแอนิเมชัน)",
+        canvas_btn_send: "ปรับแต่ง",
+
+        // Settings Modal
+        settings_header_title: "การตั้งค่าระบบ",
+        settings_header_subtitle: "ปรับแต่งประสบการณ์ใช้งาน Kira AI 2.1 ตามสไตล์ของคุณ",
+        settings_tab_general: "ทั่วไป & การแสดงผล",
+        settings_tab_account: "บัญชี & ความปลอดภัย",
+        settings_tab_ai: "โมเดล & คำสั่งกำหนดเอง",
+        settings_tab_voice: "เสียง & พากย์ AI",
+        settings_tab_data: "ข้อมูล & โครงข่ายความจำ",
+        settings_tab_pro: "Pro Tools & Labs",
+        settings_section_appearance: "ธีมและการแสดงผล (Appearance)",
+        settings_user_mode_label: "โหมดประสบการณ์ตามช่วงวัย (User Experience Mode)",
+        mode_general_name: "ทั่วไป (General)",
+        mode_general_desc: "สมดุล คล่องตัว เหมาะกับการทำงานและถามตอบทั่วไป",
+        mode_exec_name: "ผู้บริหาร (Executive)",
+        mode_exec_desc: "เน้นยุทธศาสตร์ ตรวจสัญญา สรุปส่งงานในคลิกเดียว",
+        mode_silver_name: "วัยเก๋าอุ่นใจ (Silver Care)",
+        mode_silver_desc: "ตัวหนังสือใหญ่พิเศษ สั่งด้วยเสียง 100% ดูแลสุขภาพ & ย่อยภาษาราชการ",
+        settings_theme_label: "ธีมของระบบ (Color Theme)",
+        theme_dark_name: "Dark Nebula (ค่าเริ่มต้น)",
+        theme_light_name: "Light Stellar (สว่าง)",
+        theme_oled_name: "OLED Pure Black (มืดสนิท)",
+        settings_lang_title: "ภาษาของระบบ (System Language)",
+        settings_lang_desc: "เลือกภาษาสำหรับเมนู ปุ่ม หน้าต่าง และการสื่อสารทั้งหมด",
+        settings_font_title: "ขนาดตัวอักษรในแชท (Chat Font Size)",
+        settings_font_desc: "ปรับขนาดฟอนต์ของข้อความสนทนาเพื่อการอ่านที่สบายตา",
+        font_opt_small: "กะทัดรัด (Small - 13.5px)",
+        font_opt_medium: "มาตรฐาน (Medium - 14.5px)",
+        font_opt_large: "ตัวใหญ่ (Large - 16px)",
+        font_opt_xlarge: "ตัวใหญ่พิเศษสำหรับผู้ใหญ่ (Extra Large - 18px)",
+        settings_enter_title: "การกดปุ่มส่งข้อความ (Enter Key Action)",
+        settings_enter_desc: "เลือกพฤติกรรมเมื่อกดปุ่ม Enter ในช่องแชท",
+        enter_opt_enter: "กด Enter ส่งข้อความ (Shift+Enter ขึ้นบรรทัดใหม่)",
+        enter_opt_shift: "กด Shift+Enter ส่งข้อความ (Enter ขึ้นบรรทัดใหม่)",
+        settings_sound_title: "เสียงประกอบเอฟเฟกต์ (Sound Effects)",
+        settings_sound_desc: "เล่นเสียงนุ่มนวลเมื่อส่งข้อความและรับข้อความใหม่",
+        settings_autocanvas_title: "เปิด Live Canvas อัตโนมัติเมื่อตรวจพบโค้ดเว็บ",
+        settings_autocanvas_desc: "กางหน้าต่าง Interactive Preview ทันทีที่ AI ตอบโค้ด HTML/JS",
+        settings_section_profile: "ข้อมูลโปรไฟล์ & บัญชี (Profile & Quota)",
+        settings_quota_label: "โควตาการใช้งานวันนี้:",
+        settings_preferred_name_label: "ชื่อที่ต้องการให้คิระเรียกคุณ (Preferred Name)",
+        settings_preferred_name_hint: "Kira จะใช้ชื่อนี้เรียกขานคุณในการสนทนาและทักทายอย่างเป็นกันเอง",
+        settings_section_password: "เปลี่ยนรหัสผ่าน (Change Password)",
+        settings_btn_save_pass: "บันทึกรหัสผ่านใหม่",
+        settings_section_model: "การตั้งค่าโมเดล & บุคลิกภาพ (Model & Persona)",
+        settings_default_model_title: "โมเดลเริ่มต้นเมื่อเปิดระบบ (Default AI Model)",
+        settings_default_model_desc: "เลือกโมเดลที่ต้องการให้ระบบเรียกใช้เป็นค่าเริ่มต้น",
+        settings_custom_instructions_title: "คำสั่งเฉพาะสำหรับคุณ (Custom Instructions)",
+        settings_custom_instructions_desc: "บอกสไตล์ ข้อมูลเบื้องหลัง หรือสิ่งที่ต้องการให้คิระจดจำเสมอ",
         settings_voice_label: "เลือกน้ำเสียง AI (Natural Voice Engine)",
         test_listen: "ทดลองฟัง",
         speech_rate_title: "ความเร็วการพูด (Speech Rate):",
         speech_rate_desc: "ปรับสปีดการอ่านให้ช้าลงหรือเร็วขึ้นตามความต้องการ",
         stt_lang_title: "ภาษาสำหรับการสั่งงานด้วยเสียง (Voice Input STT)",
         stt_lang_desc: "ภาษาหลักที่ใช้ในการฟังเสียงพูดผ่านไมโครโฟน",
-        toast_lang_switched: "เปลี่ยนภาษาเป็น ภาษาไทย เรียบร้อยค่ะ"
+        settings_btn_cancel: "ยกเลิก",
+        settings_btn_save: "บันทึกการตั้งค่า",
+
+        // Auth Modal
+        auth_tab_login: "เข้าสู่ระบบ",
+        auth_tab_register: "สมัครสมาชิกใหม่",
+        auth_username_placeholder: "ชื่อผู้ใช้งาน (Username)",
+        auth_password_placeholder: "รหัสผ่าน (Password)",
+        auth_remember_me: "จดจำการเข้าสู่ระบบ",
+        auth_btn_login: "เข้าสู่ระบบ (Login)",
+        auth_or_divider: "หรือเข้าสู่ระบบด้วย",
+        auth_no_account_prompt: "ยังไม่มีบัญชีใช่ไหม?",
+        auth_go_to_register: "สมัครสมาชิกใหม่ที่นี่",
+        reg_username_placeholder: "ตั้งชื่อบัญชีผู้ใช้ (อย่างน้อย 3 ตัวอักษร)",
+        reg_nickname_placeholder: "ชื่อเล่นที่อยากให้คิระเรียก (เช่น บาส, พี่ท็อป)",
+        reg_purpose_label: "วัตถุประสงค์หลักในการใช้งาน:",
+        purpose_coding: "เขียนโค้ด",
+        purpose_business: "ธุรกิจ/งาน",
+        purpose_education: "การเรียน",
+        purpose_assistant: "ผู้ช่วยทั่วไป",
+        reg_password_placeholder: "ตั้งรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)",
+        reg_confirm_placeholder: "ยืนยันรหัสผ่านอีกครั้ง",
+        reg_terms_label: "ยอมรับข้อตกลงและเงื่อนไขการใช้งาน Kira AI",
+        reg_btn_submit: "ยืนยันการลงทะเบียน (Register)",
+        auth_has_account_prompt: "มีบัญชีผู้ใช้อยู่แล้ว?",
+        auth_go_to_login: "เข้าสู่ระบบที่นี่",
+
+        // Share Modal
+        share_modal_title: "แชร์บทสนทนา & สร้างการ์ดไวรัล",
+        share_title_label: "หัวข้อบทสนทนาสำหรับการแชร์:",
+        share_btn_copy: "คัดลอกลิงก์",
+        share_btn_download: "ดาวน์โหลดภาพการ์ด (1200x630)",
+
+        // Toasts
+        toast_lang_switched: "เปลี่ยนภาษาเป็น ภาษาไทย เรียบร้อยค่ะ 🇹🇭"
     },
+
     en: {
         code: "EN",
         flag: "🇺🇸",
         name: "English",
-        share: "Share",
-        tools: "Tools",
-        live_voice: "Live Voice",
-        new_chat: "New Chat",
-        no_history: "No chat history yet",
+        // Header & Navigation
         mode_general: "General",
         mode_executive: "Executive",
         mode_silver: "Silver Care",
+        mode_general_title: "General Mode: Balanced, versatile for everyday tasks",
+        mode_executive_title: "Executive Mode: Strategy, contracts, one-click deliverables",
+        mode_silver_title: "Silver Care: Extra large text, 100% voice interactive",
+        share: "Share",
+        share_title: "Share conversation & generate social viral card",
+        tools: "Tools",
+        tools_title: "Feature hub & tool collection",
+        live_voice: "Live Voice",
+        live_voice_title: "Open real-time 2-way voice conversation",
+        theme_title: "Toggle Day/Night Theme",
+        settings_title: "System Settings",
+        upgrade_pro_title: "Upgrade to Kira Pro / Founder Pass",
+        pwa_install_btn: "Install App",
+        engine_cloud: "Cloud Engine 2.1",
+        header_boardroom: "Boardroom",
+        header_task_matrix: "Tasks",
+
+        // Sidebar
+        new_chat: "New Chat",
+        no_history: "No chat history yet",
+        sidebar_persona_label: "Response Style:",
+        persona_formal: "Formal & Polite",
+        persona_casual: "Casual & Friendly",
+        persona_direct: "Direct & Result-driven",
+        guide_title: "User Guide (Kira Guide)",
+        logout_title: "Log Out",
+        toggle_sidebar_title: "Toggle Sidebar",
+
+        // Quick Prompts
+        prompt_contract: "Contract & Risk Analysis",
+        prompt_boardroom: "4D Virtual Boardroom",
+        prompt_email: "Negotiation Email Draft",
+        prompt_strategy: "30-90-365 Day Strategy",
+        prompt_mermaid: "Mermaid Flowchart Design",
+        prompt_polish: "Executive Document Polish",
+
+        // Study Quick Chips
+        chip_summarize: "3-Level Summary",
+        chip_exam_prep: "Exam Prep & Keys",
+        chip_flashcards: "Review Flashcards",
+        chip_problem_solver: "Step-by-Step Solver",
+        chip_study_hub: "Study Co-Pilot ✨",
+
+        // Input & Actions
+        input_placeholder: "Type a message to Kira... (Shift+Enter for newline, Ctrl+V to paste image)",
+        silver_voice_label: "Tap here to speak with Kira (No typing needed)",
+        attach_image: "Image",
+        attach_doc: "Document",
+        mic_title: "Voice Input",
+        attach_title: "Attach File or Image",
+        send_title: "Send Message",
+        footer_disclaimer: "Kira may produce inaccurate info. Please verify important facts.",
+        drag_title: "Drop Image Here (Vision Inspector)",
+        drag_desc: "Drop to send UI, screenshot, or error trace for instant AI analysis",
+
+        // Tools Dropdown
+        tools_header: "Feature & Tool Hub",
+        tools_cat_study: "Academic & Study Co-Pilot",
+        tools_study_hub_title: "Study Co-Pilot Hub",
+        tools_study_hub_desc: "3-Level summary, exam prep, flashcards, step-by-step solver",
+        tools_cat_work: "Work & Strategy",
+        tools_vault_title: "Executive Offline Vault",
+        tools_vault_desc: "Offline vault & 2-way PWA sync",
+        tools_mcp_title: "MCP Integration Hub",
+        tools_mcp_desc: "Ecosystem bridge & MCP tool studio",
+        tools_boardroom_title: "Virtual Boardroom",
+        tools_boardroom_desc: "Brainstorm with 4 C-Level executives (CEO, CFO, CPO, CTO)",
+        tools_roundtable_title: "Live Roundtable Arena",
+        tools_roundtable_desc: "Interactive 4-executive live debate simulation with gavel control",
+        tools_task_matrix_title: "Task Matrix & Artifacts",
+        tools_task_matrix_desc: "Manage task matrix & automated drafts",
+        tools_slide_title: "Presentation Slides (16:9)",
+        tools_slide_desc: "Create executive keynote deck in 1-click",
+        tools_viral_share_title: "Social Share & Viral Card",
+        tools_viral_share_desc: "Generate share link & download summary card",
+        tools_canvas_title: "Interactive Canvas",
+        tools_canvas_desc: "Parallel workspace, web app preview & live code",
+        tools_export_title: "Export Chat / PDF",
+        tools_export_desc: "Save as PDF or print report",
+        tools_cat_brain: "Brain & Memory",
+        tools_graph_title: "Knowledge Graph",
+        tools_graph_desc: "Explore personal associative memory network",
+        tools_autospeak_title: "Auto-Speak Replies",
+        tools_cat_system: "System & Support",
+        tools_pwa_title: "Install Kira Web App (PWA)",
+        tools_pwa_desc: "Install on mobile or desktop",
+        tools_guide_title: "User Guide",
+        tools_guide_desc: "System tour & highlighted features",
+        tools_info_title: "About Kira AI",
+        tools_info_desc: "Architecture & cloud engine info",
+
+        // Canvas & Drawer
         tab_preview: "Preview",
         tab_code: "Code",
         tab_console: "Console",
+        canvas_split_title: "Split Workspace 50/50",
+        canvas_max_title: "Maximize Canvas",
+        canvas_desktop_title: "Desktop Viewport",
+        canvas_mobile_title: "Mobile Viewport",
+        canvas_inspect: "Inspect Canvas",
         copy_code: "Copy Code",
         apply_code: "Run & Update",
         clear_logs: "Clear Logs",
-        input_placeholder: "Type a message to Kira... (Shift+Enter for newline, Ctrl+V to paste image)",
-        settings_voice_label: "AI Voice Model (Natural Voice Engine)",
+        canvas_prompt_placeholder: "Ask Kira to modify this code... (e.g. make button blue, add animations)",
+        canvas_btn_send: "Update",
+
+        // Settings Modal
+        settings_header_title: "System Settings",
+        settings_header_subtitle: "Customize your Kira AI 2.1 experience",
+        settings_tab_general: "General & Appearance",
+        settings_tab_account: "Account & Security",
+        settings_tab_ai: "Models & Customization",
+        settings_tab_voice: "Voice & Speech",
+        settings_tab_data: "Data & Memory",
+        settings_tab_pro: "Pro Tools & Labs",
+        settings_section_appearance: "Appearance & Theme",
+        settings_user_mode_label: "User Experience Mode",
+        mode_general_name: "General",
+        mode_general_desc: "Balanced and agile for everyday work and Q&A",
+        mode_exec_name: "Executive",
+        mode_exec_desc: "Strategic focus, contract review, 1-click deliverables",
+        mode_silver_name: "Silver Care",
+        mode_silver_desc: "Extra-large fonts, 100% voice input, healthcare assistance",
+        settings_theme_label: "Color Theme",
+        theme_dark_name: "Dark Nebula (Default)",
+        theme_light_name: "Light Stellar",
+        theme_oled_name: "OLED Pure Black",
+        settings_lang_title: "System Language",
+        settings_lang_desc: "Select interface language for all menus, buttons, and dialogues",
+        settings_font_title: "Chat Font Size",
+        settings_font_desc: "Adjust message font size for comfortable reading",
+        font_opt_small: "Compact (Small - 13.5px)",
+        font_opt_medium: "Standard (Medium - 14.5px)",
+        font_opt_large: "Large (16px)",
+        font_opt_xlarge: "Extra Large (18px)",
+        settings_enter_title: "Enter Key Action",
+        settings_enter_desc: "Choose behavior when pressing Enter in chat box",
+        enter_opt_enter: "Press Enter to send (Shift+Enter for newline)",
+        enter_opt_shift: "Press Shift+Enter to send (Enter for newline)",
+        settings_sound_title: "Sound Effects",
+        settings_sound_desc: "Play gentle sounds when sending and receiving messages",
+        settings_autocanvas_title: "Auto-Open Live Canvas",
+        settings_autocanvas_desc: "Automatically expand preview when AI writes HTML/JS",
+        settings_section_profile: "Profile & Account",
+        settings_quota_label: "Today's Quota:",
+        settings_preferred_name_label: "Preferred Name for Kira to call you",
+        settings_preferred_name_hint: "Kira will use this name to address you warmly in conversations",
+        settings_section_password: "Change Password",
+        settings_btn_save_pass: "Save New Password",
+        settings_section_model: "Models & Persona Settings",
+        settings_default_model_title: "Default AI Model",
+        settings_default_model_desc: "Choose preferred default brain model",
+        settings_custom_instructions_title: "Custom Instructions",
+        settings_custom_instructions_desc: "Provide preferences or context Kira should always remember",
+        settings_voice_label: "AI Voice Selection",
         test_listen: "Preview Voice",
         speech_rate_title: "Speech Rate:",
-        speech_rate_desc: "Adjust AI reading speed according to preference",
-        stt_lang_title: "Voice Input Language (Speech-to-Text STT)",
+        speech_rate_desc: "Adjust AI reading speed to your preference",
+        stt_lang_title: "Voice Input Language (STT)",
         stt_lang_desc: "Primary language for microphone voice transcription",
-        toast_lang_switched: "Language switched to English successfully"
+        settings_btn_cancel: "Cancel",
+        settings_btn_save: "Save Changes",
+
+        // Auth Modal
+        auth_tab_login: "Sign In",
+        auth_tab_register: "Register",
+        auth_username_placeholder: "Username",
+        auth_password_placeholder: "Password",
+        auth_remember_me: "Remember me",
+        auth_btn_login: "Sign In (Login)",
+        auth_or_divider: "Or sign in with",
+        auth_no_account_prompt: "Don't have an account?",
+        auth_go_to_register: "Create an account here",
+        reg_username_placeholder: "Choose username (at least 3 characters)",
+        reg_nickname_placeholder: "Nickname for Kira to call you",
+        reg_purpose_label: "Primary Purpose:",
+        purpose_coding: "Coding",
+        purpose_business: "Business/Work",
+        purpose_education: "Education",
+        purpose_assistant: "General Assistant",
+        reg_password_placeholder: "Create password (at least 4 characters)",
+        reg_confirm_placeholder: "Confirm password again",
+        reg_terms_label: "I agree to Kira AI Terms & Conditions",
+        reg_btn_submit: "Create Account (Register)",
+        auth_has_account_prompt: "Already have an account?",
+        auth_go_to_login: "Sign in here",
+
+        // Share Modal
+        share_modal_title: "Share Conversation & Viral Card",
+        share_title_label: "Share Card Title:",
+        share_btn_copy: "Copy Link",
+        share_btn_download: "Download Image (1200x630)",
+
+        // Toasts
+        toast_lang_switched: "Interface language switched to English 🇺🇸"
     },
+
     zh: {
         code: "ZH",
         flag: "🇨🇳",
         name: "中文",
-        share: "分享",
-        tools: "工具箱",
-        live_voice: "实时语音",
-        new_chat: "新对话",
-        no_history: "暂无聊天记录",
+        // Header & Navigation
         mode_general: "常规",
         mode_executive: "高管",
         mode_silver: "关怀",
+        mode_general_title: "常规模式：通用高效的日常交互与问答",
+        mode_executive_title: "高管模式：战略分析、合同审阅、一键交付成果",
+        mode_silver_title: "长辈关怀：特大字体，全语音无障碍交互",
+        share: "分享",
+        share_title: "分享对话并生成社交卡片",
+        tools: "工具箱",
+        tools_title: "功能与工具中心",
+        live_voice: "实时语音",
+        live_voice_title: "开启实时双向语音对话 (Kira Live Voice)",
+        theme_title: "切换明暗主题",
+        settings_title: "系统设置",
+        upgrade_pro_title: "升级为 Kira Pro / Founder Pass",
+        pwa_install_btn: "安装应用",
+        engine_cloud: "Cloud Engine 2.1",
+        header_boardroom: "董事会",
+        header_task_matrix: "任务",
+
+        // Sidebar
+        new_chat: "新对话",
+        no_history: "暂无聊天记录",
+        sidebar_persona_label: "回复风格：",
+        persona_formal: "正式严谨",
+        persona_casual: "轻松随和",
+        persona_direct: "注重结果、直奔主题",
+        guide_title: "使用指南 (Kira Guide)",
+        logout_title: "退出登录",
+        toggle_sidebar_title: "打开/关闭侧边栏",
+
+        // Quick Prompts
+        prompt_contract: "合同与风险审查",
+        prompt_boardroom: "四维虚拟董事会",
+        prompt_email: "起草商务谈判邮件",
+        prompt_strategy: "30-90-365天战略规划",
+        prompt_mermaid: "设计 Mermaid 流程图",
+        prompt_polish: "润色高级公文",
+
+        // Study Quick Chips
+        chip_summarize: "3级精炼总结",
+        chip_exam_prep: "模拟考题与解析",
+        chip_flashcards: "复习记忆卡",
+        chip_problem_solver: "逐步分步解题",
+        chip_study_hub: "学习自习室 ✨",
+
+        // Input & Actions
+        input_placeholder: "输入消息与 Kira 交流... (Shift+Enter 换行，Ctrl+V 粘贴图片)",
+        silver_voice_label: "点击此处即可与 Kira 语音对话（无需键盘打字）",
+        attach_image: "图片",
+        attach_doc: "文档",
+        mic_title: "语音输入",
+        attach_title: "附加文件或图片",
+        send_title: "发送消息",
+        footer_disclaimer: "Kira 可能会提供不准确的信息，请在采纳前进行核实。",
+        drag_title: "在此放置图片 (视觉审查)",
+        drag_desc: "松开发送 UI、截图或报错日志进行即时分析",
+
+        // Tools Dropdown
+        tools_header: "功能与工具中心",
+        tools_cat_study: "学术与考试自习室",
+        tools_study_hub_title: "Study Co-Pilot 自习室",
+        tools_study_hub_desc: "3级讲义总结、考题预测、记忆卡、分步解题",
+        tools_cat_work: "工作与战略",
+        tools_vault_title: "Executive Offline Vault",
+        tools_vault_desc: "离线保险库与双向 PWA 同步",
+        tools_mcp_title: "MCP 集成中枢",
+        tools_mcp_desc: "生态系统桥梁与 MCP 工具工坊",
+        tools_boardroom_title: "虚拟顾问董事会",
+        tools_boardroom_desc: "与 4 位核心高管深度头脑风暴 (CEO, CFO, CPO, CTO)",
+        tools_roundtable_title: "实时圆桌辩论室",
+        tools_roundtable_desc: "4位高管实时辩论模拟，支持法槌介入",
+        tools_task_matrix_title: "任务看板与工作草稿",
+        tools_task_matrix_desc: "管理任务矩阵并自动起草成果",
+        tools_slide_title: "演示文稿幻灯片 (16:9)",
+        tools_slide_desc: "一键生成高管 Keynote 演示文稿",
+        tools_viral_share_title: "社交分享与爆款卡片",
+        tools_viral_share_desc: "创建分享链接并下载社交摘要卡片",
+        tools_canvas_title: "Interactive Canvas",
+        tools_canvas_desc: "并行分屏工作空间、Web 应用预览与实时代码",
+        tools_export_title: "导出对话 / PDF",
+        tools_export_desc: "保存为 PDF 或打印报告",
+        tools_cat_brain: "认知与记忆",
+        tools_graph_title: "知识图谱",
+        tools_graph_desc: "探索个人联想记忆网络",
+        tools_autospeak_title: "自动语音朗读",
+        tools_cat_system: "系统与支持",
+        tools_pwa_title: "安装 Kira Web 应用 (PWA)",
+        tools_pwa_desc: "安装至手机或桌面设备",
+        tools_guide_title: "用户使用手册",
+        tools_guide_desc: "系统导览与核心功能介绍",
+        tools_info_title: "关于 Kira AI",
+        tools_info_desc: "架构设计与云端引擎说明",
+
+        // Canvas & Drawer
         tab_preview: "预览",
         tab_code: "代码",
         tab_console: "控制台",
-        copy_code: "复制源码",
+        canvas_split_title: "50/50 分屏工作区",
+        canvas_max_title: "最大化画布",
+        canvas_desktop_title: "桌面视图",
+        canvas_mobile_title: "移动端视图",
+        canvas_inspect: "审查画布",
+        copy_code: "复制代码",
         apply_code: "运行并更新",
         clear_logs: "清除日志",
-        input_placeholder: "输入消息与 Kira 交流... (Shift+Enter 换行，Ctrl+V 粘贴图片)",
-        settings_voice_label: "AI 语音模型 (Natural Voice Engine)",
+        canvas_prompt_placeholder: "让 Kira 修改此代码... (例如将按钮改为蓝色、添加动画)",
+        canvas_btn_send: "更新",
+
+        // Settings Modal
+        settings_header_title: "系统设置",
+        settings_header_subtitle: "个性化定制您的 Kira AI 2.1 体验",
+        settings_tab_general: "常规与外观",
+        settings_tab_account: "账户与安全",
+        settings_tab_ai: "模型与自定义指令",
+        settings_tab_voice: "语音与朗读",
+        settings_tab_data: "数据与记忆网络",
+        settings_tab_pro: "Pro 工具与实验室",
+        settings_section_appearance: "主题与外观设计",
+        settings_user_mode_label: "使用体验模式",
+        mode_general_name: "常规 (General)",
+        mode_general_desc: "平衡敏捷，适合日常工作与通用问答",
+        mode_exec_name: "高管 (Executive)",
+        mode_exec_desc: "侧重战略分析、合同审查、一键交付成果",
+        mode_silver_name: "长辈关怀 (Silver Care)",
+        mode_silver_desc: "特大字体、全语音互动、健康关怀与行政文书简化",
+        settings_theme_label: "系统主题色",
+        theme_dark_name: "暗夜星云 (默认)",
+        theme_light_name: "耀白恒星 (明亮)",
+        theme_oled_name: "OLED 纯黑",
+        settings_lang_title: "系统界面语言",
+        settings_lang_desc: "选择界面、菜单及对话交互的主语言",
+        settings_font_title: "聊天文字大小",
+        settings_font_desc: "调节对话文字大小以获得更舒适的阅读体验",
+        font_opt_small: "紧凑 (小 - 13.5px)",
+        font_opt_medium: "标准 (中 - 14.5px)",
+        font_opt_large: "放大 (大 - 16px)",
+        font_opt_xlarge: "特大 (18px)",
+        settings_enter_title: "Enter 键发送行为",
+        settings_enter_desc: "选择在聊天框中按 Enter 时的行为",
+        enter_opt_enter: "按 Enter 发送 (Shift+Enter 换行)",
+        enter_opt_shift: "按 Shift+Enter 发送 (Enter 换行)",
+        settings_sound_title: "音效设置",
+        settings_sound_desc: "发送和接收新消息时播放提示音",
+        settings_autocanvas_title: "检测到代码时自动打开 Canvas",
+        settings_autocanvas_desc: "当 AI 输出 HTML/JS 代码时自动展开预览窗",
+        settings_section_profile: "个人资料与配额",
+        settings_quota_label: "今日使用额度：",
+        settings_preferred_name_label: "希望 Kira 称呼您的名字",
+        settings_preferred_name_hint: "Kira 会在日常对话与问候中使用此名字",
+        settings_section_password: "修改密码",
+        settings_btn_save_pass: "保存新密码",
+        settings_section_model: "模型与人设偏好",
+        settings_default_model_title: "默认启动模型",
+        settings_default_model_desc: "选择每次启动时默认调用的 AI 引擎",
+        settings_custom_instructions_title: "个性化系统指令",
+        settings_custom_instructions_desc: "指定希望 Kira 始终牢记的偏好或背景信息",
+        settings_voice_label: "AI 语音选择",
         test_listen: "试听声音",
-        speech_rate_title: "语速调节 (Speech Rate):",
+        speech_rate_title: "语速调节：",
         speech_rate_desc: "根据个人偏好调节语音朗读语速",
-        stt_lang_title: "语音识别语言 (Voice Input STT)",
-        stt_lang_desc: "麦克风语音输入的识别语言",
-        toast_lang_switched: "语言已切换为 中文"
+        stt_lang_title: "语音输入识别语言 (STT)",
+        stt_lang_desc: "通过麦克风输入时识别的语言",
+        settings_btn_cancel: "取消",
+        settings_btn_save: "保存设置",
+
+        // Auth Modal
+        auth_tab_login: "登录",
+        auth_tab_register: "注册新账号",
+        auth_username_placeholder: "用户名",
+        auth_password_placeholder: "密码",
+        auth_remember_me: "记住登录状态",
+        auth_btn_login: "立即登录",
+        auth_or_divider: "或通过以下方式登录",
+        auth_no_account_prompt: "还没有账号？",
+        auth_go_to_register: "在此注册新账号",
+        reg_username_placeholder: "输入用户名 (至少3个字符)",
+        reg_nickname_placeholder: "希望 Kira 称呼您的昵称",
+        reg_purpose_label: "主要使用目的：",
+        purpose_coding: "编程开发",
+        purpose_business: "商务与工作",
+        purpose_education: "学业与考试",
+        purpose_assistant: "全能助手",
+        reg_password_placeholder: "设置密码 (至少4位字符)",
+        reg_confirm_placeholder: "再次确认密码",
+        reg_terms_label: "我同意 Kira AI 服务条款与条件",
+        reg_btn_submit: "确认注册新账号",
+        auth_has_account_prompt: "已有账号？",
+        auth_go_to_login: "点击此处登录",
+
+        // Share Modal
+        share_modal_title: "分享对话与生成社交卡片",
+        share_title_label: "分享卡片主题：",
+        share_btn_copy: "复制链接",
+        share_btn_download: "下载高清卡片 (1200x630)",
+
+        // Toasts
+        toast_lang_switched: "系统语言已成功切换为 中文 🇨🇳"
     },
+
     ko: {
         code: "KO",
         flag: "🇰🇷",
         name: "한국어",
-        share: "공유",
-        tools: "도구함",
-        live_voice: "실시간 대화",
-        new_chat: "새 채팅",
-        no_history: "채팅 기록이 없습니다",
+        // Header & Navigation
         mode_general: "일반",
         mode_executive: "임원진",
         mode_silver: "시니어",
+        mode_general_title: "일반 모드: 균형 잡힌 다목적 일상 모드",
+        mode_executive_title: "임원 모드: 전략 분석, 계약 검토, 원클릭 보고",
+        mode_silver_title: "시니어 케어: 초대형 글씨, 100% 음성 대화 지원",
+        share: "공유",
+        share_title: "대화 공유 및 소셜 카드 생성",
+        tools: "도구함",
+        tools_title: "기능 및 도구 모음",
+        live_voice: "실시간 대화",
+        live_voice_title: "실시간 양방향 음성 대화 시작 (Kira Live Voice)",
+        theme_title: "다크/라이트 테마 전환",
+        settings_title: "시스템 설정",
+        upgrade_pro_title: "Kira Pro / Founder Pass 업그레이드",
+        pwa_install_btn: "앱 설치",
+        engine_cloud: "Cloud Engine 2.1",
+        header_boardroom: "이사회",
+        header_task_matrix: "업무",
+
+        // Sidebar
+        new_chat: "새 채팅",
+        no_history: "채팅 기록이 없습니다",
+        sidebar_persona_label: "응답 스타일:",
+        persona_formal: "공식적이고 정중함",
+        persona_casual: "친근하고 편안함",
+        persona_direct: "결과 중심적, 명확함",
+        guide_title: "사용자 가이드 (Kira Guide)",
+        logout_title: "로그아웃",
+        toggle_sidebar_title: "사이드바 열기/닫기",
+
+        // Quick Prompts
+        prompt_contract: "계약서 및 위험 분석",
+        prompt_boardroom: "4D 가상 이사회",
+        prompt_email: "비즈니스 협상 이메일 초안",
+        prompt_strategy: "30-90-365일 실행 전략",
+        prompt_mermaid: "Mermaid 다이어그램 설계",
+        prompt_polish: "비즈니스 문서 고급 교정",
+
+        // Study Quick Chips
+        chip_summarize: "3단계 슬라이드 요약",
+        chip_exam_prep: "예상문제 & 정답해설",
+        chip_flashcards: "복습 플래시카드",
+        chip_problem_solver: "단계별 문제 풀이",
+        chip_study_hub: "스터디 룸 ✨",
+
+        // Input & Actions
+        input_placeholder: "Kira에게 메시지를 입력하세요... (줄바꿈 Shift+Enter, 붙여넣기 Ctrl+V)",
+        silver_voice_label: "여기를 터치하여 Kira와 대화하세요 (키보드 불필요)",
+        attach_image: "이미지",
+        attach_doc: "문서",
+        mic_title: "음성 입력",
+        attach_title: "파일 또는 이미지 첨부",
+        send_title: "메시지 전송",
+        footer_disclaimer: "Kira는 부정확한 정보를 제공할 수 있으니 중요한 내용은 확인해 주세요.",
+        drag_title: "여기에 이미지를 드롭하세요 (Vision 검사기)",
+        drag_desc: "UI, 화면 캡처 또는 에러 로그를 분석합니다",
+
+        // Tools Dropdown
+        tools_header: "기능 및 도구 허브",
+        tools_cat_study: "학습 및 시험 대비",
+        tools_study_hub_title: "Study Co-Pilot 스터디룸",
+        tools_study_hub_desc: "3단계 슬라이드 요약, 시험 대비, 플래시카드, 풀이",
+        tools_cat_work: "비즈니스 & 전략",
+        tools_vault_title: "Executive Offline Vault",
+        tools_vault_desc: "오프라인 보관함 및 PWA 양방향 동기화",
+        tools_mcp_title: "MCP 연동 허브",
+        tools_mcp_desc: "생태계 연결 및 MCP 도구 스튜디오",
+        tools_boardroom_title: "가상 자문 이사회",
+        tools_boardroom_desc: "4인의 C-Level 임원진과 심층 브레인스토밍 (CEO, CFO, CPO, CTO)",
+        tools_roundtable_title: "실시간 원탁 토론장",
+        tools_roundtable_desc: "4인 임원 토론 시뮬레이션 및 발언권 개입",
+        tools_task_matrix_title: "작업 매트릭스 & 산출물",
+        tools_task_matrix_desc: "태스크 매트릭스 및 자동 초안 관리",
+        tools_slide_title: "프레젠테이션 슬라이드 (16:9)",
+        tools_slide_desc: "원클릭 임원 프레젠테이션 덱 생성",
+        tools_viral_share_title: "소셜 공유 & 바이럴 카드",
+        tools_viral_share_desc: "공유 링크 생성 및 요약 카드 다운로드",
+        tools_canvas_title: "Interactive Canvas",
+        tools_canvas_desc: "스플릿 작업 공간, 웹앱 미리보기 및 실시간 코드",
+        tools_export_title: "대화 내보내기 / PDF",
+        tools_export_desc: "PDF로 저장하거나 보고서 인쇄",
+        tools_cat_brain: "두뇌 & 메모리",
+        tools_graph_title: "지식 그래프",
+        tools_graph_desc: "개인 맞춤형 지식 그래프 확인",
+        tools_autospeak_title: "자동 음성 읽기",
+        tools_cat_system: "시스템 & 지원",
+        tools_pwa_title: "Kira 웹 앱 설치 (PWA)",
+        tools_pwa_desc: "모바일 또는 데스크톱에 설치",
+        tools_guide_title: "사용자 가이드",
+        tools_guide_desc: "시스템 둘러보기 및 핵심 기능 소개",
+        tools_info_title: "Kira AI 소개",
+        tools_info_desc: "아키텍처 및 클라우드 모델 안내",
+
+        // Canvas & Drawer
         tab_preview: "미리보기",
         tab_code: "코드",
         tab_console: "콘솔",
+        canvas_split_title: "50/50 분할 작업 공간",
+        canvas_max_title: "캔버스 최대화",
+        canvas_desktop_title: "데스크톱 뷰",
+        canvas_mobile_title: "모바일 뷰",
+        canvas_inspect: "캔버스 검사",
         copy_code: "코드 복사",
         apply_code: "실행 및 반영",
         clear_logs: "로그 삭제",
-        input_placeholder: "Kira에게 메시지를 입력하세요... (줄바꿈 Shift+Enter, 붙여넣기 Ctrl+V)",
-        settings_voice_label: "AI 음성 엔진 (Natural Voice Engine)",
+        canvas_prompt_placeholder: "Kira에게 코드 수정을 요청하세요... (예: 버튼을 파란색으로 변경, 애니메이션 추가)",
+        canvas_btn_send: "수정",
+
+        // Settings Modal
+        settings_header_title: "시스템 설정",
+        settings_header_subtitle: "맞춤형 Kira AI 2.1 환경 설정",
+        settings_tab_general: "일반 및 디스플레이",
+        settings_tab_account: "계정 및 보안",
+        settings_tab_ai: "모델 및 맞춤 설정",
+        settings_tab_voice: "음성 및 나레이션",
+        settings_tab_data: "데이터 및 메모리",
+        settings_tab_pro: "Pro 도구 및 실험실",
+        settings_section_appearance: "테마 및 화면 표시",
+        settings_user_mode_label: "사용자 경험 모드",
+        mode_general_name: "일반 (General)",
+        mode_general_desc: "균형 잡힌 민첩성, 일상 업무 및 질문 답변에 최적화",
+        mode_exec_name: "임원 (Executive)",
+        mode_exec_desc: "전략적 분석, 계약서 검토, 원클릭 결과물 도출",
+        mode_silver_name: "시니어 케어 (Silver Care)",
+        mode_silver_desc: "초대형 글씨, 100% 음성 대화, 건강 관리 및 쉬운 설명",
+        settings_theme_label: "시스템 테마",
+        theme_dark_name: "다크 네뷸라 (기본)",
+        theme_light_name: "라이트 스텔라",
+        theme_oled_name: "OLED 퓨어 블랙",
+        settings_lang_title: "시스템 표시 언어",
+        settings_lang_desc: "메뉴, 버튼, 대화 등 전체 인터페이스 언어를 선택합니다",
+        settings_font_title: "채팅 글자 크기",
+        settings_font_desc: "편안한 가독성을 위해 대화 글꼴 크기를 조절합니다",
+        font_opt_small: "작게 (Small - 13.5px)",
+        font_opt_medium: "표준 (Medium - 14.5px)",
+        font_opt_large: "크게 (Large - 16px)",
+        font_opt_xlarge: "초대형 (18px)",
+        settings_enter_title: "Enter 키 동작 설정",
+        settings_enter_desc: "채팅창에서 Enter를 눌렀을 때의 동작을 선택하세요",
+        enter_opt_enter: "Enter로 전송 (Shift+Enter 줄바꿈)",
+        enter_opt_shift: "Shift+Enter로 전송 (Enter 줄바꿈)",
+        settings_sound_title: "효과음",
+        settings_sound_desc: "메시지 전송 및 수신 시 알림음을 재생합니다",
+        settings_autocanvas_title: "코드 감지 시 Live Canvas 자동 실행",
+        settings_autocanvas_desc: "AI가 HTML/JS 코드를 작성하면 즉시 미리보기를 펼칩니다",
+        settings_section_profile: "프로필 및 사용량",
+        settings_quota_label: "오늘의 사용량:",
+        settings_preferred_name_label: "Kira가 불러줄 호칭",
+        settings_preferred_name_hint: "Kira가 친근하게 부를 호칭으로 사용됩니다",
+        settings_section_password: "비밀번호 변경",
+        settings_btn_save_pass: "새 비밀번호 저장",
+        settings_section_model: "모델 및 페르소나 설정",
+        settings_default_model_title: "기본 AI 모델",
+        settings_default_model_desc: "시스템 시작 시 기본으로 사용할 모델을 선택하세요",
+        settings_custom_instructions_title: "사용자 맞춤형 지침",
+        settings_custom_instructions_desc: "Kira가 항상 기억해야 할 요구사항이나 배경지식을 입력하세요",
+        settings_voice_label: "AI 음성 엔진 선택",
         test_listen: "미리 듣기",
-        speech_rate_title: "음성 속도 (Speech Rate):",
-        speech_rate_desc: "취향에 맞게 음성 읽기 속도를 조절하세요",
-        stt_lang_title: "음성 인식 언어 (Voice Input STT)",
-        stt_lang_desc: "마이크 입력을 처리할 기본 언어 설정",
-        toast_lang_switched: "언어가 한국어로 변경되었습니다"
+        speech_rate_title: "음성 속도:",
+        speech_rate_desc: "기호에 맞게 음성 읽기 속도를 조절하세요",
+        stt_lang_title: "음성 인식 언어 (STT)",
+        stt_lang_desc: "마이크 음성 입력 시 인식할 기본 언어",
+        settings_btn_cancel: "취소",
+        settings_btn_save: "설정 저장",
+
+        // Auth Modal
+        auth_tab_login: "로그인",
+        auth_tab_register: "회원가입",
+        auth_username_placeholder: "사용자 아이디",
+        auth_password_placeholder: "비밀번호",
+        auth_remember_me: "로그인 상태 유지",
+        auth_btn_login: "로그인 (Login)",
+        auth_or_divider: "또는 다음으로 로그인",
+        auth_no_account_prompt: "계정이 없으신가요?",
+        auth_go_to_register: "여기를 눌러 가입하세요",
+        reg_username_placeholder: "아이디 생성 (3자 이상)",
+        reg_nickname_placeholder: "Kira가 불러줄 닉네임",
+        reg_purpose_label: "주요 사용 목적:",
+        purpose_coding: "코딩 및 개발",
+        purpose_business: "비즈니스/업무",
+        purpose_education: "학습 및 교육",
+        purpose_assistant: "일반 비서",
+        reg_password_placeholder: "비밀번호 설정 (4자 이상)",
+        reg_confirm_placeholder: "비밀번호 재확인",
+        reg_terms_label: "Kira AI 서비스 이용약관에 동의합니다",
+        reg_btn_submit: "회원가입 완료 (Register)",
+        auth_has_account_prompt: "이미 계정이 있으신가요?",
+        auth_go_to_login: "여기서 로그인하세요",
+
+        // Share Modal
+        share_modal_title: "대화 공유 및 바이럴 카드 생성",
+        share_title_label: "공유 카드 제목:",
+        share_btn_copy: "링크 복사",
+        share_btn_download: "카드 이미지 다운로드 (1200x630)",
+
+        // Toasts
+        toast_lang_switched: "시스템 언어가 한국어로 변경되었습니다 🇰🇷"
     },
+
     ja: {
         code: "JA",
         flag: "🇯🇵",
         name: "日本語",
-        share: "共有",
-        tools: "ツール",
-        live_voice: "音声対話",
-        new_chat: "新しいチャット",
-        no_history: "履歴はありません",
+        // Header & Navigation
         mode_general: "一般",
         mode_executive: "エグゼクティブ",
         mode_silver: "シニア",
+        mode_general_title: "一般モード：日常タスク向けの標準モード",
+        mode_executive_title: "エグゼクティブモード：戦略分析・契約書精査・ワンクリック納品",
+        mode_silver_title: "シニアケア：特大フォント・完全音声対話サポート",
+        share: "共有",
+        share_title: "チャットを共有＆ソーシャルカード生成",
+        tools: "ツール",
+        tools_title: "機能＆ツールコレクション",
+        live_voice: "音声対話",
+        live_voice_title: "リアルタイム双方向音声対話を開始 (Kira Live Voice)",
+        theme_title: "明暗テーマ切り替え",
+        settings_title: "システム設定",
+        upgrade_pro_title: "Kira Pro / Founder Pass にアップグレード",
+        pwa_install_btn: "アプリをインストール",
+        engine_cloud: "Cloud Engine 2.1",
+        header_boardroom: "役員会",
+        header_task_matrix: "タスク",
+
+        // Sidebar
+        new_chat: "新しいチャット",
+        no_history: "履歴はありません",
+        sidebar_persona_label: "応答スタイル：",
+        persona_formal: "丁寧・ビジネス",
+        persona_casual: "フレンドリー",
+        persona_direct: "結論重視・簡潔",
+        guide_title: "ユーザーガイド (Kira Guide)",
+        logout_title: "ログアウト",
+        toggle_sidebar_title: "サイドバーの開閉",
+
+        // Quick Prompts
+        prompt_contract: "契約書＆リスク分析",
+        prompt_boardroom: "4次元バーチャル役員会",
+        prompt_email: "ビジネス交渉メール作成",
+        prompt_strategy: "30-90-365日戦略プラン",
+        prompt_mermaid: "Mermaid図表デザイン",
+        prompt_polish: "公式文書推敲・リライト",
+
+        // Study Quick Chips
+        chip_summarize: "3段階スライド要約",
+        chip_exam_prep: "予想問題＆詳細解説",
+        chip_flashcards: "復習フラッシュカード",
+        chip_problem_solver: "段階別ステップ解説",
+        chip_study_hub: "スタディハブ ✨",
+
+        // Input & Actions
+        input_placeholder: "Kiraにメッセージを入力... (Shift+Enterで改行、Ctrl+Vで画像貼付)",
+        silver_voice_label: "ここをタップしてKiraと音声で会話（入力不要）",
+        attach_image: "画像",
+        attach_doc: "文書",
+        mic_title: "音声入力",
+        attach_title: "ファイル・画像添付",
+        send_title: "送信",
+        footer_disclaimer: "Kiraは不正確な情報を生成する可能性があります。重要な情報はご確認ください。",
+        drag_title: "ここに画像をドロップ (Vision Inspector)",
+        drag_desc: "ドロップしてUI、画面、エラーログをAIで即座に解析",
+
+        // Tools Dropdown
+        tools_header: "機能＆ツールハブ",
+        tools_cat_study: "学習＆試験対策 (Study Co-Pilot)",
+        tools_study_hub_title: "Study Co-Pilot (スタディハブ)",
+        tools_study_hub_desc: "3段階スライド要約、予想問題、暗記カード、課題解説",
+        tools_cat_work: "ビジネス＆戦略",
+        tools_vault_title: "Executive Offline Vault",
+        tools_vault_desc: "オフライン金庫＆PWA双方向同期",
+        tools_mcp_title: "MCP Integration Hub",
+        tools_mcp_desc: "エコシステム連携＆MCPツールスタジオ",
+        tools_boardroom_title: "バーチャル役員会",
+        tools_boardroom_desc: "4名の役員（CEO/CFO/CPO/CTO）とブレインストーミング",
+        tools_roundtable_title: "リアルタイム円卓討論アリーナ",
+        tools_roundtable_desc: "4名役員の生討論シミュレーション＆介入",
+        tools_task_matrix_title: "タスクマトリクス＆成果物",
+        tools_task_matrix_desc: "タスク管理＆自動ドラフト生成",
+        tools_slide_title: "プレゼンテーションスライド (16:9)",
+        tools_slide_desc: "ワンクリックで役員向けプレゼン資料を生成",
+        tools_viral_share_title: "SNS共有＆バイラルカード",
+        tools_viral_share_desc: "共有リンク生成＆SNS用要約カードを保存",
+        tools_canvas_title: "Interactive Canvas",
+        tools_canvas_desc: "分割ワークスペース、Webアプリプレビュー＆生コード",
+        tools_export_title: "チャット出力 / PDF",
+        tools_export_desc: "PDFとして保存またはレポート印刷",
+        tools_cat_brain: "AIブレイン＆記憶",
+        tools_graph_title: "ナレッジグラフ",
+        tools_graph_desc: "パーソナル記憶ネットワークの可視化",
+        tools_autospeak_title: "自動音声読み上げ",
+        tools_cat_system: "システム＆サポート",
+        tools_pwa_title: "Kira Webアプリをインストール (PWA)",
+        tools_pwa_desc: "モバイルまたはデスクトップにインストール",
+        tools_guide_title: "ユーザーガイド",
+        tools_guide_desc: "システムツアー＆主要機能ガイド",
+        tools_info_title: "Kira AI について",
+        tools_info_desc: "システムアーキテクチャ＆クラウドエンジン",
+
+        // Canvas & Drawer
         tab_preview: "プレビュー",
         tab_code: "コード",
         tab_console: "コンソール",
+        canvas_split_title: "50/50 分割ワークスペース",
+        canvas_max_title: "キャンバス最大化",
+        canvas_desktop_title: "デスクトップ表示",
+        canvas_mobile_title: "モバイル表示",
+        canvas_inspect: "キャンバス検証",
         copy_code: "コードをコピー",
         apply_code: "実行・プレビュー更新",
         clear_logs: "ログをクリア",
-        input_placeholder: "Kiraにメッセージを入力... (Shift+Enterで改行、Ctrl+Vで画像貼付)",
-        settings_voice_label: "AI音声エンジン (Natural Voice Engine)",
+        canvas_prompt_placeholder: "Kiraにコード修正を依頼... (例：ボタンを青色にする、アニメーションを追加)",
+        canvas_btn_send: "更新",
+
+        // Settings Modal
+        settings_header_title: "システム設定",
+        settings_header_subtitle: "Kira AI 2.1 をお好みに合わせてカスタマイズ",
+        settings_tab_general: "一般＆外観",
+        settings_tab_account: "アカウント＆セキュリティ",
+        settings_tab_ai: "モデル＆カスタム指示",
+        settings_tab_voice: "音声＆読み上げ",
+        settings_tab_data: "データ＆記憶ネットワーク",
+        settings_tab_pro: "Proツール＆Labs",
+        settings_section_appearance: "外観＆テーマ設定",
+        settings_user_mode_label: "ユーザー体験モード",
+        mode_general_name: "一般 (General)",
+        mode_general_desc: "バランス良く軽快、日常の作業や質疑応答に最適",
+        mode_exec_name: "エグゼクティブ (Executive)",
+        mode_exec_desc: "戦略分析・契約書精査・ワンクリック成果物出力",
+        mode_silver_name: "シニアケア (Silver Care)",
+        mode_silver_desc: "特大フォント・完全音声対話・健康サポート＆わかりやすい解説",
+        settings_theme_label: "システムテーマ",
+        theme_dark_name: "ダークネビュラ (標準)",
+        theme_light_name: "ライトステラ (明色)",
+        theme_oled_name: "OLED ピュアブラック",
+        settings_lang_title: "システム表示言語",
+        settings_lang_desc: "メニュー、ボタン、対話を含む全体言語を選択",
+        settings_font_title: "チャットの文字サイズ",
+        settings_font_desc: "快適な読書感のためにフォントサイズを調節します",
+        font_opt_small: "コンパクト (小 - 13.5px)",
+        font_opt_medium: "標準 (中 - 14.5px)",
+        font_opt_large: "大きめ (大 - 16px)",
+        font_opt_xlarge: "特大 (18px)",
+        settings_enter_title: "Enterキー送信設定",
+        settings_enter_desc: "チャット欄でEnterを押したときの動作を選択",
+        enter_opt_enter: "Enterで送信 (Shift+Enterで改行)",
+        enter_opt_shift: "Shift+Enterで送信 (Enterで改行)",
+        settings_sound_title: "効果音設定",
+        settings_sound_desc: "送受信時に心地よい効果音を再生します",
+        settings_autocanvas_title: "コード検出時のLive Canvas自動起動",
+        settings_autocanvas_desc: "AIがHTML/JSを出力した際に即座にプレビューを展開",
+        settings_section_profile: "プロフィール＆アカウント情報",
+        settings_quota_label: "本日の利用枠：",
+        settings_preferred_name_label: "Kiraに呼ばせたいお名前・呼称",
+        settings_preferred_name_hint: "Kiraが会話や挨拶で親しみを込めてお呼びします",
+        settings_section_password: "パスワード変更",
+        settings_btn_save_pass: "新しいパスワードを保存",
+        settings_section_model: "モデル＆ペルソナ設定",
+        settings_default_model_title: "デフォルトAIモデル",
+        settings_default_model_desc: "起動時に標準で使用するAIエンジンを選択",
+        settings_custom_instructions_title: "カスタム指示 (Custom Instructions)",
+        settings_custom_instructions_desc: "Kiraに常に記憶させておきたい好みや前提条件を指定",
+        settings_voice_label: "AI音声エンジンの選択",
         test_listen: "音声を試聴",
-        speech_rate_title: "音声読み上げ速度 (Speech Rate):",
-        speech_rate_desc: "お好みに合わせて読み上げ速度を調節します",
-        stt_lang_title: "音声入力言語 (Voice Input STT)",
+        speech_rate_title: "読み上げ速度：",
+        speech_rate_desc: "お好みに合わせて音声読み上げ速度を調節",
+        stt_lang_title: "音声入力認識言語 (STT)",
         stt_lang_desc: "マイク入力で使用する主言語",
-        toast_lang_switched: "言語を 日本語 に切り替えました"
+        settings_btn_cancel: "キャンセル",
+        settings_btn_save: "設定を保存",
+
+        // Auth Modal
+        auth_tab_login: "ログイン",
+        auth_tab_register: "新規登録",
+        auth_username_placeholder: "ユーザー名 (Username)",
+        auth_password_placeholder: "パスワード (Password)",
+        auth_remember_me: "ログイン状態を保持",
+        auth_btn_login: "ログイン (Login)",
+        auth_or_divider: "または以下でログイン",
+        auth_no_account_prompt: "アカウントをお持ちでない方：",
+        auth_go_to_register: "こちらから新規登録",
+        reg_username_placeholder: "ユーザー名を作成 (3文字以上)",
+        reg_nickname_placeholder: "Kiraに呼ばせたいニックネーム",
+        reg_purpose_label: "主な利用目的：",
+        purpose_coding: "プログラミング",
+        purpose_business: "ビジネス・業務",
+        purpose_education: "学習・学術",
+        purpose_assistant: "汎用アシスタント",
+        reg_password_placeholder: "パスワードを設定 (4文字以上)",
+        reg_confirm_placeholder: "パスワードを再入力",
+        reg_terms_label: "Kira AI の利用規約に同意する",
+        reg_btn_submit: "登録を完了する (Register)",
+        auth_has_account_prompt: "すでにアカウントをお持ちの方：",
+        auth_go_to_login: "こちらからログイン",
+
+        // Share Modal
+        share_modal_title: "対話の共有＆ソーシャルカード作成",
+        share_title_label: "共有カードのタイトル：",
+        share_btn_copy: "リンクをコピー",
+        share_btn_download: "カード画像を保存 (1200x630)",
+
+        // Toasts
+        toast_lang_switched: "言語を 日本語 に切り替えました 🇯🇵"
     }
 };
+
+const KIRA_QUICK_PROMPT_CONFIG = {
+    th: [
+        { text: "ตรวจสัญญา & ความเสี่ยง", icon: "fa-file-shield", color: "#38bdf8", prompt: "ช่วยวิเคราะห์และตรวจสอบสัญญาหรือข้อตกลงนี้อย่างละเอียด ระบุจุดเสี่ยง ช่องโหว่ทางกฎหมายและการเงิน พร้อมข้อเสนอแนะในการแก้ไข: " },
+        { text: "สภาบอร์ดรูม 4 มิติ", icon: "fa-users-viewfinder", color: "#c084fc", prompt: "ช่วยเปิดการประชุม Virtual Boardroom วิเคราะห์ทิศทางกลยุทธ์ทางธุรกิจในประเด็นนี้อย่างรอบด้าน 4 มิติ (CEO, CFO, CPO, CTO): " },
+        { text: "ร่างอีเมลเจรจาธุรกิจ", icon: "fa-handshake-angle", color: "#fbbf24", prompt: "ช่วยร่างอีเมลเจรจาต่อรองธุรกิจระดับผู้บริหารอย่างเป็นมืออาชีพ มีวาทศิลป์ นอบน้อมแต่เด็ดขาดและรักษาผลประโยชน์สูงสุด ในกรณี: " },
+        { text: "แผนกลยุทธ์ 30-90-365 วัน", icon: "fa-compass", color: "#34d399", prompt: "ช่วยจัดทำแผนกลยุทธ์ปฏิบัติการเชิงลึกแบบ 30-90-365 วัน พร้อมกำหนด KPI, ความเสี่ยง และจุดตรวจวัดความสำเร็จ สำหรับ: " },
+        { text: "ออกแบบผัง Mermaid", icon: "fa-diagram-project", color: "#60a5fa", prompt: "ช่วยออกแบบสถาปัตยกรรมระบบหรือลำดับขั้นตอนการทำงานเป็น Mermaid Flowchart และ Diagram ที่เข้าใจง่าย สำหรับ: " },
+        { text: "เกลาเอกสารระดับทางการ", icon: "fa-wand-magic-sparkles", color: "#f43f5e", prompt: "ช่วยขัดเกลาและยกระดับภาษาของเอกสารนี้ให้กระชับ คมคาย ทรงพลัง และน่าเชื่อถือสูงสุดสำหรับนำเสนอผู้บริหารระดับสูง: " }
+    ],
+    en: [
+        { text: "Contract & Risk Analysis", icon: "fa-file-shield", color: "#38bdf8", prompt: "Please thoroughly analyze this agreement or contract, identify key risks, legal & financial vulnerabilities, and actionable remediation steps: " },
+        { text: "4D Virtual Boardroom", icon: "fa-users-viewfinder", color: "#c084fc", prompt: "Convene the Virtual Boardroom to analyze strategic business directions across 4 executive perspectives (CEO, CFO, CPO, CTO) for: " },
+        { text: "Negotiation Email Draft", icon: "fa-handshake-angle", color: "#fbbf24", prompt: "Draft a high-stakes executive negotiation email that is eloquent, diplomatic, yet resolute in protecting our core interests for: " },
+        { text: "30-90-365 Day Strategy", icon: "fa-compass", color: "#34d399", prompt: "Develop an actionable 30-90-365 day strategic execution roadmap with KPIs, risk checkpoints, and success milestones for: " },
+        { text: "Mermaid Flowchart Design", icon: "fa-diagram-project", color: "#60a5fa", prompt: "Design a clean, expressive Mermaid architecture diagram and process flowchart for: " },
+        { text: "Executive Document Polish", icon: "fa-wand-magic-sparkles", color: "#f43f5e", prompt: "Polish and elevate this document into concise, persuasive, and authoritative language suitable for executive presentation: " }
+    ],
+    zh: [
+        { text: "合同与风险审查", icon: "fa-file-shield", color: "#38bdf8", prompt: "请深入分析并审查此份合同或协议，指明潜在法律与财务漏洞，并提供修改建议： " },
+        { text: "四维虚拟董事会", icon: "fa-users-viewfinder", color: "#c084fc", prompt: "召集虚拟高管董事会，从 CEO、CFO、CPO、CTO 四个维度全面分析以下业务战略： " },
+        { text: "起草商务谈判邮件", icon: "fa-handshake-angle", color: "#fbbf24", prompt: "起草一封专业的高管级商务谈判邮件，要求辞令得体、立场坚定且维护核心利益： " },
+        { text: "30-90-365天战略规划", icon: "fa-compass", color: "#34d399", prompt: "为以下事项制定切实可行的 30-90-365 天行动路线图，包含 KPI、风险预案与里程碑： " },
+        { text: "设计 Mermaid 流程图", icon: "fa-diagram-project", color: "#60a5fa", prompt: "为以下业务或系统逻辑设计直观美观的 Mermaid 架构图和流程图： " },
+        { text: "润色高级公文", icon: "fa-wand-magic-sparkles", color: "#f43f5e", prompt: "对以下文本进行精细润色，使其语言精炼有力、权威严谨，适合呈报高层管理人员： " }
+    ],
+    ko: [
+        { text: "계약서 및 위험 분석", icon: "fa-file-shield", color: "#38bdf8", prompt: "본 계약서 및 합의 내용을 면밀히 검토하고 법적·재무적 위험 요인과 개선 권고안을 제시해 주세요: " },
+        { text: "4D 가상 이사회", icon: "fa-users-viewfinder", color: "#c084fc", prompt: "가상 이사회를 소집하여 4인의 임원(CEO, CFO, CPO, CTO) 관점에서 다음 전략을 다각도로 분석해 주세요: " },
+        { text: "비즈니스 협상 이메일", icon: "fa-handshake-angle", color: "#fbbf24", prompt: "핵심 이익을 보호하면서도 정중하고 설득력 있는 고위 경영진용 비즈니스 협상 이메일을 작성해 주세요: " },
+        { text: "30-90-365일 실행 전략", icon: "fa-compass", color: "#34d399", prompt: "다음 목표에 대해 KPI, 위험 관리, 마일스톤이 포함된 실현 가능한 30-90-365일 실행 로드맵을 수립해 주세요: " },
+        { text: "Mermaid 다이어그램 설계", icon: "fa-diagram-project", color: "#60a5fa", prompt: "다음 시스템 아키텍처 또는 업무 흐름을 직관적인 Mermaid 플로우차트로 설계해 주세요: " },
+        { text: "비즈니스 문서 고급 교정", icon: "fa-wand-magic-sparkles", color: "#f43f5e", prompt: "이 문서를 고위 임원 보고에 적합하도록 간결하고 설득력 있는 비즈니스 언어로 다듬어 주세요: " }
+    ],
+    ja: [
+        { text: "契約書＆リスク分析", icon: "fa-file-shield", color: "#38bdf8", prompt: "この契約書や合意内容を詳細に精査し、法的・財務的リスクと改善提案を明確に提示してください： " },
+        { text: "4次元バーチャル役員会", icon: "fa-users-viewfinder", color: "#c084fc", prompt: "バーチャル役員会を招集し、CEO、CFO、CPO、CTOの4つの視点から以下の戦略課題を多角的に分析してください： " },
+        { text: "ビジネス交渉メール作成", icon: "fa-handshake-angle", color: "#fbbf24", prompt: "利益を最大化しつつ、礼節と説得力を兼ね備えたエグゼクティブ向けビジネス交渉メールを作成してください： " },
+        { text: "30-90-365日戦略プラン", icon: "fa-compass", color: "#34d399", prompt: "以下のプロジェクトについて、KPI、リスク管理、成果指標を含めた実現可能な30-90-365日戦略ロードマップを策定してください： " },
+        { text: "Mermaid図表デザイン", icon: "fa-diagram-project", color: "#60a5fa", prompt: "以下の業務フローまたはシステム構成を、分かりやすいMermaidフローチャートとして設計してください： " },
+        { text: "公式文書推敲・リライト", icon: "fa-wand-magic-sparkles", color: "#f43f5e", prompt: "この文書を高官や経営陣への報告にふさわしい、簡潔で説得力のある公式な表現に推敲・洗練してください： " }
+    ]
+};
+
+function updateQuickPromptsLanguage(lang) {
+    const list = KIRA_QUICK_PROMPT_CONFIG[lang] || KIRA_QUICK_PROMPT_CONFIG['th'];
+    const container = document.getElementById('quick-prompts');
+    if (!container) return;
+
+    // We have 12 buttons (6 prompts repeated twice for infinite loop)
+    const buttons = container.querySelectorAll('.quick-prompt-btn');
+    if (!buttons || buttons.length === 0) return;
+
+    buttons.forEach((btn, idx) => {
+        const item = list[idx % list.length];
+        if (item) {
+            btn.setAttribute('data-prompt', item.prompt);
+            btn.innerHTML = `<i class="fa-solid ${item.icon}" style="color: ${item.color};"></i> ${item.text}`;
+        }
+    });
+}
 
 function setKiraLanguage(lang, syncVoice = true, showNotification = false) {
     if (!KIRA_I18N[lang]) lang = 'th';
     const dict = KIRA_I18N[lang];
 
-    // 1. Save to persistent storage
+    // 0. Set HTML root lang attribute
+    document.documentElement.lang = lang;
+
+    // 1. Save to persistent storage (both keys for 100% sync)
     try {
         localStorage.setItem('kira_ui_lang', lang);
+        localStorage.setItem('kira_lang', lang);
     } catch (e) {}
 
     // 2. Update Header Pill
@@ -10942,21 +11897,46 @@ function setKiraLanguage(lang, syncVoice = true, showNotification = false) {
         }
     });
 
-    // 4. Translate all [data-i18n] elements
+    // 4. Update Settings Modal language dropdown if present
+    const settingLangSelect = document.getElementById('setting-system-lang');
+    if (settingLangSelect && settingLangSelect.value !== lang) {
+        settingLangSelect.value = lang;
+    }
+
+    // 5. Translate all [data-i18n] textContent elements
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (dict[key]) {
+        if (dict[key] !== undefined) {
             el.textContent = dict[key];
         }
     });
 
-    // 5. Update Input placeholder
+    // 6. Translate all [data-i18n-placeholder] elements
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (dict[key] !== undefined) {
+            el.setAttribute('placeholder', dict[key]);
+        }
+    });
+
+    // 7. Translate all [data-i18n-title] elements
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        if (dict[key] !== undefined) {
+            el.setAttribute('title', dict[key]);
+        }
+    });
+
+    // 8. Update Quick Prompts to target language
+    updateQuickPromptsLanguage(lang);
+
+    // 9. Update Main Chat Input placeholder
     const userInput = document.getElementById('user-input');
     if (userInput && dict.input_placeholder) {
         userInput.setAttribute('placeholder', dict.input_placeholder);
     }
 
-    // 6. Voice & STT Synchronization (Intelligent Auto-Config)
+    // 10. Voice & STT Synchronization (Intelligent Auto-Config)
     if (syncVoice) {
         let targetStt = 'th-TH';
         let targetVoice = 'th-TH-PremwadeeNeural';
@@ -10994,15 +11974,19 @@ function setKiraLanguage(lang, syncVoice = true, showNotification = false) {
         }
     }
 
-    // 7. Close Dropdown Menu
+    // 11. Close Dropdown Menu
     const wrapper = document.getElementById('lang-switch-wrapper');
     const menu = document.getElementById('lang-dropdown-menu');
     if (wrapper) wrapper.classList.remove('open');
     if (menu) menu.style.display = 'none';
 
-    // 8. Notification
-    if (showNotification && typeof showToast === 'function') {
-        showToast(dict.toast_lang_switched, 'success');
+    // 12. Notification
+    if (showNotification) {
+        if (typeof showKiraToast === 'function') {
+            showKiraToast(dict.toast_lang_switched, 'success');
+        } else if (typeof showToast === 'function') {
+            showToast(dict.toast_lang_switched, 'success');
+        }
     }
 }
 

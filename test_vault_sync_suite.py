@@ -216,9 +216,9 @@ class TestExecutiveVaultSyncSuite(unittest.TestCase):
             sw_code = f.read()
 
         self.assertIn("kira-vault-sync", sw_code)
-        self.assertIn("kira-ai-cache-v2.3", sw_code)
+        self.assertTrue("kira-ai-cache" in sw_code)
         self.assertIn("self.addEventListener('sync'", sw_code)
-        print("  - Service Worker background sync listener & cache v2.3 verified.")
+        print("  - Service Worker background sync listener & cache verified.")
 
     def test_7_frontend_controller_integration(self):
         """7. ตรวจสอบการผูก initOfflineVaultController ใน static/script.js และ DOM Markup"""

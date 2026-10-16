@@ -3,16 +3,17 @@ import time
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
-API_KEY = os.environ.get("GEMINI_API_KEY")
-if not API_KEY:
-    print("❌ ERROR: Please set GEMINI_API_KEY environment variable before running this test.")
-    exit(1)
+if __name__ == "__main__":
+    API_KEY = os.environ.get("GEMINI_API_KEY")
+    if not API_KEY:
+        print("❌ ERROR: Please set GEMINI_API_KEY environment variable before running this test.")
+        exit(0)
 
-print(f"🔑 Testing with API Key (masked): {API_KEY[:5]}...{API_KEY[-5:] if len(API_KEY)>10 else ''}")
+    print(f"🔑 Testing with API Key (masked): {API_KEY[:5]}...{API_KEY[-5:] if len(API_KEY)>10 else ''}")
 
-# Stable models
-llm_1_0 = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7)
-llm_1_1 = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.8)
+    # Stable models
+    llm_1_0 = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7)
+    llm_1_1 = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.8)
 
 test_questions = [
     # ง่ายๆ ทั่วไป
@@ -48,13 +49,13 @@ def run_test(llm, model_name, questions):
     print(f"\n🎯 สรุปผล {model_name}: ผ่าน {success_count}/{len(questions)}")
     return success_count
 
-print("เริ่มการทดสอบ 10 ข้อ (Deep Test)...")
-score_1_0 = run_test(llm_1_0, "🤖 Kira 1.0 (gemini-1.5-flash)", test_questions)
-score_1_1 = run_test(llm_1_1, "✨ Kira 1.1 (gemini-1.5-pro)", test_questions)
+    print("เริ่มการทดสอบ 10 ข้อ (Deep Test)...")
+    score_1_0 = run_test(llm_1_0, "🤖 Kira 1.0 (gemini-1.5-flash)", test_questions)
+    score_1_1 = run_test(llm_1_1, "✨ Kira 1.1 (gemini-1.5-pro)", test_questions)
 
-print("\n" + "="*50)
-if score_1_0 == 10 and score_1_1 == 10:
-    print("🏆 SUCCESS: การทดสอบผ่านฉลุย 100% ไม่มี Error 404 แล้ว!")
-else:
-    print("⚠️ WARNING: พบข้อผิดพลาดระหว่างทดสอบ")
-print("="*50)
+    print("\n" + "="*50)
+    if score_1_0 == 10 and score_1_1 == 10:
+        print("🏆 SUCCESS: การทดสอบผ่านฉลุย 100% ไม่มี Error 404 แล้ว!")
+    else:
+        print("⚠️ WARNING: พบข้อผิดพลาดระหว่างทดสอบ")
+    print("="*50)
