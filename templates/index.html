@@ -297,11 +297,11 @@
             
             <div class="sidebar-menu" style="padding: 10px 15px; border-top: 1px solid rgba(255,255,255,0.05);">
                 <div class="persona-selector">
-                    <label for="persona-select" style="font-size: 0.85rem; color: #94a3b8;"><i class="fa-solid fa-sliders"></i> สไตล์การตอบ:</label>
+                    <label for="persona-select" style="font-size: 0.85rem; color: #94a3b8;"><i class="fa-solid fa-sliders"></i> <span data-i18n="sidebar_persona_label">สไตล์การตอบ:</span></label>
                     <select id="persona-select" class="model-select" style="width: 100%; margin-top: 5px; background: rgba(0,0,0,0.2);">
-                        <option value="default">ทางการ สุภาพ</option>
-                        <option value="friend">เป็นกันเอง สบายๆ</option>
-                        <option value="manager">มุ่งเน้นผลลัพธ์ ตรงประเด็น</option>
+                        <option value="default" data-i18n="persona_formal">ทางการ สุภาพ</option>
+                        <option value="friend" data-i18n="persona_casual">เป็นกันเอง สบายๆ</option>
+                        <option value="manager" data-i18n="persona_direct">มุ่งเน้นผลลัพธ์ ตรงประเด็น</option>
                     </select>
                 </div>
             </div>
@@ -324,11 +324,11 @@
                     </div>
                 </div>
                 <div class="sidebar-actions-compact">
-                    <button class="settings-btn" id="btn-sidebar-guide" title="คู่มือการใช้งาน (Kira Guide)"><i class="fa-solid fa-book-open"></i></button>
-                    <button class="settings-btn" id="btn-sidebar-settings" title="ตั้งค่าระบบ (Settings)"><i class="fa-solid fa-gear"></i></button>
+                    <button class="settings-btn" id="btn-sidebar-guide" data-i18n-title="guide_title" title="คู่มือการใช้งาน (Kira Guide)"><i class="fa-solid fa-book-open"></i></button>
+                    <button class="settings-btn" id="btn-sidebar-settings" data-i18n-title="settings_title" title="ตั้งค่าระบบ (Settings)"><i class="fa-solid fa-gear"></i></button>
                     <button class="settings-btn" id="btn-admin-orders" title="ตรวจสลิป (Pending Orders)" style="display: none;"><i class="fa-solid fa-receipt"></i><span id="admin-orders-badge" class="admin-orders-badge" style="display: none;">0</span></button>
                     <a href="/admin_boss" target="_blank" class="settings-btn" id="btn-admin-dashboard" title="แดชบอร์ดผู้ดูแลระบบ" style="display: none;"><i class="fa-solid fa-shield-halved"></i></a>
-                    <button class="settings-btn" id="btn-logout" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    <button class="settings-btn" id="btn-logout" data-i18n-title="logout_title" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
                 </div>
             </div>
         </aside>
@@ -342,7 +342,7 @@
                         <span class="brand-title">Kira AI</span>
                         <div id="kira-unified-status" class="unified-status-pill" title="ระบบพร้อมใช้งาน 100% | Cloud Multi-Brain Engine พร้อมทำงาน">
                             <span class="status-live-dot"></span>
-                            <span class="status-live-label" id="unified-status-text">Cloud Engine 2.1</span>
+                            <span class="status-live-label" id="unified-status-text" data-i18n="engine_cloud">Cloud Engine 2.1</span>
                             <!-- Hidden legacy hooks for JS compatibility -->
                             <span id="heartbeat-badge" style="display:none;"><span class="heartbeat-pulse-dot"></span></span>
                             <span id="engine-status-badge" style="display:none;"><span class="pulse-dot cloud"></span></span>
@@ -429,13 +429,13 @@
                     <!-- Virtual Boardroom Quick Toggle (Consolidated into Tools dropdown & Model selector) -->
                     <button title="เปิดสภาที่ปรึกษาเสมือน Kira 2.1 Boardroom" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn" style="display: none;">
                         <i class="fa-solid fa-users-viewfinder"></i>
-                        <span class="boardroom-btn-text">สภา</span>
+                        <span class="boardroom-btn-text" data-i18n="header_boardroom">สภา</span>
                     </button>
 
                     <!-- 📋 Kira Omni-Task & Matrix Button (Consolidated into Tools dropdown) -->
                     <button title="เปิดกระดานจัดการภารกิจและร่างชิ้นงาน" id="btn-task-matrix-toggle" class="header-action-btn task-matrix-btn" style="display: none;">
                         <i class="fa-solid fa-list-check"></i>
-                        <span class="task-matrix-btn-text">งาน</span>
+                        <span class="task-matrix-btn-text" data-i18n="header_task_matrix">งาน</span>
                         <span id="task-matrix-badge" class="task-matrix-badge" style="display: none;">0</span>
                     </button>
 
@@ -729,35 +729,35 @@
                 <!-- 🎓 Academic & Study Quick Chips -->
                 <div class="study-quick-chips" id="study-quick-chips">
                     <button type="button" class="study-chip" data-study-action="summarize" title="สรุปชีทสไลด์/เลกเชอร์ 3 ระดับ">
-                        <i class="fa-solid fa-file-lines text-cyan"></i> สรุปสไลด์ 3 เลเวล
+                        <i class="fa-solid fa-file-lines text-cyan"></i> <span data-i18n="chip_summarize">สรุปสไลด์ 3 เลเวล</span>
                     </button>
                     <button type="button" class="study-chip" data-study-action="exam_prep" title="เก็งข้อสอบ 5 ข้อพร้อมเฉลย">
-                        <i class="fa-solid fa-bullseye text-amber"></i> เก็งข้อสอบ & เฉลย
+                        <i class="fa-solid fa-bullseye text-amber"></i> <span data-i18n="chip_exam_prep">เก็งข้อสอบ & เฉลย</span>
                     </button>
                     <button type="button" class="study-chip" data-study-action="flashcards" title="สร้าง Flashcards บัตรคำถามติวสอบ">
-                        <i class="fa-solid fa-layer-group text-purple"></i> Flashcards ทบทวน
+                        <i class="fa-solid fa-layer-group text-purple"></i> <span data-i18n="chip_flashcards">Flashcards ทบทวน</span>
                     </button>
                     <button type="button" class="study-chip" data-study-action="problem_solver" title="แก้โจทย์วิทย์/คณิต/โค้ด ทีละสเต็ป">
-                        <i class="fa-solid fa-calculator text-emerald"></i> แก้โจทย์ทีละสเต็ป
+                        <i class="fa-solid fa-calculator text-emerald"></i> <span data-i18n="chip_problem_solver">แก้โจทย์ทีละสเต็ป</span>
                     </button>
                     <button type="button" class="study-chip hub-trigger" id="btn-open-study-hub-chip" title="เปิดห้องติวเข้มเต็มรูปแบบ">
-                        <i class="fa-solid fa-graduation-cap text-rose"></i> ห้องติวสอบ ✨
+                        <i class="fa-solid fa-graduation-cap text-rose"></i> <span data-i18n="chip_study_hub">ห้องติวสอบ ✨</span>
                     </button>
                 </div>
 
                 <div class="input-wrapper" style="position: relative;">
                     <div id="attachment-menu" class="attachment-popup" style="display: none;">
-                        <button id="menu-img-btn" class="popup-item"><i class="fa-regular fa-image"></i> รูปภาพ</button>
-                        <button id="menu-doc-btn" class="popup-item"><i class="fa-regular fa-file-pdf"></i> ไฟล์เอกสาร</button>
+                        <button id="menu-img-btn" class="popup-item"><i class="fa-regular fa-image"></i> <span data-i18n="attach_image">รูปภาพ</span></button>
+                        <button id="menu-doc-btn" class="popup-item"><i class="fa-regular fa-file-pdf"></i> <span data-i18n="attach_doc">ไฟล์เอกสาร</span></button>
                     </div>
-                    <button class="attach-btn" id="mic-btn" title="พิมพ์ด้วยเสียง"><i class="fa-solid fa-microphone"></i></button>
-                    <button class="attach-btn" id="attach-toggle-btn" title="แนบไฟล์หรือรูปภาพ"><i class="fa-solid fa-paperclip"></i></button>
+                    <button class="attach-btn" id="mic-btn" data-i18n-title="mic_title" title="พิมพ์ด้วยเสียง"><i class="fa-solid fa-microphone"></i></button>
+                    <button class="attach-btn" id="attach-toggle-btn" data-i18n-title="attach_title" title="แนบไฟล์หรือรูปภาพ"><i class="fa-solid fa-paperclip"></i></button>
                     <input type="file" id="img-input" accept="image/*" style="display: none;">
                     <input type="file" id="doc-input" accept=".pdf,.docx,.txt,.csv" style="display: none;">
                     <textarea id="user-input" placeholder="พิมพ์ข้อความหรือคำถามถึง Kira 2.1..." rows="1"></textarea>
-                    <button class="send-btn" id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                    <button class="send-btn" id="send-btn" data-i18n-title="send_title"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
-                <p class="disclaimer">Kira อาจให้ข้อมูลที่ไม่ถูกต้องได้ กรุณาตรวจสอบก่อนนำไปใช้งาน</p>
+                <p class="disclaimer" data-i18n="footer_disclaimer">Kira อาจให้ข้อมูลที่ไม่ถูกต้องได้ กรุณาตรวจสอบก่อนนำไปใช้งาน</p>
             </div>
 
             <!-- Drag & Drop Visual Inspector Overlay -->

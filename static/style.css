@@ -5729,7 +5729,7 @@ body.oled-mode textarea#user-input {
     background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(168, 85, 247, 0.2)) !important;
     border: 1px solid rgba(245, 158, 11, 0.4) !important;
     color: #fbbf24 !important;
-    display: inline-flex !important;
+    display: inline-flex;
     align-items: center;
     gap: 5px;
     padding: 0.32rem 0.65rem !important;
