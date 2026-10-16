@@ -207,48 +207,58 @@ function updateModelUI() {
 }
 
 function checkAuth() {
-    const storedUser = localStorage.getItem('kira_username') || localStorage.getItem('kira_user');
-    const isExplicitlyLoggedOut = localStorage.getItem('kira_logged_out') === 'true';
+    try {
+        let storedUser = localStorage.getItem('kira_username') || localStorage.getItem('kira_user');
+        if (storedUser === 'null' || storedUser === 'undefined' || storedUser === '') {
+            storedUser = null;
+            localStorage.removeItem('kira_username');
+            localStorage.removeItem('kira_user');
+        }
+        const isExplicitlyLoggedOut = localStorage.getItem('kira_logged_out') === 'true';
 
-    // 👑 VIP Auto-Login for Owner only on initial visit (if user has not explicitly clicked Logout)
-    if ((window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && !storedUser && !isExplicitlyLoggedOut) {
-        currentUser = "👑 Boss (Owner)";
-        localStorage.setItem('kira_username', currentUser);
-    } else {
-        currentUser = storedUser;
-    }
-
-    if (currentUser) {
-        localStorage.removeItem('kira_logged_out');
-        authModal.style.display = 'none';
-        appContainer.style.display = 'flex';
-        profileName.textContent = currentUser;
-        const customAvatar = localStorage.getItem('kira_avatar');
-        if (customAvatar) {
-            profilePic.src = customAvatar;
+        // 👑 VIP Auto-Login for Owner on localhost (if user has not explicitly clicked Logout)
+        const isLocalHost = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost');
+        if (isLocalHost && !storedUser && !isExplicitlyLoggedOut) {
+            currentUser = "👑 Boss (Owner)";
+            localStorage.setItem('kira_username', currentUser);
         } else {
-            profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser)}&background=0D8ABC&color=fff`;
+            currentUser = storedUser;
         }
-        const adminBtn = document.getElementById('btn-admin-dashboard');
-        if (adminBtn) {
-            adminBtn.style.display = isBoss(currentUser) ? 'inline-flex' : 'none';
+
+        if (currentUser && currentUser !== 'null' && currentUser !== 'undefined') {
+            localStorage.removeItem('kira_logged_out');
+            if (authModal) authModal.style.display = 'none';
+            if (appContainer) appContainer.style.display = 'flex';
+            if (profileName) profileName.textContent = currentUser;
+            const customAvatar = localStorage.getItem('kira_avatar');
+            if (profilePic) {
+                if (customAvatar) {
+                    profilePic.src = customAvatar;
+                } else {
+                    profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser)}&background=0D8ABC&color=fff`;
+                }
+            }
+            const adminBtn = document.getElementById('btn-admin-dashboard');
+            if (adminBtn) {
+                adminBtn.style.display = isBoss(currentUser) ? 'inline-flex' : 'none';
+            }
+            if (typeof loadHistory === 'function') loadHistory();
+            if (typeof loadUserProfile === 'function') loadUserProfile();
+            if (typeof loadSettingsPreferences === 'function') loadSettingsPreferences();
+            if (typeof loadOmniTasks === 'function') loadOmniTasks();
+            if (typeof checkAndTriggerOnboarding === 'function') checkAndTriggerOnboarding();
+        } else {
+            if (authModal) authModal.style.display = 'flex';
+            if (appContainer) appContainer.style.display = 'none';
+            if (loginView) loginView.style.display = 'block';
+            if (registerView) registerView.style.display = 'none';
         }
-        loadHistory();
-        loadUserProfile();
-        loadSettingsPreferences();
-        if (typeof loadOmniTasks === 'function') {
-            loadOmniTasks();
-        }
-        if (typeof checkAndTriggerOnboarding === 'function') {
-            checkAndTriggerOnboarding();
-        }
-    } else {
-        authModal.style.display = 'flex';
-        appContainer.style.display = 'none';
-        loginView.style.display = 'block';
-        registerView.style.display = 'none';
+    } catch (err) {
+        console.error("Auth check error:", err);
     }
 }
+window.checkSession = checkAuth;
+window.checkAuth = checkAuth;
 
 async function loadUserProfile() {
     try {
@@ -582,6 +592,50 @@ if (btnLogin) {
     });
 }
 
+// 👑 Boss Fast-Pass Quick Login Handler
+const btnBossQuick = document.getElementById('btn-boss-quick-login');
+if (btnBossQuick) {
+    btnBossQuick.addEventListener('click', async () => {
+        const pwd = prompt("👑 กรุณากรอกรหัสผ่านสำหรับบอส (Boss Master Password):", "");
+        if (pwd === null) return;
+        if (!pwd.trim()) {
+            alert("กรุณากรอกรหัสผ่านค่ะ");
+            return;
+        }
+
+        const originalText = btnBossQuick.innerHTML;
+        btnBossQuick.disabled = true;
+        btnBossQuick.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบสิทธิ์บอส...';
+
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: "👑 Boss (Owner)", password: pwd.trim() })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                localStorage.setItem('kira_username', data.username);
+                if (data.token) {
+                    localStorage.setItem('kira_auth_token', data.token);
+                }
+                localStorage.removeItem('kira_logged_out');
+                currentUser = data.username;
+                hideConnectionToast(500);
+                checkAuth();
+                updateModelUI();
+            } else {
+                alert(data.message || "รหัสผ่านบอสไม่ถูกต้องค่ะ");
+            }
+        } catch (err) {
+            alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้งค่ะ");
+        } finally {
+            btnBossQuick.disabled = false;
+            btnBossQuick.innerHTML = originalText;
+        }
+    });
+}
+
 if (btnRegister) {
     btnRegister.addEventListener('click', async () => {
         const username = regUsernameInput.value.trim();
@@ -645,22 +699,21 @@ if (btnRegister) {
 
             if (data.status === 'success') {
                 regError.style.color = '#34d399';
-                regError.textContent = "สมัครสมาชิกสำเร็จ กำลังกลับสู่หน้าเข้าสู่ระบบ...";
+                regError.textContent = "สมัครสมาชิกสำเร็จ! กำลังเข้าสู่ระบบให้ท่านทันที...";
                 hideConnectionToast(500);
+
+                // Auto-login seamless UX:
+                localStorage.setItem('kira_username', data.username);
+                if (data.token) {
+                    localStorage.setItem('kira_auth_token', data.token);
+                }
+                localStorage.removeItem('kira_logged_out');
+                currentUser = data.username;
+
                 setTimeout(() => {
-                    switchAuthTab('login');
-                    loginUsernameInput.value = username; // Auto-fill username
-                    regUsernameInput.value = '';
-                    if (regNicknameInput) regNicknameInput.value = '';
-                    regPasswordInput.value = '';
-                    regConfirmInput.value = '';
-                    regError.textContent = '';
-                    if (strengthContainer) strengthContainer.style.display = 'none';
-                    if (matchStatusIcon) matchStatusIcon.innerHTML = '';
-                    loginError.style.color = '#34d399';
-                    loginError.textContent = "ลงทะเบียนเรียบร้อยแล้ว กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบค่ะ";
-                    if (loginPasswordInput) loginPasswordInput.focus();
-                }, 1200);
+                    checkAuth();
+                    updateModelUI();
+                }, 800);
             } else {
                 regError.style.color = '#f87171';
                 regError.textContent = data.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก";
@@ -2445,9 +2498,9 @@ const canvasAiPromptInput = document.getElementById('canvas-ai-prompt-input');
 const btnCanvasSendPrompt = document.getElementById('btn-canvas-send-prompt');
 
 // Canvas State Management
-let artifactVersions = [];
-let activeVersionId = null;
-let currentArtifactCode = '';
+artifactVersions = [];
+activeVersionId = null;
+currentArtifactCode = '';
 let currentArtifactTitle = 'Live Code Canvas';
 let isCanvasSplitMode = true; // 50/50 split workspace on desktop
 let isCanvasMaximized = false;
@@ -11340,7 +11393,7 @@ function initKiraApp() {
     try { initKiraI18n(); } catch (e) { console.error("i18n init error:", e); }
 
     // 2. Session & Auth Guards
-    try { checkSession(); } catch (e) { console.error("Session check init error:", e); }
+    try { checkAuth(); } catch (e) { console.error("Auth check init error:", e); }
     try { checkPendingOAuthMessage(); } catch (e) { console.error("OAuth check error:", e); }
 
     // 3. Interactive Controls & Dropdowns

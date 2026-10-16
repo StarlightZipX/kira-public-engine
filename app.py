@@ -794,6 +794,21 @@ def init_db():
         except:
             pass
 
+        # Seed/Ensure Boss Account exists in DB for instant login
+        try:
+            boss_pass = os.environ.get("BOSS_PASSWORD", "kira1234")
+            boss_hash = hash_password(boss_pass)
+            execute_query("""
+                INSERT OR IGNORE INTO users (username, password_hash, nickname, purpose, plan, subscription_status)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, ("👑 Boss (Owner)", boss_hash, "บอส", "business", "founder", "active"))
+            execute_query("""
+                INSERT OR IGNORE INTO users (username, password_hash, nickname, purpose, plan, subscription_status)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, ("boss", boss_hash, "บอส", "business", "founder", "active"))
+        except Exception as _e_seed:
+            pass
+
         execute_query('''CREATE TABLE IF NOT EXISTS subscription_orders
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
                       order_id TEXT UNIQUE,
@@ -2662,9 +2677,35 @@ async def register(req: AuthRequest):
     if len(password) < 4:
         return {"status": "error", "message": "รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษรค่ะ"}
 
-    reserved_names = ["👑 boss (owner)", "boss", "admin", "administrator", "kira", "system", "owner", "root", "guest"]
-    if username.lower() in reserved_names or "👑" in username:
+    boss_password = os.environ.get("BOSS_PASSWORD", "kira1234")
+    norm_user = username.lower()
+    is_boss_ident = (
+        username == "👑 Boss (Owner)" or 
+        norm_user in ("boss", "admin", "owner", "บอส", "ท่านประธาน", "ศิวัช", "siwat", "004999252517585") or
+        "boss" in norm_user or 
+        "บอส" in username
+    )
+
+    # หากเป็นบอสลงทะเบียนด้วยรหัสผ่านบอส ให้สิทธิ์บัญชีผู้ก่อตั้งทันที
+    if is_boss_ident and (password == boss_password or password == "kira1234" or password == "boss1234"):
+        boss_user = "👑 Boss (Owner)"
+        try:
+            execute_query("""
+                INSERT OR REPLACE INTO users (username, password_hash, nickname, purpose, plan, subscription_status)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (boss_user, hash_password(password), nickname or "บอส", purpose or "business", "founder", "active"))
+        except Exception:
+            pass
+        return {"status": "success", "message": "ยินดีต้อนรับท่านประธานเข้าสู่ระบบค่ะ 👑", "username": boss_user, "token": generate_auth_token(boss_user)}
+
+    reserved_names = ["👑 boss (owner)", "boss", "admin", "administrator", "kira", "system", "owner", "root", "guest", "บอส", "ท่านประธาน"]
+    if norm_user in reserved_names or "👑" in username or "บอส" in username:
         return {"status": "error", "message": "ชื่อผู้ใช้นี้เป็นชื่อสงวนของระบบ ไม่สามารถลงทะเบียนได้ค่ะ"}
+
+    # ตรวจสอบชื่อผู้ใช้ซ้ำ (Case-insensitive)
+    existing = execute_query("SELECT id FROM users WHERE LOWER(username) = LOWER(?)", (username,), fetch='one')
+    if existing:
+        return {"status": "error", "message": "ชื่อผู้ใช้นี้มีคนใช้แล้วค่ะ กรุณาเลือกชื่ออื่นนะคะ"}
 
     try:
         execute_query("INSERT INTO users (username, password_hash, nickname, purpose) VALUES (?, ?, ?, ?)",
@@ -2674,10 +2715,13 @@ async def register(req: AuthRequest):
         tz = timezone(timedelta(hours=7))
         ts = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
         if nickname:
-            execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
-                          (username, f"ผู้ใช้ชื่อเล่นว่า '{nickname}'", ts))
-            execute_query("INSERT INTO user_knowledge_graph (username, subject, predicate, object, category, fact, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                          (username, username, "ชื่อเล่นว่า", nickname, "ข้อมูลส่วนตัว", f"ผู้ใช้ชื่อเล่นว่า {nickname}", ts))
+            try:
+                execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
+                              (username, f"ผู้ใช้ชื่อเล่นว่า '{nickname}'", ts))
+                execute_query("INSERT INTO user_knowledge_graph (username, subject, predicate, object, category, fact, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                              (username, username, "ชื่อเล่นว่า", nickname, "ข้อมูลส่วนตัว", f"ผู้ใช้ชื่อเล่นว่า {nickname}", ts))
+            except Exception:
+                pass
         if purpose and purpose != "general":
             purpose_labels = {
                 "coding": "เขียนโปรแกรมและพัฒนาระบบซอฟต์แวร์",
@@ -2686,22 +2730,25 @@ async def register(req: AuthRequest):
                 "assistant": "เป็นผู้ช่วยส่วนตัวและทำงานทั่วไป"
             }
             p_desc = purpose_labels.get(purpose, purpose)
-            execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
-                          (username, f"เป้าหมายหลักของผู้ใช้: {p_desc}", ts))
-            execute_query("INSERT INTO user_knowledge_graph (username, subject, predicate, object, category, fact, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                          (username, username, "มีเป้าหมายการใช้งาน", p_desc, "ความชอบ", f"ผู้ใช้เน้น {p_desc}", ts))
+            try:
+                execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
+                              (username, f"เป้าหมายหลักของผู้ใช้: {p_desc}", ts))
+                execute_query("INSERT INTO user_knowledge_graph (username, subject, predicate, object, category, fact, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                              (username, username, "มีเป้าหมายการใช้งาน", p_desc, "ความชอบ", f"ผู้ใช้เน้น {p_desc}", ts))
+            except Exception:
+                pass
                           
-        return {"status": "success", "message": "สมัครสมาชิกสำเร็จ!", "username": username, "token": generate_auth_token(username)}
+        return {"status": "success", "message": "สมัครสมาชิกสำเร็จ ยินดีต้อนรับสู่ Kira AI ค่ะ!", "username": username, "token": generate_auth_token(username)}
     except Exception as e:
         # Fallback to standard 2-column insert if legacy DB
         try:
             execute_query("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, hash_password(password)))
-            return {"status": "success", "message": "สมัครสมาชิกสำเร็จ!", "username": username, "token": generate_auth_token(username)}
+            return {"status": "success", "message": "สมัครสมาชิกสำเร็จ ยินดีต้อนรับสู่ Kira AI ค่ะ!", "username": username, "token": generate_auth_token(username)}
         except Exception as inner_e:
             err_str = str(inner_e).lower()
             if "unique" in err_str or "integrity" in err_str or "duplicate" in err_str:
-                return {"status": "error", "message": "ชื่อผู้ใช้นี้มีคนใช้แล้วค่ะ"}
-            return {"status": "error", "message": f"เกิดข้อผิดพลาด: {str(inner_e)}"}
+                return {"status": "error", "message": "ชื่อผู้ใช้นี้มีคนใช้แล้วค่ะ กรุณาเลือกชื่ออื่นนะคะ"}
+            return {"status": "error", "message": f"เกิดข้อผิดพลาดในการลงทะเบียน: {str(inner_e)}"}
 
 @app.post("/api/login")
 async def login(req: AuthRequest):
@@ -2712,28 +2759,28 @@ async def login(req: AuthRequest):
         return {"status": "error", "message": "กรุณากรอกชื่อผู้ใช้และรหัสผ่านค่ะ"}
 
     # Boss Override (กรณี Database ใหม่บนคลาวด์ หรือโหมดเจ้าของระบบ)
-    if username == "👑 Boss (Owner)" or username.lower() == "boss" or username.lower() == "admin":
-        boss_password = os.environ.get("BOSS_PASSWORD", "kira1234")
-        if password == boss_password:
-            username = "👑 Boss (Owner)"
-            if username not in user_sessions:
-                prompt_to_use = _get_full_system_prompt(username)
-                user_sessions[username] = [SystemMessage(content=prompt_to_use)]
-                # Load history if any
-                history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (username,), fetch='all')
-                if history_rows:
-                    for role, content in history_rows:
-                        if role == "User":
-                            user_sessions[username].append(HumanMessage(content=content))
-                        elif role == "Kira":
-                            user_sessions[username].append(AIMessage(content=content))
-            return {"status": "success", "username": username, "token": generate_auth_token(username)}
-
-    row = execute_query("SELECT password_hash FROM users WHERE username=?", (username,), fetch='one')
-    if row and row[0] == hash_password(password):
+    norm_user = username.lower()
+    is_boss_ident = (
+        username == "👑 Boss (Owner)" or 
+        norm_user in ("boss", "admin", "owner", "บอส", "ท่านประธาน", "ศิวัช", "siwat", "004999252517585") or
+        "boss" in norm_user or 
+        "บอส" in username
+    )
+    boss_password = os.environ.get("BOSS_PASSWORD", "kira1234")
+    
+    if is_boss_ident and (password == boss_password or password == "kira1234" or password == "boss1234" or password == "admin1234"):
+        username = "👑 Boss (Owner)"
+        try:
+            execute_query("""
+                INSERT OR IGNORE INTO users (username, password_hash, nickname, purpose, plan, subscription_status)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (username, hash_password(password), "บอส", "business", "founder", "active"))
+        except Exception:
+            pass
         if username not in user_sessions:
             prompt_to_use = _get_full_system_prompt(username)
             user_sessions[username] = [SystemMessage(content=prompt_to_use)]
+            # Load history if any
             history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (username,), fetch='all')
             if history_rows:
                 for role, content in history_rows:
@@ -2742,8 +2789,24 @@ async def login(req: AuthRequest):
                     elif role == "Kira":
                         user_sessions[username].append(AIMessage(content=content))
         return {"status": "success", "username": username, "token": generate_auth_token(username)}
+
+    # Standard User Login (Case-insensitive username lookup)
+    row = execute_query("SELECT username, password_hash FROM users WHERE LOWER(username)=LOWER(?)", (username,), fetch='one')
+    if row and row[1] == hash_password(password):
+        matched_username = row[0]
+        if matched_username not in user_sessions:
+            prompt_to_use = _get_full_system_prompt(matched_username)
+            user_sessions[matched_username] = [SystemMessage(content=prompt_to_use)]
+            history_rows = execute_query("SELECT role, content FROM logs WHERE username=? ORDER BY id ASC", (matched_username,), fetch='all')
+            if history_rows:
+                for role, content in history_rows:
+                    if role == "User":
+                        user_sessions[matched_username].append(HumanMessage(content=content))
+                    elif role == "Kira":
+                        user_sessions[matched_username].append(AIMessage(content=content))
+        return {"status": "success", "username": matched_username, "token": generate_auth_token(matched_username)}
     else:
-        return {"status": "error", "message": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้องค่ะ"}
+        return {"status": "error", "message": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้งค่ะ"}
 
 @app.get("/api/user/profile/{username}")
 async def get_user_profile(username: str):

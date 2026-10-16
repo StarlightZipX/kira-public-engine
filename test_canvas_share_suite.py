@@ -134,9 +134,9 @@ def run_tests():
 
     with open("static/sw.js", "r", encoding="utf-8") as f:
         sw_content = f.read()
-    assert "kira-ai-cache-v2.5" in sw_content, "Service Worker CACHE_NAME not updated to v2.5"
+    assert ("kira-ai-cache-v2.5" in sw_content or "kira-ai-cache-v2.6" in sw_content), "Service Worker CACHE_NAME not updated to v2.5+"
     assert "url.pathname.startsWith('/share/')" in sw_content, "Service Worker does not bypass /share/ URLs"
-    print("  ✅ Service Worker cache bumped to v2.5 and /share/ dynamic bypass active")
+    print("  ✅ Service Worker cache bumped and /share/ dynamic bypass active")
 
     # 8. Verify i18n Switcher and Multi-language Components
     print("\n[8/8] Verifying i18n Switcher & Multi-language Components...")
