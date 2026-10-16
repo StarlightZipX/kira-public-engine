@@ -721,7 +721,8 @@ async function loadProactiveBriefing() {
     if (!currentUser) return null;
     try {
         const token = localStorage.getItem('kira_auth_token') || '';
-        const url = `/api/user/briefing/${encodeURIComponent(currentUser)}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+        const currentLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
+        const url = `/api/user/briefing/${encodeURIComponent(currentUser)}?lang=${encodeURIComponent(currentLang)}${token ? `&token=${encodeURIComponent(token)}` : ''}`;
         const res = await fetch(url);
         if (res.ok) {
             const data = await res.json();

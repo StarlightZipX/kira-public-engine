@@ -3116,7 +3116,7 @@ async def wipe_all_memories(username: str = "", token: Optional[str] = None, req
     return {"status": "success", "message": "ล้างความจำระยะยาวทั้งหมดเรียบร้อยแล้วค่ะ"}
 
 @app.get("/api/user/briefing/{username}")
-async def get_user_briefing(username: str, token: Optional[str] = None, request: Request = None):
+async def get_user_briefing(username: str, token: Optional[str] = None, lang: Optional[str] = "th", request: Request = None):
     """Kira Context Briefing: Time-Aware Greeting & Knowledge Graph Memory Suggestions"""
     try:
         clean_user = (username or '').strip()
@@ -3125,6 +3125,7 @@ async def get_user_briefing(username: str, token: Optional[str] = None, request:
         if token_to_check and not verify_auth_token(clean_user, token_to_check):
             return {"status": "error", "message": "Invalid Auth Token"}
         is_user_boss = is_boss(clean_user)
+        active_lang = (lang or 'th').lower()
         
         # 1. Time-Aware Detection (Bangkok UTC+7)
         tz = timezone(timedelta(hours=7))
@@ -3139,18 +3140,34 @@ async def get_user_briefing(username: str, token: Optional[str] = None, request:
             time_of_day = "morning"
             greeting_prefix = "อรุณสวัสดิ์ยามเช้าค่ะ"
             greeting_sub = "เริ่มต้นวันใหม่ด้วยพลังบวก คิระพร้อมเคียงข้างและช่วยวางแผนงานให้ราบรื่นทุกขั้นตอนค่ะ ☀️"
+            en_prefix = "Good morning"
+            zh_prefix = "早上好"
+            ja_prefix = "おはようございます"
+            ko_prefix = "좋은 아침입니다"
         elif 12 <= hour < 17:
             time_of_day = "afternoon"
             greeting_prefix = "สวัสดีตอนบ่ายค่ะ"
             greeting_sub = "ช่วงบ่ายนี้มีโปรเจกต์ไหนที่ต้องการให้คิระช่วยเขียนโค้ด วิเคราะห์ หรือตรวจทานเป็นพิเศษไหมคะ ยินดีช่วยดูแลเสมอนะคะ 💻"
+            en_prefix = "Good afternoon"
+            zh_prefix = "下午好"
+            ja_prefix = "こんにちは"
+            ko_prefix = "좋은 오후입니다"
         elif 17 <= hour < 21:
             time_of_day = "evening"
             greeting_prefix = "สวัสดีช่วงเย็นค่ะ"
             greeting_sub = "ทำงานหรือเดินทางมาทั้งวันแล้ว ผ่อนคลายและให้คิระช่วยสรุปงานของวันนี้ได้นะคะ 🌆"
+            en_prefix = "Good evening"
+            zh_prefix = "晚上好"
+            ja_prefix = "こんばんは"
+            ko_prefix = "편안한 저녁 되세요"
         else:
             time_of_day = "night"
             greeting_prefix = "ราตรีสวัสดิ์ยามดึกค่ะ"
             greeting_sub = "ดึกแล้วอย่าลืมดื่มน้ำและพักผ่อนสายตานะคะ หากยังมีไอเดียหรือภารกิจสำคัญ คิระพร้อมอยู่เป็นเพื่อนเสมอค่ะ 🌙"
+            en_prefix = "Late night greetings"
+            zh_prefix = "夜深了"
+            ja_prefix = "夜分遅くに失礼します"
+            ko_prefix = "늦은 밤 평안하세요"
 
         # 2. User & Boss Customization
         nickname = None
@@ -3158,13 +3175,52 @@ async def get_user_briefing(username: str, token: Optional[str] = None, request:
         if user_row:
             nickname = user_row[0] if user_row[0] else None
         
+        display_name = nickname or clean_user or 'there'
         if is_user_boss:
             greeting_title = f"{greeting_prefix} ท่านประธาน"
-            greeting_sub = "ระบบสถาปัตยกรรม Kira 2.1 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ"
+            greeting_sub = "ระบบสถาปัตยกรรม Kira 2.5 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ"
         elif nickname:
             greeting_title = f"{greeting_prefix} คุณ{nickname}"
         else:
             greeting_title = f"{greeting_prefix} คุณ{clean_user or 'ผู้ใช้'}"
+
+        # Multilingual overrides if requested
+        if active_lang == 'en':
+            date_thai = now.strftime("%A, %d %b %Y")
+            time_str = now.strftime("%I:%M %p")
+            if is_user_boss:
+                greeting_title = f"{en_prefix}, Boss"
+                greeting_sub = "Kira AI 2.5 cognitive architecture is fully online, ready for your strategic directives."
+            else:
+                greeting_title = f"{en_prefix}, {display_name}"
+                greeting_sub = "Kira AI 2.5 is online and ready to assist you with deep thinking, coding, and productivity."
+        elif active_lang == 'zh':
+            date_thai = now.strftime("%Y年%m月%d日")
+            time_str = now.strftime("%H:%M")
+            if is_user_boss:
+                greeting_title = f"{zh_prefix}，董事长"
+                greeting_sub = "Kira AI 2.5 认知架构完全在线，随时准备接收总裁的战略指令。"
+            else:
+                greeting_title = f"{zh_prefix}，{display_name}"
+                greeting_sub = "Kira AI 2.5 已准备就绪，随时为您提供深度分析、编程与办公协助。"
+        elif active_lang == 'ja':
+            date_thai = now.strftime("%Y年%m月%d日")
+            time_str = now.strftime("%H:%M")
+            if is_user_boss:
+                greeting_title = f"{ja_prefix}、社長"
+                greeting_sub = "Kira AI 2.5 アーキテクチャがオンラインです。戦略的指示をお待ちしております。"
+            else:
+                greeting_title = f"{ja_prefix}、{display_name}様"
+                greeting_sub = "Kira AI 2.5 の準備が整いました。思考、プログラミング、日常業務をサポートします。"
+        elif active_lang == 'ko':
+            date_thai = now.strftime("%Y년 %m월 %d일")
+            time_str = now.strftime("%H:%M")
+            if is_user_boss:
+                greeting_title = f"{ko_prefix}, 회장님"
+                greeting_sub = "Kira AI 2.5 인지 아키텍처가 활성화되었습니다. 전략적 지시를 수행할 준비가 되었습니다."
+            else:
+                greeting_title = f"{ko_prefix}, {display_name}님"
+                greeting_sub = "Kira AI 2.5가 준비되었습니다. 심층 분석, 코딩, 업무 지원을 시작하세요."
 
         # 3. Memories Highlights from Knowledge Graph (user_memories & user_knowledge_graph)
         memory_highlights = []

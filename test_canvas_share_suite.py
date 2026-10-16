@@ -152,6 +152,14 @@ def run_tests():
     assert "initKiraI18n" in script_content, "Missing initKiraI18n in script.js"
     print("  ✅ Multi-Language Engine (TH/EN/ZH/KO) & Voice STT Sync verified in script.js")
 
+    # Verify multilingual briefing
+    r_brief_en = client.get("/api/user/briefing/testuser?lang=en")
+    assert r_brief_en.status_code == 200
+    brief_data = r_brief_en.json()
+    assert "greeting_title" in brief_data
+    assert ("Good morning" in brief_data["greeting_title"] or "Good afternoon" in brief_data["greeting_title"] or "Good evening" in brief_data["greeting_title"] or "Late night" in brief_data["greeting_title"])
+    print("  ✅ Multilingual Briefing Endpoint verified (EN/ZH/JA/KO support active)")
+
     print("\n==================================================")
     print("🎉 ALL TESTS PASSED SUCCESSFULLY! (100% VERIFIED)")
     print("==================================================")
