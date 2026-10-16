@@ -33,7 +33,7 @@
     <div id="kira-connection-toast" class="kira-connection-toast hidden">
         <div class="toast-content">
             <span class="toast-pulse-icon"><i class="fa-solid fa-bolt"></i></span>
-            <span class="toast-text" id="kira-toast-text">กำลังเชื่อมต่อเซิร์ฟเวอร์คิระ...</span>
+            <span class="toast-text" id="kira-toast-text" data-i18n="toast_connecting">กำลังเชื่อมต่อเซิร์ฟเวอร์คิระ...</span>
         </div>
     </div>
 
@@ -47,23 +47,23 @@
             <div class="proactive-toast-body">
                 <div class="proactive-toast-header">
                     <span class="proactive-toast-name">Kira Assistant</span>
-                    <span class="proactive-toast-time" id="proactive-toast-time">เมื่อสักครู่</span>
+                    <span class="proactive-toast-time" id="proactive-toast-time" data-i18n="proactive_time_just_now">เมื่อสักครู่</span>
                 </div>
-                <p class="proactive-toast-msg" id="proactive-toast-msg">ทำงานต่อเนื่องมาสักพักแล้ว อย่าลืมพักสายตาและดื่มน้ำหน่อยนะคะ</p>
+                <p class="proactive-toast-msg" id="proactive-toast-msg" data-i18n="proactive_default_msg">ทำงานต่อเนื่องมาสักพักแล้ว อย่าลืมพักสายตาและดื่มน้ำหน่อยนะคะ</p>
                 <div class="proactive-toast-actions">
-                    <button type="button" class="proactive-toast-action-btn" id="btn-proactive-toast-action"><i class="fa-solid fa-comment"></i> ตอบกลับ</button>
-                    <button type="button" class="proactive-toast-dismiss-btn" id="btn-proactive-toast-dismiss" title="ปิด"><i class="fa-solid fa-xmark"></i></button>
+                    <button type="button" class="proactive-toast-action-btn" id="btn-proactive-toast-action"><i class="fa-solid fa-comment"></i> <span data-i18n="proactive_reply_btn">ตอบกลับ</span></button>
+                    <button type="button" class="proactive-toast-dismiss-btn" id="btn-proactive-toast-dismiss" data-i18n-title="modal_close" title="ปิด"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <!-- Inline Proactive Reply Suite -->
                 <div class="proactive-toast-reply-box hidden" id="proactive-toast-reply-box">
                     <div class="proactive-quick-chips">
-                        <button type="button" class="proactive-chip" data-reply="ขอบคุณนะคิระ ดื่มน้ำเรียบร้อยแล้วค่ะ 💧">💧 ดื่มน้ำแล้ว</button>
-                        <button type="button" class="proactive-chip" data-reply="ขอบคุณที่เป็นห่วงนะคิระ 💖">💖 ขอบคุณนะ</button>
-                        <button type="button" class="proactive-chip" data-reply="คิระ ช่วยสรุปงานให้หน่อยได้ไหม 📝">📝 สรุปงาน</button>
+                        <button type="button" class="proactive-chip" data-reply="ขอบคุณนะคิระ ดื่มน้ำเรียบร้อยแล้วค่ะ 💧" data-i18n="proactive_chip_water">💧 ดื่มน้ำแล้ว</button>
+                        <button type="button" class="proactive-chip" data-reply="ขอบคุณที่เป็นห่วงนะคิระ 💖" data-i18n="proactive_chip_thanks">💖 ขอบคุณนะ</button>
+                        <button type="button" class="proactive-chip" data-reply="คิระ ช่วยสรุปงานให้หน่อยได้ไหม 📝" data-i18n="proactive_chip_summary">📝 สรุปงาน</button>
                     </div>
                     <div class="proactive-reply-input-row">
-                        <input type="text" id="proactive-reply-input" placeholder="พิมพ์ข้อความตอบกลับคิระ..." autocomplete="off">
-                        <button type="button" id="btn-proactive-send-reply" class="proactive-send-btn" title="ส่งข้อความ"><i class="fa-solid fa-paper-plane"></i></button>
+                        <input type="text" id="proactive-reply-input" data-i18n-placeholder="proactive_reply_placeholder" placeholder="พิมพ์ข้อความตอบกลับคิระ..." autocomplete="off">
+                        <button type="button" id="btn-proactive-send-reply" class="proactive-send-btn" data-i18n-title="send_title" title="ส่งข้อความ"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
                 </div>
             </div>
@@ -91,17 +91,17 @@
                 <p class="auth-brand-subtitle">High-Speed Multi-Brain Cloud Engine</p>
                 <div class="auth-live-badge">
                     <span class="live-dot-pulse"></span>
-                    <span>Cloud Engine 2.1 Active • ใช้งานฟรี 150 ข้อความ/วัน</span>
+                    <span data-i18n="cloud_free_quota">Cloud Engine 2.1 Active • ใช้งานฟรี 150 ข้อความ/วัน</span>
                 </div>
             </div>
 
             <!-- Tab Switcher Navigation -->
             <div class="auth-tab-nav">
                 <button type="button" id="tab-login" class="auth-tab-btn active">
-                    <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ
+                    <i class="fa-solid fa-right-to-bracket"></i> <span data-i18n="auth_tab_login">เข้าสู่ระบบ</span>
                 </button>
                 <button type="button" id="tab-register" class="auth-tab-btn">
-                    <i class="fa-solid fa-user-plus"></i> สมัครสมาชิกใหม่
+                    <i class="fa-solid fa-user-plus"></i> <span data-i18n="auth_tab_register">สมัครสมาชิกใหม่</span>
                 </button>
             </div>
 
@@ -111,12 +111,12 @@
                 
                 <div class="auth-input-group">
                     <i class="fa-solid fa-user auth-input-icon"></i>
-                    <input type="text" id="login-username" placeholder="ชื่อผู้ใช้งาน (Username)" autocomplete="off">
+                    <input type="text" id="login-username" data-i18n-placeholder="auth_username_placeholder" placeholder="ชื่อผู้ใช้งาน (Username)" autocomplete="off">
                 </div>
 
                 <div class="auth-input-group password-group">
                     <i class="fa-solid fa-lock auth-input-icon"></i>
-                    <input type="password" id="login-password" placeholder="รหัสผ่าน (Password)">
+                    <input type="password" id="login-password" data-i18n-placeholder="auth_password_placeholder" placeholder="รหัสผ่าน (Password)">
                     <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('login-password', this)" title="แสดง/ซ่อนรหัสผ่าน">
                         <i class="fa-solid fa-eye"></i>
                     </button>
@@ -125,16 +125,16 @@
                 <div class="auth-options-row">
                     <label class="auth-checkbox-label">
                         <input type="checkbox" id="remember-me" checked>
-                        <span>จดจำการเข้าสู่ระบบ</span>
+                        <span data-i18n="auth_remember_me">จดจำการเข้าสู่ระบบ</span>
                     </label>
                 </div>
 
                 <button id="btn-login" class="auth-btn primary">
-                    <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ (Login)
+                    <i class="fa-solid fa-right-to-bracket"></i> <span data-i18n="auth_btn_login">เข้าสู่ระบบ (Login)</span>
                 </button>
 
                 <div class="auth-divider">
-                    <span>หรือเข้าสู่ระบบด้วย</span>
+                    <span data-i18n="auth_or_divider">หรือเข้าสู่ระบบด้วย</span>
                 </div>
 
                 <div class="social-login-grid">
@@ -154,7 +154,7 @@
                 </div>
 
                 <div class="auth-switch-prompt" style="text-align: center; margin-top: 14px; font-size: 0.85rem; color: #94a3b8;">
-                    ยังไม่มีบัญชีใช่ไหม? <a href="#" id="go-to-register" style="color: #38bdf8; font-weight: 600; text-decoration: none;">สมัครสมาชิกใหม่ที่นี่</a>
+                    <span data-i18n="auth_no_account_prompt">ยังไม่มีบัญชีใช่ไหม?</span> <a href="#" id="go-to-register" data-i18n="auth_go_to_register" style="color: #38bdf8; font-weight: 600; text-decoration: none;">สมัครสมาชิกใหม่ที่นี่</a>
                 </div>
             </div>
 
@@ -165,30 +165,30 @@
                 <!-- Username -->
                 <div class="auth-input-group">
                     <i class="fa-solid fa-user-tag auth-input-icon"></i>
-                    <input type="text" id="reg-username" placeholder="ตั้งชื่อบัญชีผู้ใช้ (อย่างน้อย 3 ตัวอักษร)" autocomplete="off">
+                    <input type="text" id="reg-username" data-i18n-placeholder="reg_username_placeholder" placeholder="ตั้งชื่อบัญชีผู้ใช้ (อย่างน้อย 3 ตัวอักษร)" autocomplete="off">
                 </div>
 
                 <!-- Nickname (Personalized Greeting) -->
                 <div class="auth-input-group">
                     <i class="fa-solid fa-heart auth-input-icon" style="color: #ec4899;"></i>
-                    <input type="text" id="reg-nickname" placeholder="ชื่อเล่นที่อยากให้คิระเรียก (เช่น บาส, พี่ท็อป)" autocomplete="off">
+                    <input type="text" id="reg-nickname" data-i18n-placeholder="reg_nickname_placeholder" placeholder="ชื่อเล่นที่อยากให้คิระเรียก (เช่น บาส, พี่ท็อป)" autocomplete="off">
                 </div>
 
                 <!-- Purpose Selector -->
                 <div class="purpose-section">
-                    <label class="purpose-label"><i class="fa-solid fa-compass"></i> วัตถุประสงค์หลักในการใช้งาน:</label>
+                    <label class="purpose-label"><i class="fa-solid fa-compass"></i> <span data-i18n="reg_purpose_label">วัตถุประสงค์หลักในการใช้งาน:</span></label>
                     <div class="purpose-pills-grid">
                         <button type="button" class="purpose-pill active" data-purpose="coding">
-                            <i class="fa-solid fa-code"></i> เขียนโค้ด
+                            <i class="fa-solid fa-code"></i> <span data-i18n="purpose_coding">เขียนโค้ด</span>
                         </button>
                         <button type="button" class="purpose-pill" data-purpose="business">
-                            <i class="fa-solid fa-chart-line"></i> ธุรกิจ/งาน
+                            <i class="fa-solid fa-chart-line"></i> <span data-i18n="purpose_business">ธุรกิจ/งาน</span>
                         </button>
                         <button type="button" class="purpose-pill" data-purpose="education">
-                            <i class="fa-solid fa-graduation-cap"></i> การเรียน
+                            <i class="fa-solid fa-graduation-cap"></i> <span data-i18n="purpose_education">การเรียน</span>
                         </button>
                         <button type="button" class="purpose-pill" data-purpose="assistant">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> ผู้ช่วยทั่วไป
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="purpose_assistant">ผู้ช่วยทั่วไป</span>
                         </button>
                     </div>
                 </div>
@@ -196,7 +196,7 @@
                 <!-- Password with Live Strength Meter -->
                 <div class="auth-input-group password-group" style="margin-bottom: 6px;">
                     <i class="fa-solid fa-lock auth-input-icon"></i>
-                    <input type="password" id="reg-password" placeholder="ตั้งรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)">
+                    <input type="password" id="reg-password" data-i18n-placeholder="reg_password_placeholder" placeholder="ตั้งรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)">
                     <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('reg-password', this)" title="แสดง/ซ่อนรหัสผ่าน">
                         <i class="fa-solid fa-eye"></i>
                     </button>
@@ -213,7 +213,7 @@
                 <!-- Confirm Password -->
                 <div class="auth-input-group password-group" style="margin-top: 10px;">
                     <i class="fa-solid fa-shield-halved auth-input-icon"></i>
-                    <input type="password" id="reg-confirm" placeholder="ยืนยันรหัสผ่านอีกครั้ง">
+                    <input type="password" id="reg-confirm" data-i18n-placeholder="reg_confirm_placeholder" placeholder="ยืนยันรหัสผ่านอีกครั้ง">
                     <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('reg-confirm', this)" title="แสดง/ซ่อนรหัสผ่าน">
                         <i class="fa-solid fa-eye"></i>
                     </button>
@@ -224,16 +224,16 @@
                 <div class="auth-terms-group">
                     <label class="auth-checkbox-label">
                         <input type="checkbox" id="reg-terms" checked>
-                        <span>ยอมรับข้อตกลงและเงื่อนไขการใช้งาน Kira AI</span>
+                        <span data-i18n="reg_terms_label">ยอมรับข้อตกลงและเงื่อนไขการใช้งาน Kira AI</span>
                     </label>
                 </div>
 
                 <button id="btn-register" class="auth-btn register-submit-btn">
-                    <i class="fa-solid fa-user-check"></i> ยืนยันการลงทะเบียน (Register)
+                    <i class="fa-solid fa-user-check"></i> <span data-i18n="reg_btn_submit">ยืนยันการลงทะเบียน (Register)</span>
                 </button>
 
                 <div class="auth-divider">
-                    <span>หรือสมัครสมาชิกด่วนด้วย</span>
+                    <span data-i18n="auth_or_quick_register">หรือสมัครสมาชิกด่วนด้วย</span>
                 </div>
 
                 <div class="social-login-grid">
@@ -253,7 +253,7 @@
                 </div>
 
                 <div class="auth-switch-prompt" style="text-align: center; margin-top: 14px; font-size: 0.85rem; color: #94a3b8;">
-                    มีบัญชีอยู่แล้วใช่ไหม? <a href="#" id="go-to-login" style="color: #38bdf8; font-weight: 600; text-decoration: none;">เข้าสู่ระบบที่นี่</a>
+                    <span data-i18n="auth_has_account_prompt">มีบัญชีอยู่แล้วใช่ไหม?</span> <a href="#" id="go-to-login" data-i18n="auth_go_to_login" style="color: #38bdf8; font-weight: 600; text-decoration: none;">เข้าสู่ระบบที่นี่</a>
                 </div>
             </div>
 
@@ -263,14 +263,14 @@
     <!-- Feedback Modal -->
     <div id="feedback-modal" class="auth-modal" style="display: none;">
         <div class="auth-box">
-            <h2><i class="fa-solid fa-comment-dots"></i> ส่งความคิดเห็นให้ Kira</h2>
-            <p class="auth-subtitle">คำติชมของคุณจะช่วยให้ Kira ฉลาดขึ้นในอนาคต!</p>
+            <h2><i class="fa-solid fa-comment-dots"></i> <span data-i18n="feedback_modal_title">ส่งความคิดเห็นให้ Kira</span></h2>
+            <p class="auth-subtitle" data-i18n="feedback_modal_subtitle">คำติชมของคุณจะช่วยให้ Kira ฉลาดขึ้นในอนาคต!</p>
             <input type="hidden" id="feedback-rating" value="">
             <input type="hidden" id="feedback-bot-msg" value="">
-            <textarea id="feedback-text" placeholder="พิมพ์คำแนะนำ หรือสิ่งที่คุณอยากให้ Kira ปรับปรุง..." rows="4" style="width: 100%; margin: 10px 0; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;"></textarea>
+            <textarea id="feedback-text" data-i18n-placeholder="feedback_placeholder" placeholder="พิมพ์คำแนะนำ หรือสิ่งที่คุณอยากให้ Kira ปรับปรุง..." rows="4" style="width: 100%; margin: 10px 0; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;"></textarea>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button id="btn-submit-feedback" class="auth-btn primary" style="flex: 1;">ส่งรีวิว (Submit)</button>
-                <button id="btn-cancel-feedback" class="auth-btn" style="flex: 1; background: #334155;">ยกเลิก (Cancel)</button>
+                <button id="btn-submit-feedback" class="auth-btn primary" style="flex: 1;" data-i18n="feedback_btn_submit">ส่งรีวิว (Submit)</button>
+                <button id="btn-cancel-feedback" class="auth-btn" style="flex: 1; background: #334155;" data-i18n="feedback_btn_cancel">ยกเลิก (Cancel)</button>
             </div>
         </div>
     </div>
@@ -337,7 +337,7 @@
         <main class="chat-area">
             <header class="chat-header zen-header">
                 <div class="header-left">
-                    <button id="toggle-sidebar" class="menu-btn" title="เปิด/ปิดแถบเมนูด้านข้าง"><i class="fa-solid fa-bars"></i></button>
+                    <button id="toggle-sidebar" class="menu-btn" data-i18n-title="toggle_sidebar_title" title="เปิด/ปิดแถบเมนูด้านข้าง"><i class="fa-solid fa-bars"></i></button>
                     <div class="header-branding">
                         <span class="brand-title">Kira AI</span>
                         <div id="kira-unified-status" class="unified-status-pill" title="ระบบพร้อมใช้งาน 100% | Cloud Multi-Brain Engine พร้อมทำงาน">
@@ -354,10 +354,10 @@
                 <div class="header-center">
                     <div class="user-mode-switcher-wrapper" id="user-mode-switcher-wrapper">
                         <div class="user-mode-pill-group" id="header-user-mode-group">
-                            <button type="button" class="mode-pill-btn active" data-mode="general" title="โหมดทั่วไป (General): ทำงานและถามตอบทั่วไป">
+                            <button type="button" class="mode-pill-btn active" data-mode="general" data-i18n-title="mode_general_title" title="โหมดทั่วไป (General): ทำงานและถามตอบทั่วไป">
                                 <i class="fa-solid fa-house"></i> <span data-i18n="mode_general">ทั่วไป</span>
                             </button>
-                            <button type="button" class="mode-pill-btn" data-mode="executive" title="โหมดผู้บริหาร (Executive): กลยุทธ์ สัญญา ส่งงานในคลิกเดียว">
+                            <button type="button" class="mode-pill-btn" data-mode="executive" data-i18n-title="mode_executive_title" title="โหมดผู้บริหาร (Executive): กลยุทธ์ สัญญา ส่งงานในคลิกเดียว">
                                 <i class="fa-solid fa-briefcase"></i> <span data-i18n="mode_executive">ผู้บริหาร</span>
                             </button>
                             <button type="button" class="mode-pill-btn silver-mode-btn" data-mode="silver_care" title="โหมดวัยเก๋าอุ่นใจ (Silver Care): ตัวหนังสือใหญ่พิเศษ สั่งด้วยเสียง 100% ดูแลสุขภาพและย่อยเรื่องยาก">
@@ -383,7 +383,7 @@
                     </div>
 
                     <!-- 👑 Kira Pro Subscription Button -->
-                    <button title="อัปเกรดเป็น Kira Pro / Founder Pass" id="btn-upgrade-pro" class="header-action-btn upgrade-pro-btn">
+                    <button data-i18n-title="upgrade_pro_title" title="อัปเกรดเป็น Kira Pro / Founder Pass" id="btn-upgrade-pro" class="header-action-btn upgrade-pro-btn">
                         <i class="fa-solid fa-crown text-amber"></i>
                         <span class="upgrade-btn-text">Pro</span>
                         <span class="pro-sparkle-dot"></span>
@@ -440,7 +440,7 @@
                     </button>
 
                     <!-- 🎙️ Kira Real-Time Live Voice Assistant Button -->
-                    <button title="เปิดโหมดสนทนาด้วยเสียงสดสองทิศทาง (Kira Live Voice)" id="btn-live-voice" class="header-action-btn live-voice-btn">
+                    <button data-i18n-title="live_voice_title" title="เปิดโหมดสนทนาด้วยเสียงสดสองทิศทาง (Kira Live Voice)" id="btn-live-voice" class="header-action-btn live-voice-btn">
                         <i class="fa-solid fa-microphone-lines text-rose"></i>
                         <span class="live-voice-btn-text" data-i18n="live_voice">คุยสด</span>
                         <span class="live-voice-pulse-dot"></span>
@@ -449,7 +449,7 @@
                     <!-- PWA Quick Install Header Action (Preserved for compatibility) -->
                     <button id="btn-install-pwa-header" class="header-action-btn pwa-header-install-btn" title="ติดตั้ง Kira AI Web App บนอุปกรณ์" style="display: none;">
                         <i class="fa-solid fa-cloud-arrow-down"></i>
-                        <span class="pwa-header-text">ติดตั้งแอป</span>
+                        <span class="pwa-header-text" data-i18n="pwa_install_btn">ติดตั้งแอป</span>
                     </button>
 
                     <!-- 🛡️ Executive Offline Vault & Network Sync Pill (Only displays when offline or pending sync) -->
@@ -461,7 +461,7 @@
 
                     <!-- Categorized Secondary Tools Dropdown -->
                     <div class="tools-dropdown-wrapper" id="tools-dropdown-wrapper">
-                        <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" title="ศูนย์รวมฟีเจอร์และเครื่องมือ">
+                        <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" data-i18n-title="tools_title" title="ศูนย์รวมฟีเจอร์และเครื่องมือ">
                             <i class="fa-solid fa-toolbox"></i>
                             <span class="tools-btn-text" data-i18n="tools">เครื่องมือ</span>
                             <i class="fa-solid fa-chevron-down tools-caret"></i>
@@ -474,13 +474,13 @@
                             <!-- กลุ่ม 0: การศึกษา & ติวสอบอัจฉริยะ (Academic & Study Co-Pilot) -->
                             <div class="tools-group-section">
                                 <div class="tools-category-label">
-                                    <i class="fa-solid fa-graduation-cap"></i> <span>การศึกษา & ติวสอบ (Study Co-Pilot)</span>
+                                    <i class="fa-solid fa-graduation-cap"></i> <span data-i18n="tools_cat_study">การศึกษา & ติวสอบ (Study Co-Pilot)</span>
                                 </div>
                                 <button class="tools-menu-item" id="btn-tools-study-hub" type="button" title="ห้องติวเข้มและผู้ช่วยการเรียนอัจฉริยะ (Academic & Study Co-Pilot)">
                                     <span class="tool-item-icon icon-cyan"><i class="fa-solid fa-graduation-cap"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">Study Co-Pilot (ห้องติวสอบ)</span>
-                                        <span class="tool-item-desc">สรุปชีทสไลด์ 3 เลเวล, เก็งข้อสอบ, Flashcards, แก้โจทย์</span>
+                                        <span class="tool-item-title" data-i18n="tools_study_hub_title">Study Co-Pilot (ห้องติวสอบ)</span>
+                                        <span class="tool-item-desc" data-i18n="tools_study_hub_desc">สรุปชีทสไลด์ 3 เลเวล, เก็งข้อสอบ, Flashcards, แก้โจทย์</span>
                                     </div>
                                 </button>
                             </div>
@@ -490,69 +490,69 @@
                             <!-- กลุ่ม 1: งาน & กลยุทธ์ -->
                             <div class="tools-group-section">
                                 <div class="tools-category-label">
-                                    <i class="fa-solid fa-briefcase"></i> <span>งาน & กลยุทธ์</span>
+                                    <i class="fa-solid fa-briefcase"></i> <span data-i18n="tools_cat_work">งาน & กลยุทธ์</span>
                                 </div>
                                 <button class="tools-menu-item" type="button" onclick="if (typeof openOfflineVaultModal === 'function') openOfflineVaultModal();" title="คลังข้อมูลนิรภัยออฟไลน์สำหรับผู้บริหาร & ระบบซิงก์สองทิศทาง (Executive Offline Vault)">
                                     <span class="tool-item-icon icon-emerald"><i class="fa-solid fa-vault"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">Executive Offline Vault</span>
-                                        <span class="tool-item-desc">คลังนิรภัยออฟไลน์ & ซิงก์สองทิศทาง PWA</span>
+                                        <span class="tool-item-title" data-i18n="tools_vault_title">Executive Offline Vault</span>
+                                        <span class="tool-item-desc" data-i18n="tools_vault_desc">คลังนิรภัยออฟไลน์ & ซิงก์สองทิศทาง PWA</span>
                                     </div>
                                 </button>
                                 <button class="tools-menu-item" type="button" onclick="if (typeof openMCPHubModal === 'function') openMCPHubModal();" title="Model Context Protocol (MCP) Integration Hub & Tool Studio">
                                     <span class="tool-item-icon icon-cyan"><i class="fa-solid fa-network-wired"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">MCP Integration Hub</span>
-                                        <span class="tool-item-desc">ศูนย์เชื่อมต่อระบบนิเวศ & เครื่องมือ MCP</span>
+                                        <span class="tool-item-title" data-i18n="tools_mcp_title">MCP Integration Hub</span>
+                                        <span class="tool-item-desc" data-i18n="tools_mcp_desc">ศูนย์เชื่อมต่อระบบนิเวศ & เครื่องมือ MCP</span>
                                     </div>
                                 </button>
                                 <button class="tools-menu-item" type="button" onclick="document.getElementById('btn-boardroom-toggle').click();" title="สภาที่ปรึกษา 4 ผู้บริหาร (CEO, CFO, CPO, CTO)">
                                     <span class="tool-item-icon icon-amber"><i class="fa-solid fa-users-viewfinder"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">สภาที่ปรึกษาเสมือน</span>
+                                        <span class="tool-item-title" data-i18n="boardroom_modal_badge">สภาที่ปรึกษาเสมือน</span>
                                         <span class="tool-item-desc">ระดมสมอง 4 ผู้บริหารระดับสูง</span>
                                     </div>
                                 </button>
                                 <button class="tools-menu-item" type="button" onclick="if (typeof openRoundtableArenaModal === 'function') openRoundtableArenaModal();" title="ห้องประชุมโต๊ะกลมจำลองดีเบตสด (Live Executive Roundtable)">
                                     <span class="tool-item-icon icon-purple"><i class="fa-solid fa-microphone-lines"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">ห้องดีเบตสภาสด</span>
-                                        <span class="tool-item-desc">จำลองดีเบต 4 ผู้บริหารพร้อมเคาะค้อนแทรกแซง</span>
+                                        <span class="tool-item-title" data-i18n="tools_roundtable_title">ห้องดีเบตสภาสด</span>
+                                        <span class="tool-item-desc" data-i18n="tools_roundtable_desc">จำลองดีเบต 4 ผู้บริหารพร้อมเคาะค้อนแทรกแซง</span>
                                     </div>
                                 </button>
                                 <button class="tools-menu-item" type="button" onclick="document.getElementById('btn-task-matrix-toggle').click();" title="กระดานภารกิจและดราฟต์ชิ้นงาน">
                                     <span class="tool-item-icon icon-blue"><i class="fa-solid fa-list-check"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">กระดานภารกิจ & ชิ้นงาน</span>
-                                        <span class="tool-item-desc">จัดการ Task Matrix & ดราฟต์อัตโนมัติ</span>
+                                        <span class="tool-item-title" data-i18n="tools_task_matrix_title">กระดานภารกิจ & ชิ้นงาน</span>
+                                        <span class="tool-item-desc" data-i18n="tools_task_matrix_desc">จัดการ Task Matrix & ดราฟต์อัตโนมัติ</span>
                                     </div>
                                 </button>
                                 <button class="tools-menu-item" id="btn-tools-slide-studio" title="สตูดิโอสร้างสไลด์ผู้บริหาร (Executive Slide Deck 16:9)">
                                     <span class="tool-item-icon icon-rose"><i class="fa-solid fa-file-powerpoint"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">สไลด์พรีเซนต์ (16:9)</span>
-                                        <span class="tool-item-desc">สร้างชุดสไลด์ผู้บริหาร Keynote ในคลิกเดียว</span>
+                                        <span class="tool-item-title" data-i18n="tools_slide_title">สไลด์พรีเซนต์ (16:9)</span>
+                                        <span class="tool-item-desc" data-i18n="tools_slide_desc">สร้างชุดสไลด์ผู้บริหาร Keynote ในคลิกเดียว</span>
                                     </div>
                                 </button>
-                                <button class="tools-menu-item" id="btn-tools-viral-share" title="แชร์บทสนทนา & สร้างการ์ดไวรัล">
+                                <button class="tools-menu-item" id="btn-tools-viral-share" data-i18n-title="share_modal_title" title="แชร์บทสนทนา & สร้างการ์ดไวรัล">
                                     <span class="tool-item-icon icon-cyan"><i class="fa-solid fa-share-nodes"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">แชร์สู่โซเชียล & การ์ดไวรัล</span>
-                                        <span class="tool-item-desc">สร้างลิงก์แชร์และดาวน์โหลดการ์ดสรุปสำหรับโซเชียล</span>
+                                        <span class="tool-item-title" data-i18n="tools_viral_share_title">แชร์สู่โซเชียล & การ์ดไวรัล</span>
+                                        <span class="tool-item-desc" data-i18n="tools_viral_share_desc">สร้างลิงก์แชร์และดาวน์โหลดการ์ดสรุปสำหรับโซเชียล</span>
                                     </div>
                                 </button>
                                 <button class="tools-menu-item" id="btn-tools-open-canvas" title="เปิดห้องทำงานคู่ขนาน Interactive Canvas">
                                     <span class="tool-item-icon icon-purple"><i class="fa-solid fa-laptop-code"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">Interactive Canvas</span>
-                                        <span class="tool-item-desc">ห้องทำงานคู่ขนาน พรีวิวเว็บแอพ และเอกสารสด</span>
+                                        <span class="tool-item-title" data-i18n="tools_canvas_title">Interactive Canvas</span>
+                                        <span class="tool-item-desc" data-i18n="tools_canvas_desc">ห้องทำงานคู่ขนาน พรีวิวเว็บแอพ และเอกสารสด</span>
                                     </div>
                                 </button>
                                 <button class="tools-menu-item" id="btn-export" title="ส่งออกบทสนทนา">
                                     <span class="tool-item-icon icon-green"><i class="fa-solid fa-file-export"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">ส่งออกบทสนทนา / PDF</span>
-                                        <span class="tool-item-desc">บันทึกเป็น PDF หรือพิมพ์รายงาน</span>
+                                        <span class="tool-item-title" data-i18n="tools_export_title">ส่งออกบทสนทนา / PDF</span>
+                                        <span class="tool-item-desc" data-i18n="tools_export_desc">บันทึกเป็น PDF หรือพิมพ์รายงาน</span>
                                     </div>
                                 </button>
                             </div>
@@ -562,19 +562,19 @@
                             <!-- กลุ่ม 2: สมอง & ความจำ -->
                             <div class="tools-group-section">
                                 <div class="tools-category-label">
-                                    <i class="fa-solid fa-brain"></i> <span>สมอง & การสื่อสาร</span>
+                                    <i class="fa-solid fa-brain"></i> <span data-i18n="tools_cat_brain">สมอง & การสื่อสาร</span>
                                 </div>
                                 <button class="tools-menu-item" id="btn-graph" title="ผังความจำ">
                                     <span class="tool-item-icon icon-purple"><i class="fa-solid fa-diagram-project"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">ผังความจำ (Knowledge Graph)</span>
-                                        <span class="tool-item-desc">ส่องแผนผังความจำส่วนบุคคล</span>
+                                        <span class="tool-item-title" data-i18n="tools_graph_title">ผังความจำ (Knowledge Graph)</span>
+                                        <span class="tool-item-desc" data-i18n="tools_graph_desc">ส่องแผนผังความจำส่วนบุคคล</span>
                                     </div>
                                 </button>
-                                <button class="tools-menu-item" id="btn-autospeak" title="อ่านออกเสียงอัตโนมัติ">
+                                <button class="tools-menu-item" id="btn-autospeak" data-i18n-title="tools_autospeak_title" title="อ่านออกเสียงอัตโนมัติ">
                                     <span class="tool-item-icon icon-teal"><i class="fa-solid fa-volume-high" id="autospeak-icon"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">อ่านออกเสียงอัตโนมัติ</span>
+                                        <span class="tool-item-title" data-i18n="tools_autospeak_title">อ่านออกเสียงอัตโนมัติ</span>
                                         <span class="tool-item-desc" id="autospeak-status-text">สถานะ: ปิดอยู่</span>
                                     </div>
                                 </button>
@@ -585,27 +585,27 @@
                             <!-- กลุ่ม 3: ระบบ & ตัวช่วย -->
                             <div class="tools-group-section">
                                 <div class="tools-category-label">
-                                    <i class="fa-solid fa-gear"></i> <span>ระบบ & การช่วยเหลือ</span>
+                                    <i class="fa-solid fa-gear"></i> <span data-i18n="tools_cat_system">ระบบ & การช่วยเหลือ</span>
                                 </div>
                                 <button class="tools-menu-item" id="btn-install-app-menu" title="ติดตั้ง Kira AI Web App ลงอุปกรณ์">
                                     <span class="tool-item-icon icon-indigo"><i class="fa-solid fa-mobile-screen-button"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">ติดตั้ง Kira Web App (PWA)</span>
-                                        <span class="tool-item-desc" id="pwa-menu-status">ติดตั้งบนมือถือหรือเดสก์ท็อป</span>
+                                        <span class="tool-item-title" data-i18n="tools_pwa_title">ติดตั้ง Kira Web App (PWA)</span>
+                                        <span class="tool-item-desc" id="pwa-menu-status" data-i18n="tools_pwa_desc">ติดตั้งบนมือถือหรือเดสก์ท็อป</span>
                                     </div>
                                 </button>
                                 <button class="tools-menu-item" id="btn-open-guide" title="คู่มือการใช้งาน">
                                     <span class="tool-item-icon icon-amber"><i class="fa-solid fa-book-open"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">คู่มือการใช้งาน (User Guide)</span>
-                                        <span class="tool-item-desc">ทัวร์ระบบและฟีเจอร์เด่น</span>
+                                        <span class="tool-item-title" data-i18n="tools_guide_title">คู่มือการใช้งาน (User Guide)</span>
+                                        <span class="tool-item-desc" data-i18n="tools_guide_desc">ทัวร์ระบบและฟีเจอร์เด่น</span>
                                     </div>
                                 </button>
                                 <button class="tools-menu-item" id="btn-info" title="เกี่ยวกับ Kira 2.1">
                                     <span class="tool-item-icon icon-slate"><i class="fa-solid fa-circle-info"></i></span>
                                     <div class="tool-item-info">
-                                        <span class="tool-item-title">เกี่ยวกับ Kira AI</span>
-                                        <span class="tool-item-desc">สถาปัตยกรรม & โมเดล Cloud</span>
+                                        <span class="tool-item-title" data-i18n="tools_info_title">เกี่ยวกับ Kira AI</span>
+                                        <span class="tool-item-desc" data-i18n="tools_info_desc">สถาปัตยกรรม & โมเดล Cloud</span>
                                     </div>
                                 </button>
                             </div>
@@ -613,7 +613,7 @@
                     </div>
 
                     <!-- Theme Toggle -->
-                    <button title="สลับโหมดกลางวัน/กลางคืน" id="btn-theme" class="header-action-btn icon-only-btn"><i class="fa-solid fa-moon"></i></button>
+                    <button data-i18n-title="theme_title" title="สลับโหมดกลางวัน/กลางคืน" id="btn-theme" class="header-action-btn icon-only-btn"><i class="fa-solid fa-moon"></i></button>
                     
                     <!-- Settings -->
                     <button title="ตั้งค่าระบบ (Settings) - Ctrl+," id="btn-header-settings" class="header-action-btn icon-only-btn settings-glow-btn"><i class="fa-solid fa-gear"></i></button>
@@ -720,7 +720,7 @@
                 <div id="silver-voice-pill" class="silver-voice-pill" style="display: none;" title="แตะเพื่อพูดคุยด้วยเสียงกับคิระ">
                     <span class="silver-voice-pulse"></span>
                     <i class="fa-solid fa-microphone-lines silver-voice-icon"></i>
-                    <span id="silver-voice-label">แตะที่นี่เพื่อพูดคุยกับคิระ (ไม่ต้องพิมพ์คีย์บอร์ดนะคะ)</span>
+                    <span id="silver-voice-label" data-i18n="silver_voice_label">แตะที่นี่เพื่อพูดคุยกับคิระ (ไม่ต้องพิมพ์คีย์บอร์ดนะคะ)</span>
                 </div>
                 <div id="image-preview-container" style="display: none; position: absolute; bottom: 100%; left: 10px; padding: 10px; background: #1e293b; border-radius: 8px; border: 1px solid #334155; margin-bottom: 10px;">
                     <img id="image-preview" src="" style="max-height: 80px; border-radius: 4px;">
@@ -764,8 +764,8 @@
             <div id="drag-drop-overlay" class="drag-drop-overlay hidden">
                 <div class="drag-drop-box">
                     <i class="fa-solid fa-cloud-arrow-up drag-drop-icon"></i>
-                    <h4>วางรูปภาพที่นี่ (Kira Vision Inspector)</h4>
-                    <p>ปล่อยเพื่อส่งรูปภาพ UI, หน้าจอ หรือ Error Trace ให้คิระวิเคราะห์ทันที</p>
+                    <h4 data-i18n="drag_title">วางรูปภาพที่นี่ (Kira Vision Inspector)</h4>
+                    <p data-i18n="drag_desc">ปล่อยเพื่อส่งรูปภาพ UI, หน้าจอ หรือ Error Trace ให้คิระวิเคราะห์ทันที</p>
                 </div>
             </div>
         </main>
@@ -791,10 +791,10 @@
             </div>
 
             <div class="artifacts-actions">
-                <button id="btn-canvas-split" class="viewport-btn active" title="แบ่งหน้าจอ 50/50 (Split Workspace)"><i class="fa-solid fa-table-columns"></i></button>
-                <button id="btn-canvas-maximize" class="viewport-btn" title="ขยายเต็มจอ (Full Canvas)"><i class="fa-solid fa-expand"></i></button>
-                <button id="btn-viewport-desktop" class="viewport-btn active" title="มุมมองคอมพิวเตอร์ (Desktop)"><i class="fa-solid fa-desktop"></i></button>
-                <button id="btn-viewport-mobile" class="viewport-btn" title="มุมมองมือถือ (Mobile)"><i class="fa-solid fa-mobile-screen"></i></button>
+                <button id="btn-canvas-split" class="viewport-btn active" data-i18n-title="canvas_split_title" title="แบ่งหน้าจอ 50/50 (Split Workspace)"><i class="fa-solid fa-table-columns"></i></button>
+                <button id="btn-canvas-maximize" class="viewport-btn" data-i18n-title="canvas_max_title" title="ขยายเต็มจอ (Full Canvas)"><i class="fa-solid fa-expand"></i></button>
+                <button id="btn-viewport-desktop" class="viewport-btn active" data-i18n-title="canvas_desktop_title" title="มุมมองคอมพิวเตอร์ (Desktop)"><i class="fa-solid fa-desktop"></i></button>
+                <button id="btn-viewport-mobile" class="viewport-btn" data-i18n-title="canvas_mobile_title" title="มุมมองมือถือ (Mobile)"><i class="fa-solid fa-mobile-screen"></i></button>
                 <button id="btn-inspect-canvas" class="action-btn inspect-canvas-btn" title="📷 แคปเจอร์หน้าจอส่งให้ Kira ตรวจสอบ (Live Vision Inspector)"><i class="fa-solid fa-camera"></i> ตรวจ Canvas</button>
                 <button id="btn-share-canvas" class="action-btn canvas-share-btn" title="📤 แชร์ผลงานสู่สาธารณะ (Viral Share Link)"><i class="fa-solid fa-share-nodes text-cyan"></i></button>
                 <button id="btn-download-artifact" class="action-btn" title="ดาวน์โหลดไฟล์ HTML"><i class="fa-solid fa-download"></i></button>
@@ -1017,7 +1017,7 @@
                     </div>
                     <div>
                         <h2 class="settings-modal-title">การตั้งค่าระบบ <span class="settings-version-pill">Settings</span></h2>
-                        <p class="settings-modal-subtitle">ปรับแต่งประสบการณ์ใช้งาน Kira AI 2.1 ตามสไตล์ของคุณ</p>
+                        <p class="settings-modal-subtitle" data-i18n="settings_header_subtitle">ปรับแต่งประสบการณ์ใช้งาน Kira AI 2.1 ตามสไตล์ของคุณ</p>
                     </div>
                 </div>
                 <button type="button" class="settings-modal-close" id="btn-close-settings" title="ปิดหน้าต่าง (Esc)">
@@ -1031,27 +1031,27 @@
                 <nav class="settings-nav" id="settings-nav">
                     <button type="button" class="settings-tab-btn active" data-tab="general">
                         <i class="fa-solid fa-palette"></i>
-                        <span>ทั่วไป & การแสดงผล</span>
+                        <span data-i18n="settings_tab_general">ทั่วไป & การแสดงผล</span>
                     </button>
                     <button type="button" class="settings-tab-btn" data-tab="account">
                         <i class="fa-solid fa-shield-halved"></i>
-                        <span>บัญชี & ความปลอดภัย</span>
+                        <span data-i18n="settings_tab_account">บัญชี & ความปลอดภัย</span>
                     </button>
                     <button type="button" class="settings-tab-btn" data-tab="ai">
                         <i class="fa-solid fa-brain"></i>
-                        <span>โมเดล & คำสั่งกำหนดเอง</span>
+                        <span data-i18n="settings_tab_ai">โมเดล & คำสั่งกำหนดเอง</span>
                     </button>
                     <button type="button" class="settings-tab-btn" data-tab="voice">
                         <i class="fa-solid fa-microphone-lines"></i>
-                        <span>เสียง & พากย์ AI</span>
+                        <span data-i18n="settings_tab_voice">เสียง & พากย์ AI</span>
                     </button>
                     <button type="button" class="settings-tab-btn" data-tab="data">
                         <i class="fa-solid fa-database"></i>
-                        <span>ข้อมูล & โครงข่ายความจำ</span>
+                        <span data-i18n="settings_tab_data">ข้อมูล & โครงข่ายความจำ</span>
                     </button>
                     <button type="button" class="settings-tab-btn" data-tab="pro">
                         <i class="fa-solid fa-flask-vial"></i>
-                        <span>Pro Tools & Labs</span>
+                        <span data-i18n="settings_tab_pro">Pro Tools & Labs</span>
                     </button>
                 </nav>
 
@@ -1071,8 +1071,8 @@
                                     <div class="mode-card-inner">
                                         <div class="mode-icon-circle bg-cyan-soft"><i class="fa-solid fa-house"></i></div>
                                         <div class="mode-info">
-                                            <strong class="mode-name">ทั่วไป (General)</strong>
-                                            <span class="mode-desc">สมดุล คล่องตัว เหมาะกับการทำงานและถามตอบทั่วไป</span>
+                                            <strong class="mode-name" data-i18n="mode_general_name">ทั่วไป (General)</strong>
+                                            <span class="mode-desc" data-i18n="mode_general_desc">สมดุล คล่องตัว เหมาะกับการทำงานและถามตอบทั่วไป</span>
                                         </div>
                                     </div>
                                 </label>
@@ -1081,8 +1081,8 @@
                                     <div class="mode-card-inner">
                                         <div class="mode-icon-circle bg-amber-soft"><i class="fa-solid fa-briefcase"></i></div>
                                         <div class="mode-info">
-                                            <strong class="mode-name">ผู้บริหาร (Executive)</strong>
-                                            <span class="mode-desc">เน้นยุทธศาสตร์ ตรวจสัญญา สรุปส่งงานในคลิกเดียว</span>
+                                            <strong class="mode-name" data-i18n="mode_exec_name">ผู้บริหาร (Executive)</strong>
+                                            <span class="mode-desc" data-i18n="mode_exec_desc">เน้นยุทธศาสตร์ ตรวจสัญญา สรุปส่งงานในคลิกเดียว</span>
                                         </div>
                                     </div>
                                 </label>
@@ -1091,8 +1091,8 @@
                                     <div class="mode-card-inner">
                                         <div class="mode-icon-circle bg-rose-soft"><i class="fa-solid fa-heart-pulse"></i></div>
                                         <div class="mode-info">
-                                            <strong class="mode-name">วัยเก๋าอุ่นใจ (Silver Care)</strong>
-                                            <span class="mode-desc">ตัวหนังสือใหญ่พิเศษ สั่งด้วยเสียง 100% ดูแลสุขภาพ & ย่อยภาษาราชการ</span>
+                                            <strong class="mode-name" data-i18n="mode_silver_name">วัยเก๋าอุ่นใจ (Silver Care)</strong>
+                                            <span class="mode-desc" data-i18n="mode_silver_desc">ตัวหนังสือใหญ่พิเศษ สั่งด้วยเสียง 100% ดูแลสุขภาพ & ย่อยภาษาราชการ</span>
                                         </div>
                                     </div>
                                 </label>
@@ -1100,7 +1100,7 @@
                         </div>
 
                         <div class="settings-group">
-                            <label class="settings-label">ธีมของระบบ (Color Theme)</label>
+                            <label class="settings-label" data-i18n="settings_theme_label">ธีมของระบบ (Color Theme)</label>
                             <div class="theme-options-grid">
                                 <label class="theme-card-option">
                                     <input type="radio" name="setting-theme" value="dark" checked>
@@ -1108,7 +1108,7 @@
                                         <div class="preview-header"></div>
                                         <div class="preview-bubble"></div>
                                     </div>
-                                    <span class="theme-label-text">Dark Nebula (ค่าเริ่มต้น)</span>
+                                    <span class="theme-label-text" data-i18n="theme_dark_name">Dark Nebula (ค่าเริ่มต้น)</span>
                                 </label>
                                 <label class="theme-card-option">
                                     <input type="radio" name="setting-theme" value="light">
@@ -1116,7 +1116,7 @@
                                         <div class="preview-header"></div>
                                         <div class="preview-bubble"></div>
                                     </div>
-                                    <span class="theme-label-text">Light Stellar (สว่าง)</span>
+                                    <span class="theme-label-text" data-i18n="theme_light_name">Light Stellar (สว่าง)</span>
                                 </label>
                                 <label class="theme-card-option">
                                     <input type="radio" name="setting-theme" value="oled">
@@ -1124,7 +1124,7 @@
                                         <div class="preview-header"></div>
                                         <div class="preview-bubble"></div>
                                     </div>
-                                    <span class="theme-label-text">OLED Pure Black (มืดสนิท)</span>
+                                    <span class="theme-label-text" data-i18n="theme_oled_name">OLED Pure Black (มืดสนิท)</span>
                                 </label>
                             </div>
                         </div>
@@ -1132,14 +1132,14 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">ขนาดตัวอักษรในแชท (Chat Font Size)</strong>
-                                    <p class="setting-desc">ปรับขนาดฟอนต์ของข้อความสนทนาเพื่อการอ่านที่สบายตา</p>
+                                    <strong class="setting-title" data-i18n="settings_font_title">ขนาดตัวอักษรในแชท (Chat Font Size)</strong>
+                                    <p class="setting-desc" data-i18n="settings_font_desc">ปรับขนาดฟอนต์ของข้อความสนทนาเพื่อการอ่านที่สบายตา</p>
                                 </div>
                                 <select id="setting-font-size" class="settings-select">
-                                    <option value="small">กะทัดรัด (Small - 13.5px)</option>
-                                    <option value="medium" selected>มาตรฐาน (Medium - 14.5px)</option>
-                                    <option value="large">ตัวใหญ่ (Large - 16px)</option>
-                                    <option value="extra_large">ตัวใหญ่พิเศษสำหรับผู้ใหญ่ (Extra Large - 18px)</option>
+                                    <option value="small" data-i18n="font_opt_small">กะทัดรัด (Small - 13.5px)</option>
+                                    <option value="medium" selected data-i18n="font_opt_medium">มาตรฐาน (Medium - 14.5px)</option>
+                                    <option value="large" data-i18n="font_opt_large">ตัวใหญ่ (Large - 16px)</option>
+                                    <option value="extra_large" data-i18n="font_opt_xlarge">ตัวใหญ่พิเศษสำหรับผู้ใหญ่ (Extra Large - 18px)</option>
                                 </select>
                             </div>
                         </div>
@@ -1147,12 +1147,12 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">การกดปุ่มส่งข้อความ (Enter Key Action)</strong>
-                                    <p class="setting-desc">เลือกพฤติกรรมเมื่อกดปุ่ม Enter ในช่องแชท</p>
+                                    <strong class="setting-title" data-i18n="settings_enter_title">การกดปุ่มส่งข้อความ (Enter Key Action)</strong>
+                                    <p class="setting-desc" data-i18n="settings_enter_desc">เลือกพฤติกรรมเมื่อกดปุ่ม Enter ในช่องแชท</p>
                                 </div>
                                 <select id="setting-enter-send" class="settings-select">
-                                    <option value="enter" selected>กด Enter ส่งข้อความ (Shift+Enter ขึ้นบรรทัดใหม่)</option>
-                                    <option value="shift_enter">กด Shift+Enter ส่งข้อความ (Enter ขึ้นบรรทัดใหม่)</option>
+                                    <option value="enter" selected data-i18n="enter_opt_enter">กด Enter ส่งข้อความ (Shift+Enter ขึ้นบรรทัดใหม่)</option>
+                                    <option value="shift_enter" data-i18n="enter_opt_shift">กด Shift+Enter ส่งข้อความ (Enter ขึ้นบรรทัดใหม่)</option>
                                 </select>
                             </div>
                         </div>
@@ -1160,8 +1160,8 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">เสียงประกอบเอฟเฟกต์ (Sound Effects)</strong>
-                                    <p class="setting-desc">เล่นเสียงนุ่มนวลเมื่อส่งข้อความและรับข้อความใหม่</p>
+                                    <strong class="setting-title" data-i18n="settings_sound_title">เสียงประกอบเอฟเฟกต์ (Sound Effects)</strong>
+                                    <p class="setting-desc" data-i18n="settings_sound_desc">เล่นเสียงนุ่มนวลเมื่อส่งข้อความและรับข้อความใหม่</p>
                                 </div>
                                 <label class="kira-switch">
                                     <input type="checkbox" id="setting-sound-effects" checked>
@@ -1173,8 +1173,8 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">เปิด Live Canvas อัตโนมัติเมื่อตรวจพบโค้ดเว็บ</strong>
-                                    <p class="setting-desc">กางหน้าต่าง Interactive Preview ทันทีที่ AI ตอบโค้ด HTML/JS</p>
+                                    <strong class="setting-title" data-i18n="settings_autocanvas_title">เปิด Live Canvas อัตโนมัติเมื่อตรวจพบโค้ดเว็บ</strong>
+                                    <p class="setting-desc" data-i18n="settings_autocanvas_desc">กางหน้าต่าง Interactive Preview ทันทีที่ AI ตอบโค้ด HTML/JS</p>
                                 </div>
                                 <label class="kira-switch">
                                     <input type="checkbox" id="setting-auto-canvas" checked>
@@ -1212,9 +1212,9 @@
                         </div>
 
                         <div class="settings-group">
-                            <label class="settings-label" for="setting-preferred-name">ชื่อที่ต้องการให้คิระเรียกคุณ (Preferred Name)</label>
+                            <label class="settings-label" for="setting-preferred-name" data-i18n="settings_preferred_name_label">ชื่อที่ต้องการให้คิระเรียกคุณ (Preferred Name)</label>
                             <input type="text" id="setting-preferred-name" class="settings-input" placeholder="เช่น Boss, คุณบอส, พี่เป็ด, คุณหมอ">
-                            <span class="input-hint">Kira จะใช้ชื่อนี้เรียกขานคุณในการสนทนาและทักทายอย่างเป็นกันเอง</span>
+                            <span class="input-hint" data-i18n="settings_preferred_name_hint">Kira จะใช้ชื่อนี้เรียกขานคุณในการสนทนาและทักทายอย่างเป็นกันเอง</span>
                         </div>
 
                         <h3 class="panel-section-title" style="margin-top: 25px;"><i class="fa-solid fa-key text-amber"></i> เปลี่ยนรหัสผ่าน (Change Password)</h3>
@@ -1245,8 +1245,8 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">โมเดลเริ่มต้นเมื่อเปิดระบบ (Default AI Model)</strong>
-                                    <p class="setting-desc">เลือกโมเดลที่ต้องการให้ระบบเรียกใช้เป็นค่าเริ่มต้น</p>
+                                    <strong class="setting-title" data-i18n="settings_default_model_title">โมเดลเริ่มต้นเมื่อเปิดระบบ (Default AI Model)</strong>
+                                    <p class="setting-desc" data-i18n="settings_default_model_desc">เลือกโมเดลที่ต้องการให้ระบบเรียกใช้เป็นค่าเริ่มต้น</p>
                                 </div>
                                 <select id="setting-default-model" class="settings-select">
                                     <option value="2.1-reasoning">Kira 2.1 Reasoning</option>
@@ -1264,9 +1264,9 @@
                                     <p class="setting-desc">ปรับรูปแบบการตอบสนองและอารมณ์ของ AI</p>
                                 </div>
                                 <select id="setting-persona" class="settings-select">
-                                    <option value="default">ทางการ สุภาพ</option>
-                                    <option value="friend">เป็นกันเอง สบายๆ</option>
-                                    <option value="manager">มุ่งเน้นผลลัพธ์ ตรงประเด็น</option>
+                                    <option value="default" data-i18n="persona_formal">ทางการ สุภาพ</option>
+                                    <option value="friend" data-i18n="persona_casual">เป็นกันเอง สบายๆ</option>
+                                    <option value="manager" data-i18n="persona_direct">มุ่งเน้นผลลัพธ์ ตรงประเด็น</option>
                                     <option value="coder">วิศวกรซอฟต์แวร์ เน้นโค้ดและตรรกะ</option>
                                     <option value="researcher">นักวิจัยวิชาการ เจาะลึกและอ้างอิง</option>
                                 </select>
@@ -1742,9 +1742,9 @@
         <div class="boardroom-info-card glass-panel">
             <div class="boardroom-info-header">
                 <div class="boardroom-info-title-group">
-                    <div class="boardroom-info-badge"><i class="fa-solid fa-users-viewfinder"></i> สภาที่ปรึกษาเสมือน</div>
+                    <div class="boardroom-info-badge"><i class="fa-solid fa-users-viewfinder"></i> <span data-i18n="boardroom_modal_badge">สภาที่ปรึกษาเสมือน</span></div>
                     <h2>Kira Virtual Boardroom</h2>
-                    <p class="boardroom-info-desc">ระดมสมอง 4 ขุนพลผู้บริหารระดับสูง ร่วมวิเคราะห์ ถกเถียง หักล้าง และสังเคราะห์มติเอกฉันท์แบบ 360 องศา</p>
+                    <p class="boardroom-info-desc" data-i18n="boardroom_modal_desc">ระดมสมอง 4 ขุนพลผู้บริหารระดับสูง ร่วมวิเคราะห์ ถกเถียง หักล้าง และสังเคราะห์มติเอกฉันท์แบบ 360 องศา</p>
                 </div>
                 <button id="btn-close-boardroom-info" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -1755,7 +1755,7 @@
                     <div class="exec-card-header">
                         <span class="exec-portrait">👔</span>
                         <div class="exec-meta">
-                            <span class="exec-role-tag role-gold">CEO • วิสัยทัศน์ & กลยุทธ์</span>
+                            <span class="exec-role-tag role-gold" data-i18n="boardroom_ceo_role">CEO • วิสัยทัศน์ & กลยุทธ์</span>
                             <h4>คุณคิรินทร์</h4>
                         </div>
                     </div>
@@ -1770,7 +1770,7 @@
                     <div class="exec-card-header">
                         <span class="exec-portrait">💰</span>
                         <div class="exec-meta">
-                            <span class="exec-role-tag role-green">CFO • การเงิน & ความเสี่ยง</span>
+                            <span class="exec-role-tag role-green" data-i18n="boardroom_cfo_role">CFO • การเงิน & ความเสี่ยง</span>
                             <h4>คุณเมธัส</h4>
                         </div>
                     </div>
@@ -1785,7 +1785,7 @@
                     <div class="exec-card-header">
                         <span class="exec-portrait">🎨</span>
                         <div class="exec-meta">
-                            <span class="exec-role-tag role-pink">CPO • ประสบการณ์ผู้ใช้ & ตลาด</span>
+                            <span class="exec-role-tag role-pink" data-i18n="boardroom_cpo_role">CPO • ประสบการณ์ผู้ใช้ & ตลาด</span>
                             <h4>คุณรินดา</h4>
                         </div>
                     </div>
@@ -1800,7 +1800,7 @@
                     <div class="exec-card-header">
                         <span class="exec-portrait">🛡️</span>
                         <div class="exec-meta">
-                            <span class="exec-role-tag role-cyan">CTO • สถาปัตยกรรม & เทคโนโลยี</span>
+                            <span class="exec-role-tag role-cyan" data-i18n="boardroom_cto_role">CTO • สถาปัตยกรรม & เทคโนโลยี</span>
                             <h4>คุณธนิน</h4>
                         </div>
                     </div>
@@ -1814,23 +1814,23 @@
             <div class="boardroom-workflow-bar">
                 <div class="workflow-step">
                     <span class="step-num">1</span>
-                    <span class="step-label">แถลงมุมมองเดี่ยว 4 ด้าน</span>
+                    <span class="step-label" data-i18n="boardroom_step_1">แถลงมุมมองเดี่ยว 4 ด้าน</span>
                 </div>
                 <div class="workflow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
                 <div class="workflow-step">
                     <span class="step-num">2</span>
-                    <span class="step-label">การถกเถียง & หักล้างจุดอ่อน</span>
+                    <span class="step-label" data-i18n="boardroom_step_2">การถกเถียง & หักล้างจุดอ่อน</span>
                 </div>
                 <div class="workflow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
                 <div class="workflow-step highlight">
                     <span class="step-num">3</span>
-                    <span class="step-label">มติเอกฉันท์ & แผน 90 วัน</span>
+                    <span class="step-label" data-i18n="boardroom_step_3">มติเอกฉันท์ & แผน 90 วัน</span>
                 </div>
             </div>
 
             <div class="boardroom-info-footer">
                 <button id="btn-start-boardroom-from-modal" class="boardroom-primary-btn">
-                    <i class="fa-solid fa-gavel"></i> เริ่มเปิดวาระการประชุมทันที
+                    <i class="fa-solid fa-gavel"></i> <span data-i18n="boardroom_btn_start">เริ่มเปิดวาระการประชุมทันที</span>
                 </button>
             </div>
         </div>
@@ -1845,8 +1845,8 @@
                     <div class="debate-header-badge">
                         <span class="live-dot pulse-red"></span> LIVE ROUNDTABLE ARENA
                     </div>
-                    <h2 class="debate-header-title">สภาผู้บริหารจำลองสถานการณ์และดีเบตสด</h2>
-                    <p class="debate-header-desc">วิเคราะห์เชิงลึก ถกเถียงสด 4 มุมมอง พร้อมแท่นเคาะค้อนสั่งการของท่านประธาน</p>
+                    <h2 class="debate-header-title" data-i18n="debate_header_title">สภาผู้บริหารจำลองสถานการณ์และดีเบตสด</h2>
+                    <p class="debate-header-desc" data-i18n="debate_header_desc">วิเคราะห์เชิงลึก ถกเถียงสด 4 มุมมอง พร้อมแท่นเคาะค้อนสั่งการของท่านประธาน</p>
                 </div>
                 <div class="debate-header-actions">
                     <button id="btn-close-debate-modal" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
@@ -1857,7 +1857,7 @@
             <div class="debate-setup-bar">
                 <div class="debate-input-group">
                     <label for="debate-topic-input"><i class="fa-solid fa-bullseye"></i> วาระการประชุม / โจทย์ธุรกิจ:</label>
-                    <input type="text" id="debate-topic-input" class="debate-topic-input" placeholder="เช่น แผนการเปิดตัวผลิตภัณฑ์ใหม่ใน 30 วัน, การลดงบประมาณ 50%, หรือกลยุทธ์เจาะตลาด B2B...">
+                    <input type="text" id="debate-topic-input" class="debate-topic-input" data-i18n-placeholder="debate_topic_placeholder" placeholder="เช่น แผนการเปิดตัวผลิตภัณฑ์ใหม่ใน 30 วัน, การลดงบประมาณ 50%, หรือกลยุทธ์เจาะตลาด B2B...">
                 </div>
                 <div class="debate-angle-group">
                     <label for="debate-angle-select"><i class="fa-solid fa-compass"></i> มุมมองยุทธศาสตร์:</label>
@@ -2033,8 +2033,8 @@
             <div class="task-matrix-header">
                 <div class="task-matrix-title-group">
                     <div class="task-matrix-badge"><i class="fa-solid fa-list-check"></i> Kira Omni-Task Suite</div>
-                    <h2>กระดานงานและเมทริกซ์ 4 มิติ (Task Matrix)</h2>
-                    <p class="task-matrix-subtitle">ระบบปฏิบัติการงานอัจฉริยะ: ร่างชิ้นงานจริง (Auto-Deliverable) & วิเคราะห์ความคุ้มค่า/ความเสี่ยงโดยสภา 4 ผู้บริหาร</p>
+                    <h2 data-i18n="task_matrix_modal_title">กระดานงานและเมทริกซ์ 4 มิติ (Task Matrix)</h2>
+                    <p class="task-matrix-subtitle" data-i18n="task_matrix_modal_desc">ระบบปฏิบัติการงานอัจฉริยะ: ร่างชิ้นงานจริง (Auto-Deliverable) & วิเคราะห์ความคุ้มค่า/ความเสี่ยงโดยสภา 4 ผู้บริหาร</p>
                 </div>
                 <div class="task-matrix-header-actions">
                     <button id="btn-quick-new-task" class="action-btn primary-action-btn" title="สร้างภารกิจใหม่"><i class="fa-solid fa-plus"></i> เพิ่มงานใหม่</button>
@@ -2517,7 +2517,7 @@
                         <input type="text" id="mcp-tool-search-input" placeholder="ค้นหาเครื่องมือ MCP เช่น financial, workspace, diagnostics...">
                     </div>
                     <div class="mcp-category-filters">
-                        <button type="button" class="mcp-cat-btn active" data-cat="all">ทั้งหมด</button>
+                        <button type="button" class="mcp-cat-btn active" data-cat="all" data-i18n="vault_cat_all">ทั้งหมด</button>
                         <button type="button" class="mcp-cat-btn" data-cat="financial">การเงิน & ผู้บริหาร</button>
                         <button type="button" class="mcp-cat-btn" data-cat="workspace">โปรเจกต์ & ไฟล์</button>
                         <button type="button" class="mcp-cat-btn" data-cat="system">สุขภาพระบบ</button>
@@ -2666,7 +2666,7 @@
                 <div class="vault-title-group">
                     <div class="vault-badge"><i class="fa-solid fa-shield-halved text-emerald"></i> Executive Local-First Vault</div>
                     <h2>Executive Offline Vault & Mobile PWA Sync</h2>
-                    <p class="vault-subtitle">คลังข้อมูลนิรภัยออฟไลน์สำหรับผู้บริหาร ทำงานได้ 100% แม้ไม่มีอินเทอร์เน็ต พร้อมระบบซิงก์สองทิศทางเมื่อกลับมาออนไลน์</p>
+                    <p class="vault-subtitle" data-i18n="vault_subtitle">คลังข้อมูลนิรภัยออฟไลน์สำหรับผู้บริหาร ทำงานได้ 100% แม้ไม่มีอินเทอร์เน็ต พร้อมระบบซิงก์สองทิศทางเมื่อกลับมาออนไลน์</p>
                 </div>
                 <button id="btn-close-vault-modal" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -2685,7 +2685,7 @@
                 </div>
                 <div class="vault-status-right">
                     <button type="button" id="btn-vault-manual-sync" class="btn-vault-sync-action">
-                        <i class="fa-solid fa-arrows-rotate"></i> <span>ซิงก์ข้อมูลทันที</span>
+                        <i class="fa-solid fa-arrows-rotate"></i> <span data-i18n="vault_btn_sync">ซิงก์ข้อมูลทันที</span>
                     </button>
                 </div>
             </div>
@@ -2696,13 +2696,13 @@
                     <i class="fa-solid fa-box-archive"></i> <span>คลังเอกสารนิรภัย (<span id="vault-catalog-count">0</span>)</span>
                 </button>
                 <button type="button" class="vault-tab-btn" data-tab="memo">
-                    <i class="fa-solid fa-pen-to-square"></i> <span>สร้างบันทึก / คำสั่งด่วน</span>
+                    <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="vault_tab_memo">สร้างบันทึก / คำสั่งด่วน</span>
                 </button>
                 <button type="button" class="vault-tab-btn" data-tab="outbox">
                     <i class="fa-solid fa-clock-rotate-left"></i> <span>คิวรอซิงก์ Outbox (<span id="vault-outbox-count">0</span>)</span>
                 </button>
                 <button type="button" class="vault-tab-btn" data-tab="security">
-                    <i class="fa-solid fa-lock"></i> <span>ความปลอดภัย & สำรองข้อมูล</span>
+                    <i class="fa-solid fa-lock"></i> <span data-i18n="vault_tab_security">ความปลอดภัย & สำรองข้อมูล</span>
                 </button>
             </div>
 
@@ -2711,14 +2711,14 @@
                 <div class="vault-pane-toolbar">
                     <div class="vault-search-wrap">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="vault-search-input" placeholder="ค้นหาบันทึก คำสั่งการ หรือเอกสารในคลังนิรภัย...">
+                        <input type="text" id="vault-search-input" data-i18n-placeholder="vault_search_placeholder" placeholder="ค้นหาบันทึก คำสั่งการ หรือเอกสารในคลังนิรภัย...">
                     </div>
                     <div class="vault-category-filters">
-                        <button type="button" class="vault-cat-btn active" data-cat="all">ทั้งหมด</button>
-                        <button type="button" class="vault-cat-btn" data-cat="memo">บันทึก & คำสั่งการ</button>
-                        <button type="button" class="vault-cat-btn" data-cat="boardroom_minutes">มติสภา 4 บริหาร</button>
-                        <button type="button" class="vault-cat-btn" data-cat="slide_deck">ชุดสไลด์ (16:9)</button>
-                        <button type="button" class="vault-cat-btn" data-cat="task">ภารกิจ & ชิ้นงาน</button>
+                        <button type="button" class="vault-cat-btn active" data-cat="all" data-i18n="vault_cat_all">ทั้งหมด</button>
+                        <button type="button" class="vault-cat-btn" data-cat="memo" data-i18n="vault_cat_memo">บันทึก & คำสั่งการ</button>
+                        <button type="button" class="vault-cat-btn" data-cat="boardroom_minutes" data-i18n="vault_cat_minutes">มติสภา 4 บริหาร</button>
+                        <button type="button" class="vault-cat-btn" data-cat="slide_deck" data-i18n="vault_cat_slides">ชุดสไลด์ (16:9)</button>
+                        <button type="button" class="vault-cat-btn" data-cat="task" data-i18n="vault_cat_tasks">ภารกิจ & ชิ้นงาน</button>
                     </div>
                 </div>
 
@@ -2907,8 +2907,8 @@
             <div class="mindmap-top-bar">
                 <div class="mindmap-title-wrap">
                     <div class="mindmap-badge"><i class="fa-solid fa-diagram-project"></i> <span>Kira Neural Map</span></div>
-                    <h3 id="mindmap-title" class="mindmap-title">ผังความคิดสรุปบทสนทนา</h3>
-                    <span id="mindmap-stats" class="mindmap-stats-pill">0 กิ่ง • 0 ข้อย่อย</span>
+                    <h3 id="mindmap-title" class="mindmap-title" data-i18n="mindmap_title_default">ผังความคิดสรุปบทสนทนา</h3>
+                    <span id="mindmap-stats" class="mindmap-stats-pill" data-i18n="mindmap_stats_init">0 กิ่ง • 0 ข้อย่อย</span>
                 </div>
                 <div class="mindmap-actions-group">
                     <button type="button" id="btn-mindmap-ai-refine" class="mindmap-bar-btn secondary" title="ให้สมองกล AI จัดโครงสร้างเชิงลึกใหม่">
@@ -2978,13 +2978,13 @@
             </div>
             <div class="pwa-banner-details">
                 <div class="pwa-banner-title">
-                    <span class="pwa-title-text">ติดตั้งแอป Kira AI</span>
+                    <span class="pwa-title-text" data-i18n="pwa_modal_title">ติดตั้งแอป Kira AI</span>
                     <span class="pwa-badge-v2">Web App</span>
                 </div>
-                <div class="pwa-banner-desc">เปิดใช้งานแบบเต็มจอ รวดเร็ว และเข้าถึงง่ายจากหน้าจอของคุณ</div>
+                <div class="pwa-banner-desc" data-i18n="pwa_modal_desc">เปิดใช้งานแบบเต็มจอ รวดเร็ว และเข้าถึงง่ายจากหน้าจอของคุณ</div>
             </div>
             <div class="pwa-banner-actions">
-                <button id="pwa-btn-dismiss" class="pwa-banner-btn-secondary" title="ปิดไว้ก่อน">ไว้ทีหลัง</button>
+                <button id="pwa-btn-dismiss" class="pwa-banner-btn-secondary" data-i18n-title="pwa_btn_dismiss" data-i18n="pwa_btn_dismiss" title="ปิดไว้ก่อน">ไว้ทีหลัง</button>
                 <button id="pwa-btn-install" class="pwa-banner-btn-primary" title="ติดตั้งแอปพลิเคชัน"><i class="fa-solid fa-cloud-arrow-down"></i> ติดตั้ง</button>
             </div>
         </div>
@@ -3102,26 +3102,26 @@
                 <!-- Share Type Selector -->
                 <div class="share-type-selector">
                     <button type="button" id="share-tab-chat" class="share-type-btn active">
-                        <i class="fa-solid fa-comments"></i> แชร์บทสนทนานี้
+                        <i class="fa-solid fa-comments"></i> <span data-i18n="share_tab_chat">แชร์บทสนทนานี้</span>
                     </button>
                     <button type="button" id="share-tab-canvas" class="share-type-btn">
-                        <i class="fa-solid fa-laptop-code"></i> แชร์ผลงาน Canvas
+                        <i class="fa-solid fa-laptop-code"></i> <span data-i18n="share_tab_canvas">แชร์ผลงาน Canvas</span>
                     </button>
                 </div>
 
                 <!-- Title Input -->
                 <div class="share-input-group">
-                    <label for="share-title-input"><i class="fa-solid fa-heading"></i> หัวข้อผลงานหรือบทสนทนา:</label>
-                    <input type="text" id="share-title-input" class="share-text-input" placeholder="ระบุหัวข้อที่ต้องการแชร์...">
+                    <label for="share-title-input"><i class="fa-solid fa-heading"></i> <span data-i18n="share_title_label">หัวข้อผลงานหรือบทสนทนา:</span></label>
+                    <input type="text" id="share-title-input" class="share-text-input" data-i18n-placeholder="share_title_placeholder" placeholder="ระบุหัวข้อที่ต้องการแชร์...">
                 </div>
 
                 <!-- Public Link Box -->
                 <div class="share-link-section">
-                    <label><i class="fa-solid fa-link"></i> ลิงก์สาธารณะ (Public URL):</label>
+                    <label><i class="fa-solid fa-link"></i> <span data-i18n="share_link_label">ลิงก์สาธารณะ (Public URL):</span></label>
                     <div class="share-link-box">
-                        <input type="text" id="share-link-result" class="share-link-input" readonly placeholder="กำลังสร้างลิงก์แชร์...">
+                        <input type="text" id="share-link-result" class="share-link-input" readonly data-i18n-placeholder="share_generating_link" placeholder="กำลังสร้างลิงก์แชร์...">
                         <button type="button" id="btn-copy-share-url" class="btn-copy-url">
-                            <i class="fa-regular fa-copy"></i> คัดลอก
+                            <i class="fa-regular fa-copy"></i> <span data-i18n="copy">คัดลอก</span>
                         </button>
                     </div>
                 </div>
@@ -3147,7 +3147,7 @@
                             <span>การ์ดรูปภาพไวรัลสำหรับโพสต์โซเชียล (1200x630 Social Card)</span>
                         </div>
                         <button type="button" id="btn-download-viral-card" class="btn-download-card">
-                            <i class="fa-solid fa-download"></i> ดาวน์โหลดการ์ด (PNG)
+                            <i class="fa-solid fa-download"></i> <span data-i18n="download_card_png">ดาวน์โหลดการ์ด (PNG)</span>
                         </button>
                     </div>
                     <div class="viral-card-preview-wrap">
@@ -3169,7 +3169,7 @@
                     </div>
                     <div>
                         <h2 class="study-hub-title">Kira Study Co-Pilot <span class="study-badge">Academic 2.5</span></h2>
-                        <p class="study-hub-subtitle">ผู้ช่วยติวเข้ม สรุปชีทสไลด์ เก็งข้อสอบ และเตรียมความพร้อมก่อนเข้าห้องเรียน</p>
+                        <p class="study-hub-subtitle" data-i18n="study_modal_subtitle">ผู้ช่วยติวเข้ม สรุปชีทสไลด์ เก็งข้อสอบ และเตรียมความพร้อมก่อนเข้าห้องเรียน</p>
                     </div>
                 </div>
                 <button type="button" class="modal-close-btn" id="btn-close-study-hub" title="ปิดหน้าต่าง">&times;</button>
@@ -3178,19 +3178,19 @@
             <!-- Tool Mode Tabs -->
             <div class="study-tabs-nav">
                 <button type="button" class="study-tab-btn active" data-tab="summarize">
-                    <i class="fa-solid fa-file-lines"></i> สรุปสไลด์ 3 เลเวล
+                    <i class="fa-solid fa-file-lines"></i> <span data-i18n="study_tab_summarize">สรุปสไลด์ 3 เลเวล</span>
                 </button>
                 <button type="button" class="study-tab-btn" data-tab="exam_prep">
-                    <i class="fa-solid fa-bullseye"></i> เก็งข้อสอบ 5 ข้อ
+                    <i class="fa-solid fa-bullseye"></i> <span data-i18n="study_tab_exam">เก็งข้อสอบ 5 ข้อ</span>
                 </button>
                 <button type="button" class="study-tab-btn" data-tab="flashcards">
-                    <i class="fa-solid fa-layer-group"></i> Flashcards ทบทวน
+                    <i class="fa-solid fa-layer-group"></i> <span data-i18n="study_tab_flashcards">Flashcards ทบทวน</span>
                 </button>
                 <button type="button" class="study-tab-btn" data-tab="polish_report">
-                    <i class="fa-solid fa-feather-pointed"></i> ขัดเกลารายงาน
+                    <i class="fa-solid fa-feather-pointed"></i> <span data-i18n="study_tab_polish">ขัดเกลารายงาน</span>
                 </button>
                 <button type="button" class="study-tab-btn" data-tab="problem_solver">
-                    <i class="fa-solid fa-calculator"></i> แก้โจทย์ทีละสเต็ป
+                    <i class="fa-solid fa-calculator"></i> <span data-i18n="study_tab_problem">แก้โจทย์ทีละสเต็ป</span>
                 </button>
             </div>
 
@@ -3200,12 +3200,12 @@
                 <div class="study-input-panel">
                     <div class="study-form-group">
                         <label for="study-subject-input"><i class="fa-solid fa-bookmark text-purple"></i> ชื่อวิชา หรือหัวข้อบทเรียน:</label>
-                        <input type="text" id="study-subject-input" class="study-text-input" placeholder="เช่น Computer Science, Macroeconomics, ฟิสิกส์ เรื่องแรงและกลศาสตร์...">
+                        <input type="text" id="study-subject-input" class="study-text-input" data-i18n-placeholder="study_subject_placeholder" placeholder="เช่น Computer Science, Macroeconomics, ฟิสิกส์ เรื่องแรงและกลศาสตร์...">
                     </div>
                     <div class="study-form-group">
                         <div class="study-label-row">
                             <label for="study-content-input"><i class="fa-solid fa-align-left text-cyan"></i> เนื้อหาบทเรียน / ข้อความสไลด์ / โจทย์:</label>
-                            <button type="button" class="study-paste-hint" id="btn-paste-study-content"><i class="fa-regular fa-clipboard"></i> วางข้อความ</button>
+                            <button type="button" class="study-paste-hint" id="btn-paste-study-content"><i class="fa-regular fa-clipboard"></i> <span data-i18n="study_btn_paste">วางข้อความ</span></button>
                         </div>
                         <textarea id="study-content-input" class="study-textarea" rows="8" placeholder="วางเนื้อหาจากสไลด์ PDF, ข้อความเลกเชอร์, การบ้าน หรือโจทย์ที่ต้องการให้คิระช่วยวิเคราะห์..."></textarea>
                     </div>
@@ -3213,13 +3213,13 @@
                         <div class="study-option-item">
                             <label for="study-difficulty-select"><i class="fa-solid fa-sliders"></i> ระดับการศึกษา:</label>
                             <select id="study-difficulty-select" class="study-select">
-                                <option value="basic">ระดับมัธยม / พื้นฐาน (Fundamental)</option>
-                                <option value="intermediate" selected>ระดับมหาวิทยาลัย (Undergraduate)</option>
-                                <option value="advanced">ระดับบัณฑิตศึกษา / เชิงลึก (Advanced)</option>
+                                <option value="basic" data-i18n="study_diff_basic">ระดับมัธยม / พื้นฐาน (Fundamental)</option>
+                                <option value="intermediate" selected data-i18n="study_diff_intermediate">ระดับมหาวิทยาลัย (Undergraduate)</option>
+                                <option value="advanced" data-i18n="study_diff_advanced">ระดับบัณฑิตศึกษา / เชิงลึก (Advanced)</option>
                             </select>
                         </div>
                         <button type="button" id="btn-generate-study" class="btn-generate-study">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> <span>เริ่มประมวลผล</span>
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="study_btn_generate">เริ่มประมวลผล</span>
                         </button>
                     </div>
                 </div>
@@ -3234,18 +3234,18 @@
                             <button type="button" class="study-action-btn" id="btn-copy-study-result" title="คัดลอกผลลัพธ์">
                                 <i class="fa-regular fa-copy"></i>
                             </button>
-                            <button type="button" class="study-action-btn" id="btn-study-to-canvas" title="เปิดใน Split Canvas เพื่อจดบันทึกและพรีวิวสด">
-                                <i class="fa-solid fa-laptop-code text-cyan"></i> เปิดใน Canvas
+                            <button type="button" class="study-action-btn" id="btn-study-to-canvas" data-i18n-title="study_canvas_tooltip" title="เปิดใน Split Canvas เพื่อจดบันทึกและพรีวิวสด">
+                                <i class="fa-solid fa-laptop-code text-cyan"></i> <span data-i18n="study_btn_canvas">เปิดใน Canvas</span>
                             </button>
-                            <button type="button" class="study-action-btn" id="btn-study-to-mindmap" title="แปลงเป็นผังความคิด Living Mind Map">
-                                <i class="fa-solid fa-diagram-project text-purple"></i> สร้าง Mind Map
+                            <button type="button" class="study-action-btn" id="btn-study-to-mindmap" data-i18n-title="study_mindmap_tooltip" title="แปลงเป็นผังความคิด Living Mind Map">
+                                <i class="fa-solid fa-diagram-project text-purple"></i> <span data-i18n="study_btn_mindmap">สร้าง Mind Map</span>
                             </button>
                         </div>
                     </div>
                     <div class="study-result-container" id="study-result-container">
                         <div class="study-placeholder">
                             <i class="fa-solid fa-book-open-reader study-empty-icon"></i>
-                            <p class="study-empty-text">เลือกโหมดที่ต้องการ แล้ววางเนื้อหาบทเรียนเพื่อเริ่มติวเข้มกับคิระได้ทันทีค่ะ 🌸</p>
+                            <p class="study-empty-text" data-i18n="study_empty_placeholder">เลือกโหมดที่ต้องการ แล้ววางเนื้อหาบทเรียนเพื่อเริ่มติวเข้มกับคิระได้ทันทีค่ะ 🌸</p>
                         </div>
                     </div>
                 </div>

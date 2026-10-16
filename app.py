@@ -187,6 +187,7 @@ class StudyRequest(BaseModel):
     difficulty: Optional[str] = "intermediate"
     subject: Optional[str] = "ทั่วไป"
     username: Optional[str] = "student"
+    ui_lang: Optional[str] = "th"
 
 @app.post("/api/study/generate")
 async def generate_study_material(payload: StudyRequest, request: Request):
@@ -203,6 +204,7 @@ async def generate_study_material(payload: StudyRequest, request: Request):
     action = payload.action or "summarize"
     diff = payload.difficulty or "intermediate"
     subject = payload.subject or "ทั่วไป"
+    ui_lang = (payload.ui_lang or "th").lower()
 
     if action == "summarize":
         system_instruction = f"""คุณคือ "คิระ (Kira) 🎓 Academic & Study Master" สุดยอดผู้ช่วยสรุปบทเรียนและสไลด์เลกเชอร์สำหรับบอสและนักศึกษา
@@ -248,6 +250,16 @@ async def generate_study_material(payload: StudyRequest, request: Request):
 ระดับความยาก: {diff} | หมวดวิชา: {subject}"""
     else:
         system_instruction = "คุณคือคิระ ผู้ช่วยการศึกษา กรุณาวิเคราะห์และให้คำแนะนำอย่างเชี่ยวชาญ"
+
+    # Multi-Language Directive Injection for Study Material
+    if ui_lang == "ja":
+        system_instruction += "\n\n[Language Directive - 日本語 (JA)]:\n- 出力する教材（要約、問題、解説、カード）はすべて自然で丁寧な日本語（敬語 / です・ます調）で作成してください。"
+    elif ui_lang == "en":
+        system_instruction += "\n\n[Language Directive - ENGLISH (EN)]:\n- Output all study materials, summaries, exam questions, and flashcards in fluent, clear, and professional English formatted in Markdown."
+    elif ui_lang == "zh":
+        system_instruction += "\n\n[Language Directive - 中文 (ZH)]:\n- 请使用得体、严谨且通顺的中文（简体中文 / Markdown格式）生成所有学习材料、题目、解析与总结。"
+    elif ui_lang == "ko":
+        system_instruction += "\n\n[Language Directive - 한국어 (KO)]:\n- 모든 학습 자료, 요약, 시험 문제, 플래시카드는 정중하고 자연스러운 한국어(존댓말 / Markdown)로 작성해 주세요."
 
     res_content = ""
     tz = timezone(timedelta(hours=7))
@@ -375,6 +387,7 @@ async def get_study_history(username: Optional[str] = "student"):
 class MindMapRequest(BaseModel):
     content: str
     max_branches: Optional[int] = 6
+    ui_lang: Optional[str] = "th"
 
 @app.post("/api/generate-mindmap")
 async def generate_mindmap(payload: MindMapRequest, request: Request):
@@ -386,7 +399,18 @@ async def generate_mindmap(payload: MindMapRequest, request: Request):
         raise HTTPException(status_code=400, detail="Content cannot be empty")
     if len(text) > 25000:
         text = text[:25000]
-    
+
+    ui_lang = (payload.ui_lang or "th").lower()
+    target_lang = "ภาษาไทย"
+    if ui_lang == "ja":
+        target_lang = "日本語 (Japanese)"
+    elif ui_lang == "en":
+        target_lang = "English"
+    elif ui_lang == "zh":
+        target_lang = "中文 (Chinese)"
+    elif ui_lang == "ko":
+        target_lang = "한국어 (Korean)"
+
     try:
         from langchain_groq import ChatGroq
         import re
@@ -398,22 +422,22 @@ async def generate_mindmap(payload: MindMapRequest, request: Request):
             max_tokens=900
         )
         prompt = f"""คุณคือผู้เชี่ยวชาญด้านการจัดทำแผนผังความคิด (Mind Map Architect)
-กรุณาวิเคราะห์ข้อความต่อไปนี้ แล้วแปลงเป็นโครงสร้างต้นไม้ (Mind Map Tree) เป็นภาษาไทยในรูปแบบ JSON เท่านั้น โดยมีรูปแบบ:
+กรุณาวิเคราะห์ข้อความต่อไปนี้ แล้วแปลงเป็นโครงสร้างต้นไม้ (Mind Map Tree) เป็นภาษา {target_lang} ในรูปแบบ JSON เท่านั้น โดยมีรูปแบบ:
 {{
-  "title": "หัวข้อหลักใจความสำคัญ (สั้น กระชับ)",
+  "title": "หัวข้อหลักใจความสำคัญ (สั้น กระชับ ในภาษา {target_lang})",
   "nodes": [
     {{
-      "title": "ชื่อกิ่งหลัก (เช่น ประเด็นสำคัญ, กลยุทธ์, ขั้นตอน)",
+      "title": "ชื่อกิ่งหลัก (เช่น ประเด็นสำคัญ, กลยุทธ์, ขั้นตอน ในภาษา {target_lang})",
       "children": [
-        {{"title": "หัวข้อย่อยสั้นๆ 1"}},
-        {{"title": "หัวข้อย่อยสั้นๆ 2"}}
+        {{"title": "หัวข้อย่อยสั้นๆ 1 ในภาษา {target_lang}"}},
+        {{"title": "หัวข้อย่อยสั้นๆ 2 ในภาษา {target_lang}"}}
       ]
     }}
   ]
 }}
 
 กฎ:
-1. ตอบเป็น JSON ภาษาไทยที่ถูกต้องเท่านั้น ห้ามใส่คำบรรยายอื่นนอก JSON
+1. ตอบเป็น JSON ภาษา {target_lang} ที่ถูกต้องเท่านั้น ห้ามใส่คำบรรยายอื่นนอก JSON
 2. แตกกิ่งหลักไม่เกิน 5-6 กิ่ง แต่ละกิ่งย่อยมี 2-4 หัวข้อ
 
 ข้อความที่ต้องแปลง:
@@ -4510,6 +4534,7 @@ class BoardroomDebateRequest(BaseModel):
     rounds: Optional[int] = 3
     username: Optional[str] = "boss"
     session_id: Optional[str] = "boardroom_live"
+    ui_lang: Optional[str] = "th"
 
 async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
     """Kira 2.2 Autonomous Boardroom Debate Engine
@@ -4524,6 +4549,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
     angle = req.angle or "balanced"
     boss_gavel = req.boss_intervention.strip() if req.boss_intervention else None
     session_id = req.session_id or f"br_live_{int(_time.time())}"
+    ui_lang = (getattr(req, "ui_lang", None) or "th").lower()
     is_boss_user = is_boss(uname)
 
     # 1. ตรวจสอบสิทธิ์การเข้าถึง (Paywall Guard)
@@ -4579,6 +4605,16 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
     }
     angle_note = angle_descriptions.get(angle, angle_descriptions["balanced"])
 
+    lang_directive = ""
+    if ui_lang == "ja":
+        lang_directive = "\n\n[Language Directive - 日本語 (JA)]:\n- 役員の個別発言、討論での反論、および議事録・戦略合意書はすべて自然で格調高い日本語（敬語 / です・ます調）で行ってください。"
+    elif ui_lang == "en":
+        lang_directive = "\n\n[Language Directive - ENGLISH (EN)]:\n- All executive statements, debate clashes, and the final strategic consensus blueprint must be delivered in fluent, professional, high-impact English."
+    elif ui_lang == "zh":
+        lang_directive = "\n\n[Language Directive - 中文 (ZH)]:\n- 所有高管发言、辩论争鸣以及最终共识蓝图请务必使用专业、地道且严谨的高管级中文进行阐述。"
+    elif ui_lang == "ko":
+        lang_directive = "\n\n[Language Directive - 한국어 (KO)]:\n- 모든 임원 발언, 상호 토론 및 최종 전략 합의안은 자연스럽고 격식 있는 한국어(비즈니스 존댓말)로 작성해 주세요."
+
     # ----------------------------------------------------
     # ROUND 1: Opening Statements & Individual Clashes
     # ----------------------------------------------------
@@ -4596,6 +4632,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
             SystemMessage(content=(
                 f"{exec_info['prompt']}\n\n"
                 f"[ทิศทางยุทธศาสตร์ของที่ประชุมรอบนี้]: {angle_note}\n"
+                f"{lang_directive}\n"
                 "จงแถลงมุมมองของท่านอย่างตรงประเด็น เข้มข้น และมีพลัง ความยาวประมาณ 100-150 คำ"
             )),
             HumanMessage(content=f"วาระการประชุม: {topic}")
@@ -4663,6 +4700,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
     debate_facilitator_prompt = [
         SystemMessage(content=(
             "คุณคือผู้ควบคุมการดีเบตสภาผู้บริหารระดับสูง (Executive Live Debate Director)\n"
+            f"{lang_directive}\n"
             "ผู้บริหารทั้ง 4 ได้แถลงจุดยืนแล้ว:\n"
             f"- CEO (คุณคิรินทร์): {statements.get('CEO', '')[:280]}\n"
             f"- CFO (คุณเมธัส): {statements.get('CFO', '')[:280]}\n"
@@ -4765,6 +4803,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
     consensus_prompt = [
         SystemMessage(content=(
             "คุณคือ 'คิระ' เลขานุการคณะกรรมการบริหารระดับสูง สังเคราะห์มติเอกฉันท์ของที่ประชุม (Executive Board Resolution)\n"
+            f"{lang_directive}\n"
             f"วาระการประชุม: {topic}\n"
             f"คำสั่งแทรกแซงของท่านประธาน (ถ้ามี): {boss_gavel or 'ไม่มี - ดำเนินการตามปกติ'}\n\n"
             "จงจัดทำ 'เอกสารสรุปมติที่ประชุมและพิมพ์เขียวกลยุทธ์ (Executive Strategic Blueprint)' โดยต้องมีหัวข้อครบถ้วนตามนี้อย่างเคร่งครัด:\n\n"
@@ -4823,7 +4862,7 @@ async def boardroom_debate_endpoint(req: BoardroomDebateRequest, request: Reques
         media_type="text/event-stream"
     )
 
-async def _generate_virtual_boardroom_stream(user_input: str, uname: str, session_id: str, is_boss_user: bool):
+async def _generate_virtual_boardroom_stream(user_input: str, uname: str, session_id: str, is_boss_user: bool, ui_lang: str = "th"):
     """Kira Virtual Boardroom Stream: Structured Prompt Engineering Simulation
     สร้างคำตอบจากมุมมอง 4 บทบาทผู้บริหาร (CEO, CFO, CPO, CTO) ผ่าน LLM calls
     ไม่ใช่ multi-agent ที่แท้จริง แต่เป็น prompt-driven role simulation 3 เฟส:
@@ -4850,12 +4889,23 @@ async def _generate_virtual_boardroom_stream(user_input: str, uname: str, sessio
 
     boardroom_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
 
+    lang_directive = ""
+    ui_lang = (ui_lang or "th").lower()
+    if ui_lang == "ja":
+        lang_directive = "\n\n[Language Directive - 日本語 (JA)]:\n- 役員の個別発言、討論での反論、および議事録・戦略合意書はすべて自然で格調高い日本語（敬語 / です・ます調）で行ってください。"
+    elif ui_lang == "en":
+        lang_directive = "\n\n[Language Directive - ENGLISH (EN)]:\n- All executive statements, debate clashes, and the final strategic consensus blueprint must be delivered in fluent, professional, high-impact English."
+    elif ui_lang == "zh":
+        lang_directive = "\n\n[Language Directive - 中文 (ZH)]:\n- 所有高管发言、辩论争鸣以及最终共识蓝图请务必使用专业、地道且严谨的高管级中文进行阐述。"
+    elif ui_lang == "ko":
+        lang_directive = "\n\n[Language Directive - 한국어 (KO)]:\n- 모든 임원 발언, 상호 토론 및 최종 전략 합의안은 자연스럽고 격식 있는 한국어(비즈니스 존댓말)로 작성해 주세요."
+
     # ----------------------------------------------------
     # PHASE 1: แถลงการณ์มุมมองเฉพาะด้านของ 4 ผู้บริหาร (Concurrent Generation)
     # ----------------------------------------------------
     async def _fetch_exec_statement(exec_info):
         prompt_messages = [
-            SystemMessage(content=exec_info["prompt"]),
+            SystemMessage(content=f"{exec_info['prompt']}\n{lang_directive}"),
             HumanMessage(content=f"วาระการประชุมจากผู้ใช้: {user_input}")
         ]
         ok, chunks, _ = await _try_all_keys_and_models(prompt_messages, boardroom_model)
@@ -4915,7 +4965,8 @@ async def _generate_virtual_boardroom_stream(user_input: str, uname: str, sessio
             "🎨 คุณรินดา (CPO): ...\n"
             "🛡️ คุณธนิน (CTO): ...\n"
             "👔 คุณคิรินทร์ (CEO): ...\n"
-            "ความยาวรวม 180-260 คำ กระชับ มีไหวพริบ และลื่นไหลเป็นธรรมชาติ"
+            "ความยาวรวม 180-260 คำ กระชับ มีไหวพริบ และลื่นไหลเป็นธรรมชาติ\n"
+            f"{lang_directive}"
         )),
         HumanMessage(content=f"วาระการประชุม: {user_input}")
     ]
@@ -4943,6 +4994,7 @@ async def _generate_virtual_boardroom_stream(user_input: str, uname: str, sessio
     consensus_prompt = [
         SystemMessage(content=(
             "คุณคือ 'คิระ' เลขานุการคณะกรรมการบริหารระดับสูง สังเคราะห์มติเอกฉันท์ของที่ประชุม (Executive Board Resolution)\n"
+            f"{lang_directive}\n"
             "จากวาระการประชุมและมุมมองของ 4 ผู้บริหาร (CEO, CFO, CPO, CTO) รวมถึงการถกเถียงกันในห้องประชุม:\n\n"
             "จงจัดทำ 'เอกสารสรุปมติที่ประชุมและพิมพ์เขียวกลยุทธ์' ให้ผู้ใช้โดยต้องมีหัวข้อครบถ้วนตามโครงสร้างนี้อย่างเคร่งครัด:\n\n"
             "### 🏛️ 1. มติเอกฉันท์ของที่ประชุม (The Executive Verdict)\n"
@@ -5110,7 +5162,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                     media_type="text/plain; charset=utf-8"
                 )
         return StreamingResponse(
-            _generate_virtual_boardroom_stream(user_input, uname, session_id, is_boss_user),
+            _generate_virtual_boardroom_stream(user_input, uname, session_id, is_boss_user, ui_lang=ui_lang),
             media_type="text/plain; charset=utf-8"
         )
 
