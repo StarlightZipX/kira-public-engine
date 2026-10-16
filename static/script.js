@@ -1701,7 +1701,8 @@ async function sendMessage() {
                 session_id: currentSessionId,
                 flavor: flavor,
                 persona: persona,
-                user_mode: currentUserMode || 'general'
+                user_mode: currentUserMode || 'general',
+                ui_lang: localStorage.getItem('kira_lang') || 'th'
             })
         });
 
@@ -9197,7 +9198,8 @@ function initLiveVoiceAssistant() {
                     model_version: modelVersion,
                     session_id: currentSessionId,
                     persona: persona,
-                    user_mode: currentUserMode || 'general'
+                    user_mode: currentUserMode || 'general',
+                    ui_lang: localStorage.getItem('kira_lang') || 'th'
                 })
             });
 

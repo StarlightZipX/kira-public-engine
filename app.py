@@ -2003,6 +2003,7 @@ class ChatRequest(BaseModel):
     persona: Optional[str] = "default"
     boardroom_mode: Optional[bool] = False
     user_mode: Optional[str] = "general"
+    ui_lang: Optional[str] = "th"
 
 class FeedbackRequest(BaseModel):
     username: str
@@ -3420,7 +3421,7 @@ def get_dictionary_context() -> str:
         context += f"- {term} = {meaning}\n"
     return context
 
-def _get_full_system_prompt(username: str) -> str:
+def _get_full_system_prompt(username: str, ui_lang: str = "th") -> str:
     is_boss_user = is_boss(username)
     base_prompt = get_system_prompt(is_boss_user)
     dict_context = get_dictionary_context()
@@ -3440,6 +3441,17 @@ def _get_full_system_prompt(username: str) -> str:
     
     reasoning_protocol = "\n\n[Kira 2.1 Deep Reasoning Protocol]:\nเมื่อได้รับคำถามที่ต้องใช้ตรรกะซับซ้อน, การคำนวณทางคณิตศาสตร์, การเขียนโปรแกรม/ดีบักโค้ด, หรือการวางแผนเชิงกลยุทธ์:\n- หากจำเป็น คุณสามารถเริ่มต้นด้วยการวิเคราะห์อย่างเป็นขั้นตอนในแท็ก <think>ขั้นตอนการคิดและการวางแผน...</think> ได้\n- เมื่อคิดและวางแผนเสร็จแล้ว ให้สรุปและส่งคำตอบที่สมบูรณ์ ชัดเจน สละสลวย และถูกต้อง 100% ให้กับผู้ใช้\n"
     
+    # 🌐 Multi-Language Directive Adaptation
+    lang_directive = ""
+    if ui_lang == "ja":
+        lang_directive = "\n\n[Language Directive - 日本語 (JA)]:\n- ผู้ใช้ได้ตั้งค่าภาษาของระบบเป็น ภาษาญี่ปุ่น (日本語 / Japanese)\n- กรุณาสื่อสารและตอบกลับเป็นภาษาญี่ปุ่นอย่างเป็นธรรมชาติ นอบน้อม และถูกต้องตามหลักไวยากรณ์ (敬語 / です・ます調) เสมอ โดยให้เกียรติบอสเสมือนผู้ช่วยอัจฉริยะส่วนตัวระดับสูง (ยกเว้นผู้ใช้จะสั่งให้ตอบเป็นภาษาอื่นอย่างชัดเจน)\n"
+    elif ui_lang == "en":
+        lang_directive = "\n\n[Language Directive - ENGLISH (EN)]:\n- The user has set the system UI language to English.\n- Please communicate and answer in fluent, professional, and courteous English (calling user Boss/President respectfully) unless explicitly requested otherwise.\n"
+    elif ui_lang == "zh":
+        lang_directive = "\n\n[Language Directive - 中文 (ZH)]:\n- 用户已将系统界面设置为 中文 (简体中文 / Chinese)。\n- 请使用得体、敬重、专业且地道的中文进行沟通与回复（尊称用户为Boss/老板），除非用户明确要求其他语言。\n"
+    elif ui_lang == "ko":
+        lang_directive = "\n\n[Language Directive - 한국어 (KO)]:\n- 사용자가 시스템 인터페이스 언어를 한국어(Korean)로 설정했습니다.\n- 정중하고 예의 바른 한국어(존댓말)로 친절하게 응답해 주세요 (보스/사장님 호칭).\n"
+
     custom_instr_ctx = ""
     try:
         pref = execute_query(
@@ -3469,7 +3481,7 @@ def _get_full_system_prompt(username: str) -> str:
     except Exception as e:
         print("Custom instructions load error:", e)
 
-    return base_prompt + image_instruction + reasoning_protocol + dict_context + memory_ctx + custom_instr_ctx
+    return base_prompt + image_instruction + reasoning_protocol + lang_directive + dict_context + memory_ctx + custom_instr_ctx
 
 async def _extract_and_save_memory(username: str, user_input: str, version: str):
     """Kira 2.1 Knowledge Graph Memory Engine: วิเคราะห์และจดจำ/อัปเดต/ลบ ความจำระดับบุคคลและโครงข่ายความสัมพันธ์"""
@@ -5106,7 +5118,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         return StreamingResponse(generate_image(), media_type="text/plain")
 
     if session_key not in user_sessions:
-        prompt_to_use = _get_full_system_prompt(uname)
+        prompt_to_use = _get_full_system_prompt(uname, ui_lang=ui_lang)
         
         # Inject Persona
         if persona == "friend":
@@ -5128,6 +5140,22 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                     user_sessions[session_key].append(HumanMessage(content=content))
                 else:
                     user_sessions[session_key].append(AIMessage(content=content))
+    else:
+        # Dynamically refresh system prompt if UI language changed mid-session
+        if user_sessions[session_key] and isinstance(user_sessions[session_key][0], SystemMessage):
+            curr_content = user_sessions[session_key][0].content
+            expected_tag = "[Language Directive - "
+            has_tag = expected_tag in curr_content
+            should_have_tag = (ui_lang != "th")
+            specific_tag = f"({ui_lang.upper()})]"
+            
+            if (should_have_tag and specific_tag not in curr_content) or (not should_have_tag and has_tag):
+                new_prompt = _get_full_system_prompt(uname, ui_lang=ui_lang)
+                if persona == "friend":
+                    new_prompt += "\n\n[PERSONA INSTRUCTION]: ผู้ใช้เลือกโหมดเพื่อนสนิท ให้คุณตอบคำถามแบบเป็นกันเอง ใช้ภาษาวัยรุ่น ใช้คำว่าแก/ฉัน หรือกู/มึงได้ถ้าเหมาะสม ไม่ต้องเป็นทางการมากนัก"
+                elif persona == "manager":
+                    new_prompt += "\n\n[PERSONA INSTRUCTION]: ผู้ใช้เลือกโหมดผู้จัดการ ให้คุณตอบคำถามแบบดุดัน เน้นผลลัพธ์ ตรงไปตรงมา กระชับ และเน้นกระตุ้นให้เกิดการทำงาน"
+                user_sessions[session_key][0] = SystemMessage(content=new_prompt)
 
     history = user_sessions[session_key]
 
