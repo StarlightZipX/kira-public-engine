@@ -1690,10 +1690,14 @@ function addMessage(text, isUser, imageBase64 = null) {
                 let toggleIcon = hasSubstantialAnswer ? "▼" : "▲";
                 let stepsHtml = steps.map(s => `<div class="thinking-step" style="white-space: pre-wrap; font-size: 0.85rem; margin-bottom: 4px;">${escapeHtml(s)}</div>`).join('');
                 
+                const curLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
+                const curDict = KIRA_I18N[curLang] || KIRA_I18N['th'];
+                const thinkingTitle = (curDict && curDict.thinking_title_display) ? curDict.thinking_title_display : "🧠 กระบวนการคิดเชิงลึก (Deep Reasoning)";
+                
                 htmlContent += `
                 <div class="${boxClass}">
                     <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <div class="thinking-title">🧠 กระบวนการคิดเชิงลึก (Deep Reasoning)</div>
+                        <div class="thinking-title">${thinkingTitle}</div>
                         <div class="thinking-toggle-icon">${toggleIcon}</div>
                     </div>
                     <div class="thinking-progress-bar"></div>
@@ -1711,9 +1715,12 @@ function addMessage(text, isUser, imageBase64 = null) {
             }
 
             if (!finalMarkdown && normalizedTxt.includes("[THINKING]")) {
+                const curLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
+                const curDict = KIRA_I18N[curLang] || KIRA_I18N['th'];
+                const thinkingSummary = (curDict && curDict.thinking_summary_done) ? curDict.thinking_summary_done : "คิระได้วิเคราะห์และสรุปแนวทางไว้ในขั้นตอนการคิดเชิงลึกด้านบนเรียบร้อยแล้วค่ะ";
                 htmlContent += `<div class="thinking-summary-note" style="margin-top: 10px; padding: 10px 14px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; color: #7dd3fc; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
                     <i class="fa-solid fa-circle-check" style="color: #38bdf8;"></i>
-                    <span>คิระได้วิเคราะห์และสรุปแนวทางไว้ในขั้นตอนการคิดเชิงลึกด้านบนเรียบร้อยแล้วค่ะ</span>
+                    <span>${thinkingSummary}</span>
                 </div>`;
             }
             content.innerHTML = htmlContent;
@@ -1822,7 +1829,9 @@ async function sendMessage() {
         hideTypingIndicator();
         
         if (!response.ok) {
-            addMessage('ระบบขัดข้อง: เซิร์ฟเวอร์ตอบกลับผิดพลาด', false);
+            const curLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
+            const curDict = KIRA_I18N[curLang] || KIRA_I18N['th'];
+            addMessage(curDict.server_error_response || 'ระบบขัดข้อง: เซิร์ฟเวอร์ตอบกลับผิดพลาด', false);
             return;
         }
 
@@ -1880,10 +1889,14 @@ async function sendMessage() {
                 let boxClass = (isDone && hasSubstantialAnswer && shouldCollapse) ? "thinking-box done collapsed" : (isDone ? "thinking-box done" : "thinking-box");
                 let toggleIcon = (isDone && hasSubstantialAnswer && shouldCollapse) ? "▼" : "▲";
                 
+                const curLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
+                const curDict = KIRA_I18N[curLang] || KIRA_I18N['th'];
+                const thinkingTitle = (curDict && curDict.thinking_title_display) ? curDict.thinking_title_display : "🧠 กระบวนการคิดเชิงลึก (Deep Reasoning)";
+                
                 htmlContent += `
                 <div class="${boxClass}">
                     <div class="thinking-header" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <div class="thinking-title">🧠 กระบวนการคิดเชิงลึก (Deep Reasoning)</div>
+                        <div class="thinking-title">${thinkingTitle}</div>
                         <div class="thinking-toggle-icon">${toggleIcon}</div>
                     </div>
                     <div class="thinking-progress-bar"></div>
@@ -1901,9 +1914,12 @@ async function sendMessage() {
             }
 
             if (normalizedTxt.includes("[THINKING_DONE]") && !finalMarkdown) {
+                const curLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
+                const curDict = KIRA_I18N[curLang] || KIRA_I18N['th'];
+                const thinkingSummary = (curDict && curDict.thinking_summary_done) ? curDict.thinking_summary_done : "คิระได้วิเคราะห์รายละเอียดและขั้นตอนการคิดไว้ในบล็อกด้านบนนี้เรียบร้อยแล้วค่ะ";
                 htmlContent += `<div class="thinking-summary-note" style="margin-top: 10px; padding: 10px 14px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; color: #7dd3fc; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
                     <i class="fa-solid fa-circle-check" style="color: #38bdf8;"></i>
-                    <span>คิระได้วิเคราะห์รายละเอียดและขั้นตอนการคิดไว้ในบล็อกด้านบนนี้เรียบร้อยแล้วค่ะ</span>
+                    <span>${thinkingSummary}</span>
                 </div>`;
             }
             contentDiv.innerHTML = htmlContent;
@@ -1939,7 +1955,9 @@ async function sendMessage() {
         console.error("Chat streaming error:", error);
         hideTypingIndicator();
         if (!fullText || fullText.trim() === '') {
-            addMessage('ระบบขัดข้อง: ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', false);
+            const curLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
+            const curDict = KIRA_I18N[curLang] || KIRA_I18N['th'];
+            addMessage(curDict.server_error_connect || 'ระบบขัดข้อง: ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', false);
         }
     } finally {
         isGenerating = false;
@@ -11286,6 +11304,10 @@ const KIRA_I18N = {
         spec_db_label: "โครงข่ายฐานข้อมูล:",
         settings_save_status_ready: "พร้อมบันทึกการเปลี่ยนแปลง",
         btn_save_settings: "บันทึกการตั้งค่า",
+        server_error_response: "ระบบขัดข้อง: เซิร์ฟเวอร์ตอบกลับผิดพลาด",
+        server_error_connect: "ระบบขัดข้อง: ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้",
+        thinking_title_display: "🧠 กระบวนการคิดเชิงลึก (Deep Reasoning)",
+        thinking_summary_done: "คิระได้วิเคราะห์รายละเอียดและขั้นตอนการคิดไว้ในบล็อกด้านบนนี้เรียบร้อยแล้วค่ะ",
         toast_lang_switched: "เปลี่ยนภาษาเป็น ภาษาไทย เรียบร้อยค่ะ 🇹🇭"
     },
 
@@ -11677,6 +11699,10 @@ const KIRA_I18N = {
         spec_db_label: "Knowledge DB:",
         settings_save_status_ready: "Ready to save changes",
         btn_save_settings: "Save Settings",
+        server_error_response: "System Error: Server response failed",
+        server_error_connect: "System Error: Unable to connect to server",
+        thinking_title_display: "🧠 Deep Reasoning Process",
+        thinking_summary_done: "Kira has detailed the analytical steps and reasoning process in the block above.",
         toast_lang_switched: "Interface language switched to English 🇺🇸"
     },
 
@@ -12068,6 +12094,10 @@ const KIRA_I18N = {
         spec_db_label: "知识图谱库：",
         settings_save_status_ready: "就绪，等待保存",
         btn_save_settings: "保存设置",
+        server_error_response: "系统异常：服务器响应失败",
+        server_error_connect: "系统异常：无法连接至服务器",
+        thinking_title_display: "🧠 深度思考与推理过程 (Deep Reasoning)",
+        thinking_summary_done: "Kira 已在上方模块中完成了深度推理与步骤分析。",
         toast_lang_switched: "系统语言已成功切换为 中文 🇨🇳"
     },
 
@@ -12459,6 +12489,10 @@ const KIRA_I18N = {
         spec_db_label: "지식 데이터베이스:",
         settings_save_status_ready: "변경 사항 저장 준비 완료",
         btn_save_settings: "설정 저장",
+        server_error_response: "시스템 오류: 서버 응답 실패",
+        server_error_connect: "시스템 오류: 서버에 연결할 수 없습니다",
+        thinking_title_display: "🧠 심층 추론 과정 (Deep Reasoning)",
+        thinking_summary_done: "Kira가 상단 블록에 심층 분석 및 단계별 추론을 완료했습니다.",
         toast_lang_switched: "시스템 언어가 한국어로 변경되었습니다 🇰🇷"
     },
 
@@ -12850,6 +12884,10 @@ const KIRA_I18N = {
         spec_db_label: "ナレッジデータベース:",
         settings_save_status_ready: "変更を保存する準備が完了しました",
         btn_save_settings: "設定を保存",
+        server_error_response: "システムエラー：サーバーの応答に失敗しました",
+        server_error_connect: "システムエラー：サーバーに接続できません",
+        thinking_title_display: "🧠 深層思考・推論プロセス (Deep Reasoning)",
+        thinking_summary_done: "Kiraが上記のブロックで詳細な分析と思考プロセスを完了しました。",
         toast_lang_switched: "言語を 日本語 に切り替えました 🇯🇵"
     }
 };

@@ -5398,6 +5398,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     flavor = req.flavor
     persona = req.persona
     client_ip = _get_client_ip(request)
+    ui_lang = (getattr(req, "ui_lang", None) or "th").lower()
 
     # 0. Payload Size Guard (Anti-DoS / Memory Exhaustion)
     if req.file_base64 and len(req.file_base64) > 15 * 1024 * 1024:
