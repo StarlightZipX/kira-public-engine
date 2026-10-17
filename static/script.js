@@ -1822,7 +1822,7 @@ async function sendMessage() {
                 flavor: flavor,
                 persona: persona,
                 user_mode: currentUserMode || 'general',
-                ui_lang: localStorage.getItem('kira_lang') || 'th'
+                ui_lang: localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th'
             })
         });
 

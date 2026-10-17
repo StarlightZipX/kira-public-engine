@@ -1430,11 +1430,12 @@ def _create_llm(model_name, api_key=None):
     return UnifiedLLM(model_name=model_name, api_key=api_key, temperature=0.7)
 
 
-def _synthesize_autonomous_emergency_response(history, last_error: str) -> list:
+def _synthesize_autonomous_emergency_response(history, last_error: str, ui_lang: str = "th") -> list:
     """Kira Autonomous Emergency Resilience Synthesizer
     ในกรณีที่ผู้ให้บริการคลาวด์ภายนอกทั้งหมด (Groq, OpenRouter, Google) เผชิญกับ Rate Limit หรือเน็ตหลุดพร้อมกัน
     ระบบจะทำการสังเคราะห์คำตอบเพื่อความต่อเนื่องในการทำงาน ไม่ให้ระบบหลุดหรือ Error เด็ดขาด!
     """
+    ui_lang = (ui_lang or "th").lower()
     last_user_query = ""
     for msg in reversed(history):
         if hasattr(msg, "content") and (getattr(msg, "type", "") == "human" or msg.__class__.__name__ == "HumanMessage"):
@@ -1445,25 +1446,90 @@ def _synthesize_autonomous_emergency_response(history, last_error: str) -> list:
             break
             
     q_clean = last_user_query.strip().lower()
+    is_greeting = any(q_clean.startswith(g) or q_clean == g for g in [
+        "สวัสดี", "หวัดดี", "ดีครับ", "ดีค่ะ", "hello", "hi", "hey", "你好", "こんにちは", "안녕하세요"
+    ])
     
-    # 1. Greetings
-    if any(q_clean.startswith(g) or q_clean == g for g in ["สวัสดี", "หวัดดี", "ดีครับ", "ดีค่ะ", "hello", "hi", "hey"]):
+    if ui_lang == "en":
+        if is_greeting:
+            return [
+                "Hello! Kira is always right here and ready to assist you. 🥰\n\n"
+                "🛡️ **[Kira Neural Resilience Mode - Safe Active]**\n"
+                "External AI model clusters are currently cooling down their minute quota limits, but Kira's internal architecture and memory state are 100% intact. Is there anything specific you would like me to prepare for you?"
+            ]
         return [
-            "สวัสดีค่ะบอส! คิระยังอยู่ตรงนี้เสมอและพร้อมลุยงานกับบอสเสมอค่ะ 🥰\n\n"
-            "🛡️ **[Kira Neural Resilience Mode - Safe Active]**\n"
-            "ขณะนี้เซิร์ฟเวอร์โมเดลภายนอกกำลังรีเซ็ตโควตารายนาที (Rate Limit Reset) ชั่วขณะ แต่ระบบความจำและสถาปัตยกรรมภายในของคิระยังปลอดภัย 100% ค่ะ บอสมีข้อมูลอะไรให้หนูเตรียมความพร้อมไว้ก่อนไหมคะ?"
+            "🛡️ **[Kira Neural Resilience Shield - Autonomous Safe Mode]**\n\n"
+            "Apologies for the brief delay! External AI provider clusters (Groq, OpenRouter, Google) are temporarily experiencing traffic surges or rate limits.\n\n"
+            "💡 **Actions automatically taken by the Resilience Mesh:**\n"
+            "1. **Circuit Breaker** has quarantined rate-limited endpoints and initiated a 60-second recovery cooldown.\n"
+            "2. Your conversation context and query have been safely preserved in session memory.\n"
+            "3. System administrators can configure additional backup keys in `GROQ_API_KEYS`, `OPENROUTER_API_KEYS`, or `GEMINI_API_KEYS` on the Render dashboard.\n\n"
+            "*(Please wait 30–60 seconds and submit your query again; Kira will automatically reconnect.)* 💖"
         ]
-        
-    # 2. General Query / Task
-    return [
-        "🛡️ **[Kira Neural Resilience Shield - Autonomous Safe Mode]**\n\n"
-        "ขออภัยในความล่าช้าชั่วขณะนะคะบอส! ตอนนี้คลัสเตอร์เชื่อมต่อโมเดลภายนอก (Groq, OpenRouter, Google) กำลังเผชิญกับข้อจำกัดโควตา (Rate Limit / Traffic Surge) พร้อมกันค่ะ\n\n"
-        "💡 **สิ่งที่ระบบ Resilience Mesh ได้ดำเนินการให้บอสแล้ว:**\n"
-        "1. ระบบ **Circuit Breaker** ได้ทำการกักกันคีย์ที่ติด Rate Limit และกำลังนับถอยหลังฟื้นฟูอัตโนมัติ (60 วินาที)\n"
-        "2. ข้อมูลโจทย์ล่าสุดของบอสถูกจัดเก็บในหน่วยความจำชั่วคราวอย่างปลอดภัย\n"
-        "3. ท่านประธานหรือผู้ดูแลระบบสามารถเพิ่มคีย์สำรองได้ใน `GROQ_API_KEYS`, `OPENROUTER_API_KEYS` หรือ `GEMINI_API_KEYS` บน Render Dashboard ได้ทันทีค่ะ\n\n"
-        "*(โปรดรอประมาณ 30-60 วินาที แล้วลองส่งข้อความอีกครั้ง คิระจะทำการเชื่อมต่อใหม่อัตโนมัติค่ะ)* 💖"
-    ]
+    elif ui_lang == "ja":
+        if is_greeting:
+            return [
+                "こんにちは！キラはいつでもここにいて、あなたをサポートする準備ができています。🥰\n\n"
+                "🛡️ **[Kira Neural Resilience Mode - Safe Active]**\n"
+                "現在、外部AIモデルのレート制限がクールダウン中ですが、キラの内部メモリとシステムは正常に保持されています。何か準備してお手伝いできることはありますか？"
+            ]
+        return [
+            "🛡️ **[Kira Neural Resilience Shield - Autonomous Safe Mode]**\n\n"
+            "ご不便をおかけして申し訳ありません！現在、外部AIモデル（Groq, OpenRouter, Google）へのアクセスが集中しており、一時的な制限が発生しています。\n\n"
+            "💡 **システムの自動保護ステータス:**\n"
+            "1. **Circuit Breaker** が制限中のキーを隔離し、60秒間の自動復旧待機を開始しました。\n"
+            "2. 直前の会話コンテキストとご質問内容は安全にメモリに保持されています。\n"
+            "3. Renderの環境変数（`GROQ_API_KEYS` 等）にバックアップキーを追加することも可能です。\n\n"
+            "*(約30〜60秒お待ちいただき、再度メッセージをお送りください。)* 💖"
+        ]
+    elif ui_lang == "zh":
+        if is_greeting:
+            return [
+                "您好！Kira一直在这里，随时准备为您提供协助。🥰\n\n"
+                "🛡️ **[Kira Neural Resilience Mode - Safe Active]**\n"
+                "当前外部AI模型正在进行分钟级配额冷却，但Kira的内部状态与记忆保持完整。请问有什么我可以提前为您准备的吗？"
+            ]
+        return [
+            "🛡️ **[Kira Neural Resilience Shield - Autonomous Safe Mode]**\n\n"
+            "非常抱歉！当前外部AI模型集群（Groq、OpenRouter、Google）正在经历瞬时访问高峰或配额限制。\n\n"
+            "💡 **韧性保护网络已自动执行：**\n"
+            "1. **熔断机制（Circuit Breaker）** 已隔离受限节点，并启动60秒自动恢复冷却。\n"
+            "2. 您的对话上下文与问题已安全保存在会话内存中。\n"
+            "3. 管理员可在Render控制台中添加更多备用密钥。\n\n"
+            "*(请稍候30-60秒后重新发送，Kira将自动重新连接。)* 💖"
+        ]
+    elif ui_lang == "ko":
+        if is_greeting:
+            return [
+                "안녕하세요! 키라는 언제나 여기에 있으며 도움을 드릴 준비가 되어 있습니다. 🥰\n\n"
+                "🛡️ **[Kira Neural Resilience Mode - Safe Active]**\n"
+                "현재 외부 AI 모델의 분당 호출 제한이 복구 중이지만, 키라의 내부 메모리와 시스템은 안전하게 보존되어 있습니다. 미리 준비해 드릴 내용이 있으신가요?"
+            ]
+        return [
+            "🛡️ **[Kira Neural Resilience Shield - Autonomous Safe Mode]**\n\n"
+            "불편을 드려 죄송합니다! 현재 외부 AI 클러스터(Groq, OpenRouter, Google)의 트래픽 급증 또는 호출 제한이 발생했습니다.\n\n"
+            "💡 **복원 네트워크 자동 보호 조치:**\n"
+            "1. **서킷 브레이커(Circuit Breaker)** 가 제한된 키를 격리하고 60초 자동 복구 쿨다운을 진행 중입니다.\n"
+            "2. 이전 대화 맥락과 질문은 안전하게 보존되어 있습니다.\n"
+            "3. 관리자는 Render 대시보드에서 백업 키를 추가할 수 있습니다.\n\n"
+            "*(약 30~60초 후 다시 질문을 전송해 주세요. 키라가 자동으로 재연결합니다.)* 💖"
+        ]
+    else: # Thai (default)
+        if is_greeting:
+            return [
+                "สวัสดีค่ะบอส! คิระยังอยู่ตรงนี้เสมอและพร้อมลุยงานกับบอสเสมอค่ะ 🥰\n\n"
+                "🛡️ **[Kira Neural Resilience Mode - Safe Active]**\n"
+                "ขณะนี้เซิร์ฟเวอร์โมเดลภายนอกกำลังรีเซ็ตโควตารายนาที (Rate Limit Reset) ชั่วขณะ แต่ระบบความจำและสถาปัตยกรรมภายในของคิระยังปลอดภัย 100% ค่ะ บอสมีข้อมูลอะไรให้หนูเตรียมความพร้อมไว้ก่อนไหมคะ?"
+            ]
+        return [
+            "🛡️ **[Kira Neural Resilience Shield - Autonomous Safe Mode]**\n\n"
+            "ขออภัยในความล่าช้าชั่วขณะนะคะบอส! ตอนนี้คลัสเตอร์เชื่อมต่อโมเดลภายนอก (Groq, OpenRouter, Google) กำลังเผชิญกับข้อจำกัดโควตา (Rate Limit / Traffic Surge) พร้อมกันค่ะ\n\n"
+            "💡 **สิ่งที่ระบบ Resilience Mesh ได้ดำเนินการให้บอสแล้ว:**\n"
+            "1. ระบบ **Circuit Breaker** ได้ทำการกักกันคีย์ที่ติด Rate Limit และกำลังนับถอยหลังฟื้นฟูอัตโนมัติ (60 วินาที)\n"
+            "2. ข้อมูลโจทย์ล่าสุดของบอสถูกจัดเก็บในหน่วยความจำชั่วคราวอย่างปลอดภัย\n"
+            "3. ท่านประธานหรือผู้ดูแลระบบสามารถเพิ่มคีย์สำรองได้ใน `GROQ_API_KEYS`, `OPENROUTER_API_KEYS` หรือ `GEMINI_API_KEYS` บน Render Dashboard ได้ทันทีค่ะ\n\n"
+            "*(โปรดรอประมาณ 30-60 วินาที แล้วลองส่งข้อความอีกครั้ง คิระจะทำการเชื่อมต่อใหม่อัตโนมัติค่ะ)* 💖"
+        ]
 
 
 async def _execute_single_attempt(provider: str, model_name: str, api_key: str, history):
@@ -1478,7 +1544,7 @@ async def _execute_single_attempt(provider: str, model_name: str, api_key: str, 
     return chunks
 
 
-async def _try_all_keys_and_models(history, preferred_model):
+async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"):
     """Kira 2.2 Resilient Multi-Provider Fallback Cascade
     ทดลองประมวลผลคำสั่งตามลำดับชั้นความยืดหยุ่นสูง:
     1. Primary Target: โมเดลและ Provider ที่ถูกขอโดยตรง (ลองคีย์ทั้งหมดที่พร้อมใช้งาน)
@@ -1581,7 +1647,7 @@ async def _try_all_keys_and_models(history, preferred_model):
                         continue
 
     # Stage 6: Autonomous Emergency Resilience Synthesizer
-    emergency_chunks = _synthesize_autonomous_emergency_response(history, last_error)
+    emergency_chunks = _synthesize_autonomous_emergency_response(history, last_error, ui_lang=ui_lang)
     if emergency_chunks:
         provider_monitor.stats["autonomous_offline"]["success"] += 1
         return True, emergency_chunks, ""
@@ -5679,265 +5745,287 @@ async def chat_endpoint(req: ChatRequest, request: Request):
 
     async def generate():
         import time as _time
+        import traceback as _tb
         start_time = _time.time()
         full_response = ""
         
-        # บังคับให้ FastAPI ส่งข้อมูลชุดแรกไปที่หน้าเว็บทันที
-        await asyncio.sleep(0.05)
-
-        yield "[THINKING]กำลังวิเคราะห์โจทย์...[/THINKING]"
-        
-        search_term = await asyncio.to_thread(_decide_search, user_input)
-        temp_history = history.copy()
-
-        # Slash Commands Injection
-        if user_input.startswith("/แปลภาษา"):
-            yield "[THINKING]กำลังเตรียมระบบแปลภาษา...[/THINKING]"
-            temp_history.insert(-1, SystemMessage(content="[คำสั่งพิเศษจากบอส]: ให้ทำหน้าที่เป็นนักแปลภาษา แปลข้อความที่ตามหลังคำสั่งเป็นภาษาไทย (หรืออังกฤษถ้าต้นฉบับเป็นไทย) อย่างสละสลวยที่สุด ห้ามอธิบายเพิ่มเติม ห้ามตอบอย่างอื่นนอกจากคำแปล"))
-        elif user_input.startswith("/สรุป"):
-            yield "[THINKING]กำลังสรุปประเด็นสำคัญ...[/THINKING]"
-            temp_history.insert(-1, SystemMessage(content="[คำสั่งพิเศษจากบอส]: ให้สรุปใจความสำคัญของข้อความที่ตามหลังคำสั่งให้สั้น กระชับ และเข้าใจง่ายที่สุดในรูปแบบ Bullet points"))
-            
-        # Weather Check
-        if any(w in user_input for w in ["สภาพอากาศ", "พยากรณ์อากาศ", "อุณหภูมิ", "ฝนจะตก", "ฝนตกไหม"]):
-            yield "[THINKING]กำลังตรวจสอบข้อมูลสภาพอากาศแบบเรียลไทม์...[/THINKING]"
-            
-            weather_ctx = await asyncio.to_thread(_fetch_weather, user_input)
-            if weather_ctx:
-                temp_history.insert(-1, SystemMessage(content=weather_ctx))
-                yield "[THINKING]รับข้อมูลสภาพอากาศเรียบร้อย[/THINKING]"
-
-        # Autonomous Model Context Protocol (MCP) Tool Dispatcher (Kira 2.2 Phase 2)
         try:
-            mcp_dispatch = await asyncio.to_thread(auto_detect_and_dispatch_mcp, user_input)
-            if mcp_dispatch:
-                mcp_tool_name = mcp_dispatch.get("tool_name", "mcp_tool")
-                mcp_disp_name = mcp_dispatch.get("display_name", mcp_tool_name)
-                mcp_result = mcp_dispatch.get("result", {})
-                yield f"[THINKING]🔌 เรียกใช้เครื่องมือ MCP: {mcp_disp_name}...[/THINKING]"
-                
-                mcp_ctx = (
-                    f"\n[Model Context Protocol (MCP) Tool Execution Result]:\n"
-                    f"เครื่องมือ: {mcp_disp_name} ({mcp_tool_name})\n"
-                    f"ข้อมูลผลลัพธ์ (JSON):\n{json.dumps(mcp_result, ensure_ascii=False, indent=2)}\n"
-                    f"(Instruction: นำผลลัพธ์การประมวลผลของ MCP Tool ด้านบนนี้ มาสรุป วิเคราะห์ และให้คำแนะนำเชิงยุทธศาสตร์แก่ผู้ใช้/บอส อย่างถูกต้อง สละสลวย และชัดเจนที่สุด)\n"
-                )
-                temp_history.insert(-1, SystemMessage(content=mcp_ctx))
-                yield f"[THINKING]รับผลการประมวลผลจาก MCP ({mcp_disp_name}) เรียบร้อย[/THINKING]"
-        except Exception as _e_mcp_disp:
-            print("MCP Dispatch Notice:", _e_mcp_disp)
-        
-        if search_term:
-            yield f"[THINKING]ค้นหาข้อมูลสดจากอินเทอร์เน็ต: \"{search_term}\"[/THINKING]"
-            
-            # Execute search
-            search_ctx = await asyncio.to_thread(_execute_search, search_term, model_version)
-            if search_ctx:
-                temp_history.insert(-1, SystemMessage(content=search_ctx))
-                yield "[THINKING]รับผลการค้นหาเรียบร้อย[/THINKING]"
-
-        import re
-        urls = re.findall(r'(https?://[^\s]+)', user_input)
-        if urls:
-            url_to_scrape = urls[0]
-            yield f"[THINKING]กำลังอ่านเนื้อหาจากเว็บไซต์: {url_to_scrape}[/THINKING]"
-            
-            scraped_text = await asyncio.to_thread(_scrape_url, url_to_scrape)
-            if scraped_text:
-                temp_history.insert(-1, SystemMessage(content=f"\n[เนื้อหาจากเว็บไซต์ {url_to_scrape}]:\n{scraped_text}\n(Instruction: ใช้ข้อมูลนี้ตอบคำถามให้ครบถ้วน)"))
-                yield "[THINKING]อ่านข้อมูลเว็บไซต์เรียบร้อย[/THINKING]"
-
-        if req.image_base64:
-            yield "[THINKING]กำลังวิเคราะห์องค์ประกอบภาพ โค้ด และ UI/UX เชิงลึก...[/THINKING]"
-            vision_guideline = (
-                "\n[Kira 2.2 Live Vision Inspector Protocol]:\n"
-                "ผู้ใช้ได้แนบรูปภาพ UI/หน้าจอ Canvas/Screenshot หรือภาพ Error Trace เข้ามาในการสนทนานี้\n"
-                "- จงวิเคราะห์องค์ประกอบภาพ, โครงสร้าง UI/UX, Layout, Palette สี, Typography และข้อผิดพลาดอย่างละเอียดและลึกซึ้ง\n"
-                "- หากตรวจพบข้อผิดพลาดหรือจุดที่ควรปรับปรุง ให้เสนอแนวทางแก้ไขที่ตรงจุดและชัดเจน\n"
-                "- หากเป็นการตรวจงาน Canvas หรือเขียนหน้าเว็บ จงส่งมอบโค้ด HTML/CSS/JS ฉบับปรับปรุงแก้ไขที่สมบูรณ์ในบล็อก ```html...``` เพื่อให้ผู้ใช้สามารถกดรันสดบน Live Code Canvas ได้ทันที\n"
-            )
-            temp_history.insert(-1, SystemMessage(content=vision_guideline))
-
-        # Pillar A: Age-Adaptive User Mode Context (Silver Care / Executive)
-        user_mode = getattr(req, "user_mode", "general") or "general"
-        if user_mode == "silver_care":
-            silver_guideline = (
-                "\n👵 [โหมดวัยเก๋าอุ่นใจ / SILVER CARE MODE กำลังทำงาน 100%]:\n"
-                "- ผู้ใช้งานอยู่ในโหมดวัยเก๋า/ผู้สูงวัย หรือผู้ใหญ่ที่ต้องการคำอธิบายที่อบอุ่น นอบน้อม สุภาพ และเข้าใจง่ายเป็นพิเศษ\n"
-                "- ใช้น้ำเสียงที่สุภาพ อ่อนโยน ใจเย็น เปรียบเสมือนลูกหลานที่คอยดูแลอย่างใส่ใจ ลงท้ายด้วย 'ค่ะ / นะคะ' อย่างเป็นธรรมชาติเสมอ\n"
-                "- ใช้ภาษาไทยที่สละสลวย ชัดเจน ตรงไปตรงมา หลีกเลี่ยงศัพท์เทคนิคหรือตัวย่อภาษาอังกฤษที่ซับซ้อน (หากจำเป็นต้องใช้ให้มีคำแปลหรือคำอธิบายภาษาไทยประกอบเสมอ)\n"
-                "- แบ่งย่อหน้าให้อ่านง่าย สบายตา ไม่เขียนติดกันเป็นพรืด ชี้แจงเป็นข้อๆ ชัดเจน\n"
-                "- หากเป็นเรื่องสุขภาพ ให้คำแนะนำเบื้องต้นอย่างระมัดระวังและเตือนให้ปรึกษาแพทย์เสมอ หากเป็นเรื่องข่าวสาร ให้เน้นความถูกต้องและเตือนระวังมิจฉาชีพ\n"
-            )
-            temp_history.insert(-1, SystemMessage(content=silver_guideline))
-        elif user_mode == "executive":
-            exec_guideline = (
-                "\n💼 [โหมดผู้บริหารระดับสูง / EXECUTIVE COMMAND MODE กำลังทำงาน 100%]:\n"
-                "- ผู้ใช้งานอยู่ในโหมดผู้บริหาร/ทำงานระดับมืออาชีพ เน้นความกระชับ ตรงประเด็น ผลลัพธ์เชิงกลยุทธ์ (Strategic Deliverable) ชัดเจน มีตัวเลข/กรอบเวลา/จุดชี้ขาด และพร้อมส่งต่อผู้บริหารได้ทันที\n"
-            )
-            temp_history.insert(-1, SystemMessage(content=exec_guideline))
-
-        yield "[THINKING]กำลังเรียบเรียงคำตอบ...[/THINKING]"
-
-        # Pillar 1 & 2: Multi-Model Consensus & Peer Review (Draft+Review Architecture, not true MoA)
-        is_moa_active, moa_reason, moa_hint = _should_trigger_moa(user_input, model_version, flavor)
-        
-        if is_moa_active and not req.image_base64:
-            yield f"[THINKING][Multi-Model Consensus] เปิดระบบวิเคราะห์พหุปัญญา: {moa_hint}...[/THINKING]"
-            yield "[THINKING][Proposer Agent] กำลังร่างแนวคิดและโครงสร้างคำตอบ...[/THINKING]"
+            # บังคับให้ FastAPI ส่งข้อมูลชุดแรกไปที่หน้าเว็บทันที
             await asyncio.sleep(0.05)
+
+            yield "[THINKING]กำลังวิเคราะห์โจทย์...[/THINKING]"
             
-            proposer_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
-            draft_success, draft_chunks, _ = await _try_all_keys_and_models(temp_history, proposer_model)
-            draft_text = "".join([getattr(c, "content", c) for c in draft_chunks]) if draft_success else ""
+            search_term = await asyncio.to_thread(_decide_search, user_input)
+            temp_history = history.copy()
+
+            # Slash Commands Injection
+            if user_input.startswith("/แปลภาษา"):
+                yield "[THINKING]กำลังเตรียมระบบแปลภาษา...[/THINKING]"
+                temp_history.insert(-1, SystemMessage(content="[คำสั่งพิเศษจากบอส]: ให้ทำหน้าที่เป็นนักแปลภาษา แปลข้อความที่ตามหลังคำสั่งเป็นภาษาไทย (หรืออังกฤษถ้าต้นฉบับเป็นไทย) อย่างสละสลวยที่สุด ห้ามอธิบายเพิ่มเติม ห้ามตอบอย่างอื่นนอกจากคำแปล"))
+            elif user_input.startswith("/สรุป"):
+                yield "[THINKING]กำลังสรุปประเด็นสำคัญ...[/THINKING]"
+                temp_history.insert(-1, SystemMessage(content="[คำสั่งพิเศษจากบอส]: ให้สรุปใจความสำคัญของข้อความที่ตามหลังคำสั่งให้สั้น กระชับ และเข้าใจง่ายที่สุดในรูปแบบ Bullet points"))
+                
+            # Weather Check
+            if any(w in user_input for w in ["สภาพอากาศ", "พยากรณ์อากาศ", "อุณหภูมิ", "ฝนจะตก", "ฝนตกไหม"]):
+                yield "[THINKING]กำลังตรวจสอบข้อมูลสภาพอากาศแบบเรียลไทม์...[/THINKING]"
+                
+                weather_ctx = await asyncio.to_thread(_fetch_weather, user_input)
+                if weather_ctx:
+                    temp_history.insert(-1, SystemMessage(content=weather_ctx))
+                    yield "[THINKING]รับข้อมูลสภาพอากาศเรียบร้อย[/THINKING]"
+
+            # Autonomous Model Context Protocol (MCP) Tool Dispatcher (Kira 2.2 Phase 2)
+            try:
+                mcp_dispatch = await asyncio.to_thread(auto_detect_and_dispatch_mcp, user_input)
+                if mcp_dispatch:
+                    mcp_tool_name = mcp_dispatch.get("tool_name", "mcp_tool")
+                    mcp_disp_name = mcp_dispatch.get("display_name", mcp_tool_name)
+                    mcp_result = mcp_dispatch.get("result", {})
+                    yield f"[THINKING]🔌 เรียกใช้เครื่องมือ MCP: {mcp_disp_name}...[/THINKING]"
+                    
+                    mcp_ctx = (
+                        f"\n[Model Context Protocol (MCP) Tool Execution Result]:\n"
+                        f"เครื่องมือ: {mcp_disp_name} ({mcp_tool_name})\n"
+                        f"ข้อมูลผลลัพธ์ (JSON):\n{json.dumps(mcp_result, ensure_ascii=False, indent=2)}\n"
+                        f"(Instruction: นำผลลัพธ์การประมวลผลของ MCP Tool ด้านบนนี้ มาสรุป วิเคราะห์ และให้คำแนะนำเชิงยุทธศาสตร์แก่ผู้ใช้/บอส อย่างถูกต้อง สละสลวย และชัดเจนที่สุด)\n"
+                    )
+                    temp_history.insert(-1, SystemMessage(content=mcp_ctx))
+                    yield f"[THINKING]รับผลการประมวลผลจาก MCP ({mcp_disp_name}) เรียบร้อย[/THINKING]"
+            except Exception as _e_mcp_disp:
+                print("MCP Dispatch Notice:", _e_mcp_disp)
             
-            if draft_text:
-                yield "[THINKING][Peer Review & Fact-Checker Agent] กำลังตรวจสอบความถูกต้อง ตรรกะ และจุดบกพร่อง...[/THINKING]"
-                await asyncio.sleep(0.05)
+            if search_term:
+                yield f"[THINKING]ค้นหาข้อมูลสดจากอินเทอร์เน็ต: \"{search_term}\"[/THINKING]"
                 
-                critic_model = "meta-llama/llama-3.3-70b-instruct" if OPENROUTER_API_KEYS else PREFERRED_FLASH
-                critic_prompt = [
-                    SystemMessage(content="You are Kira's Peer Reviewer & Fact-Checker (Draft+Review phase). Evaluate this draft answer for logic, completeness, code accuracy, and natural Thai phrasing. Provide concise, actionable improvements."),
-                    HumanMessage(content=f"User Query: {user_input}\n\nDraft Solution:\n{draft_text[:2000]}")
-                ]
-                critic_s, critic_chunks, _ = await _try_all_keys_and_models(critic_prompt, critic_model)
-                critic_text = "".join([getattr(c, "content", c) for c in critic_chunks]) if critic_s else ""
-                
-                yield "[THINKING][Synthesis Engine] กำลังผสานข้อเสนอแนะและสังเคราะห์คำตอบขั้นสมบูรณ์...[/THINKING]"
-                await asyncio.sleep(0.05)
-                
-                if critic_text:
-                    temp_history.append(SystemMessage(content=f"[Multi-Agent Peer Review Guidelines]: Incorporate these verified peer review points into the final response:\n{critic_text[:800]}"))
-        elif model_version in ["2.0-ultra", "2.0-pro"]:
-            yield f"[THINKING][Cognitive Router] ตรวจพบ {moa_hint} → สลับโหมดประมวลผลทันที...[/THINKING]"
+                # Execute search
+                search_ctx = await asyncio.to_thread(_execute_search, search_term, model_version)
+                if search_ctx:
+                    temp_history.insert(-1, SystemMessage(content=search_ctx))
+                    yield "[THINKING]รับผลการค้นหาเรียบร้อย[/THINKING]"
 
-        elapsed_think = round(_time.time() - start_time, 1)
-        yield f"[THINKING]ใช้เวลาประมวลผล: {elapsed_think} วินาที[/THINKING]"
-        yield "[THINKING_DONE]"
-
-        # Multi-Brain Router (Kira 2.1): เลือกสมองที่เหมาะสมที่สุด
-        preferred_model, brain_type, brain_desc = _route_brain(user_input, model_version, flavor)
-        
-        print(f"🧠 [Brain Router] {brain_type} → {preferred_model} | {brain_desc}")
-        
-        clean_history = []
-        for msg in temp_history:
-            if isinstance(msg, AIMessage):
-                clean_content = msg.content
-                clean_content = re.sub(r'✨ \*\*\[Kira 1\.[12] PRO\]\*\*\n\n', '', clean_content)
-                clean_content = re.sub(r'👑 \*\*\[Kira 1\.3 APEX\]\*\*\n\n', '', clean_content)
-                clean_content = re.sub(r'🤖 \*\*\[Kira 1\.0\]\*\*\n\n', '', clean_content)
-                clean_content = re.sub(r'\*\(\🌐 กำลัง.*?\.\.\.\)\*\n\n', '', clean_content)
-                clean_history.append(AIMessage(content=clean_content))
-            else:
-                clean_history.append(msg)
-
-        # Boss ลอง 2 รอบ (รอบ 2 รอ 60 วิ), ผู้ใช้ลอง 1 รอบ
-        max_rounds = 2 if is_boss_user else 1
-        
-        agent_loop_count = 0
-        max_agent_loops = 3 # ให้รันโค้ดและแก้บั๊กได้สูงสุด 3 รอบต่อข้อความ
-
-        while agent_loop_count < max_agent_loops:
-            agent_loop_count += 1
-            success = False
-            last_error = ""
-
-            for round_num in range(max_rounds):
-                if round_num > 0:
-                    wait_msg = "\n\n⏳ *กำลังรอโควตาฟื้นตัว (60 วินาที)...*\n"
-                    full_response += wait_msg
-                    yield wait_msg
-                    await asyncio.sleep(60)
-
-                # Force Full Multimodal Vision model if image is present (Pillar 3: Live Screen & Vision Inspector)
-                if req.image_base64:
-                    preferred_model = "qwen/qwen-2.5-vl-72b-instruct" if OPENROUTER_API_KEYS else "meta-llama/llama-3.2-11b-vision-instruct"
-
-                s, chunks, err = await _try_all_keys_and_models(clean_history, preferred_model)
-
-                if s:
-                    if agent_loop_count > 1:
-                        yield "\n*(📝 คิระกำลังประมวลผลลัพธ์...)*\n\n"
-                        full_response += "\n*(📝 คิระกำลังประมวลผลลัพธ์...)*\n\n"
-                        
-                    for c in chunks:
-                        scrubbed_c = scrub_sensitive_output(c)
-                        full_response += scrubbed_c
-                        yield scrubbed_c
-                    success = True
-                    use_user_quota(uname)
-                    execute_query("UPDATE users SET points = points + 1 WHERE username=?", (uname,))
-                    break
-                else:
-                    last_error = err
-
-            if not success:
-                if is_boss_user:
-                    error_msg = "\n\n⚠️ **บอสคะ!** หนูลองสมองของ Groq ทุกตัวและทุก Key แล้ว แต่โควตา API เต็มหมดเลยค่ะ 😢\n\n"
-                    error_msg += "💡 **วิธีแก้ด่วน:** ให้บอสเพิ่ม API Key ของ Groq ลงในตัวแปร `GROQ_API_KEYS` บน Render เพิ่มอีกนะคะ\n"
-                    error_msg += f"\n🛠️ **[Boss Diagnostic]**\n```\nKeys ทั้งหมด: {len(API_KEYS)} ดอก\n{last_error}\n```"
-                else:
-                    error_msg = "\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้!** ตอนนี้ระบบมีผู้ใช้งานเยอะมาก รบกวนรอสักพัก (ประมาณ 1 นาที) แล้วลองถามใหม่อีกครั้งนะคะ 🙏"
-
-                error_msg = scrub_sensitive_output(error_msg)
-                full_response += error_msg
-                yield error_msg
-                break
-                
-            # --- Check for Python Execution ---
             import re
-            python_matches = re.findall(r'\[PYTHON\](.*?)\[/PYTHON\]', full_response, re.DOTALL)
+            urls = re.findall(r'(https?://[^\s]+)', user_input)
+            if urls:
+                url_to_scrape = urls[0]
+                yield f"[THINKING]กำลังอ่านเนื้อหาจากเว็บไซต์: {url_to_scrape}[/THINKING]"
+                
+                scraped_text = await asyncio.to_thread(_scrape_url, url_to_scrape)
+                if scraped_text:
+                    temp_history.insert(-1, SystemMessage(content=f"\n[เนื้อหาจากเว็บไซต์ {url_to_scrape}]:\n{scraped_text}\n(Instruction: ใช้ข้อมูลนี้ตอบคำถามให้ครบถ้วน)"))
+                    yield "[THINKING]อ่านข้อมูลเว็บไซต์เรียบร้อย[/THINKING]"
+
+            if req.image_base64:
+                yield "[THINKING]กำลังวิเคราะห์องค์ประกอบภาพ โค้ด และ UI/UX เชิงลึก...[/THINKING]"
+                vision_guideline = (
+                    "\n[Kira 2.2 Live Vision Inspector Protocol]:\n"
+                    "ผู้ใช้ได้แนบรูปภาพ UI/หน้าจอ Canvas/Screenshot หรือภาพ Error Trace เข้ามาในการสนทนานี้\n"
+                    "- จงวิเคราะห์องค์ประกอบภาพ, โครงสร้าง UI/UX, Layout, Palette สี, Typography และข้อผิดพลาดอย่างละเอียดและลึกซึ้ง\n"
+                    "- หากตรวจพบข้อผิดพลาดหรือจุดที่ควรปรับปรุง ให้เสนอแนวทางแก้ไขที่ตรงจุดและชัดเจน\n"
+                    "- หากเป็นการตรวจงาน Canvas หรือเขียนหน้าเว็บ จงส่งมอบโค้ด HTML/CSS/JS ฉบับปรับปรุงแก้ไขที่สมบูรณ์ในบล็อก ```html...``` เพื่อให้ผู้ใช้สามารถกดรันสดบน Live Code Canvas ได้ทันที\n"
+                )
+                temp_history.insert(-1, SystemMessage(content=vision_guideline))
+
+            # Pillar A: Age-Adaptive User Mode Context (Silver Care / Executive)
+            user_mode = getattr(req, "user_mode", "general") or "general"
+            if user_mode == "silver_care":
+                silver_guideline = (
+                    "\n👵 [โหมดวัยเก๋าอุ่นใจ / SILVER CARE MODE กำลังทำงาน 100%]:\n"
+                    "- ผู้ใช้งานอยู่ในโหมดวัยเก๋า/ผู้สูงวัย หรือผู้ใหญ่ที่ต้องการคำอธิบายที่อบอุ่น นอบน้อม สุภาพ และเข้าใจง่ายเป็นพิเศษ\n"
+                    "- ใช้น้ำเสียงที่สุภาพ อ่อนโยน ใจเย็น เปรียบเสมือนลูกหลานที่คอยดูแลอย่างใส่ใจ ลงท้ายด้วย 'ค่ะ / นะคะ' อย่างเป็นธรรมชาติเสมอ\n"
+                    "- ใช้ภาษาไทยที่สละสลวย ชัดเจน ตรงไปตรงมา หลีกเลี่ยงศัพท์เทคนิคหรือตัวย่อภาษาอังกฤษที่ซับซ้อน (หากจำเป็นต้องใช้ให้มีคำแปลหรือคำอธิบายภาษาไทยประกอบเสมอ)\n"
+                    "- แบ่งย่อหน้าให้อ่านง่าย สบายตา ไม่เขียนติดกันเป็นพรืด ชี้แจงเป็นข้อๆ ชัดเจน\n"
+                    "- หากเป็นเรื่องสุขภาพ ให้คำแนะนำเบื้องต้นอย่างระมัดระวังและเตือนให้ปรึกษาแพทย์เสมอ หากเป็นเรื่องข่าวสาร ให้เน้นความถูกต้องและเตือนระวังมิจฉาชีพ\n"
+                )
+                temp_history.insert(-1, SystemMessage(content=silver_guideline))
+            elif user_mode == "executive":
+                exec_guideline = (
+                    "\n💼 [โหมดผู้บริหารระดับสูง / EXECUTIVE COMMAND MODE กำลังทำงาน 100%]:\n"
+                    "- ผู้ใช้งานอยู่ในโหมดผู้บริหาร/ทำงานระดับมืออาชีพ เน้นความกระชับ ตรงประเด็น ผลลัพธ์เชิงกลยุทธ์ (Strategic Deliverable) ชัดเจน มีตัวเลข/กรอบเวลา/จุดชี้ขาด และพร้อมส่งต่อผู้บริหารได้ทันที\n"
+                )
+                temp_history.insert(-1, SystemMessage(content=exec_guideline))
+
+            yield "[THINKING]กำลังเรียบเรียงคำตอบ...[/THINKING]"
+
+            # Pillar 1 & 2: Multi-Model Consensus & Peer Review (Draft+Review Architecture, not true MoA)
+            is_moa_active, moa_reason, moa_hint = _should_trigger_moa(user_input, model_version, flavor)
             
-            if python_matches and model_version in ["1.1", "1.2", "1.3"]:
-                # Get the last python block we just generated
-                code_to_run = python_matches[-1].strip()
+            if is_moa_active and not req.image_base64:
+                yield f"[THINKING][Multi-Model Consensus] เปิดระบบวิเคราะห์พหุปัญญา: {moa_hint}...[/THINKING]"
+                yield "[THINKING][Proposer Agent] กำลังร่างแนวคิดและโครงสร้างคำตอบ...[/THINKING]"
+                await asyncio.sleep(0.05)
                 
-                # We need to make sure we haven't already executed this exact block in the current session loop
-                # To be safe, we just check if it's the end of this agent loop. If we execute, we trigger LLM again.
-                yield "[THINKING]⚙️ กำลังประมวลผลโค้ด Python...[/THINKING]"
-                await asyncio.sleep(0.1)
+                proposer_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
+                draft_success, draft_chunks, _ = await _try_all_keys_and_models(temp_history, proposer_model, ui_lang=ui_lang)
+                draft_text = "".join([getattr(c, "content", c) for c in draft_chunks]) if draft_success else ""
                 
-                output = await asyncio.to_thread(_execute_python_code, code_to_run)
-                
-                # Python Sandbox Safety Policy Interception
-                if output.startswith("[SECURITY_BLOCK]"):
-                    record_ip_strike(client_ip, "Python Sandbox Policy Violation")
-                    target = output.split(" ", 1)[1] if " " in output else "restricted module"
-                    output = f"🛑 SecurityError: การเรียกใช้งานโมดูลหรือฟังก์ชัน '{target}' ไม่อนุญาตในสภาพแวดล้อม Sandbox เพื่อความปลอดภัยของระบบ"
+                if draft_text:
+                    yield "[THINKING][Peer Review & Fact-Checker Agent] กำลังตรวจสอบความถูกต้อง ตรรกะ และจุดบกพร่อง...[/THINKING]"
+                    await asyncio.sleep(0.05)
+                    
+                    critic_model = "meta-llama/llama-3.3-70b-instruct" if OPENROUTER_API_KEYS else PREFERRED_FLASH
+                    critic_prompt = [
+                        SystemMessage(content="You are Kira's Peer Reviewer & Fact-Checker (Draft+Review phase). Evaluate this draft answer for logic, completeness, code accuracy, and natural Thai phrasing. Provide concise, actionable improvements."),
+                        HumanMessage(content=f"User Query: {user_input}\n\nDraft Solution:\n{draft_text[:2000]}")
+                    ]
+                    critic_s, critic_chunks, _ = await _try_all_keys_and_models(critic_prompt, critic_model, ui_lang=ui_lang)
+                    critic_text = "".join([getattr(c, "content", c) for c in critic_chunks]) if critic_s else ""
+                    
+                    yield "[THINKING][Synthesis Engine] กำลังผสานข้อเสนอแนะและสังเคราะห์คำตอบขั้นสมบูรณ์...[/THINKING]"
+                    await asyncio.sleep(0.05)
+                    
+                    if critic_text:
+                        temp_history.append(SystemMessage(content=f"[Multi-Agent Peer Review Guidelines]: Incorporate these verified peer review points into the final response:\n{critic_text[:800]}"))
+            elif model_version in ["2.0-ultra", "2.0-pro"]:
+                yield f"[THINKING][Cognitive Router] ตรวจพบ {moa_hint} → สลับโหมดประมวลผลทันที...[/THINKING]"
 
-                # Check for base64 image (Data Visualization)
-                img_matches = re.findall(r'\[IMAGE_BASE64\]\s*(.*?)\s*\[/IMAGE_BASE64\]', output, re.DOTALL)
-                for b64 in img_matches:
-                    # Yield image directly to user
-                    img_md = f"\n\n![Chart](data:image/png;base64,{b64})\n\n"
-                    yield img_md
-                    full_response += img_md
-                    # Clean output so LLM doesn't see base64
-                    output = output.replace(f"[IMAGE_BASE64] {b64} [/IMAGE_BASE64]", "[Plot Generated Successfully]")
-                    output = output.replace(f"[IMAGE_BASE64]\n{b64}\n[/IMAGE_BASE64]", "[Plot Generated Successfully]")
-                    output = output.replace(f"[IMAGE_BASE64]{b64}[/IMAGE_BASE64]", "[Plot Generated Successfully]")
-                
-                # Append assistant's partial response to clean history
-                clean_history.append(AIMessage(content=full_response))
-                
-                # Append system observation
-                if "Error executing code:" in output:
-                    observation = f"\n[PYTHON_ERROR]\n{output}\n[/PYTHON_ERROR]\n(Instruction: The code failed. Analyze the error and write a new [PYTHON] block to fix it. Do NOT explain or apologize, just provide the fixed code.)"
+            elapsed_think = round(_time.time() - start_time, 1)
+            yield f"[THINKING]ใช้เวลาประมวลผล: {elapsed_think} วินาที[/THINKING]"
+            yield "[THINKING_DONE]"
+
+            # Multi-Brain Router (Kira 2.1): เลือกสมองที่เหมาะสมที่สุด
+            preferred_model, brain_type, brain_desc = _route_brain(user_input, model_version, flavor)
+            
+            print(f"🧠 [Brain Router] {brain_type} → {preferred_model} | {brain_desc}")
+            
+            clean_history = []
+            for msg in temp_history:
+                if isinstance(msg, AIMessage):
+                    clean_content = msg.content
+                    clean_content = re.sub(r'✨ \*\*\[Kira 1\.[12] PRO\]\*\*\n\n', '', clean_content)
+                    clean_content = re.sub(r'👑 \*\*\[Kira 1\.3 APEX\]\*\*\n\n', '', clean_content)
+                    clean_content = re.sub(r'🤖 \*\*\[Kira 1\.0\]\*\*\n\n', '', clean_content)
+                    clean_content = re.sub(r'\*\(\🌐 กำลัง.*?\.\.\.\)\*\n\n', '', clean_content)
+                    clean_history.append(AIMessage(content=clean_content))
                 else:
-                    observation = f"\n[PYTHON_RESULT]\n{output}\n[/PYTHON_RESULT]\n(Instruction: Analyze this output and provide the final summarized answer in Thai. Do not output code again unless necessary.)"
-                
-                clean_history.append(SystemMessage(content=observation))
-                
-                yield "[THINKING]ประมวลผลโค้ดเสร็จสิ้น[/THINKING]"
-                
-                # Loop continues to next iteration (agent_loop_count + 1)
-            else:
-                # No [PYTHON] tag found — code execution loop finished
-                break
+                    clean_history.append(msg)
 
-        history.append(AIMessage(content=full_response))
-        log_chat(uname, "Kira", full_response, session_id)
+            # Boss ลอง 2 รอบ (รอบ 2 รอ 60 วิ), ผู้ใช้ลอง 1 รอบ
+            max_rounds = 2 if is_boss_user else 1
+            
+            agent_loop_count = 0
+            max_agent_loops = 3 # ให้รันโค้ดและแก้บั๊กได้สูงสุด 3 รอบต่อข้อความ
+
+            while agent_loop_count < max_agent_loops:
+                agent_loop_count += 1
+                success = False
+                last_error = ""
+
+                for round_num in range(max_rounds):
+                    if round_num > 0:
+                        wait_msg = "\n\n⏳ *กำลังรอโควตาฟื้นตัว (60 วินาที)...*\n"
+                        full_response += wait_msg
+                        yield wait_msg
+                        await asyncio.sleep(60)
+
+                    # Force Full Multimodal Vision model if image is present (Pillar 3: Live Screen & Vision Inspector)
+                    if req.image_base64:
+                        preferred_model = "qwen/qwen-2.5-vl-72b-instruct" if OPENROUTER_API_KEYS else "meta-llama/llama-3.2-11b-vision-instruct"
+
+                    s, chunks, err = await _try_all_keys_and_models(clean_history, preferred_model, ui_lang=ui_lang)
+
+                    if s:
+                        if agent_loop_count > 1:
+                            yield "\n*(📝 คิระกำลังประมวลผลลัพธ์...)*\n\n"
+                            full_response += "\n*(📝 คิระกำลังประมวลผลลัพธ์...)*\n\n"
+                            
+                        for c in chunks:
+                            scrubbed_c = scrub_sensitive_output(c)
+                            full_response += scrubbed_c
+                            yield scrubbed_c
+                        success = True
+                        use_user_quota(uname)
+                        execute_query("UPDATE users SET points = points + 1 WHERE username=?", (uname,))
+                        break
+                    else:
+                        last_error = err
+
+                if not success:
+                    if is_boss_user:
+                        error_msg = "\n\n⚠️ **บอสคะ!** หนูลองสมองของ Groq ทุกตัวและทุก Key แล้ว แต่โควตา API เต็มหมดเลยค่ะ 😢\n\n"
+                        error_msg += "💡 **วิธีแก้ด่วน:** ให้บอสเพิ่ม API Key ของ Groq ลงในตัวแปร `GROQ_API_KEYS` บน Render เพิ่มอีกนะคะ\n"
+                        error_msg += f"\n🛠️ **[Boss Diagnostic]**\n```\nKeys ทั้งหมด: {len(API_KEYS)} ดอก\n{last_error}\n```"
+                    else:
+                        quota_error_msgs = {
+                            "th": "\n\n⚠️ **ขออภัยค่ะคุณผู้ใช้!** ตอนนี้ระบบมีผู้ใช้งานเยอะมาก รบกวนรอสักพัก (ประมาณ 1 นาที) แล้วลองถามใหม่อีกครั้งนะคะ 🙏",
+                            "en": "\n\n⚠️ **We apologize!** The system is currently experiencing high demand. Please wait a moment (about 1 minute) and try again 🙏",
+                            "zh": "\n\n⚠️ **抱歉！** 当前系统繁忙，请稍等片刻（约1分钟）后再试 🙏",
+                            "ko": "\n\n⚠️ **죄송합니다!** 현재 시스템 이용자가 많습니다. 잠시 후(약 1분) 다시 시도해 주세요 🙏",
+                            "ja": "\n\n⚠️ **申し訳ありません！** 現在アクセスが集中しています。しばらく（約1分）待ってからもう一度お試しください 🙏"
+                        }
+                        error_msg = quota_error_msgs.get(ui_lang, quota_error_msgs["th"])
+
+                    error_msg = scrub_sensitive_output(error_msg)
+                    full_response += error_msg
+                    yield error_msg
+                    break
+                    
+                # --- Check for Python Execution ---
+                import re
+                python_matches = re.findall(r'\[PYTHON\](.*?)\[/PYTHON\]', full_response, re.DOTALL)
+                
+                if python_matches and model_version in ["1.1", "1.2", "1.3"]:
+                    # Get the last python block we just generated
+                    code_to_run = python_matches[-1].strip()
+                    
+                    yield "[THINKING]⚙️ กำลังประมวลผลโค้ด Python...[/THINKING]"
+                    await asyncio.sleep(0.1)
+                    
+                    output = await asyncio.to_thread(_execute_python_code, code_to_run)
+                    
+                    # Python Sandbox Safety Policy Interception
+                    if output.startswith("[SECURITY_BLOCK]"):
+                        record_ip_strike(client_ip, "Python Sandbox Policy Violation")
+                        target = output.split(" ", 1)[1] if " " in output else "restricted module"
+                        output = f"🛑 SecurityError: การเรียกใช้งานโมดูลหรือฟังก์ชัน '{target}' ไม่อนุญาตในสภาพแวดล้อม Sandbox เพื่อความปลอดภัยของระบบ"
+
+                    # Check for base64 image (Data Visualization)
+                    img_matches = re.findall(r'\[IMAGE_BASE64\]\s*(.*?)\s*\[/IMAGE_BASE64\]', output, re.DOTALL)
+                    for b64 in img_matches:
+                        # Yield image directly to user
+                        img_md = f"\n\n![Chart](data:image/png;base64,{b64})\n\n"
+                        yield img_md
+                        full_response += img_md
+                        # Clean output so LLM doesn't see base64
+                        output = output.replace(f"[IMAGE_BASE64] {b64} [/IMAGE_BASE64]", "[Plot Generated Successfully]")
+                        output = output.replace(f"[IMAGE_BASE64]\n{b64}\n[/IMAGE_BASE64]", "[Plot Generated Successfully]")
+                        output = output.replace(f"[IMAGE_BASE64]{b64}[/IMAGE_BASE64]", "[Plot Generated Successfully]")
+                    
+                    # Append assistant's partial response to clean history
+                    clean_history.append(AIMessage(content=full_response))
+                    
+                    # Append system observation
+                    if "Error executing code:" in output:
+                        observation = f"\n[PYTHON_ERROR]\n{output}\n[/PYTHON_ERROR]\n(Instruction: The code failed. Analyze the error and write a new [PYTHON] block to fix it. Do NOT explain or apologize, just provide the fixed code.)"
+                    else:
+                        observation = f"\n[PYTHON_RESULT]\n{output}\n[/PYTHON_RESULT]\n(Instruction: Analyze this output and provide the final summarized answer in Thai. Do not output code again unless necessary.)"
+                    
+                    clean_history.append(SystemMessage(content=observation))
+                    
+                    yield "[THINKING]ประมวลผลโค้ดเสร็จสิ้น[/THINKING]"
+                else:
+                    # No [PYTHON] tag found — code execution loop finished
+                    break
+        except Exception as _stream_err:
+            print(f"🚨 [Streaming Exception in generate()] user={uname}:", _tb.format_exc())
+            err_lang = ui_lang or "th"
+            err_fallbacks = {
+                "th": "\n\n⚠️ **ขออภัยค่ะบอส/คุณผู้ใช้!** เกิดข้อผิดพลาดชั่วคราวในการประมวลผลคำตอบ รบกวนลองส่งข้อความใหม่อีกครั้งนะคะ 🙏",
+                "en": "\n\n⚠️ **Apologies!** A temporary error occurred while processing the response. Please try sending your message again. 🙏",
+                "zh": "\n\n⚠️ **抱歉！** 处理回答时发生临时错误，请重试发送您的消息。🙏",
+                "ko": "\n\n⚠️ **죄송합니다!** 응답을 처리하는 중에 일시적인 오류가 발생했습니다. 다시 시도해 주세요. 🙏",
+                "ja": "\n\n⚠️ **申し訳ありません！** 回答の処理中に一時的なエラーが発生しました。もう一度お試しください。🙏"
+            }
+            apology = err_fallbacks.get(err_lang, err_fallbacks["th"])
+            full_response += apology
+            yield apology
+        finally:
+            if full_response.strip():
+                try:
+                    history.append(AIMessage(content=full_response))
+                    log_chat(uname, "Kira", full_response, session_id)
+                except Exception as _save_err:
+                    print("Error saving chat log in finally:", _save_err)
 
     return StreamingResponse(generate(), media_type="text/plain")
 
