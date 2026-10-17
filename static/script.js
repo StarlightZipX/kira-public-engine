@@ -737,23 +737,155 @@ async function loadProactiveBriefing() {
     return null;
 }
 
+const WELCOME_I18N = {
+    th: {
+        smart_greeting: "Kira Smart Greeting",
+        prep_title: (name) => `สวัสดีค่ะคุณ ${name || 'ผู้ใช้'}`,
+        prep_subtitle: "คิระกำลังเตรียมพร้อมระบบและประมวลผลบริบทการทำงานของคุณอยู่นะคะ...",
+        boss_badge: '<i class="fa-solid fa-crown"></i> สิทธิ์ผู้ดูแลระบบ (Boss Admin)',
+        ai_online: '<i class="fa-solid fa-heart-pulse heartbeat-icon" style="color:#38bdf8;"></i> AI Engine ออนไลน์',
+        continue_label: '<i class="fa-solid fa-arrow-rotate-left"></i> คุยค้างไว้จากครั้งก่อน ต้องการให้คิระช่วยต่อไหมคะ?',
+        continue_btn: '<i class="fa-solid fa-play"></i> สนทนาต่อเลยค่ะ',
+        continue_title: "คลิกเพื่อสนทนาต่อจากหัวข้อเดิม",
+        memory_header: '<i class="fa-solid fa-brain" style="color: #c084fc;"></i> สิ่งที่คิระจดจำเกี่ยวกับคุณและงานของคุณได้ (Knowledge Graph Memory):',
+        memory_pill_title: "คลิกเพื่อให้คิระช่วยเรื่องนี้ต่อ",
+        memory_pill_prompt: (fact) => `ช่วยวิเคราะห์หรือต่อยอดจากข้อมูลเรื่อง: ${fact} ให้หน่อยนะคะ`,
+        cat_all: '<i class="fa-solid fa-sparkles"></i> ทั้งหมด',
+        cat_advisor: '<i class="fa-solid fa-compass"></i> ที่ปรึกษา & วางแผน',
+        cat_draft: '<i class="fa-solid fa-pen-nib"></i> ร่างดราฟต์แรก',
+        cat_review: '<i class="fa-solid fa-magnifying-glass-chart"></i> ตรวจทานงาน',
+        cat_learning: '<i class="fa-solid fa-lightbulb"></i> ย่อยเรื่องยาก',
+        cat_tech: '<i class="fa-solid fa-code"></i> โค้ด & ผังงาน',
+        badge_advisor: '<i class="fa-solid fa-compass"></i> ที่ปรึกษา',
+        badge_draft: '<i class="fa-solid fa-pen-nib"></i> ดราฟต์แรก',
+        badge_review: '<i class="fa-solid fa-magnifying-glass-chart"></i> ตรวจทาน',
+        badge_learning: '<i class="fa-solid fa-lightbulb"></i> ย่อยเรื่องยาก',
+        badge_tech: '<i class="fa-solid fa-code"></i> โค้ด/ผัง',
+        badge_default: '<i class="fa-solid fa-sparkles"></i> แนะนำ'
+    },
+    en: {
+        smart_greeting: "Kira Smart Greeting",
+        prep_title: (name) => `Hello, ${name || 'User'}`,
+        prep_subtitle: "Kira is preparing the system and contextualizing your workspace...",
+        boss_badge: '<i class="fa-solid fa-crown"></i> Administrator (Boss Admin)',
+        ai_online: '<i class="fa-solid fa-heart-pulse heartbeat-icon" style="color:#38bdf8;"></i> AI Engine Online',
+        continue_label: '<i class="fa-solid fa-arrow-rotate-left"></i> Resume where you left off?',
+        continue_btn: '<i class="fa-solid fa-play"></i> Continue Session',
+        continue_title: "Click to resume previous conversation",
+        memory_header: '<i class="fa-solid fa-brain" style="color: #c084fc;"></i> What Kira remembers about you & your work (Knowledge Graph Memory):',
+        memory_pill_title: "Click to continue with this memory topic",
+        memory_pill_prompt: (fact) => `Please analyze and build upon: ${fact}`,
+        cat_all: '<i class="fa-solid fa-sparkles"></i> All',
+        cat_advisor: '<i class="fa-solid fa-compass"></i> Strategy & Planning',
+        cat_draft: '<i class="fa-solid fa-pen-nib"></i> First Draft',
+        cat_review: '<i class="fa-solid fa-magnifying-glass-chart"></i> Review & Polish',
+        cat_learning: '<i class="fa-solid fa-lightbulb"></i> Concept Explainer',
+        cat_tech: '<i class="fa-solid fa-code"></i> Code & Diagrams',
+        badge_advisor: '<i class="fa-solid fa-compass"></i> Advisor',
+        badge_draft: '<i class="fa-solid fa-pen-nib"></i> Draft',
+        badge_review: '<i class="fa-solid fa-magnifying-glass-chart"></i> Review',
+        badge_learning: '<i class="fa-solid fa-lightbulb"></i> Explainer',
+        badge_tech: '<i class="fa-solid fa-code"></i> Tech/Diagram',
+        badge_default: '<i class="fa-solid fa-sparkles"></i> Recommended'
+    },
+    zh: {
+        smart_greeting: "Kira Smart Greeting",
+        prep_title: (name) => `您好，${name || '用户'}`,
+        prep_subtitle: "Kira 正在准备系统并加载您的工作流上下文...",
+        boss_badge: '<i class="fa-solid fa-crown"></i> 最高管理权限 (Boss Admin)',
+        ai_online: '<i class="fa-solid fa-heart-pulse heartbeat-icon" style="color:#38bdf8;"></i> AI 引擎在线',
+        continue_label: '<i class="fa-solid fa-arrow-rotate-left"></i> 接续上次未完成的对话？',
+        continue_btn: '<i class="fa-solid fa-play"></i> 继续对话',
+        continue_title: "点击接续上次对话",
+        memory_header: '<i class="fa-solid fa-brain" style="color: #c084fc;"></i> Kira 记住的关于您与工作的信息 (Knowledge Graph Memory)：',
+        memory_pill_title: "点击基于此记忆继续探讨",
+        memory_pill_prompt: (fact) => `请基于此信息深入分析与拓展：${fact}`,
+        cat_all: '<i class="fa-solid fa-sparkles"></i> 全部',
+        cat_advisor: '<i class="fa-solid fa-compass"></i> 战略与规划',
+        cat_draft: '<i class="fa-solid fa-pen-nib"></i> 快速初稿',
+        cat_review: '<i class="fa-solid fa-magnifying-glass-chart"></i> 审校润色',
+        cat_learning: '<i class="fa-solid fa-lightbulb"></i> 概念速解',
+        cat_tech: '<i class="fa-solid fa-code"></i> 代码与图表',
+        badge_advisor: '<i class="fa-solid fa-compass"></i> 顾问',
+        badge_draft: '<i class="fa-solid fa-pen-nib"></i> 初稿',
+        badge_review: '<i class="fa-solid fa-magnifying-glass-chart"></i> 审校',
+        badge_learning: '<i class="fa-solid fa-lightbulb"></i> 概念',
+        badge_tech: '<i class="fa-solid fa-code"></i> 代码/图表',
+        badge_default: '<i class="fa-solid fa-sparkles"></i> 推荐'
+    },
+    ko: {
+        smart_greeting: "Kira Smart Greeting",
+        prep_title: (name) => `안녕하세요, ${name || '사용자'}님`,
+        prep_subtitle: "Kira가 시스템을 준비하고 작업 컨텍스트를 로드하는 중입니다...",
+        boss_badge: '<i class="fa-solid fa-crown"></i> 최고 관리자 권한 (Boss Admin)',
+        ai_online: '<i class="fa-solid fa-heart-pulse heartbeat-icon" style="color:#38bdf8;"></i> AI 엔진 온라인',
+        continue_label: '<i class="fa-solid fa-arrow-rotate-left"></i> 지난번 대화를 이어갈까요?',
+        continue_btn: '<i class="fa-solid fa-play"></i> 대화 계속하기',
+        continue_title: "클릭하여 이전 대화 이어가기",
+        memory_header: '<i class="fa-solid fa-brain" style="color: #c084fc;"></i> Kira가 기억하는 사용자와 업무 정보 (Knowledge Graph Memory):',
+        memory_pill_title: "클릭하여 이 기억 주제로 대화 계속하기",
+        memory_pill_prompt: (fact) => `이 내용을 바탕으로 분석하고 발전시켜 주세요: ${fact}`,
+        cat_all: '<i class="fa-solid fa-sparkles"></i> 전체',
+        cat_advisor: '<i class="fa-solid fa-compass"></i> 전략 & 계획',
+        cat_draft: '<i class="fa-solid fa-pen-nib"></i> 첫 초안 작성',
+        cat_review: '<i class="fa-solid fa-magnifying-glass-chart"></i> 검토 & 교정',
+        cat_learning: '<i class="fa-solid fa-lightbulb"></i> 핵심 해설',
+        cat_tech: '<i class="fa-solid fa-code"></i> 코드 & 다이어그램',
+        badge_advisor: '<i class="fa-solid fa-compass"></i> 자문',
+        badge_draft: '<i class="fa-solid fa-pen-nib"></i> 초안',
+        badge_review: '<i class="fa-solid fa-magnifying-glass-chart"></i> 검토',
+        badge_learning: '<i class="fa-solid fa-lightbulb"></i> 해설',
+        badge_tech: '<i class="fa-solid fa-code"></i> 기술/도표',
+        badge_default: '<i class="fa-solid fa-sparkles"></i> 추천'
+    },
+    ja: {
+        smart_greeting: "Kira Smart Greeting",
+        prep_title: (name) => `こんにちは、${name || 'ユーザー'}様`,
+        prep_subtitle: "Kiraがシステムを準備し、作業コンテキストを読み込んでいます...",
+        boss_badge: '<i class="fa-solid fa-crown"></i> 最高管理者権限 (Boss Admin)',
+        ai_online: '<i class="fa-solid fa-heart-pulse heartbeat-icon" style="color:#38bdf8;"></i> AI エンジン稼働中',
+        continue_label: '<i class="fa-solid fa-arrow-rotate-left"></i> 前回の対話を再開しますか？',
+        continue_btn: '<i class="fa-solid fa-play"></i> 対話を再開する',
+        continue_title: "クリックして前回の続きから対話する",
+        memory_header: '<i class="fa-solid fa-brain" style="color: #c084fc;"></i> Kiraが記憶しているあなたと業務の情報 (Knowledge Graph Memory)：',
+        memory_pill_title: "クリックしてこの記憶トピックで対話を続ける",
+        memory_pill_prompt: (fact) => `この情報を元に分析・発展させてください: ${fact}`,
+        cat_all: '<i class="fa-solid fa-sparkles"></i> すべて',
+        cat_advisor: '<i class="fa-solid fa-compass"></i> 顧問＆戦略立案',
+        cat_draft: '<i class="fa-solid fa-pen-nib"></i> 初稿クイック作成',
+        cat_review: '<i class="fa-solid fa-magnifying-glass-chart"></i> 文書推敲・レビュー',
+        cat_learning: '<i class="fa-solid fa-lightbulb"></i> 難解概念の要約',
+        cat_tech: '<i class="fa-solid fa-code"></i> コード＆図表',
+        badge_advisor: '<i class="fa-solid fa-compass"></i> 顧問',
+        badge_draft: '<i class="fa-solid fa-pen-nib"></i> 初稿',
+        badge_review: '<i class="fa-solid fa-magnifying-glass-chart"></i> レビュー',
+        badge_learning: '<i class="fa-solid fa-lightbulb"></i> 要約',
+        badge_tech: '<i class="fa-solid fa-code"></i> コード/図表',
+        badge_default: '<i class="fa-solid fa-sparkles"></i> おすすめ'
+    }
+};
+
 async function renderWelcomeHub() {
     const qpWrapper = document.getElementById('quick-prompts-wrapper');
     if (qpWrapper) {
         qpWrapper.classList.remove('hidden-during-chat');
     }
+
+    const currentLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
+    const wDict = WELCOME_I18N[currentLang] || WELCOME_I18N['th'];
+
     chatBox.innerHTML = `
         <div class="welcome-hero-card">
             <div class="welcome-meta-bar">
                 <span class="welcome-time-tag" style="border-color: rgba(6,182,212,0.3); color:#67e8f9;">
-                    <i class="fa-solid fa-sparkles text-cyan"></i> Kira Smart Greeting
+                    <i class="fa-solid fa-sparkles text-cyan"></i> ${wDict.smart_greeting}
                 </span>
             </div>
             <div class="welcome-header">
                 <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo">
                 <div style="flex: 1;">
-                    <h3 class="welcome-title">สวัสดีค่ะคุณ ${escapeHtml(currentUser || 'ผู้ใช้')}</h3>
-                    <p class="welcome-subtitle">คิระกำลังเตรียมพร้อมระบบและประมวลผลบริบทการทำงานของคุณอยู่นะคะ...</p>
+                    <h3 class="welcome-title">${wDict.prep_title(escapeHtml(currentUser || ''))}</h3>
+                    <p class="welcome-subtitle">${wDict.prep_subtitle}</p>
                 </div>
             </div>
         </div>
@@ -761,30 +893,23 @@ async function renderWelcomeHub() {
 
     const briefing = await loadProactiveBriefing();
     const data = briefing || {
-        greeting_title: `สวัสดีค่ะคุณ ${currentUser || 'ผู้ใช้'}`,
-        greeting_subtitle: `ระบบประมวลผล Kira 2.1 พร้อมช่วยงาน คิดวิเคราะห์ และจัดการภารกิจของคุณแล้วค่ะ`,
-        time_str: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
-        date_thai: 'วันนี้',
+        greeting_title: wDict.prep_title(currentUser),
+        greeting_subtitle: wDict.prep_subtitle,
+        time_str: new Date().toLocaleTimeString(currentLang === 'ja' ? 'ja-JP' : (currentLang === 'en' ? 'en-US' : 'th-TH'), { hour: '2-digit', minute: '2-digit' }),
+        date_thai: 'Today',
         is_boss: currentUser && (currentUser.includes('Boss') || currentUser.toLowerCase().includes('admin')),
-        proactive_suggestions: [
-            { title: "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: "ย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: "ADVISOR", category: "advisor" },
-            { title: "สร้างดราฟต์แรกของงานเขียน (First-Draft Machine)", desc: "ร่างอีเมลธุรกิจ บทความ โพสต์โซเชียล หรือโครงสร้างรายงานทันที", prompt: "ช่วยร่างโครงสร้างและเขียนดราฟต์แรกของเนื้อหาอย่างมืออาชีพ ปรับภาษาให้อ่านง่ายและน่าเชื่อถือให้หน่อยนะคะ", icon: "fa-solid fa-pen-nib", tag: "FIRST DRAFT", category: "draft" },
-            { title: "ตรวจทานและเกลาภาษา (Quality & Tone Reviewer)", desc: "ตรวจความถูกต้อง ปรับระดับภาษาให้สุภาพและน่าเชื่อถือ", prompt: "ช่วยตรวจทานความถูกต้องและเกลาข้อความต่อไปนี้ให้สุภาพ กระชับ เป็นมืออาชีพ และไม่มีคำผิดให้หน่อยค่ะ", icon: "fa-solid fa-magnifying-glass-chart", tag: "REVIEW", category: "review" },
-            { title: "ย่อยเรื่องยากให้เข้าใจง่าย (Fast Concept Explainer)", desc: "สรุปสาระสำคัญใน 3 นาที พร้อมยกตัวอย่างให้เห็นภาพชัดเจน", prompt: "ช่วยสรุปและอธิบายเรื่องนี้ให้เข้าใจง่ายใน 3 นาที แบบที่คนไม่มีพื้นฐานก็เข้าใจได้ทันทีให้หน่อยนะคะ", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
-            { title: "พรีวิวโค้ดสด (Live Code Canvas)", desc: "สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที", prompt: "ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บ Landing Page สวยๆ พร้อม Tailwind CSS และ Interactive Elements ให้หน่อยค่ะ", icon: "fa-solid fa-code", tag: "CANVAS", category: "tech" },
-            { title: "วาดผังงาน (Mermaid Flowchart)", desc: "สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ", prompt: "ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานและกระบวนการอย่างเป็นลำดับให้หน่อยค่ะ", icon: "fa-solid fa-project-diagram", tag: "DIAGRAM", category: "tech" }
-        ]
+        proactive_suggestions: []
     };
 
     let continueHtml = '';
     if (data.last_topic && data.last_session_id) {
         continueHtml = `
-            <div class="welcome-continue-card" onclick="loadSession('${escapeHtml(data.last_session_id)}')" title="คลิกเพื่อสนทนาต่อจากหัวข้อเดิม">
+            <div class="welcome-continue-card" onclick="loadSession('${escapeHtml(data.last_session_id)}')" title="${wDict.continue_title}">
                 <div class="welcome-continue-info">
-                    <span class="welcome-continue-label"><i class="fa-solid fa-arrow-rotate-left"></i> คุยค้างไว้จากครั้งก่อน ต้องการให้คิระช่วยต่อไหมคะ?</span>
+                    <span class="welcome-continue-label">${wDict.continue_label}</span>
                     <span class="welcome-continue-topic">"${escapeHtml(data.last_topic)}"</span>
                 </div>
-                <button type="button" class="welcome-continue-btn"><i class="fa-solid fa-play"></i> สนทนาต่อเลยค่ะ</button>
+                <button type="button" class="welcome-continue-btn">${wDict.continue_btn}</button>
             </div>
         `;
     }
@@ -794,8 +919,10 @@ async function renderWelcomeHub() {
         const memoryPills = data.memory_highlights.map(fact => {
             const escapedFact = escapeHtml(fact);
             const safeParam = escapedFact.replace(/'/g, "\\'");
+            const promptText = wDict.memory_pill_prompt(safeParam);
+            const safePrompt = escapeHtml(promptText).replace(/'/g, "\\'");
             return `
-                <span class="welcome-memory-pill" onclick="sendQuickPrompt('ช่วยวิเคราะห์หรือต่อยอดจากข้อมูลเรื่อง: ${safeParam} ให้หน่อยนะคะ')" title="คลิกเพื่อให้คิระช่วยเรื่องนี้ต่อ">
+                <span class="welcome-memory-pill" onclick="sendQuickPrompt('${safePrompt}')" title="${wDict.memory_pill_title}">
                     <i class="fa-solid fa-lightbulb"></i> ${escapedFact}
                 </span>
             `;
@@ -804,7 +931,7 @@ async function renderWelcomeHub() {
         memoryHtml = `
             <div class="welcome-memory-container">
                 <div class="welcome-memory-header">
-                    <i class="fa-solid fa-brain" style="color: #c084fc;"></i> สิ่งที่คิระจดจำเกี่ยวกับคุณและงานของคุณได้ (Knowledge Graph Memory):
+                    ${wDict.memory_header}
                 </div>
                 <div class="welcome-memory-pills">
                     ${memoryPills}
@@ -813,26 +940,10 @@ async function renderWelcomeHub() {
         `;
     }
 
-    const suggestions = data.proactive_suggestions && data.proactive_suggestions.length > 0
-        ? data.proactive_suggestions
-        : [
-            { title: "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: "ย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: "ADVISOR", category: "advisor" },
-            { title: "สร้างดราฟต์แรกของงานเขียน (First-Draft Machine)", desc: "ร่างอีเมลธุรกิจ บทความ โพสต์โซเชียล หรือโครงสร้างรายงานทันที", prompt: "ช่วยร่างโครงสร้างและเขียนดราฟต์แรกของเนื้อหาอย่างมืออาชีพ ปรับภาษาให้อ่านง่ายและน่าเชื่อถือให้หน่อยนะคะ", icon: "fa-solid fa-pen-nib", tag: "FIRST DRAFT", category: "draft" },
-            { title: "ตรวจทานและเกลาภาษา (Quality & Tone Reviewer)", desc: "ตรวจความถูกต้อง ปรับระดับภาษาให้สุภาพและน่าเชื่อถือ", prompt: "ช่วยตรวจทานความถูกต้องและเกลาข้อความต่อไปนี้ให้สุภาพ กระชับ เป็นมืออาชีพ และไม่มีคำผิดให้หน่อยค่ะ", icon: "fa-solid fa-magnifying-glass-chart", tag: "REVIEW", category: "review" },
-            { title: "ย่อยเรื่องยากให้เข้าใจง่าย (Fast Concept Explainer)", desc: "สรุปสาระสำคัญใน 3 นาที พร้อมยกตัวอย่างให้เห็นภาพชัดเจน", prompt: "ช่วยสรุปและอธิบายเรื่องนี้ให้เข้าใจง่ายใน 3 นาที แบบที่คนไม่มีพื้นฐานก็เข้าใจได้ทันทีให้หน่อยนะคะ", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
-            { title: "พรีวิวโค้ดสด (Live Code Canvas)", desc: "สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที", prompt: "ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บ Landing Page สวยๆ พร้อม Tailwind CSS และ Interactive Elements ให้หน่อยค่ะ", icon: "fa-solid fa-code", tag: "CANVAS", category: "tech" },
-            { title: "วาดผังงาน (Mermaid Flowchart)", desc: "สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ", prompt: "ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานและกระบวนการอย่างเป็นลำดับให้หน่อยค่ะ", icon: "fa-solid fa-project-diagram", tag: "DIAGRAM", category: "tech" }
-        ];
+    const suggestions = data.proactive_suggestions || [];
 
     function getCatBadge(cat) {
-        switch(cat) {
-            case 'advisor': return '<i class="fa-solid fa-compass"></i> ที่ปรึกษา';
-            case 'draft': return '<i class="fa-solid fa-pen-nib"></i> ดราฟต์แรก';
-            case 'review': return '<i class="fa-solid fa-magnifying-glass-chart"></i> ตรวจทาน';
-            case 'learning': return '<i class="fa-solid fa-lightbulb"></i> ย่อยเรื่องยาก';
-            case 'tech': return '<i class="fa-solid fa-code"></i> โค้ด/ผัง';
-            default: return '<i class="fa-solid fa-sparkles"></i> แนะนำ';
-        }
+        return wDict['badge_' + cat] || wDict.badge_default;
     }
 
     const suggestionsHtml = suggestions.map(s => {
@@ -850,9 +961,10 @@ async function renderWelcomeHub() {
         `;
     }).join('');
 
-    const bossBadge = data.is_boss ? `<span class="welcome-boss-tag"><i class="fa-solid fa-crown"></i> สิทธิ์ผู้ดูแลระบบ (Boss Admin)</span>` : '';
-    const timeTag = `<span class="welcome-time-tag"><i class="fa-regular fa-clock"></i> ${escapeHtml(data.date_thai || '')} • ${escapeHtml(data.time_str || '')}</span>`;
-    const heartbeatTag = `<span class="welcome-time-tag" style="border-color: rgba(56,189,248,0.3); color:#7dd3fc;"><i class="fa-solid fa-heart-pulse heartbeat-icon" style="color:#38bdf8;"></i> AI Engine ออนไลน์</span>`;
+    const bossBadge = data.is_boss ? `<span class="welcome-boss-tag">${wDict.boss_badge}</span>` : '';
+    const dateFormatted = data.date_thai || '';
+    const timeTag = `<span class="welcome-time-tag"><i class="fa-regular fa-clock"></i> ${escapeHtml(dateFormatted)} • ${escapeHtml(data.time_str || '')}</span>`;
+    const heartbeatTag = `<span class="welcome-time-tag" style="border-color: rgba(56,189,248,0.3); color:#7dd3fc;">${wDict.ai_online}</span>`;
 
     chatBox.innerHTML = `
         <div class="welcome-hero-card">
@@ -871,12 +983,12 @@ async function renderWelcomeHub() {
             ${continueHtml}
             ${memoryHtml}
             <div class="welcome-category-bar">
-                <button type="button" class="welcome-cat-btn active" onclick="filterWelcomeCategory('all', this)"><i class="fa-solid fa-sparkles"></i> ทั้งหมด</button>
-                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('advisor', this)"><i class="fa-solid fa-compass"></i> ที่ปรึกษา & วางแผน</button>
-                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('draft', this)"><i class="fa-solid fa-pen-nib"></i> ร่างดราฟต์แรก</button>
-                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('review', this)"><i class="fa-solid fa-magnifying-glass-chart"></i> ตรวจทานงาน</button>
-                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('learning', this)"><i class="fa-solid fa-lightbulb"></i> ย่อยเรื่องยาก</button>
-                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('tech', this)"><i class="fa-solid fa-code"></i> โค้ด & ผังงาน</button>
+                <button type="button" class="welcome-cat-btn active" onclick="filterWelcomeCategory('all', this)">${wDict.cat_all}</button>
+                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('advisor', this)">${wDict.cat_advisor}</button>
+                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('draft', this)">${wDict.cat_draft}</button>
+                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('review', this)">${wDict.cat_review}</button>
+                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('learning', this)">${wDict.cat_learning}</button>
+                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('tech', this)">${wDict.cat_tech}</button>
             </div>
             <div class="welcome-grid">
                 ${suggestionsHtml}
@@ -11085,6 +11197,95 @@ const KIRA_I18N = {
         modal_close: "ปิด",
         study_canvas_tooltip: "เปิดใน Split Canvas เพื่อจดบันทึกและพรีวิวสด",
         study_mindmap_tooltip: "แปลงเป็นผังความคิด Living Mind Map",
+        // Settings Modal & Controls (TH)
+        settings_modal_title: "การตั้งค่าระบบ",
+        close_esc: "ปิดหน้าต่าง (Esc)",
+        settings_mode_label: "โหมดการทำงานระบบ",
+        settings_account_section_title: "ข้อมูลบัญชีผู้ใช้ & ความปลอดภัย",
+        settings_member_since: "สมาชิกตั้งแต่:",
+        settings_preferred_name_ph: "ชื่อที่คุณต้องการให้คิระเรียก",
+        settings_changepass_title: "เปลี่ยนรหัสผ่าน",
+        settings_curpass_label: "รหัสผ่านปัจจุบัน",
+        settings_curpass_ph: "ระบุรหัสผ่านปัจจุบัน",
+        settings_newpass_label: "รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)",
+        settings_newpass_ph: "ระบุรหัสผ่านใหม่",
+        settings_confirmpass_label: "ยืนยันรหัสผ่านใหม่",
+        settings_confirmpass_ph: "พิมพ์รหัสผ่านใหม่อีกครั้ง",
+        settings_save_newpass_btn: "บันทึกรหัสผ่านใหม่",
+        settings_ai_section_title: "การตั้งค่าโมเดลสมองกล & คำสั่งประจำตัว",
+        settings_persona_title: "บุคลิกภาพและการตอบสนอง (AI Persona)",
+        settings_persona_desc: "ปรับโทนการสนทนาของคิระให้เหมาะกับรูปแบบการทำงานของคุณ",
+        persona_coder: "โปรแกรมเมอร์ & นักพัฒนา (เน้นโค้ด ชัดเจน)",
+        persona_researcher: "นักวิจัย & วิเคราะห์เชิงลึก (อ้างอิงรอบด้าน)",
+        settings_thinking_title: "การแสดงผลกระบวนการคิด (Chain of Thought)",
+        settings_thinking_desc: "ควบคุมการเปิดเผยการใช้เหตุผลเชิงลึกของโมเดลก่อนให้คำตอบ",
+        thinking_opt_autocollapse: "พับเก็บอัตโนมัติ (คลิกเพื่อดูการคิด)",
+        thinking_opt_alwaysopen: "เปิดค้างไว้เสมอ (ดูทุกขั้นตอนทันที)",
+        resilience_title: "เกราะส่งต่ออัจฉริยะ (Circuit Breaker & Fallback)",
+        resilience_desc: "เมื่อโมเดลหลักขัดข้องหรือโควต้าหมด ระบบจะสลับไปยังโหนดสำรองทันทีอย่างไร้รอยต่อ",
+        chip_groq: "Groq Llama 3.3 (ความเร็วระดับสายฟ้า)",
+        chip_openrouter: "OpenRouter (เครือข่ายสำรองระดับโลก)",
+        chip_gemini: "Gemini 2.5 Flash (ขุมพลังวิเคราะห์หลัก)",
+        chip_circuit: "Iron Citadel Circuit Breaker (เปิดใช้งาน)",
+        custom_about_label: "เกี่ยวกับตัวคุณและงานของคุณ:",
+        custom_about_ph: "เช่น ฉันเป็นผู้จัดการฝ่ายการตลาด บริษัทซอฟต์แวร์ ชอบคำตอบที่สั้นกระชับและมุ่งเน้นตัวเลข KPI",
+        custom_style_label: "คุณต้องการให้คิระตอบกลับอย่างไรเป็นพิเศษ:",
+        custom_style_ph: "เช่น ตอบด้วยภาษาที่สุภาพและอบอุ่น, นำเสนอเป็นข้อๆ เสมอ, ใส่หัวข้อสรุปสั้นๆ ไว้ด้านบนก่อนลงรายละเอียด",
+        voice_suite_title: "ระบบเสียง & การแปลงคำพูดเป็นข้อความ",
+        auto_speak_title: "อ่านคำตอบออกเสียงอัตโนมัติ (Auto-Speak)",
+        auto_speak_desc: "เมื่อคิระตอบข้อความเสร็จ ระบบจะพากย์เสียงอ่านให้ฟังโดยอัตโนมัติทันที",
+        voice_group_th: "ภาษาไทย (Thai)",
+        voice_group_en: "ภาษาอังกฤษ (English)",
+        voice_group_zh: "ภาษาจีน (Chinese)",
+        voice_group_ko: "ภาษาเกาหลี (Korean)",
+        voice_group_ja: "ภาษาญี่ปุ่น (Japanese)",
+        voice_th_premwadee: "Premwadee (หญิง - อบอุ่น นุ่มนวล แนะนำ)",
+        voice_th_niwat: "Niwat (ชาย - สุภาพ เป็นทางการ)",
+        voice_en_jenny: "Jenny (หญิง - ชัดเจน มืออาชีพ)",
+        voice_en_guy: "Guy (ชาย - ทุ้ม นิ่ง น่าเชื่อถือ)",
+        voice_zh_xiaoxiao: "Xiaoxiao (หญิง - นุ่มนวล ชัดถ้อยชัดคำ)",
+        voice_zh_yunxi: "Yunxi (ชาย - คล่องแคล่ว ทันสมัย)",
+        voice_ko_sunhi: "SunHi (หญิง - ไพเราะ เป็นธรรมชาติ)",
+        voice_ko_injoon: "InJoon (ชาย - สุภาพ อบอุ่น)",
+        voice_ja_nanami: "Nanami (หญิง - ไพเราะ นุ่มนวล แนะนำ)",
+        voice_ja_keita: "Keita (ชาย - สุภาพ หนักแน่น)",
+        stt_opt_th: "ภาษาไทย (Thai - th-TH)",
+        stt_opt_en: "ภาษาอังกฤษ (English - en-US)",
+        stt_opt_zh: "ภาษาจีนกลาง (Chinese - zh-CN)",
+        stt_opt_ko: "ภาษาเกาหลี (Korean - ko-KR)",
+        stt_opt_ja: "ภาษาญี่ปุ่น (Japanese - ja-JP)",
+        data_section_title: "การจัดการข้อมูล & โครงข่ายความจำ (Knowledge Graph)",
+        graph_memory_title: "โครงข่ายความจำถาวร (Knowledge Graph Memory)",
+        graph_memory_desc: "คิระจะจดจำบริบทสำคัญ ข้อมูลธุรกิจ และข้อตกลงของคุณเพื่อให้บริการได้อย่างต่อเนื่องในทุกบทสนทนา",
+        explore_graph_title: "สำรวจโครงข่ายความจำของคุณ",
+        explore_graph_desc: "ดูแผนผังความสัมพันธ์ของข้อมูล ข้อเท็จจริง และบริบทที่คิระจดจำเกี่ยวกับคุณ",
+        explore_graph_btn: "เปิดดูโครงข่ายความจำ",
+        export_chat_title: "สำรองและส่งออกประวัติการสนทนา",
+        export_chat_desc: "ดาวน์โหลดประวัติการสนทนาทั้งหมดของคุณเป็นไฟล์ JSON เพื่อการเก็บรักษาหรือย้ายเครื่อง",
+        export_chat_btn: "ส่งออกข้อมูล JSON",
+        danger_zone_title: "โซนอันตราย (Danger Zone)",
+        danger_clear_chats_title: "ล้างประวัติการสนทนาทั้งหมด",
+        danger_clear_chats_desc: "ลบข้อความและเซสชันทั้งหมดออกจากเครื่องนี้ การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+        danger_clear_chats_btn: "ล้างประวัติทั้งหมด",
+        danger_wipe_mem_title: "ล้างโครงข่ายความจำ AI ทั้งหมด",
+        danger_wipe_mem_desc: "ลบข้อเท็จจริงและบริบททั้งหมดที่คิระจดจำเกี่ยวกับคุณ เพื่อเริ่มเรียนรู้ใหม่ตั้งแต่ต้น",
+        danger_wipe_mem_btn: "ล้างความจำ AI",
+        labs_section_title: "ห้องทดลอง & การตรวจวินิจฉัยระบบ (Labs & Diagnostics)",
+        sandbox_confirm_title: "ยืนยันก่อนรันโค้ด Python ใน Sandbox",
+        sandbox_confirm_desc: "แสดงกล่องข้อความถามยืนยันก่อนที่ระบบจะประมวลผลโค้ดคอมพิวเตอร์จริงบนเครื่อง",
+        relaunch_tour_title: "เปิดดูทัวร์แนะนำการใช้งาน (Kira Onboarding Tour)",
+        relaunch_tour_desc: "เรียนรู้ฟีเจอร์เด่น แถบควบคุม และคีย์ลัดสำหรับการทำงานระดับโปร",
+        relaunch_tour_btn: "เริ่มทัวร์แนะนำ",
+        latency_ping_title: "ทดสอบค่าความหน่วงของเซิร์ฟเวอร์ (Latency Ping)",
+        latency_ping_desc: "วัดความเร็วในการตอบสนองระหว่างเบราว์เซอร์ของคุณกับเซิร์ฟเวอร์ Kira Cloud Engine",
+        latency_untested: "ยังไม่ได้ทดสอบ",
+        latency_ping_btn: "ทดสอบความเร็ว (Ping)",
+        spec_ver_label: "เวอร์ชันระบบ:",
+        spec_cloud_label: "คลาวด์เอ็นจิ้น:",
+        spec_reasoning_label: "โมเดลเหตุผล:",
+        spec_db_label: "โครงข่ายฐานข้อมูล:",
+        settings_save_status_ready: "พร้อมบันทึกการเปลี่ยนแปลง",
+        btn_save_settings: "บันทึกการตั้งค่า",
         toast_lang_switched: "เปลี่ยนภาษาเป็น ภาษาไทย เรียบร้อยค่ะ 🇹🇭"
     },
 
@@ -11387,6 +11588,95 @@ const KIRA_I18N = {
         modal_close: "Close",
         study_canvas_tooltip: "Open in Split Canvas for notes and live preview",
         study_mindmap_tooltip: "Convert into dynamic Living Mind Map",
+        // Settings Modal & Controls (EN)
+        settings_modal_title: "System Settings",
+        close_esc: "Close (Esc)",
+        settings_mode_label: "System Operation Mode",
+        settings_account_section_title: "Account Profile & Security",
+        settings_member_since: "Member since:",
+        settings_preferred_name_ph: "Name you want Kira to call you",
+        settings_changepass_title: "Change Password",
+        settings_curpass_label: "Current Password",
+        settings_curpass_ph: "Enter current password",
+        settings_newpass_label: "New Password (min. 6 characters)",
+        settings_newpass_ph: "Enter new password",
+        settings_confirmpass_label: "Confirm New Password",
+        settings_confirmpass_ph: "Re-enter new password",
+        settings_save_newpass_btn: "Save New Password",
+        settings_ai_section_title: "AI Brain & Custom Instructions",
+        settings_persona_title: "Response Personality (AI Persona)",
+        settings_persona_desc: "Adjust Kira's tone of voice to match your workflow",
+        persona_coder: "Coder & Developer (Code-first, precise)",
+        persona_researcher: "Deep Researcher & Analyst (Comprehensive citations)",
+        settings_thinking_title: "Chain-of-Thought Display",
+        settings_thinking_desc: "Control how the model reveals its internal reasoning before answering",
+        thinking_opt_autocollapse: "Auto-collapse (Click to view thinking)",
+        thinking_opt_alwaysopen: "Always expanded (View all steps immediately)",
+        resilience_title: "Smart Resilience & Fallback Engine",
+        resilience_desc: "When the primary model experiences rate limits, Kira seamlessly fails over to backup nodes",
+        chip_groq: "Groq Llama 3.3 (Ultra-low latency)",
+        chip_openrouter: "OpenRouter (Global redundancy network)",
+        chip_gemini: "Gemini 2.5 Flash (Primary reasoning powerhouse)",
+        chip_circuit: "Iron Citadel Circuit Breaker (Active)",
+        custom_about_label: "About you and your work:",
+        custom_about_ph: "e.g. I am a marketing manager at a tech company, prefer concise answers with clear KPIs",
+        custom_style_label: "How would you like Kira to respond:",
+        custom_style_ph: "e.g. Always polite and warm, format as bullet points, include an executive summary at the top",
+        voice_suite_title: "Voice Suite & Speech-to-Text",
+        auto_speak_title: "Auto-Speak Responses",
+        auto_speak_desc: "Kira will automatically read out the answer aloud upon completion",
+        voice_group_th: "Thai (ภาษาไทย)",
+        voice_group_en: "English (US)",
+        voice_group_zh: "Chinese (Mandarin)",
+        voice_group_ko: "Korean (한국어)",
+        voice_group_ja: "Japanese (日本語)",
+        voice_th_premwadee: "Premwadee (Female - Warm & Natural, Recommended)",
+        voice_th_niwat: "Niwat (Male - Polite & Formal)",
+        voice_en_jenny: "Jenny (Female - Clear & Professional)",
+        voice_en_guy: "Guy (Male - Deep & Confident)",
+        voice_zh_xiaoxiao: "Xiaoxiao (Female - Gentle & Expressive)",
+        voice_zh_yunxi: "Yunxi (Male - Fluent & Energetic)",
+        voice_ko_sunhi: "SunHi (Female - Melodic & Natural)",
+        voice_ko_injoon: "InJoon (Male - Warm & Courteous)",
+        voice_ja_nanami: "Nanami (Female - Sweet & Polite, Recommended)",
+        voice_ja_keita: "Keita (Male - Polite & Reliable)",
+        stt_opt_th: "Thai (th-TH)",
+        stt_opt_en: "English (US - en-US)",
+        stt_opt_zh: "Chinese (Mandarin - zh-CN)",
+        stt_opt_ko: "Korean (ko-KR)",
+        stt_opt_ja: "Japanese (ja-JP)",
+        data_section_title: "Data Management & Knowledge Graph",
+        graph_memory_title: "Persistent Knowledge Graph Memory",
+        graph_memory_desc: "Kira remembers essential business context and user preferences across all conversations",
+        explore_graph_title: "Explore Your Knowledge Graph",
+        explore_graph_desc: "Inspect the relational network of facts and context that Kira has mapped for you",
+        explore_graph_btn: "Explore Knowledge Graph",
+        export_chat_title: "Export & Backup Chat History",
+        export_chat_desc: "Download your entire conversation archive as a portable JSON file",
+        export_chat_btn: "Export JSON",
+        danger_zone_title: "Danger Zone",
+        danger_clear_chats_title: "Clear All Chat History",
+        danger_clear_chats_desc: "Delete all messages and sessions from this device. This action cannot be undone.",
+        danger_clear_chats_btn: "Clear All Chats",
+        danger_wipe_mem_title: "Wipe AI Knowledge Graph Memory",
+        danger_wipe_mem_desc: "Erase all facts and preferences Kira learned about you to start completely fresh",
+        danger_wipe_mem_btn: "Wipe Memory",
+        labs_section_title: "Labs & System Diagnostics",
+        sandbox_confirm_title: "Confirm Before Executing Code in Sandbox",
+        sandbox_confirm_desc: "Show a confirmation prompt before executing computed code inside the local sandbox",
+        relaunch_tour_title: "Relaunch Interactive Onboarding Tour",
+        relaunch_tour_desc: "Learn key features, control surfaces, and productivity shortcuts",
+        relaunch_tour_btn: "Start Tour",
+        latency_ping_title: "Server Latency Ping",
+        latency_ping_desc: "Measure round-trip response time between your browser and Kira Cloud Engine",
+        latency_untested: "Untested",
+        latency_ping_btn: "Test Latency (Ping)",
+        spec_ver_label: "System Version:",
+        spec_cloud_label: "Cloud Engine:",
+        spec_reasoning_label: "Reasoning Model:",
+        spec_db_label: "Knowledge DB:",
+        settings_save_status_ready: "Ready to save changes",
+        btn_save_settings: "Save Settings",
         toast_lang_switched: "Interface language switched to English 🇺🇸"
     },
 
@@ -11689,6 +11979,95 @@ const KIRA_I18N = {
         modal_close: "关闭",
         study_canvas_tooltip: "在分屏画布中打开以实时记笔记并预览",
         study_mindmap_tooltip: "一键转换为动态思维导图",
+        // Settings Modal & Controls (ZH)
+        settings_modal_title: "系统设置",
+        close_esc: "关闭窗口 (Esc)",
+        settings_mode_label: "系统运行模式",
+        settings_account_section_title: "用户账户与安全设置",
+        settings_member_since: "注册时间：",
+        settings_preferred_name_ph: "您希望 Kira 称呼您的名字",
+        settings_changepass_title: "修改密码",
+        settings_curpass_label: "当前密码",
+        settings_curpass_ph: "输入当前密码",
+        settings_newpass_label: "新密码（至少6位）",
+        settings_newpass_ph: "输入新密码",
+        settings_confirmpass_label: "确认新密码",
+        settings_confirmpass_ph: "再次输入新密码",
+        settings_save_newpass_btn: "保存新密码",
+        settings_ai_section_title: "AI 核心模型与个性化指令",
+        settings_persona_title: "AI 个性与回答风格 (Persona)",
+        settings_persona_desc: "调整 Kira 的交互语气以契合您的工作场景",
+        persona_coder: "程序员与开发者（代码优先，精准）",
+        persona_researcher: "深度研究员与分析师（全面引用，深入透彻）",
+        settings_thinking_title: "思维链过程展示 (Chain of Thought)",
+        settings_thinking_desc: "控制 AI 模型在生成最终答复前如何展现推理过程",
+        thinking_opt_autocollapse: "自动折叠（点击展开查看推理）",
+        thinking_opt_alwaysopen: "始终展开（实时查看完整步骤）",
+        resilience_title: "智能容灾与熔断保护 (Circuit Breaker)",
+        resilience_desc: "当主模型遇到频控或故障时，Kira 会无缝自动切换至备用节点",
+        chip_groq: "Groq Llama 3.3（极速响应）",
+        chip_openrouter: "OpenRouter（全球冗余备份网）",
+        chip_gemini: "Gemini 2.5 Flash（核心深度分析主力）",
+        chip_circuit: "Iron Citadel 智能熔断防线（已启用）",
+        custom_about_label: "关于您及您的业务背景：",
+        custom_about_ph: "例如：我是科技公司的市场总监，倾向简洁、聚焦 KPI 数据的回答",
+        custom_style_label: "您希望 Kira 采用怎样的专属答复风格：",
+        custom_style_ph: "例如：语气始终温和礼貌，多用要点陈述，并在正文前先附上一句话总结",
+        voice_suite_title: "语音套件与语音转文字设置",
+        auto_speak_title: "自动朗读回答 (Auto-Speak)",
+        auto_speak_desc: "Kira 完成回答后将立即通过语音自动朗读",
+        voice_group_th: "泰语 (Thai)",
+        voice_group_en: "英语 (English)",
+        voice_group_zh: "中文 (Chinese)",
+        voice_group_ko: "韩语 (Korean)",
+        voice_group_ja: "日语 (Japanese)",
+        voice_th_premwadee: "Premwadee（女声 - 温暖自然，推荐）",
+        voice_th_niwat: "Niwat（男声 - 沉稳得体）",
+        voice_en_jenny: "Jenny（女声 - 清晰专业）",
+        voice_en_guy: "Guy（男声 - 沉稳有力）",
+        voice_zh_xiaoxiao: "晓晓（女声 - 亲切自然）",
+        voice_zh_yunxi: "云希（男声 - 阳光明朗）",
+        voice_ko_sunhi: "善熙（女声 - 甜美自然）",
+        voice_ko_injoon: "仁俊（男声 - 儒雅稳重）",
+        voice_ja_nanami: "七海（女声 - 甜美温和，推荐）",
+        voice_ja_keita: "圭太（男声 - 沉稳可靠）",
+        stt_opt_th: "泰语 (th-TH)",
+        stt_opt_en: "英语 (en-US)",
+        stt_opt_zh: "中文普通话 (zh-CN)",
+        stt_opt_ko: "韩语 (ko-KR)",
+        stt_opt_ja: "日语 (ja-JP)",
+        data_section_title: "数据管理与认知知识图谱",
+        graph_memory_title: "持久认知知识图谱 (Knowledge Graph)",
+        graph_memory_desc: "Kira 会跨会话沉淀您的业务背景与偏好，提供连续一致的智能协作",
+        explore_graph_title: "探索您的专属知识图谱",
+        explore_graph_desc: "查看 Kira 为您构建的关联概念网络与关键事实",
+        explore_graph_btn: "打开知识图谱",
+        export_chat_title: "备份与导出完整对话历史",
+        export_chat_desc: "将您所有的会话记录下载为 JSON 文件，便于归档与迁移",
+        export_chat_btn: "导出 JSON 数据",
+        danger_zone_title: "危险区域 (Danger Zone)",
+        danger_clear_chats_title: "清空所有对话历史",
+        danger_clear_chats_desc: "从本地彻底删除所有会话与消息，此操作不可撤销。",
+        danger_clear_chats_btn: "清空所有对话",
+        danger_wipe_mem_title: "重置 AI 认知记忆网络",
+        danger_wipe_mem_desc: "清除 Kira 记住的关于您的所有背景与偏好，使其恢复初始状态",
+        danger_wipe_mem_btn: "清除所有记忆",
+        labs_section_title: "实验室与系统诊断 (Labs & Diagnostics)",
+        sandbox_confirm_title: "在沙盒中运行 Python 代码前提示确认",
+        sandbox_confirm_desc: "在本地隔离沙盒执行计算代码前弹出确认提示",
+        relaunch_tour_title: "重新启动新手引导指南 (Onboarding Tour)",
+        relaunch_tour_desc: "重温核心特性、控制面板与高阶生产力快捷键",
+        relaunch_tour_btn: "启动新手引导",
+        latency_ping_title: "服务器延迟测速 (Latency Ping)",
+        latency_ping_desc: "测量当前浏览器与 Kira Cloud Engine 之间的网络往返延迟",
+        latency_untested: "未测试",
+        latency_ping_btn: "立即测速 (Ping)",
+        spec_ver_label: "系统版本：",
+        spec_cloud_label: "云端引擎：",
+        spec_reasoning_label: "推理模型：",
+        spec_db_label: "知识图谱库：",
+        settings_save_status_ready: "就绪，等待保存",
+        btn_save_settings: "保存设置",
         toast_lang_switched: "系统语言已成功切换为 中文 🇨🇳"
     },
 
@@ -11991,6 +12370,95 @@ const KIRA_I18N = {
         modal_close: "닫기",
         study_canvas_tooltip: "메모 작성 및 실시간 미리보기를 위해 Split Canvas에서 열기",
         study_mindmap_tooltip: "동적 마인드맵으로 변환",
+        // Settings Modal & Controls (KO)
+        settings_modal_title: "시스템 설정",
+        close_esc: "닫기 (Esc)",
+        settings_mode_label: "시스템 작동 모드",
+        settings_account_section_title: "사용자 계정 및 보안",
+        settings_member_since: "가입일:",
+        settings_preferred_name_ph: "Kira가 부를 호칭을 입력하세요",
+        settings_changepass_title: "비밀번호 변경",
+        settings_curpass_label: "현재 비밀번호",
+        settings_curpass_ph: "현재 비밀번호 입력",
+        settings_newpass_label: "새 비밀번호 (최소 6자 이상)",
+        settings_newpass_ph: "새 비밀번호 입력",
+        settings_confirmpass_label: "새 비밀번호 확인",
+        settings_confirmpass_ph: "새 비밀번호 다시 입력",
+        settings_save_newpass_btn: "새 비밀번호 저장",
+        settings_ai_section_title: "AI 두뇌 모델 및 사용자 맞춤 지침",
+        settings_persona_title: "AI 성격 및 응답 스타일 (Persona)",
+        settings_persona_desc: "작업 스타일에 맞게 Kira의 대화 어조를 조정합니다",
+        persona_coder: "개발자 & 엔지니어 (코드 중심, 정밀)",
+        persona_researcher: "연구원 & 분석가 (심층 분석, 출처 명시)",
+        settings_thinking_title: "생각 과정 표시 (Chain of Thought)",
+        settings_thinking_desc: "최종 답변 전 모델의 심층 추론 과정 표시 방식 설정",
+        thinking_opt_autocollapse: "자동 접기 (클릭하여 생각 과정 확인)",
+        thinking_opt_alwaysopen: "항상 펼치기 (모든 단계를 즉시 확인)",
+        resilience_title: "스마트 복원력 & 폴백 엔진",
+        resilience_desc: "기본 모델 제한 또는 장애 발생 시 백업 노드로 원활하게 자동 전환됩니다",
+        chip_groq: "Groq Llama 3.3 (초고속 지연시간)",
+        chip_openrouter: "OpenRouter (글로벌 이중화 백업)",
+        chip_gemini: "Gemini 2.5 Flash (주력 분석 엔진)",
+        chip_circuit: "Iron Citadel 서킷 브레이커 (활성화됨)",
+        custom_about_label: "귀하와 귀하의 업무에 대해:",
+        custom_about_ph: "예: 테크 기업 마케팅 총괄, KPI 중심의 간결한 답변 선호",
+        custom_style_label: "Kira가 어떤 방식으로 답변하길 원하시나요:",
+        custom_style_ph: "예: 정중하고 따뜻한 어조, 글머리 기호 사용, 상단에 핵심 요약 먼저 제시",
+        voice_suite_title: "음성 제품군 및 음성 인식 설정",
+        auto_speak_title: "답변 자동 읽어주기 (Auto-Speak)",
+        auto_speak_desc: "Kira가 답변을 완료하면 자동으로 음성으로 읽어줍니다",
+        voice_group_th: "태국어 (Thai)",
+        voice_group_en: "영어 (English)",
+        voice_group_zh: "중국어 (Chinese)",
+        voice_group_ko: "한국어 (Korean)",
+        voice_group_ja: "일본어 (Japanese)",
+        voice_th_premwadee: "Premwadee (여성 - 따뜻하고 자연스러움, 추천)",
+        voice_th_niwat: "Niwat (남성 - 정중하고 공식적임)",
+        voice_en_jenny: "Jenny (여성 - 명확하고 전문적임)",
+        voice_en_guy: "Guy (남성 - 중후하고 신뢰감 있음)",
+        voice_zh_xiaoxiao: "Xiaoxiao (여성 - 부드럽고 정확한 발음)",
+        voice_zh_yunxi: "Yunxi (남성 - 유창하고 현대적임)",
+        voice_ko_sunhi: "선희 (여성 - 부드럽고 자연스러움)",
+        voice_ko_injoon: "인준 (남성 - 정중하고 따뜻함)",
+        voice_ja_nanami: "Nanami (여성 - 상냥하고 정중함, 추천)",
+        voice_ja_keita: "Keita (남성 - 정중하고 든든함)",
+        stt_opt_th: "태국어 (th-TH)",
+        stt_opt_en: "영어 (en-US)",
+        stt_opt_zh: "중국어 표준어 (zh-CN)",
+        stt_opt_ko: "한국어 (ko-KR)",
+        stt_opt_ja: "일본어 (ja-JP)",
+        data_section_title: "데이터 관리 및 지식 그래프",
+        graph_memory_title: "영구 지식 그래프 메모리",
+        graph_memory_desc: "Kira는 모든 대화에서 핵심 비즈니스 맥락과 선호도를 기억하여 일관된 경험을 제공합니다",
+        explore_graph_title: "내 지식 그래프 탐색",
+        explore_graph_desc: "Kira가 기억하고 연결한 지식과 사실 관계도를 확인합니다",
+        explore_graph_btn: "지식 그래프 열기",
+        export_chat_title: "대화 기록 내보내기 및 백업",
+        export_chat_desc: "모든 대화 기록을 JSON 파일로 다운로드하여 안전하게 보관하세요",
+        export_chat_btn: "JSON 내보내기",
+        danger_zone_title: "위험 구역 (Danger Zone)",
+        danger_clear_chats_title: "모든 대화 기록 삭제",
+        danger_clear_chats_desc: "이 기기에서 모든 메시지와 세션을 영구 삭제합니다. 실행 후 복구할 수 없습니다.",
+        danger_clear_chats_btn: "모든 기록 삭제",
+        danger_wipe_mem_title: "AI 지식 그래프 메모리 전체 초기화",
+        danger_wipe_mem_desc: "Kira가 기억한 모든 사실과 정보를 지우고 처음부터 새롭게 학습합니다",
+        danger_wipe_mem_btn: "메모리 초기화",
+        labs_section_title: "실험실 및 시스템 진단",
+        sandbox_confirm_title: "샌드박스에서 Python 코드 실행 전 확인",
+        sandbox_confirm_desc: "로컬 샌드박스에서 연산 코드를 실행하기 전에 확인 창을 표시합니다",
+        relaunch_tour_title: "대화형 온보딩 투어 다시 보기",
+        relaunch_tour_desc: "주요 기능, 제어 패널, 전문가용 단축키 가이드를 다시 확인합니다",
+        relaunch_tour_btn: "투어 시작",
+        latency_ping_title: "서버 지연 시간 측정 (Latency Ping)",
+        latency_ping_desc: "브라우저와 Kira Cloud Engine 간의 왕복 응답 속도를 측정합니다",
+        latency_untested: "미측정",
+        latency_ping_btn: "지연시간 측정 (Ping)",
+        spec_ver_label: "시스템 버전:",
+        spec_cloud_label: "클라우드 엔진:",
+        spec_reasoning_label: "추론 모델:",
+        spec_db_label: "지식 데이터베이스:",
+        settings_save_status_ready: "변경 사항 저장 준비 완료",
+        btn_save_settings: "설정 저장",
         toast_lang_switched: "시스템 언어가 한국어로 변경되었습니다 🇰🇷"
     },
 
@@ -12293,6 +12761,95 @@ const KIRA_I18N = {
         modal_close: "閉じる",
         study_canvas_tooltip: "ノート作成とリアルタイムプレビューのためにSplit Canvasで開く",
         study_mindmap_tooltip: "動的なマインドマップに変換",
+        // Settings Modal & Controls (JA)
+        settings_modal_title: "システム設定",
+        close_esc: "閉じる (Esc)",
+        settings_mode_label: "システム動作モード",
+        settings_account_section_title: "アカウント情報とセキュリティ",
+        settings_member_since: "登録日:",
+        settings_preferred_name_ph: "Kiraに呼んでほしいお名前",
+        settings_changepass_title: "パスワードの変更",
+        settings_curpass_label: "現在のパスワード",
+        settings_curpass_ph: "現在のパスワードを入力",
+        settings_newpass_label: "新しいパスワード（6文字以上）",
+        settings_newpass_ph: "新しいパスワードを入力",
+        settings_confirmpass_label: "新しいパスワード（確認）",
+        settings_confirmpass_ph: "もう一度入力してください",
+        settings_save_newpass_btn: "新しいパスワードを保存",
+        settings_ai_section_title: "AIモデル・カスタム指示設定",
+        settings_persona_title: "AIの性格と応答スタイル (Persona)",
+        settings_persona_desc: "業務スタイルに合わせてKiraのトーンを調整します",
+        persona_coder: "プログラマー・開発者（コード重視・精密）",
+        persona_researcher: "リサーチャー・分析官（綿密な引用・深層分析）",
+        settings_thinking_title: "思考プロセスの表示 (Chain of Thought)",
+        settings_thinking_desc: "回答前のAI推論・思考プロセスの展開方法を設定",
+        thinking_opt_autocollapse: "自動折りたたみ（クリックで思考を表示）",
+        thinking_opt_alwaysopen: "常に展開（全ステップをリアルタイム表示）",
+        resilience_title: "スマート耐障害性・フェイルオーバー",
+        resilience_desc: "メインモデルに障害や制限が発生した場合、予備ノードへシームレスに自動切り替えします",
+        chip_groq: "Groq Llama 3.3（超高速レスポンス）",
+        chip_openrouter: "OpenRouter（グローバル冗余バックアップ）",
+        chip_gemini: "Gemini 2.5 Flash（コア推论・主力分析エンジン）",
+        chip_circuit: "Iron Citadel サーキットブレーカー（常時稼働）",
+        custom_about_label: "あなたと業務内容について：",
+        custom_about_ph: "例：IT企業のマーケティング責任者です。KPI数値を重視した簡潔な回答を好みます。",
+        custom_style_label: "Kiraに期待する特別な応答スタイル：",
+        custom_style_ph: "例：丁寧で温かみのある言葉遣い、箇条書きを活用、冒頭にエグゼクティブサマリーを記載",
+        voice_suite_title: "音声エンジン・音声認識設定",
+        auto_speak_title: "回答の自動音声読み上げ (Auto-Speak)",
+        auto_speak_desc: "Kiraが回答を完了すると、自動的に音声で読み上げます",
+        voice_group_th: "タイ語 (Thai)",
+        voice_group_en: "英語 (English)",
+        voice_group_zh: "中国語 (Chinese)",
+        voice_group_ko: "韓国語 (Korean)",
+        voice_group_ja: "日本語 (Japanese)",
+        voice_th_premwadee: "Premwadee（女性 - 温かみのある自然な声、推奨）",
+        voice_th_niwat: "Niwat（男性 - 丁寧で公式的）",
+        voice_en_jenny: "Jenny（女性 - 明瞭・プロフェッショナル）",
+        voice_en_guy: "Guy（男性 - 落ち着きと信頼感）",
+        voice_zh_xiaoxiao: "Xiaoxiao（女性 - 優しく表情豊か）",
+        voice_zh_yunxi: "Yunxi（男性 - スムーズで明快）",
+        voice_ko_sunhi: "SunHi（女性 - 自然で心地よい声）",
+        voice_ko_injoon: "InJoon（男性 - 丁寧で温かみのある声）",
+        voice_ja_nanami: "Nanami（女性 - 優しく丁寧、推奨）",
+        voice_ja_keita: "Keita（男性 - 爽やかで信頼感のある声）",
+        stt_opt_th: "タイ語 (th-TH)",
+        stt_opt_en: "英語 (en-US)",
+        stt_opt_zh: "中国語普通話 (zh-CN)",
+        stt_opt_ko: "韓国語 (ko-KR)",
+        stt_opt_ja: "日本語 (ja-JP)",
+        data_section_title: "データ管理・ナレッジグラフ設定",
+        graph_memory_title: "永続的ナレッジグラフメモリ",
+        graph_memory_desc: "Kiraはすべての対話を通じて重要な業務コンテキストや設定を記憶し、継続的なサポートを提供します",
+        explore_graph_title: "ナレッジグラフの探索",
+        explore_graph_desc: "Kiraが蓄積したあなたに関する事実と関連概念のネットワークを確認",
+        explore_graph_btn: "ナレッジグラフを開く",
+        export_chat_title: "対話履歴のエクスポート・バックアップ",
+        export_chat_desc: "全対話履歴をJSONファイルとしてダウンロードし、安全に保存・移行できます",
+        export_chat_btn: "JSONをエクスポート",
+        danger_zone_title: "危険ゾーン (Danger Zone)",
+        danger_clear_chats_title: "すべての対話履歴を消去",
+        danger_clear_chats_desc: "この端末からすべての対話とセッションを削除します。元に戻すことはできません。",
+        danger_clear_chats_btn: "全履歴を消去",
+        danger_wipe_mem_title: "AIナレッジグラフメモリの完全消去",
+        danger_wipe_mem_desc: "Kiraが学習したすべての事実とコンテキストを削除し、初期状態から再開します",
+        danger_wipe_mem_btn: "メモリを消去",
+        labs_section_title: "実験室・システム診断 (Labs & Diagnostics)",
+        sandbox_confirm_title: "サンドボックスでのPythonコード実行前に確認",
+        sandbox_confirm_desc: "ローカルサンドボックスでコードを実行する前に確認ダイアログを表示",
+        relaunch_tour_title: "インタラクティブ・ツアーを再開 (Onboarding Tour)",
+        relaunch_tour_desc: "主要機能、操作パネル、プロ向けショートカットを再確認",
+        relaunch_tour_btn: "ツアーを開始",
+        latency_ping_title: "サーバー遅延測定 (Latency Ping)",
+        latency_ping_desc: "お使いのブラウザとKira Cloud Engine間の往復応答時間を測定",
+        latency_untested: "未測定",
+        latency_ping_btn: "速度テスト (Ping)",
+        spec_ver_label: "システムバージョン:",
+        spec_cloud_label: "クラウドエンジン:",
+        spec_reasoning_label: "推論モデル:",
+        spec_db_label: "ナレッジデータベース:",
+        settings_save_status_ready: "変更を保存する準備が完了しました",
+        btn_save_settings: "設定を保存",
         toast_lang_switched: "言語を 日本語 に切り替えました 🇯🇵"
     }
 };
@@ -12417,6 +12974,14 @@ function setKiraLanguage(lang, syncVoice = true, showNotification = false) {
         }
     });
 
+    // 7.1 Translate all [data-i18n-label] elements (for <optgroup>, etc.)
+    document.querySelectorAll('[data-i18n-label]').forEach(el => {
+        const key = el.getAttribute('data-i18n-label');
+        if (dict[key] !== undefined) {
+            el.label = dict[key];
+        }
+    });
+
     // 8. Update Quick Prompts to target language
     updateQuickPromptsLanguage(lang);
 
@@ -12424,6 +12989,12 @@ function setKiraLanguage(lang, syncVoice = true, showNotification = false) {
     const userInput = document.getElementById('user-input');
     if (userInput && dict.input_placeholder) {
         userInput.setAttribute('placeholder', dict.input_placeholder);
+    }
+
+    // 9.1 Re-render Welcome Hero Card if currently shown on screen
+    const welcomeHero = document.querySelector('.welcome-hero-card');
+    if (welcomeHero && typeof renderWelcomeHub === 'function') {
+        renderWelcomeHub();
     }
 
     // 10. Voice & STT Synchronization (Intelligent Auto-Config)

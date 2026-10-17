@@ -1016,11 +1016,11 @@
                         <i class="fa-solid fa-sliders"></i>
                     </div>
                     <div>
-                        <h2 class="settings-modal-title">การตั้งค่าระบบ <span class="settings-version-pill">Settings</span></h2>
+                        <h2 class="settings-modal-title"><span data-i18n="settings_modal_title">การตั้งค่าระบบ</span> <span class="settings-version-pill">Settings</span></h2>
                         <p class="settings-modal-subtitle" data-i18n="settings_header_subtitle">ปรับแต่งประสบการณ์ใช้งาน Kira AI 2.1 ตามสไตล์ของคุณ</p>
                     </div>
                 </div>
-                <button type="button" class="settings-modal-close" id="btn-close-settings" title="ปิดหน้าต่าง (Esc)">
+                <button type="button" class="settings-modal-close" id="btn-close-settings" title="ปิดหน้าต่าง (Esc)" data-i18n-title="close_esc">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -1060,11 +1060,11 @@
                     
                     <!-- TAB 1: General & UI -->
                     <div class="settings-panel active" id="settings-panel-general">
-                        <h3 class="panel-section-title"><i class="fa-solid fa-palette text-purple"></i> ธีมและการแสดงผล (Appearance)</h3>
+                        <h3 class="panel-section-title"><i class="fa-solid fa-palette text-purple"></i> <span data-i18n="settings_section_appearance">ธีมและการแสดงผล (Appearance)</span></h3>
                         
                         <!-- Age-Adaptive Experience Mode Section -->
                         <div class="settings-group">
-                            <label class="settings-label"><i class="fa-solid fa-users text-cyan"></i> โหมดประสบการณ์ตามช่วงวัย (User Experience Mode)</label>
+                            <label class="settings-label"><i class="fa-solid fa-users text-cyan"></i> <span data-i18n="settings_mode_label">โหมดประสบการณ์ตามช่วงวัย (User Experience Mode)</span></label>
                             <div class="mode-options-grid">
                                 <label class="mode-card-option">
                                     <input type="radio" name="setting-user-mode" value="general" checked>
@@ -1186,7 +1186,7 @@
 
                     <!-- TAB 2: Account & Security -->
                     <div class="settings-panel" id="settings-panel-account">
-                        <h3 class="panel-section-title"><i class="fa-solid fa-id-card text-cyan"></i> ข้อมูลโปรไฟล์ & บัญชี (Profile & Quota)</h3>
+                        <h3 class="panel-section-title"><i class="fa-solid fa-id-card text-cyan"></i> <span data-i18n="settings_account_section_title">ข้อมูลโปรไฟล์ & บัญชี (Profile & Quota)</span></h3>
                         
                         <div class="profile-summary-box">
                             <div class="profile-avatar-large">
@@ -1198,10 +1198,10 @@
                                     <h4 id="settings-username-display">User</h4>
                                     <span class="role-pill" id="settings-user-role">Free Member</span>
                                 </div>
-                                <p class="profile-created-date" id="settings-user-created">สมาชิกตั้งแต่: 2026</p>
+                                <p class="profile-created-date" id="settings-user-created"><span data-i18n="settings_member_since">สมาชิกตั้งแต่:</span> 2026</p>
                                 <div class="quota-progress-container">
                                     <div class="quota-labels">
-                                        <span><i class="fa-solid fa-bolt text-amber"></i> โควตาการใช้งานวันนี้:</span>
+                                        <span><i class="fa-solid fa-bolt text-amber"></i> <span data-i18n="settings_quota_label">โควตาการใช้งานวันนี้:</span></span>
                                         <strong id="settings-quota-count">0 / 150 ข้อความ</strong>
                                     </div>
                                     <div class="quota-track">
@@ -1213,34 +1213,34 @@
 
                         <div class="settings-group">
                             <label class="settings-label" for="setting-preferred-name" data-i18n="settings_preferred_name_label">ชื่อที่ต้องการให้คิระเรียกคุณ (Preferred Name)</label>
-                            <input type="text" id="setting-preferred-name" class="settings-input" placeholder="เช่น Boss, คุณบอส, พี่เป็ด, คุณหมอ">
+                            <input type="text" id="setting-preferred-name" class="settings-input" placeholder="เช่น Boss, คุณบอส, พี่เป็ด, คุณหมอ" data-i18n-placeholder="settings_preferred_name_ph">
                             <span class="input-hint" data-i18n="settings_preferred_name_hint">Kira จะใช้ชื่อนี้เรียกขานคุณในการสนทนาและทักทายอย่างเป็นกันเอง</span>
                         </div>
 
-                        <h3 class="panel-section-title" style="margin-top: 25px;"><i class="fa-solid fa-key text-amber"></i> เปลี่ยนรหัสผ่าน (Change Password)</h3>
+                        <h3 class="panel-section-title" style="margin-top: 25px;"><i class="fa-solid fa-key text-amber"></i> <span data-i18n="settings_changepass_title">เปลี่ยนรหัสผ่าน (Change Password)</span></h3>
                         <div class="change-password-box">
                             <div class="input-stacked">
-                                <label for="setting-current-pass">รหัสผ่านปัจจุบัน</label>
-                                <input type="password" id="setting-current-pass" class="settings-input" placeholder="รหัสผ่านปัจจุบัน">
+                                <label for="setting-current-pass" data-i18n="settings_curpass_label">รหัสผ่านปัจจุบัน</label>
+                                <input type="password" id="setting-current-pass" class="settings-input" placeholder="รหัสผ่านปัจจุบัน" data-i18n-placeholder="settings_curpass_ph">
                             </div>
                             <div class="input-stacked">
-                                <label for="setting-new-pass">รหัสผ่านใหม่ (อย่างน้อย 4 ตัวอักษร)</label>
-                                <input type="password" id="setting-new-pass" class="settings-input" placeholder="รหัสผ่านใหม่">
+                                <label for="setting-new-pass" data-i18n="settings_newpass_label">รหัสผ่านใหม่ (อย่างน้อย 4 ตัวอักษร)</label>
+                                <input type="password" id="setting-new-pass" class="settings-input" placeholder="รหัสผ่านใหม่" data-i18n-placeholder="settings_newpass_ph">
                             </div>
                             <div class="input-stacked">
-                                <label for="setting-confirm-pass">ยืนยันรหัสผ่านใหม่</label>
-                                <input type="password" id="setting-confirm-pass" class="settings-input" placeholder="ยืนยันรหัสผ่านใหม่อีกครั้ง">
+                                <label for="setting-confirm-pass" data-i18n="settings_confirmpass_label">ยืนยันรหัสผ่านใหม่</label>
+                                <input type="password" id="setting-confirm-pass" class="settings-input" placeholder="ยืนยันรหัสผ่านใหม่อีกครั้ง" data-i18n-placeholder="settings_confirmpass_ph">
                             </div>
                             <div id="settings-pass-error" class="settings-error-msg hidden"></div>
                             <button type="button" class="btn-action-sm primary" id="btn-submit-change-pass">
-                                <i class="fa-solid fa-lock"></i> บันทึกรหัสผ่านใหม่
+                                <i class="fa-solid fa-lock"></i> <span data-i18n="settings_save_newpass_btn">บันทึกรหัสผ่านใหม่</span>
                             </button>
                         </div>
                     </div>
 
                     <!-- TAB 3: AI Models & Custom Instructions -->
                     <div class="settings-panel" id="settings-panel-ai">
-                        <h3 class="panel-section-title"><i class="fa-solid fa-brain text-pink"></i> การตั้งค่าโมเดล & บุคลิกภาพ (Model & Persona)</h3>
+                        <h3 class="panel-section-title"><i class="fa-solid fa-brain text-pink"></i> <span data-i18n="settings_ai_section_title">การตั้งค่าโมเดล & บุคลิกภาพ (Model & Persona)</span></h3>
 
                         <div class="settings-group">
                             <div class="settings-row">
@@ -1260,15 +1260,15 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">บุคลิกและน้ำเสียงของคิระ (Persona)</strong>
-                                    <p class="setting-desc">ปรับรูปแบบการตอบสนองและอารมณ์ของ AI</p>
+                                    <strong class="setting-title" data-i18n="settings_persona_title">บุคลิกและน้ำเสียงของคิระ (Persona)</strong>
+                                    <p class="setting-desc" data-i18n="settings_persona_desc">ปรับรูปแบบการตอบสนองและอารมณ์ของ AI</p>
                                 </div>
                                 <select id="setting-persona" class="settings-select">
                                     <option value="default" data-i18n="persona_formal">ทางการ สุภาพ</option>
                                     <option value="friend" data-i18n="persona_casual">เป็นกันเอง สบายๆ</option>
                                     <option value="manager" data-i18n="persona_direct">มุ่งเน้นผลลัพธ์ ตรงประเด็น</option>
-                                    <option value="coder">วิศวกรซอฟต์แวร์ เน้นโค้ดและตรรกะ</option>
-                                    <option value="researcher">นักวิจัยวิชาการ เจาะลึกและอ้างอิง</option>
+                                    <option value="coder" data-i18n="persona_coder">วิศวกรซอฟต์แวร์ เน้นโค้ดและตรรกะ</option>
+                                    <option value="researcher" data-i18n="persona_researcher">นักวิจัยวิชาการ เจาะลึกและอ้างอิง</option>
                                 </select>
                             </div>
                         </div>
@@ -1276,12 +1276,12 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">พฤติกรรมกล่องกระบวนการคิด (Deep Thinking Accordion)</strong>
-                                    <p class="setting-desc">เลือกการเปิดหรือพับกล่อง Chain-of-Thought อัตโนมัติ</p>
+                                    <strong class="setting-title" data-i18n="settings_thinking_title">พฤติกรรมกล่องกระบวนการคิด (Deep Thinking Accordion)</strong>
+                                    <p class="setting-desc" data-i18n="settings_thinking_desc">เลือกการเปิดหรือพับกล่อง Chain-of-Thought อัตโนมัติ</p>
                                 </div>
                                 <select id="setting-thinking-accordion" class="settings-select">
-                                    <option value="auto_collapse" selected>พับเก็บอัตโนมัติเมื่อคิดเสร็จ (แนะนำ)</option>
-                                    <option value="always_open">กางค้างไว้ตลอดเวลา</option>
+                                    <option value="auto_collapse" selected data-i18n="thinking_opt_autocollapse">พับเก็บอัตโนมัติเมื่อคิดเสร็จ (แนะนำ)</option>
+                                    <option value="always_open" data-i18n="thinking_opt_alwaysopen">กางค้างไว้ตลอดเวลา</option>
                                 </select>
                             </div>
                         </div>
@@ -1289,43 +1289,43 @@
                         <!-- Neural Resilience Mesh & Fallback Engine Card -->
                         <div class="settings-group" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px; margin-top: 15px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <strong style="color: #60a5fa; font-size: 0.92rem;"><i class="fa-solid fa-shield-halved"></i> เครือข่ายความยืดหยุ่น (Neural Resilience Mesh)</strong>
+                                <strong style="color: #60a5fa; font-size: 0.92rem;"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="resilience_title">เครือข่ายความยืดหยุ่น (Neural Resilience Mesh)</span></strong>
                                 <span class="status-badge-chip" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 0.72rem; padding: 2px 8px; border-radius: 20px;">Multi-Tier Active</span>
                             </div>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;" data-i18n="resilience_desc">
                                 ระบบป้องกันการผูกขาดและการล่มข้ามค่าย สลับโมเดลอัตโนมัติแบบไร้รอยต่อระหว่าง Groq, OpenRouter, Google Gemini Direct และ Local Edge Node
                             </p>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="resilience-providers-chips">
-                                <span class="status-badge-chip" id="chip-groq" style="font-size: 0.75rem; background: rgba(255, 255, 255, 0.06); padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-bolt text-yellow"></i> Groq LPU: ออนไลน์</span>
-                                <span class="status-badge-chip" id="chip-openrouter" style="font-size: 0.75rem; background: rgba(255, 255, 255, 0.06); padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-rocket text-purple"></i> OpenRouter: สำรอง Tier-1</span>
-                                <span class="status-badge-chip" id="chip-gemini" style="font-size: 0.75rem; background: rgba(255, 255, 255, 0.06); padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-gem text-cyan"></i> Gemini Direct: สำรอง Tier-2</span>
-                                <span class="status-badge-chip" id="chip-circuit" style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.12); color: #34d399; padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-heart-pulse"></i> Circuit Breaker: ป้องกัน 100%</span>
+                                <span class="status-badge-chip" id="chip-groq" style="font-size: 0.75rem; background: rgba(255, 255, 255, 0.06); padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-bolt text-yellow"></i> <span data-i18n="chip_groq">Groq LPU: ออนไลน์</span></span>
+                                <span class="status-badge-chip" id="chip-openrouter" style="font-size: 0.75rem; background: rgba(255, 255, 255, 0.06); padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-rocket text-purple"></i> <span data-i18n="chip_openrouter">OpenRouter: สำรอง Tier-1</span></span>
+                                <span class="status-badge-chip" id="chip-gemini" style="font-size: 0.75rem; background: rgba(255, 255, 255, 0.06); padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-gem text-cyan"></i> <span data-i18n="chip_gemini">Gemini Direct: สำรอง Tier-2</span></span>
+                                <span class="status-badge-chip" id="chip-circuit" style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.12); color: #34d399; padding: 3px 8px; border-radius: 6px;"><i class="fa-solid fa-heart-pulse"></i> <span data-i18n="chip_circuit">Circuit Breaker: ป้องกัน 100%</span></span>
                             </div>
                         </div>
 
-                        <h3 class="panel-section-title" style="margin-top: 25px;"><i class="fa-solid fa-wand-magic-sparkles text-purple"></i> คำสั่งพิเศษประจำตัว (Custom Instructions)</h3>
-                        <p class="panel-section-desc">ช่วยให้ Kira รู้จักคุณดีขึ้นและตอบตรงใจคุณในทุกบทสนทนาโดยไม่ต้องบอกซ้ำ</p>
+                        <h3 class="panel-section-title" style="margin-top: 25px;"><i class="fa-solid fa-wand-magic-sparkles text-purple"></i> <span data-i18n="custom_instructions_title">คำสั่งพิเศษประจำตัว (Custom Instructions)</span></h3>
+                        <p class="panel-section-desc" data-i18n="custom_instructions_desc">ช่วยให้ Kira รู้จักคุณดีขึ้นและตอบตรงใจคุณในทุกบทสนทนาโดยไม่ต้องบอกซ้ำ</p>
 
                         <div class="settings-group">
-                            <label class="settings-label" for="setting-custom-about">สิ่งที่คุณอยากให้คิระรู้เกี่ยวกับตัวคุณ (About You):</label>
-                            <textarea id="setting-custom-about" class="settings-textarea" rows="3" placeholder="เช่น ฉันเป็น Full-Stack Developer ใช้ Python และ JavaScript, อยู่กรุงเทพฯ, ชอบคำอธิบายกระชับไม่อ้อมค้อม..."></textarea>
+                            <label class="settings-label" for="setting-custom-about" data-i18n="custom_about_label">สิ่งที่คุณอยากให้คิระรู้เกี่ยวกับตัวคุณ (About You):</label>
+                            <textarea id="setting-custom-about" class="settings-textarea" rows="3" placeholder="เช่น ฉันเป็น Full-Stack Developer ใช้ Python และ JavaScript, อยู่กรุงเทพฯ, ชอบคำอธิบายกระชับไม่อ้อมค้อม..." data-i18n-placeholder="custom_about_ph"></textarea>
                         </div>
 
                         <div class="settings-group">
-                            <label class="settings-label" for="setting-custom-style">สิ่งที่คุณอยากให้คิระตอบสนอง (Response Style):</label>
-                            <textarea id="setting-custom-style" class="settings-textarea" rows="3" placeholder="เช่น ตอบภาษาไทยเป็นหลัก, แนบตัวอย่างโค้ดเสมอ, อธิบายด้วย Bullet points, ใส่ emoji เล็กน้อย..."></textarea>
+                            <label class="settings-label" for="setting-custom-style" data-i18n="custom_style_label">สิ่งที่คุณอยากให้คิระตอบสนอง (Response Style):</label>
+                            <textarea id="setting-custom-style" class="settings-textarea" rows="3" placeholder="เช่น ตอบภาษาไทยเป็นหลัก, แนบตัวอย่างโค้ดเสมอ, อธิบายด้วย Bullet points, ใส่ emoji เล็กน้อย..." data-i18n-placeholder="custom_style_ph"></textarea>
                         </div>
                     </div>
 
                     <!-- TAB 4: Voice & Audio -->
                     <div class="settings-panel" id="settings-panel-voice">
-                        <h3 class="panel-section-title"><i class="fa-solid fa-microphone-lines text-cyan"></i> เสียงพากย์และการอ่านออกเสียง (Natural Voice Suite)</h3>
+                        <h3 class="panel-section-title"><i class="fa-solid fa-microphone-lines text-cyan"></i> <span data-i18n="voice_suite_title">เสียงพากย์และการอ่านออกเสียง (Natural Voice Suite)</span></h3>
 
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">อ่านออกเสียงคำตอบอัตโนมัติ (Auto-Speak)</strong>
-                                    <p class="setting-desc">เล่นเสียงพากย์อัตโนมัติทันทีที่ AI ตอบเสร็จสมบูรณ์</p>
+                                    <strong class="setting-title" data-i18n="auto_speak_title">อ่านออกเสียงคำตอบอัตโนมัติ (Auto-Speak)</strong>
+                                    <p class="setting-desc" data-i18n="auto_speak_desc">เล่นเสียงพากย์อัตโนมัติทันทีที่ AI ตอบเสร็จสมบูรณ์</p>
                                 </div>
                                 <label class="kira-switch">
                                     <input type="checkbox" id="setting-auto-speak">
@@ -1338,28 +1338,28 @@
                             <label class="settings-label" data-i18n="settings_voice_label">เลือกน้ำเสียง AI (Natural Voice Engine)</label>
                             <div class="voice-selector-row">
                                 <select id="setting-voice-name" class="settings-select" style="flex: 1;">
-                                    <optgroup label="🇹🇭 ภาษาไทย (Thai)">
-                                        <option value="th-TH-PremwadeeNeural" selected>เปรมวดี (Premwadee) - หญิงไทย น้ำเสียงนุ่มนวล</option>
-                                        <option value="th-TH-NiwatNeural">นิวัต (Niwat) - ชายไทย สุภาพ น่าเชื่อถือ</option>
+                                    <optgroup label="🇹🇭 ภาษาไทย (Thai)" data-i18n-label="voice_group_th">
+                                        <option value="th-TH-PremwadeeNeural" selected data-i18n="voice_th_premwadee">เปรมวดี (Premwadee) - หญิงไทย น้ำเสียงนุ่มนวล</option>
+                                        <option value="th-TH-NiwatNeural" data-i18n="voice_th_niwat">นิวัต (Niwat) - ชายไทย สุภาพ น่าเชื่อถือ</option>
                                     </optgroup>
-                                    <optgroup label="🇺🇸 English (US)">
-                                        <option value="en-US-JennyNeural">Jenny - หญิงอเมริกัน คล่องแคล่ว ทันสมัย</option>
-                                        <option value="en-US-GuyNeural">Guy - ชายอเมริกัน สุภาพ มืออาชีพ</option>
+                                    <optgroup label="🇺🇸 English (US)" data-i18n-label="voice_group_en">
+                                        <option value="en-US-JennyNeural" data-i18n="voice_en_jenny">Jenny - หญิงอเมริกัน คล่องแคล่ว ทันสมัย</option>
+                                        <option value="en-US-GuyNeural" data-i18n="voice_en_guy">Guy - ชายอเมริกัน สุภาพ มืออาชีพ</option>
                                     </optgroup>
-                                    <optgroup label="🇨🇳 中文 (Chinese)">
-                                        <option value="zh-CN-XiaoxiaoNeural">晓晓 (Xiaoxiao) - หญิงจีน นุ่มนวลเป็นธรรมชาติ</option>
-                                        <option value="zh-CN-YunxiNeural">云希 (Yunxi) - ชายจีน มืออาชีพน่าเชื่อถือ</option>
+                                    <optgroup label="🇨🇳 中文 (Chinese)" data-i18n-label="voice_group_zh">
+                                        <option value="zh-CN-XiaoxiaoNeural" data-i18n="voice_zh_xiaoxiao">晓晓 (Xiaoxiao) - หญิงจีน นุ่มนวลเป็นธรรมชาติ</option>
+                                        <option value="zh-CN-YunxiNeural" data-i18n="voice_zh_yunxi">云希 (Yunxi) - ชายจีน มืออาชีพน่าเชื่อถือ</option>
                                     </optgroup>
-                                    <optgroup label="🇰🇷 한국어 (Korean)">
-                                        <option value="ko-KR-SunHiNeural">선희 (SunHi) - หญิงเกาหลี ไพเราะอ่อนหวาน</option>
-                                        <option value="ko-KR-InJoonNeural">인준 (InJoon) - ชายเกาหลี สุภาพนุ่มนวล</option>
+                                    <optgroup label="🇰🇷 한국어 (Korean)" data-i18n-label="voice_group_ko">
+                                        <option value="ko-KR-SunHiNeural" data-i18n="voice_ko_sunhi">선희 (SunHi) - หญิงเกาหลี ไพเราะอ่อนหวาน</option>
+                                        <option value="ko-KR-InJoonNeural" data-i18n="voice_ko_injoon">인준 (InJoon) - ชายเกาหลี สุภาพนุ่มนวล</option>
                                     </optgroup>
-                                    <optgroup label="🇯🇵 日本語 (Japanese)">
-                                        <option value="ja-JP-NanamiNeural">七海 (Nanami) - หญิงญี่ปุ่น สดใส อ่อนโยน</option>
-                                        <option value="ja-JP-KeitaNeural">圭太 (Keita) - ชายญี่ปุ่น สุภาพ เป็นธรรมชาติ</option>
+                                    <optgroup label="🇯🇵 日本語 (Japanese)" data-i18n-label="voice_group_ja">
+                                        <option value="ja-JP-NanamiNeural" data-i18n="voice_ja_nanami">七海 (Nanami) - หญิงญี่ปุ่น สดใส อ่อนโยน</option>
+                                        <option value="ja-JP-KeitaNeural" data-i18n="voice_ja_keita">圭太 (Keita) - ชายญี่ปุ่น สุภาพ เป็นธรรมชาติ</option>
                                     </optgroup>
                                 </select>
-                                <button type="button" class="btn-action-sm secondary" id="btn-preview-voice" title="ทดสอบฟังเสียง">
+                                <button type="button" class="btn-action-sm secondary" id="btn-preview-voice" title="ทดสอบฟังเสียง" data-i18n-title="test_listen">
                                     <i class="fa-solid fa-play"></i> <span data-i18n="test_listen">ทดลองฟัง</span>
                                 </button>
                             </div>
@@ -1387,11 +1387,11 @@
                                     <p class="setting-desc" data-i18n="stt_lang_desc">ภาษาหลักที่ใช้ในการฟังเสียงพูดผ่านไมโครโฟน</p>
                                 </div>
                                 <select id="setting-stt-lang" class="settings-select">
-                                    <option value="th-TH" selected>🇹🇭 ภาษาไทย (th-TH)</option>
-                                    <option value="en-US">🇺🇸 English (en-US)</option>
-                                    <option value="zh-CN">🇨🇳 中文 - 普通话 (zh-CN)</option>
-                                    <option value="ko-KR">🇰🇷 한국어 (ko-KR)</option>
-                                    <option value="ja-JP">🇯🇵 日本語 (ja-JP)</option>
+                                    <option value="th-TH" selected data-i18n="stt_opt_th">🇹🇭 ภาษาไทย (th-TH)</option>
+                                    <option value="en-US" data-i18n="stt_opt_en">🇺🇸 English (en-US)</option>
+                                    <option value="zh-CN" data-i18n="stt_opt_zh">🇨🇳 中文 - 普通话 (zh-CN)</option>
+                                    <option value="ko-KR" data-i18n="stt_opt_ko">🇰🇷 한국어 (ko-KR)</option>
+                                    <option value="ja-JP" data-i18n="stt_opt_ja">🇯🇵 日本語 (ja-JP)</option>
                                 </select>
                             </div>
                         </div>
@@ -1399,13 +1399,13 @@
 
                     <!-- TAB 5: Data & Memory -->
                     <div class="settings-panel" id="settings-panel-data">
-                        <h3 class="panel-section-title"><i class="fa-solid fa-database text-purple"></i> ความจำระยะยาว & โครงข่ายความสัมพันธ์ (Knowledge Graph & Logs)</h3>
+                        <h3 class="panel-section-title"><i class="fa-solid fa-database text-purple"></i> <span data-i18n="data_section_title">ความจำระยะยาว & โครงข่ายความสัมพันธ์ (Knowledge Graph & Logs)</span></h3>
 
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">เปิดใช้งานความจำระยะยาว (Long-Term Memory)</strong>
-                                    <p class="setting-desc">อนุญาตให้คิระบันทึกข้อเท็จจริงและความสนใจเพื่อใช้ต่อยอดในอนาคต</p>
+                                    <strong class="setting-title" data-i18n="graph_memory_title">เปิดใช้งานความจำระยะยาว (Long-Term Memory)</strong>
+                                    <p class="setting-desc" data-i18n="graph_memory_desc">อนุญาตให้คิระบันทึกข้อเท็จจริงและความสนใจเพื่อใช้ต่อยอดในอนาคต</p>
                                 </div>
                                 <label class="kira-switch">
                                     <input type="checkbox" id="setting-graph-memory" checked>
@@ -1417,11 +1417,11 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">สำรวจโครงข่ายสมอง 2D Mind-Map</strong>
-                                    <p class="setting-desc">เปิดหน้าต่าง Interactive Knowledge Graph เพื่อส่องดูหรือแก้ไขข้อเท็จจริง</p>
+                                    <strong class="setting-title" data-i18n="explore_graph_title">สำรวจโครงข่ายสมอง 2D Mind-Map</strong>
+                                    <p class="setting-desc" data-i18n="explore_graph_desc">เปิดหน้าต่าง Interactive Knowledge Graph เพื่อส่องดูหรือแก้ไขข้อเท็จจริง</p>
                                 </div>
                                 <button type="button" class="btn-action-sm secondary" id="btn-open-graph-from-settings">
-                                    <i class="fa-solid fa-diagram-project"></i> เปิด Mind-Map
+                                    <i class="fa-solid fa-diagram-project"></i> <span data-i18n="explore_graph_btn">เปิด Mind-Map</span>
                                 </button>
                             </div>
                         </div>
@@ -1429,11 +1429,11 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">ส่งออกประวัติการแชท (Export Chat Data)</strong>
-                                    <p class="setting-desc">ดาวน์โหลดบันทึกการสนทนาทั้งหมดของคุณเป็นไฟล์ JSON</p>
+                                    <strong class="setting-title" data-i18n="export_chat_title">ส่งออกประวัติการแชท (Export Chat Data)</strong>
+                                    <p class="setting-desc" data-i18n="export_chat_desc">ดาวน์โหลดบันทึกการสนทนาทั้งหมดของคุณเป็นไฟล์ JSON</p>
                                 </div>
                                 <button type="button" class="btn-action-sm secondary" id="btn-export-chat-json">
-                                    <i class="fa-solid fa-download"></i> ดาวน์โหลด JSON
+                                    <i class="fa-solid fa-download"></i> <span data-i18n="export_chat_btn">ดาวน์โหลด JSON</span>
                                 </button>
                             </div>
                         </div>
@@ -1441,24 +1441,24 @@
                         <div class="danger-zone-box">
                             <div class="danger-zone-header">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                                <span>โซนอันตราย (Danger Zone)</span>
+                                <span data-i18n="danger_zone_title">โซนอันตราย (Danger Zone)</span>
                             </div>
                             <div class="danger-row">
                                 <div>
-                                    <strong>ล้างประวัติการแชททั้งหมด (Clear All Chat History)</strong>
-                                    <p>ลบข้อความสนทนาทั้งหมดในบัญชีของคุณ การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+                                    <strong data-i18n="danger_clear_chats_title">ล้างประวัติการแชททั้งหมด (Clear All Chat History)</strong>
+                                    <p data-i18n="danger_clear_chats_desc">ลบข้อความสนทนาทั้งหมดในบัญชีของคุณ การกระทำนี้ไม่สามารถย้อนกลับได้</p>
                                 </div>
                                 <button type="button" class="btn-danger-sm" id="btn-clear-all-chats">
-                                    <i class="fa-solid fa-trash-can"></i> ล้างประวัติแชท
+                                    <i class="fa-solid fa-trash-can"></i> <span data-i18n="danger_clear_chats_btn">ล้างประวัติแชท</span>
                                 </button>
                             </div>
                             <div class="danger-row">
                                 <div>
-                                    <strong>ล้างความจำและโหนดสมองทั้งหมด (Wipe Knowledge Graph Memories)</strong>
-                                    <p>รีเซ็ตโครงข่ายความจำส่วนบุคคลทั้งหมด คิระจะเริ่มต้นเรียนรู้ใหม่เหมือนวันแรก</p>
+                                    <strong data-i18n="danger_wipe_mem_title">ล้างความจำและโหนดสมองทั้งหมด (Wipe Knowledge Graph Memories)</strong>
+                                    <p data-i18n="danger_wipe_mem_desc">รีเซ็ตโครงข่ายความจำส่วนบุคคลทั้งหมด คิระจะเริ่มต้นเรียนรู้ใหม่เหมือนวันแรก</p>
                                 </div>
                                 <button type="button" class="btn-danger-sm" id="btn-wipe-all-memories">
-                                    <i class="fa-solid fa-eraser"></i> ล้างความจำสมอง
+                                    <i class="fa-solid fa-eraser"></i> <span data-i18n="danger_wipe_mem_btn">ล้างความจำสมอง</span>
                                 </button>
                             </div>
                         </div>
@@ -1466,13 +1466,13 @@
 
                     <!-- TAB 6: Pro Tools & Labs -->
                     <div class="settings-panel" id="settings-panel-pro">
-                        <h3 class="panel-section-title"><i class="fa-solid fa-flask-vial text-rose"></i> เครื่องมือทดลอง & ระบบขั้นสูง (Labs & Diagnostics)</h3>
+                        <h3 class="panel-section-title"><i class="fa-solid fa-flask-vial text-rose"></i> <span data-i18n="labs_section_title">เครื่องมือทดลอง & ระบบขั้นสูง (Labs & Diagnostics)</span></h3>
 
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">ยืนยันก่อนรันโค้ด Python ใน Sandbox</strong>
-                                    <p class="setting-desc">แสดงหน้าต่างยืนยันความปลอดภัยก่อนอนุญาตให้เอเจนต์รันโค้ดคำนวณ</p>
+                                    <strong class="setting-title" data-i18n="sandbox_confirm_title">ยืนยันก่อนรันโค้ด Python ใน Sandbox</strong>
+                                    <p class="setting-desc" data-i18n="sandbox_confirm_desc">แสดงหน้าต่างยืนยันความปลอดภัยก่อนอนุญาตให้เอเจนต์รันโค้ดคำนวณ</p>
                                 </div>
                                 <label class="kira-switch">
                                     <input type="checkbox" id="setting-python-confirm" checked>
@@ -1484,11 +1484,11 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">เปิดคู่มือแนะนำการใช้งานซ้ำ (Re-launch Onboarding Tour)</strong>
-                                    <p class="setting-desc">เปิดหน้าสไลด์แนะนำฟีเจอร์ 4 ขั้นตอนสำหรับผู้ใช้ใหม่อีกครั้ง</p>
+                                    <strong class="setting-title" data-i18n="relaunch_tour_title">เปิดคู่มือแนะนำการใช้งานซ้ำ (Re-launch Onboarding Tour)</strong>
+                                    <p class="setting-desc" data-i18n="relaunch_tour_desc">เปิดหน้าสไลด์แนะนำฟีเจอร์ 4 ขั้นตอนสำหรับผู้ใช้ใหม่อีกครั้ง</p>
                                 </div>
                                 <button type="button" class="btn-action-sm secondary" id="btn-relaunch-tour">
-                                    <i class="fa-solid fa-book-open"></i> เปิดคู่มือ 4 ขั้นตอน
+                                    <i class="fa-solid fa-book-open"></i> <span data-i18n="relaunch_tour_btn">เปิดคู่มือ 4 ขั้นตอน</span>
                                 </button>
                             </div>
                         </div>
@@ -1496,13 +1496,13 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div>
-                                    <strong class="setting-title">วัดความเร็วการเชื่อมต่อเซิร์ฟเวอร์ (Latency Ping)</strong>
-                                    <p class="setting-desc">ตรวจวัดระยะเวลา Ping ไปยังเซิร์ฟเวอร์คลาวด์ (Server Latency Ping)</p>
+                                    <strong class="setting-title" data-i18n="latency_ping_title">วัดความเร็วการเชื่อมต่อเซิร์ฟเวอร์ (Latency Ping)</strong>
+                                    <p class="setting-desc" data-i18n="latency_ping_desc">ตรวจวัดระยะเวลา Ping ไปยังเซิร์ฟเวอร์คลาวด์ (Server Latency Ping)</p>
                                 </div>
                                 <div class="latency-test-wrapper">
-                                    <span id="latency-ping-result" class="latency-tag">ยังไม่ได้ทดสอบ</span>
+                                    <span id="latency-ping-result" class="latency-tag" data-i18n="latency_untested">ยังไม่ได้ทดสอบ</span>
                                     <button type="button" class="btn-action-sm secondary" id="btn-ping-latency">
-                                        <i class="fa-solid fa-network-wired"></i> ทดสอบ Ping
+                                        <i class="fa-solid fa-network-wired"></i> <span data-i18n="latency_ping_btn">ทดสอบ Ping</span>
                                     </button>
                                 </div>
                             </div>
@@ -1510,19 +1510,19 @@
 
                         <div class="system-specs-card">
                             <div class="spec-item">
-                                <span class="spec-label">เวอร์ชันระบบ:</span>
+                                <span class="spec-label" data-i18n="spec_ver_label">เวอร์ชันระบบ:</span>
                                 <span class="spec-val">Kira 2.1 Next-Gen (Build 2026.9)</span>
                             </div>
                             <div class="spec-item">
-                                <span class="spec-label">โครงข่ายคลาวด์:</span>
+                                <span class="spec-label" data-i18n="spec_cloud_label">โครงข่ายคลาวด์:</span>
                                 <span class="spec-val text-emerald">Cloud Engine v2.1 Active</span>
                             </div>
                             <div class="spec-item">
-                                <span class="spec-label">เอ็นจิ้นเหตุผล:</span>
+                                <span class="spec-label" data-i18n="spec_reasoning_label">เอ็นจิ้นเหตุผล:</span>
                                 <span class="spec-val">Multi-Model Consensus & Peer Review</span>
                             </div>
                             <div class="spec-item">
-                                <span class="spec-label">ฐานข้อมูลความจำ:</span>
+                                <span class="spec-label" data-i18n="spec_db_label">ฐานข้อมูลความจำ:</span>
                                 <span class="spec-val">SQLite 3 + Knowledge Graph Memory</span>
                             </div>
                         </div>
@@ -1534,12 +1534,12 @@
             <!-- Modal Footer -->
             <div class="settings-modal-footer">
                 <div class="settings-footer-status" id="settings-save-status">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> พร้อมบันทึกการตั้งค่า
+                    <i class="fa-solid fa-cloud-arrow-up"></i> <span data-i18n="settings_save_status_ready">พร้อมบันทึกการตั้งค่า</span>
                 </div>
                 <div class="settings-footer-actions">
-                    <button type="button" class="settings-btn-cancel" id="btn-cancel-settings">ปิด</button>
+                    <button type="button" class="settings-btn-cancel" id="btn-cancel-settings" data-i18n="modal_close">ปิด</button>
                     <button type="button" class="settings-btn-save" id="btn-save-settings">
-                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า (Save)
+                        <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="btn_save_settings">บันทึกการตั้งค่า (Save)</span>
                     </button>
                 </div>
             </div>

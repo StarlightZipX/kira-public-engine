@@ -3282,128 +3282,477 @@ async def get_user_briefing(username: str, token: Optional[str] = None, lang: Op
         except Exception as e:
             print("Briefing last log notice:", e)
 
-        # 5. Proactive Dynamic Suggestions
-        proactive_suggestions = []
-        if is_user_boss:
-            proactive_suggestions = [
-                {
-                    "title": "รายงานสถานะสถาปัตยกรรมระบบ",
-                    "desc": "ตรวจเช็กความพร้อม Multi-Brain Engine และเกราะป้องกัน Enterprise",
-                    "prompt": "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.1 ตรวจสอบความพร้อมของ Multi-Brain Engine และเกราะป้องกันล่าสุดให้บอสหน่อยค่ะ",
-                    "icon": "fa-solid fa-shield-halved",
-                    "tag": "ADMIN CORE",
-                    "category": "advisor"
-                },
-                {
-                    "title": "พัฒนาฟังก์ชัน 4 เสาหลัก (Pillars Roadmap)",
-                    "desc": "วางแผนและติดตามความคืบหน้า 4 เสาหลักสู่ Kira 2.2 / 3.0",
-                    "prompt": "ช่วยสรุปสถานะการพัฒนาแผนงาน 4 เสาหลักใน PROJECT_CONTEXT.md และแนะนำกลยุทธ์ก้าวต่อไปให้หน่อยค่ะ",
-                    "icon": "fa-solid fa-cubes-stacked",
-                    "tag": "ROADMAP",
-                    "category": "advisor"
-                },
-                {
-                    "title": "ที่ปรึกษาการคิดเชิงยุทธศาสตร์ (Socratic Advisor)",
-                    "desc": "ช่วยคิดข้ามช็อต วางกลยุทธ์ธุรกิจ และประเมินจุดชี้ขาด",
-                    "prompt": "ช่วยคิดวิเคราะห์เชิงลึกและวางกลยุทธ์การขยายขีดความสามารถของ Kira AI สู่การเป็น Symbiotic Agentic OS ระดับสากลให้หน่อยค่ะ",
-                    "icon": "fa-solid fa-brain",
-                    "tag": "STRATEGY",
-                    "category": "advisor"
-                },
-                {
-                    "title": "สังเคราะห์โค้ดพรีวิวบน Live Canvas",
-                    "desc": "สร้าง UI เว็บไซต์แบบทันสมัยพร้อม Interactive Components",
-                    "prompt": "ช่วยเขียนโค้ดหน้าเว็บ Dashboard พรีวิวสดบน Canvas ธีม Dark Minimal พร้อม Tailwind CSS และ Interactive Elements ให้หน่อยค่ะ",
-                    "icon": "fa-solid fa-code",
-                    "tag": "CANVAS STUDIO",
-                    "category": "tech"
-                },
-                {
-                    "title": "ตรวจทาน & เกลาเอกสารระดับผู้บริหาร (Executive Review)",
-                    "desc": "ตรวจทานความถูกต้อง กรองความเสี่ยง และเกลาสำนวนขั้นสุด",
-                    "prompt": "ช่วยตรวจทานความถูกต้องและเกลาเอกสารนี้ให้อยู่ในระดับผู้บริหารสูงสุด กระชับ ตรงประเด็น และไร้จุดบกพร่องให้หน่อยค่ะ",
-                    "icon": "fa-solid fa-file-signature",
-                    "tag": "EXECUTIVE",
-                    "category": "review"
-                }
-            ]
-        else:
-            time_card = {
-                "title": "วางแผนและจัดลำดับงานวันนี้",
-                "desc": "ช่วยสรุปเป้าหมายสำคัญและ Checklist สำหรับวันนี้",
-                "prompt": "ช่วยเป็นที่ปรึกษาวางแผนตารางงานและเป้าหมายสำคัญประจำวันนี้ให้มีประสิทธิภาพสูงสุดหน่อยค่ะ",
-                "icon": "fa-solid fa-list-check",
-                "tag": "PLANNING",
-                "category": "advisor"
-            } if time_of_day == "morning" else (
-                {
-                    "title": "สรุปข่าวและเทรนด์เทคโนโลยีสด",
-                    "desc": "ค้นหาข่าวความเคลื่อนไหว AI และเทคโนโลยีสำคัญของวันนี้",
-                    "prompt": "ช่วยสรุปข่าวเทคโนโลยี AI และแนวโน้มสำคัญล่าสุดของวันนี้ให้ฟังหน่อยนะคะ",
-                    "icon": "fa-solid fa-globe",
-                    "tag": "LIVE WEB",
-                    "category": "learning"
-                } if time_of_day in ("afternoon", "evening") else {
-                    "title": "ทบทวนบทเรียนและไอเดียยามดึก",
-                    "desc": "สนทนา ระดมความคิด หรือผ่อนคลายก่อนนอน",
-                    "prompt": "ช่วยสรุปไอเดียสร้างสรรค์ที่น่าสนใจ หรือเล่าเรื่องราวความรู้เชิงปรัชญาสบายๆ ให้ฟังหน่อยค่ะ",
-                    "icon": "fa-solid fa-moon",
-                    "tag": "REFLECTION",
-                    "category": "advisor"
-                }
-            )
+        # 5. Proactive Dynamic Suggestions (Multilingual 5-Language Matrix)
+        proactive_cards_map = {
+            "boss": {
+                "th": [
+                    {
+                        "title": "รายงานสถานะสถาปัตยกรรมระบบ",
+                        "desc": "ตรวจเช็กความพร้อม Multi-Brain Engine และเกราะป้องกัน Enterprise",
+                        "prompt": "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.1 ตรวจสอบความพร้อมของ Multi-Brain Engine และเกราะป้องกันล่าสุดให้บอสหน่อยค่ะ",
+                        "icon": "fa-solid fa-shield-halved",
+                        "tag": "ADMIN CORE",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "พัฒนาฟังก์ชัน 4 เสาหลัก (Pillars Roadmap)",
+                        "desc": "วางแผนและติดตามความคืบหน้า 4 เสาหลักสู่ Kira 2.2 / 3.0",
+                        "prompt": "ช่วยสรุปสถานะการพัฒนาแผนงาน 4 เสาหลักใน PROJECT_CONTEXT.md และแนะนำกลยุทธ์ก้าวต่อไปให้หน่อยค่ะ",
+                        "icon": "fa-solid fa-cubes-stacked",
+                        "tag": "ROADMAP",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "ที่ปรึกษาการคิดเชิงยุทธศาสตร์ (Socratic Advisor)",
+                        "desc": "ช่วยคิดข้ามช็อต วางกลยุทธ์ธุรกิจ และประเมินจุดชี้ขาด",
+                        "prompt": "ช่วยคิดวิเคราะห์เชิงลึกและวางกลยุทธ์การขยายขีดความสามารถของ Kira AI สู่การเป็น Symbiotic Agentic OS ระดับสากลให้หน่อยค่ะ",
+                        "icon": "fa-solid fa-brain",
+                        "tag": "STRATEGY",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "สังเคราะห์โค้ดพรีวิวบน Live Canvas",
+                        "desc": "สร้าง UI เว็บไซต์แบบทันสมัยพร้อม Interactive Components",
+                        "prompt": "ช่วยเขียนโค้ดหน้าเว็บ Dashboard พรีวิวสดบน Canvas ธีม Dark Minimal พร้อม Tailwind CSS และ Interactive Elements ให้หน่อยค่ะ",
+                        "icon": "fa-solid fa-code",
+                        "tag": "CANVAS STUDIO",
+                        "category": "tech"
+                    },
+                    {
+                        "title": "ตรวจทาน & เกลาเอกสารระดับผู้บริหาร (Executive Review)",
+                        "desc": "ตรวจทานความถูกต้อง กรองความเสี่ยง และเกลาสำนวนขั้นสุด",
+                        "prompt": "ช่วยตรวจทานความถูกต้องและเกลาเอกสารนี้ให้อยู่ในระดับผู้บริหารสูงสุด กระชับ ตรงประเด็น และไร้จุดบกพร่องให้หน่อยค่ะ",
+                        "icon": "fa-solid fa-file-signature",
+                        "tag": "EXECUTIVE",
+                        "category": "review"
+                    }
+                ],
+                "en": [
+                    {
+                        "title": "System Architecture Status",
+                        "desc": "Check Multi-Brain Engine readiness and Enterprise defenses",
+                        "prompt": "Please report Kira AI 2.5 system architecture status, multi-brain engine readiness, and active security barriers for the Boss.",
+                        "icon": "fa-solid fa-shield-halved",
+                        "tag": "ADMIN CORE",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "4-Pillars Strategic Roadmap",
+                        "desc": "Track progress and next milestones towards Kira 2.2 / 3.0",
+                        "prompt": "Please summarize the progress of the 4 Pillars in PROJECT_CONTEXT.md and recommend next strategic execution steps.",
+                        "icon": "fa-solid fa-cubes-stacked",
+                        "tag": "ROADMAP",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "Strategic Socratic Advisor",
+                        "desc": "Multi-step reasoning, business strategy, and critical tradeoffs",
+                        "prompt": "Please provide deep strategic analysis on expanding Kira AI into a world-class Symbiotic Agentic OS.",
+                        "icon": "fa-solid fa-brain",
+                        "tag": "STRATEGY",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "Live Canvas Code Synthesis",
+                        "desc": "Generate modern web UI with interactive components",
+                        "prompt": "Please generate a modern Dark Minimal Dashboard on Live Canvas with interactive components and clean CSS/JS.",
+                        "icon": "fa-solid fa-code",
+                        "tag": "CANVAS STUDIO",
+                        "category": "tech"
+                    },
+                    {
+                        "title": "Executive Document Review & Polish",
+                        "desc": "Flawless grammar verification, risk screening, and tone refinement",
+                        "prompt": "Please review and elevate this document into concise, authoritative executive-grade language with zero flaws.",
+                        "icon": "fa-solid fa-file-signature",
+                        "tag": "EXECUTIVE",
+                        "category": "review"
+                    }
+                ],
+                "zh": [
+                    {
+                        "title": "系统架构运行报告",
+                        "desc": "全面检查多脑引擎就绪状态与企业级安全防护",
+                        "prompt": "请为董事长生成 Kira AI 2.5 系统架构运行报告，检查多脑引擎与企业级防护就绪状态。",
+                        "icon": "fa-solid fa-shield-halved",
+                        "tag": "ADMIN CORE",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "四大核心支柱演进路线 (Pillars Roadmap)",
+                        "desc": "跟踪规划四大支柱研发进度，迈向 Kira 2.2 / 3.0",
+                        "prompt": "请总结 PROJECT_CONTEXT.md 中四大支柱研发推进现状，并为下一步战略执行提供专业建议。",
+                        "icon": "fa-solid fa-cubes-stacked",
+                        "tag": "ROADMAP",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "苏格拉底战略智囊 (Socratic Advisor)",
+                        "desc": "穿透性深度思考、商业竞争布局与关键决策权衡",
+                        "prompt": "请进行高层次战略推演，就 Kira AI 扩展为世界级共生智能体操作系统（Symbiotic Agentic OS）制定战略规划。",
+                        "icon": "fa-solid fa-brain",
+                        "tag": "STRATEGY",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "Live Canvas 实时代码构建",
+                        "desc": "即刻生成现代化 Web UI 与高交互性组件",
+                        "prompt": "请在 Live Canvas 上编写并实时预览一套暗黑极简风现代管理仪表盘（Dashboard），包含丰富交互组件。",
+                        "icon": "fa-solid fa-code",
+                        "tag": "CANVAS STUDIO",
+                        "category": "tech"
+                    },
+                    {
+                        "title": "高管级公文精审与润色 (Executive Review)",
+                        "desc": "严密逻辑审查、风险排查与高级文风升华",
+                        "prompt": "请对该文档进行高管级精细审阅与润色，确保措辞严谨、逻辑精炼有力、无懈可击。",
+                        "icon": "fa-solid fa-file-signature",
+                        "tag": "EXECUTIVE",
+                        "category": "review"
+                    }
+                ],
+                "ko": [
+                    {
+                        "title": "시스템 아키텍처 상태 보고",
+                        "desc": "Multi-Brain 엔진 및 엔터พ라이즈 보안 상태 점검",
+                        "prompt": "Kira AI 2.5 시스템 아키텍처 현황, 멀티 브레인 엔진 준비 상태 및 최신 보안 방벽 상태를 보고해 주세요.",
+                        "icon": "fa-solid fa-shield-halved",
+                        "tag": "ADMIN CORE",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "4대 핵심 기둥 로드맵 (Pillars Roadmap)",
+                        "desc": "Kira 2.2 / 3.0을 향한 4대 기둥 개발 진척도 점검",
+                        "prompt": "PROJECT_CONTEXT.md의 4대 기둥 개발 현황을 요약하고 다음 단계의 전략적 실행 방안을 제안해 주세요.",
+                        "icon": "fa-solid fa-cubes-stacked",
+                        "tag": "ROADMAP",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "전략적 소크라테스 자문 (Socratic Advisor)",
+                        "desc": "다차원 심층 분석, 비즈니스 전략 수립 및 핵심 의사결정",
+                        "prompt": "Kira AI를 세계적인 공생형 에이전트 OS(Symbiotic Agentic OS)로 확장하기 위한 심층 전략 분석을 제시해 주세요.",
+                        "icon": "fa-solid fa-brain",
+                        "tag": "STRATEGY",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "Live Canvas 실시간 코드 합성",
+                        "desc": "인터랙티브 컴포넌트를 갖춘 모던 웹 UI 생성",
+                        "prompt": "Live Canvas에서 실시간으로 프리뷰할 수 있는 다크 미니멀 대시보드 웹 UI 코드를 작성해 주세요.",
+                        "icon": "fa-solid fa-code",
+                        "tag": "CANVAS STUDIO",
+                        "category": "tech"
+                    },
+                    {
+                        "title": "고위 경영진 문서 정밀 교정 (Executive Review)",
+                        "desc": "문법 정확성 검증, 리스크 필터링 및 최고급 어조 정제",
+                        "prompt": "이 문서를 최고 경영진 보고에 적합하도록 간결하고 설득력 있는 비즈니스 언어로 정밀 교정해 주세요.",
+                        "icon": "fa-solid fa-file-signature",
+                        "tag": "EXECUTIVE",
+                        "category": "review"
+                    }
+                ],
+                "ja": [
+                    {
+                        "title": "システム構成・稼働ステータス",
+                        "desc": "マルチブレインエンジンとエンタープライズ防壁の稼働確認",
+                        "prompt": "Kira AI 2.5のシステムアーキテクチャ状況、マルチブレインエンジンの準備状況、最新のセキュリティ防壁を報告してください。",
+                        "icon": "fa-solid fa-shield-halved",
+                        "tag": "ADMIN CORE",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "4大支柱ロードマップ (Pillars Roadmap)",
+                        "desc": "Kira 2.2 / 3.0に向けた4大支柱の進捗管理と計画",
+                        "prompt": "PROJECT_CONTEXT.mdの4大支柱の開発進捗を要約し、次の戦略的ステップを提案してください。",
+                        "icon": "fa-solid fa-cubes-stacked",
+                        "tag": "ROADMAP",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "戦略的ソクラテス顧問 (Socratic Advisor)",
+                        "desc": "深層思考、ビジネス戦略策定、および重要トレードオフ評価",
+                        "prompt": "Kira AIを世界水準の共生型エージェントOSへと拡張するための深層戦略分析とロードマップを策定してください。",
+                        "icon": "fa-solid fa-brain",
+                        "tag": "STRATEGY",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "Live Canvas リアルタイムコード生成",
+                        "desc": "インタラクティブコンポーネントを備えた最新Web UIの構築",
+                        "prompt": "Live Canvasでリアルタイムプレビュー可能な、洗練されたダークミニマルUIのダッシュボードコードを作成してください。",
+                        "icon": "fa-solid fa-code",
+                        "tag": "CANVAS STUDIO",
+                        "category": "tech"
+                    },
+                    {
+                        "title": "役員級文書推敲・レビュー (Executive Review)",
+                        "desc": "正確性の精査、潜在リスクの排除、および最高水準の推敲",
+                        "prompt": "この文書を最高幹部報告にふさわしい、簡潔で説得力のある公式な表現へと精査・推敲してください。",
+                        "icon": "fa-solid fa-file-signature",
+                        "tag": "EXECUTIVE",
+                        "category": "review"
+                    }
+                ]
+            },
+            "user": {
+                "th": [
+                    {
+                        "title": "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)",
+                        "desc": "ช่วยย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง",
+                        "prompt": "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ",
+                        "icon": "fa-solid fa-compass",
+                        "tag": "ADVISOR",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "สร้างดราฟต์แรกของงานเขียน (First-Draft Machine)",
+                        "desc": "ร่างอีเมลธุรกิจ บทความ โพสต์โซเชียล หรือโครงสร้างรายงานทันที",
+                        "prompt": "ช่วยร่างโครงสร้างและเขียนดราฟต์แรกของเนื้อหาอย่างมืออาชีพ ปรับภาษาให้อ่านง่ายและน่าเชื่อถือให้หน่อยนะคะ",
+                        "icon": "fa-solid fa-pen-nib",
+                        "tag": "FIRST DRAFT",
+                        "category": "draft"
+                    },
+                    {
+                        "title": "ตรวจทานและเกลาภาษา (Quality & Tone Reviewer)",
+                        "desc": "ตรวจความถูกต้อง ปรับระดับภาษาให้สุภาพและน่าเชื่อถือ",
+                        "prompt": "ช่วยตรวจทานความถูกต้องและเกลาข้อความต่อไปนี้ให้สุภาพ กระชับ เป็นมืออาชีพ และไม่มีคำผิดให้หน่อยค่ะ",
+                        "icon": "fa-solid fa-magnifying-glass-chart",
+                        "tag": "REVIEW",
+                        "category": "review"
+                    },
+                    {
+                        "title": "ย่อยเรื่องยากให้เข้าใจง่าย (Fast Concept Explainer)",
+                        "desc": "สรุปสาระสำคัญใน 3 นาที พร้อมยกตัวอย่างให้เห็นภาพชัดเจน",
+                        "prompt": "ช่วยสรุปและอธิบายเรื่องนี้ให้เข้าใจง่ายใน 3 นาที แบบที่คนไม่มีพื้นฐานก็เข้าใจได้ทันทีให้หน่อยนะคะ",
+                        "icon": "fa-solid fa-lightbulb",
+                        "tag": "EXPLAINER",
+                        "category": "learning"
+                    },
+                    {
+                        "title": "พรีวิวโค้ดสด (Live Code Canvas)",
+                        "desc": "สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที",
+                        "prompt": "ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บ Landing Page สวยๆ พร้อม Tailwind CSS และ Interactive Elements ให้หน่อยค่ะ",
+                        "icon": "fa-solid fa-code",
+                        "tag": "CANVAS",
+                        "category": "tech"
+                    },
+                    {
+                        "title": "วาดผังงาน (Mermaid Flowchart)",
+                        "desc": "สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ",
+                        "prompt": "ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานและกระบวนการอย่างเป็นลำดับให้หน่อยค่ะ",
+                        "icon": "fa-solid fa-project-diagram",
+                        "tag": "DIAGRAM",
+                        "category": "tech"
+                    }
+                ],
+                "en": [
+                    {
+                        "title": "Strategy Advisor (Planning)",
+                        "desc": "Deconstruct complex problems & assess risks",
+                        "prompt": "Please break down this problem into a step-by-step action plan with risk mitigation.",
+                        "icon": "fa-solid fa-compass",
+                        "tag": "ADVISOR",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "First-Draft Machine",
+                        "desc": "Quick business emails, articles, or reports",
+                        "prompt": "Please draft a structured, professional first draft of this content.",
+                        "icon": "fa-solid fa-pen-nib",
+                        "tag": "FIRST DRAFT",
+                        "category": "draft"
+                    },
+                    {
+                        "title": "Quality & Tone Reviewer",
+                        "desc": "Flawless proofreading and polite tone enhancement",
+                        "prompt": "Please proofread and polish the following text to make it professional and flawless.",
+                        "icon": "fa-solid fa-magnifying-glass-chart",
+                        "tag": "REVIEW",
+                        "category": "review"
+                    },
+                    {
+                        "title": "Fast Concept Explainer",
+                        "desc": "3-minute essence with intuitive analogies",
+                        "prompt": "Please explain this concept clearly in 3 minutes with simple analogies for beginners.",
+                        "icon": "fa-solid fa-lightbulb",
+                        "tag": "EXPLAINER",
+                        "category": "learning"
+                    },
+                    {
+                        "title": "Live Code Canvas",
+                        "desc": "Generate HTML/JS web page with live preview",
+                        "prompt": "Please build a beautiful modern web page with interactive elements on Live Canvas.",
+                        "icon": "fa-solid fa-code",
+                        "tag": "CANVAS",
+                        "category": "tech"
+                    },
+                    {
+                        "title": "Mermaid Flowchart Generator",
+                        "desc": "Architecture diagrams and process flows",
+                        "prompt": "Please generate a clear Mermaid diagram illustrating this workflow and system architecture.",
+                        "icon": "fa-solid fa-project-diagram",
+                        "tag": "DIAGRAM",
+                        "category": "tech"
+                    }
+                ],
+                "zh": [
+                    {
+                        "title": "战略思考与规划顾问",
+                        "desc": "拆解复杂难题，梳理执行步骤与风险规避",
+                        "prompt": "请作为战略顾问，协助拆解此难题并制定详尽的执行方案与风控对策。",
+                        "icon": "fa-solid fa-compass",
+                        "tag": "ADVISOR",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "初稿快速生成引擎",
+                        "desc": "快速起草商务邮件、公文或文章大纲",
+                        "prompt": "请协助起草专业、清晰且具备说服力的初稿与结构大纲。",
+                        "icon": "fa-solid fa-pen-nib",
+                        "tag": "FIRST DRAFT",
+                        "category": "draft"
+                    },
+                    {
+                        "title": "专业校对与语调润色",
+                        "desc": "全面排查错别字，提升语言专业度与得体感",
+                        "prompt": "请校对以下内容，消除错漏，调整至得体、严谨的高级水准。",
+                        "icon": "fa-solid fa-magnifying-glass-chart",
+                        "tag": "REVIEW",
+                        "category": "review"
+                    },
+                    {
+                        "title": "深入浅出概念速解",
+                        "desc": "3分钟萃取核心精髓，辅以生动实例",
+                        "prompt": "请以生动易懂的语言，在3分钟内向零基础读者解释清晰该核心概念。",
+                        "icon": "fa-solid fa-lightbulb",
+                        "tag": "EXPLAINER",
+                        "category": "learning"
+                    },
+                    {
+                        "title": "Live Canvas 实时代码构建",
+                        "desc": "生成支持实时交互预览的现代 Web 页面",
+                        "prompt": "请在 Canvas 上构建一套美观现代的交互式 Web UI 页面。",
+                        "icon": "fa-solid fa-code",
+                        "tag": "CANVAS",
+                        "category": "tech"
+                    },
+                    {
+                        "title": "Mermaid 架构流程图绘制",
+                        "desc": "自动化业务流程与系统拓扑可视化",
+                        "prompt": "请绘制清晰优雅的 Mermaid 流程图，直观展现该业务与系统执行流程。",
+                        "icon": "fa-solid fa-project-diagram",
+                        "tag": "DIAGRAM",
+                        "category": "tech"
+                    }
+                ],
+                "ko": [
+                    {
+                        "title": "전략 자문 및 실행 계획",
+                        "desc": "복잡한 문제 분석 및 리스크 평가",
+                        "prompt": "문제를 단계별로 분석하고 실질적인 실행 계획과 리스크 대책을 제안해 주세요.",
+                        "icon": "fa-solid fa-compass",
+                        "tag": "ADVISOR",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "초안 작성 머신",
+                        "desc": "비즈니스 이메일, 글, 보고서 초안 생성",
+                        "prompt": "전문적이고 읽기 쉬운 첫 번째 초안과 구성을 빠르게 작성해 주세요.",
+                        "icon": "fa-solid fa-pen-nib",
+                        "tag": "FIRST DRAFT",
+                        "category": "draft"
+                    },
+                    {
+                        "title": "품질 및 톤 정밀 검토",
+                        "desc": "맞춤법 교정 및 정중한 비즈니스 톤 다듬기",
+                        "prompt": "다음 문장을 오류 없이 정중하고 설득력 있는 어조로 다듬어 주세요.",
+                        "icon": "fa-solid fa-magnifying-glass-chart",
+                        "tag": "REVIEW",
+                        "category": "review"
+                    },
+                    {
+                        "title": "어려운 개념 3분 핵심 해설",
+                        "desc": "비전공자도 이해하기 쉬운 직관적 비유와 예시",
+                        "prompt": "전문 지식이 없는 사람도 3분 만에 핵심을 이해할 수 있도록 쉽게 설명해 주세요.",
+                        "icon": "fa-solid fa-lightbulb",
+                        "tag": "EXPLAINER",
+                        "category": "learning"
+                    },
+                    {
+                        "title": "Live Canvas 코드 프리뷰",
+                        "desc": "인터랙티브 웹 페이지 생성 및 실시간 미리보기",
+                        "prompt": "Canvas에서 바로 확인할 수 있는 미려한 인터랙티브 웹 UI 코드를 작성해 주세요.",
+                        "icon": "fa-solid fa-code",
+                        "tag": "CANVAS",
+                        "category": "tech"
+                    },
+                    {
+                        "title": "Mermaid 다이어그램 설계",
+                        "desc": "업무 흐름 및 아키텍처 자동 시각화",
+                        "prompt": "단계별 프로세스와 아키텍처를 명확한 Mermaid 다이어그램으로 설계해 주세요.",
+                        "icon": "fa-solid fa-project-diagram",
+                        "tag": "DIAGRAM",
+                        "category": "tech"
+                    }
+                ],
+                "ja": [
+                    {
+                        "title": "戦略アドバイザー（計画立案）",
+                        "desc": "複雑な課題の整理とリスク評価",
+                        "prompt": "課題を段階的に分析し、具体的なアクションプランとリスク対策を提案してください。",
+                        "icon": "fa-solid fa-compass",
+                        "tag": "ADVISOR",
+                        "category": "advisor"
+                    },
+                    {
+                        "title": "初稿クイック作成マシン",
+                        "desc": "ビジネスメール、記事、報告書の骨子作成",
+                        "prompt": "プロフェッショナルで読みやすい初稿と構成案を即座に作成してください。",
+                        "icon": "fa-solid fa-pen-nib",
+                        "tag": "FIRST DRAFT",
+                        "category": "draft"
+                    },
+                    {
+                        "title": "品質＆トーン推敲レビュー",
+                        "desc": "誤字脱字チェックと礼節ある表現への調整",
+                        "prompt": "以下のテキストを誤字なく、丁寧で説得力のある文章に推敲してください。",
+                        "icon": "fa-solid fa-magnifying-glass-chart",
+                        "tag": "REVIEW",
+                        "category": "review"
+                    },
+                    {
+                        "title": "難解な概念の3分要約解説",
+                        "desc": "初心者でも直感的に理解できる具体例付き解説",
+                        "prompt": "予備知識がない人でも3分で本質が理解できるよう、わかりやすく解説してください。",
+                        "icon": "fa-solid fa-lightbulb",
+                        "tag": "EXPLAINER",
+                        "category": "learning"
+                    },
+                    {
+                        "title": "Live Canvas コード生成",
+                        "desc": "HTML/JSのWebページをリアルタイムプレビュー",
+                        "prompt": "Tailwind CSSを用いた洗練されたWebページを作成し、Canvasでプレビューしてください。",
+                        "icon": "fa-solid fa-code",
+                        "tag": "CANVAS",
+                        "category": "tech"
+                    },
+                    {
+                        "title": "Mermaid フローチャート作図",
+                        "desc": "ワークフローやシステム構成の自動図解",
+                        "prompt": "業務手順やアーキテクチャを分かりやすいMermaidフローチャートで図解してください。",
+                        "icon": "fa-solid fa-project-diagram",
+                        "tag": "DIAGRAM",
+                        "category": "tech"
+                    }
+                ]
+            }
+        }
 
-            proactive_suggestions = [
-                time_card,
-                {
-                    "title": "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)",
-                    "desc": "ช่วยย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง",
-                    "prompt": "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ",
-                    "icon": "fa-solid fa-compass",
-                    "tag": "ADVISOR",
-                    "category": "advisor"
-                },
-                {
-                    "title": "สร้างดราฟต์แรกของงานเขียน (First-Draft Machine)",
-                    "desc": "ร่างอีเมลธุรกิจ บทความ โพสต์โซเชียล หรือโครงสร้างรายงานทันที",
-                    "prompt": "ช่วยร่างโครงสร้างและเขียนดราฟต์แรกของเนื้อหาอย่างมืออาชีพ ปรับภาษาให้อ่านง่ายและน่าเชื่อถือให้หน่อยนะคะ",
-                    "icon": "fa-solid fa-pen-nib",
-                    "tag": "FIRST DRAFT",
-                    "category": "draft"
-                },
-                {
-                    "title": "ตรวจทานและเกลาภาษา (Quality & Tone Reviewer)",
-                    "desc": "ตรวจความถูกต้อง ปรับระดับภาษาให้สุภาพและน่าเชื่อถือ",
-                    "prompt": "ช่วยตรวจทานความถูกต้องและเกลาข้อความต่อไปนี้ให้สุภาพ กระชับ เป็นมืออาชีพ และไม่มีคำผิดให้หน่อยค่ะ",
-                    "icon": "fa-solid fa-magnifying-glass-chart",
-                    "tag": "REVIEW",
-                    "category": "review"
-                },
-                {
-                    "title": "ย่อยเรื่องยากให้เข้าใจง่าย (Fast Concept Explainer)",
-                    "desc": "สรุปสาระสำคัญใน 3 นาที พร้อมยกตัวอย่างให้เห็นภาพชัดเจน",
-                    "prompt": "ช่วยสรุปและอธิบายเรื่องนี้ให้เข้าใจง่ายใน 3 นาที แบบที่คนไม่มีพื้นฐานก็เข้าใจได้ทันทีให้หน่อยนะคะ",
-                    "icon": "fa-solid fa-lightbulb",
-                    "tag": "EXPLAINER",
-                    "category": "learning"
-                },
-                {
-                    "title": "พรีวิวโค้ดสด (Live Code Canvas)",
-                    "desc": "สร้างหน้าเว็บ HTML/JS และพรีวิวสดบน Canvas ทันที",
-                    "prompt": "ช่วยเขียนโค้ดหน้าเว็บพรีวิวสด: สร้างหน้าเว็บ Landing Page สวยๆ พร้อม Tailwind CSS และ Interactive Elements ให้หน่อยค่ะ",
-                    "icon": "fa-solid fa-code",
-                    "tag": "CANVAS",
-                    "category": "tech"
-                },
-                {
-                    "title": "วาดผังงาน (Mermaid Flowchart)",
-                    "desc": "สร้าง Flowchart และ Diagram สถาปัตยกรรมอัตโนมัติ",
-                    "prompt": "ช่วยวาดแผนผัง Mermaid Flowchart อธิบายขั้นตอนการทำงานและกระบวนการอย่างเป็นลำดับให้หน่อยค่ะ",
-                    "icon": "fa-solid fa-project-diagram",
-                    "tag": "DIAGRAM",
-                    "category": "tech"
-                }
-            ]
+        role_key = "boss" if is_user_boss else "user"
+        role_cards = proactive_cards_map.get(role_key, proactive_cards_map["user"])
+        proactive_suggestions = role_cards.get(active_lang, role_cards.get("th", []))
 
         return {
             "status": "success",
