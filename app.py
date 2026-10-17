@@ -5052,7 +5052,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
             )),
             HumanMessage(content=f"วาระการประชุม: {topic}")
         ]
-        ok, chunks, _ = await _try_all_keys_and_models(exec_prompt, boardroom_model)
+        ok, chunks, _ = await _try_all_keys_and_models(exec_prompt, boardroom_model, ui_lang=ui_lang)
         speech = "".join([getattr(c, "content", c) for c in chunks]) if ok else f"ดิฉัน/ผมขอสนับสนุนการวิเคราะห์ในมุมมองของ {exec_info['title']} เพื่อให้โครงการสำเร็จอย่างมั่นคงครับ/ค่ะ"
         return exec_info, speech
 
@@ -5138,7 +5138,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
         HumanMessage(content=f"วาระการประชุม: {topic}")
     ]
 
-    ok_deb, deb_chunks, _ = await _try_all_keys_and_models(debate_facilitator_prompt, boardroom_model)
+    ok_deb, deb_chunks, _ = await _try_all_keys_and_models(debate_facilitator_prompt, boardroom_model, ui_lang=ui_lang)
     deb_raw = "".join([getattr(c, "content", c) for c in deb_chunks]) if ok_deb else ""
     turns_data = []
 
@@ -5243,7 +5243,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
         HumanMessage(content=f"บทวิเคราะห์จาก 4 ผู้บริหาร:\nCEO: {statements.get('CEO', '')[:250]}\nCFO: {statements.get('CFO', '')[:250]}\nCPO: {statements.get('CPO', '')[:250]}\nCTO: {statements.get('CTO', '')[:250]}")
     ]
 
-    ok_con, con_chunks, _ = await _try_all_keys_and_models(consensus_prompt, boardroom_model)
+    ok_con, con_chunks, _ = await _try_all_keys_and_models(consensus_prompt, boardroom_model, ui_lang=ui_lang)
     blueprint_md = "".join([getattr(c, "content", c) for c in con_chunks]) if ok_con else "มติที่ประชุมสภาผู้บริหารสรุปให้เดินหน้าพัฒนาตามแผนงานแบบ Lean เพื่อให้บรรลุเป้าหมายอย่างปลอดภัยสูงสุดค่ะ"
     blueprint_md = scrub_sensitive_output(blueprint_md)
 
@@ -5287,173 +5287,191 @@ async def _generate_virtual_boardroom_stream(user_input: str, uname: str, sessio
     รวม: 6 LLM calls ต่อ 1 session
     """
     import time as _time
+    import traceback as _tb
     start_time = _time.time()
     full_boardroom_text = ""
     tz = timezone(timedelta(hours=7))
     timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
 
-    # 1. บันทึกคำถามเปิดวาระเข้าสู่ Log
-    execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
-                  (uname, session_id, timestamp, "User (Boardroom)", user_input))
+    try:
+        # 1. บันทึกคำถามเปิดวาระเข้าสู่ Log
+        execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
+                      (uname, session_id, timestamp, "User (Boardroom)", user_input))
 
-    # ส่งสัญญาณเริ่มเปิดการประชุมให้ Frontend ทราบเพื่อเคาะค้อน Gavel
-    start_signal = "[BOARDROOM_START]\n"
-    full_boardroom_text += start_signal
-    yield start_signal
-    await asyncio.sleep(0.05)
+        # ส่งสัญญาณเริ่มเปิดการประชุมให้ Frontend ทราบเพื่อเคาะค้อน Gavel
+        start_signal = "[BOARDROOM_START]\n"
+        full_boardroom_text += start_signal
+        yield start_signal
+        await asyncio.sleep(0.05)
 
-    boardroom_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
+        boardroom_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
 
-    lang_directive = ""
-    ui_lang = (ui_lang or "th").lower()
-    if ui_lang == "ja":
-        lang_directive = "\n\n[Language Directive - 日本語 (JA)]:\n- 役員の個別発言、討論での反論、および議事録・戦略合意書はすべて自然で格調高い日本語（敬語 / です・ます調）で行ってください。"
-    elif ui_lang == "en":
-        lang_directive = "\n\n[Language Directive - ENGLISH (EN)]:\n- All executive statements, debate clashes, and the final strategic consensus blueprint must be delivered in fluent, professional, high-impact English."
-    elif ui_lang == "zh":
-        lang_directive = "\n\n[Language Directive - 中文 (ZH)]:\n- 所有高管发言、辩论争鸣以及最终共识蓝图请务必使用专业、地道且严谨的高管级中文进行阐述。"
-    elif ui_lang == "ko":
-        lang_directive = "\n\n[Language Directive - 한국어 (KO)]:\n- 모든 임원 발언, 상호 토론 및 최종 전략 합의안은 자연스럽고 격식 있는 한국어(비즈니스 존댓말)로 작성해 주세요."
+        lang_directive = ""
+        ui_lang = (ui_lang or "th").lower()
+        if ui_lang == "ja":
+            lang_directive = "\n\n[Language Directive - 日本語 (JA)]:\n- 役員の個別発言、討論での反論、および議事録・戦略合意書はすべて自然で格調高い日本語（敬語 / です・ます調）で行ってください。"
+        elif ui_lang == "en":
+            lang_directive = "\n\n[Language Directive - ENGLISH (EN)]:\n- All executive statements, debate clashes, and the final strategic consensus blueprint must be delivered in fluent, professional, high-impact English."
+        elif ui_lang == "zh":
+            lang_directive = "\n\n[Language Directive - 中文 (ZH)]:\n- 所有高管发言、辩论争鸣以及最终共识蓝图请务必使用专业、地道且严谨的高管级中文进行阐述。"
+        elif ui_lang == "ko":
+            lang_directive = "\n\n[Language Directive - 한국어 (KO)]:\n- 모든 임원 발언, 상호 토론 및 최종 전략 합의안은 자연스럽고 격식 있는 한국어(비즈니스 존댓말)로 작성해 주세요."
 
-    # ----------------------------------------------------
-    # PHASE 1: แถลงการณ์มุมมองเฉพาะด้านของ 4 ผู้บริหาร (Concurrent Generation)
-    # ----------------------------------------------------
-    async def _fetch_exec_statement(exec_info):
-        prompt_messages = [
-            SystemMessage(content=f"{exec_info['prompt']}\n{lang_directive}"),
-            HumanMessage(content=f"วาระการประชุมจากผู้ใช้: {user_input}")
-        ]
-        ok, chunks, _ = await _try_all_keys_and_models(prompt_messages, boardroom_model)
-        if ok:
-            speech_text = "".join([getattr(c, "content", c) for c in chunks])
-        else:
-            if exec_info.get("id") == "CPO":
-                speech_text = f"ดิฉันขอสนับสนุนการวิเคราะห์ในมุมมองของ {exec_info['title']} เพื่อให้ประสบการณ์ผู้ใช้ดีที่สุดค่ะ"
+        # ----------------------------------------------------
+        # PHASE 1: แถลงการณ์มุมมองเฉพาะด้านของ 4 ผู้บริหาร (Concurrent Generation)
+        # ----------------------------------------------------
+        async def _fetch_exec_statement(exec_info):
+            prompt_messages = [
+                SystemMessage(content=f"{exec_info['prompt']}\n{lang_directive}"),
+                HumanMessage(content=f"วาระการประชุมจากผู้ใช้: {user_input}")
+            ]
+            ok, chunks, _ = await _try_all_keys_and_models(prompt_messages, boardroom_model, ui_lang=ui_lang)
+            if ok:
+                speech_text = "".join([getattr(c, "content", c) for c in chunks])
             else:
-                speech_text = f"ผมขอสนับสนุนการวิเคราะห์ในมุมมองของ {exec_info['title']} เพื่อให้โครงการดำเนินไปด้วยความรอบคอบครับ"
-        return exec_info, chunks if ok else [speech_text], speech_text
+                if exec_info.get("id") == "CPO":
+                    speech_text = f"ดิฉันขอสนับสนุนการวิเคราะห์ในมุมมองของ {exec_info['title']} เพื่อให้ประสบการณ์ผู้ใช้ดีที่สุดค่ะ"
+                else:
+                    speech_text = f"ผมขอสนับสนุนการวิเคราะห์ในมุมมองของ {exec_info['title']} เพื่อให้โครงการดำเนินไปด้วยความรอบคอบครับ"
+            return exec_info, chunks if ok else [speech_text], speech_text
 
-    exec_results = await asyncio.gather(*[_fetch_exec_statement(e) for e in BOARDROOM_EXECUTIVES])
-    statements = {}
+        exec_results = await asyncio.gather(*[_fetch_exec_statement(e) for e in BOARDROOM_EXECUTIVES])
+        statements = {}
 
-    for exec_info, chunks, speech_text in exec_results:
-        statements[exec_info['id']] = speech_text
-        exec_header = f"[BOARDROOM_SPEAKER:{exec_info['id']}:{exec_info['name']} - {exec_info['title']}:{exec_info['theme']}]\n"
-        full_boardroom_text += exec_header
-        yield exec_header
+        for exec_info, chunks, speech_text in exec_results:
+            statements[exec_info['id']] = speech_text
+            exec_header = f"[BOARDROOM_SPEAKER:{exec_info['id']}:{exec_info['name']} - {exec_info['title']}:{exec_info['theme']}]\n"
+            full_boardroom_text += exec_header
+            yield exec_header
+            await asyncio.sleep(0.02)
+
+            for c in chunks:
+                clean_c = scrub_sensitive_output(getattr(c, "content", c) if not isinstance(c, str) else c)
+                full_boardroom_text += clean_c
+                yield clean_c
+                await asyncio.sleep(0.01)
+
+            exec_footer = "\n[/BOARDROOM_SPEAKER]\n"
+            full_boardroom_text += exec_footer
+            yield exec_footer
+            await asyncio.sleep(0.04)
+
+        # ----------------------------------------------------
+        # PHASE 2: Cross-Examination & Executive Debate
+        # ----------------------------------------------------
+        debate_header = "[BOARDROOM_DEBATE:การถกเถียงและหักล้างจุดอ่อน (Executive Debate)]\n"
+        full_boardroom_text += debate_header
+        yield debate_header
         await asyncio.sleep(0.02)
 
-        for c in chunks:
+        debate_prompt = [
+            SystemMessage(content=(
+                "คุณคือผู้สังเคราะห์การประชุมผู้บริหารระดับสูง (Executive Debate Facilitator)\n"
+                "ผู้บริหารทั้ง 4 ได้แถลงมุมมองของตนเองแล้วดังนี้:\n"
+                f"- CEO (คุณคิรินทร์): {statements.get('CEO', '')[:400]}\n"
+                f"- CFO (คุณเมธัส): {statements.get('CFO', '')[:400]}\n"
+                f"- CPO (คุณรินดา): {statements.get('CPO', '')[:400]}\n"
+                f"- CTO (คุณธนิน): {statements.get('CTO', '')[:400]}\n\n"
+                "หน้าที่ของคุณคือ: จำลองบทสนทนาการถกเถียงสด (Debate) ระหว่างผู้บริหารอย่างเฉียบคมและสมจริง โดยให้มีการท้าทายกัน เช่น:\n"
+                "- CFO ท้วงติงงบประมาณของ CEO และถามเรื่องกระแสเงินสด\n"
+                "- CTO ชี้ข้อจำกัดของระบบต่อฟีเจอร์ที่ CPO อยากได้ว่าอาจทำให้เลื่อนกำหนดการ\n"
+                "- CPO โต้แย้ง CTO เรื่องความง่ายของผู้ใช้ อย่าทำระบบซับซ้อนเกินไป\n"
+                "- CEO สรุปจุดประนีประนอมที่ลงตัวระหว่าง ความเร็ว ต้นทุน และประสบการณ์ลูกค้า\n"
+                "รูปแบบการตอบ: เขียนเป็นบทสนทนาโต้ตอบสลับกัน 4-5 ลำดับ โดยขึ้นต้นแต่ละคนด้วยไอคอนและชื่อชัดเจน เช่น:\n"
+                "💰 คุณเมธัส (CFO): ...\n"
+                "🎨 คุณรินดา (CPO): ...\n"
+                "🛡️ คุณธนิน (CTO): ...\n"
+                "👔 คุณคิรินทร์ (CEO): ...\n"
+                "ความยาวรวม 180-260 คำ กระชับ มีไหวพริบ และลื่นไหลเป็นธรรมชาติ\n"
+                f"{lang_directive}"
+            )),
+            HumanMessage(content=f"วาระการประชุม: {user_input}")
+        ]
+        ok_deb, deb_chunks, _ = await _try_all_keys_and_models(debate_prompt, boardroom_model, ui_lang=ui_lang)
+        deb_text = "".join([getattr(c, "content", c) for c in deb_chunks]) if ok_deb else "ที่ประชุมได้ถกเถียงและชั่งน้ำหนักเรื่องงบประมาณและความเป็นไปได้ทางเทคนิคอย่างรอบคอบ"
+        for c in deb_chunks if ok_deb else [deb_text]:
             clean_c = scrub_sensitive_output(getattr(c, "content", c) if not isinstance(c, str) else c)
             full_boardroom_text += clean_c
             yield clean_c
             await asyncio.sleep(0.01)
 
-        exec_footer = "\n[/BOARDROOM_SPEAKER]\n"
-        full_boardroom_text += exec_footer
-        yield exec_footer
+        debate_footer = "\n[/BOARDROOM_DEBATE]\n"
+        full_boardroom_text += debate_footer
+        yield debate_footer
         await asyncio.sleep(0.04)
 
-    # ----------------------------------------------------
-    # PHASE 2: Cross-Examination & Executive Debate
-    # ----------------------------------------------------
-    debate_header = "[BOARDROOM_DEBATE:การถกเถียงและหักล้างจุดอ่อน (Executive Debate)]\n"
-    full_boardroom_text += debate_header
-    yield debate_header
-    await asyncio.sleep(0.02)
+        # ----------------------------------------------------
+        # PHASE 3: Consensus & Strategic Blueprint
+        # ----------------------------------------------------
+        consensus_header = "[BOARDROOM_CONSENSUS:มติที่ประชุมและพิมพ์เขียวกลยุทธ์ (Strategic Blueprint)]\n"
+        full_boardroom_text += consensus_header
+        yield consensus_header
+        await asyncio.sleep(0.02)
 
-    debate_prompt = [
-        SystemMessage(content=(
-            "คุณคือผู้สังเคราะห์การประชุมผู้บริหารระดับสูง (Executive Debate Facilitator)\n"
-            "ผู้บริหารทั้ง 4 ได้แถลงมุมมองของตนเองแล้วดังนี้:\n"
-            f"- CEO (คุณคิรินทร์): {statements.get('CEO', '')[:400]}\n"
-            f"- CFO (คุณเมธัส): {statements.get('CFO', '')[:400]}\n"
-            f"- CPO (คุณรินดา): {statements.get('CPO', '')[:400]}\n"
-            f"- CTO (คุณธนิน): {statements.get('CTO', '')[:400]}\n\n"
-            "หน้าที่ของคุณคือ: จำลองบทสนทนาการถกเถียงสด (Debate) ระหว่างผู้บริหารอย่างเฉียบคมและสมจริง โดยให้มีการท้าทายกัน เช่น:\n"
-            "- CFO ท้วงติงงบประมาณของ CEO และถามเรื่องกระแสเงินสด\n"
-            "- CTO ชี้ข้อจำกัดของระบบต่อฟีเจอร์ที่ CPO อยากได้ว่าอาจทำให้เลื่อนกำหนดการ\n"
-            "- CPO โต้แย้ง CTO เรื่องความง่ายของผู้ใช้ อย่าทำระบบซับซ้อนเกินไป\n"
-            "- CEO สรุปจุดประนีประนอมที่ลงตัวระหว่าง ความเร็ว ต้นทุน และประสบการณ์ลูกค้า\n"
-            "รูปแบบการตอบ: เขียนเป็นบทสนทนาโต้ตอบสลับกัน 4-5 ลำดับ โดยขึ้นต้นแต่ละคนด้วยไอคอนและชื่อชัดเจน เช่น:\n"
-            "💰 คุณเมธัส (CFO): ...\n"
-            "🎨 คุณรินดา (CPO): ...\n"
-            "🛡️ คุณธนิน (CTO): ...\n"
-            "👔 คุณคิรินทร์ (CEO): ...\n"
-            "ความยาวรวม 180-260 คำ กระชับ มีไหวพริบ และลื่นไหลเป็นธรรมชาติ\n"
-            f"{lang_directive}"
-        )),
-        HumanMessage(content=f"วาระการประชุม: {user_input}")
-    ]
-    ok_deb, deb_chunks, _ = await _try_all_keys_and_models(debate_prompt, boardroom_model)
-    deb_text = "".join([getattr(c, "content", c) for c in deb_chunks]) if ok_deb else "ที่ประชุมได้ถกเถียงและชั่งน้ำหนักเรื่องงบประมาณและความเป็นไปได้ทางเทคนิคอย่างรอบคอบ"
-    for c in deb_chunks if ok_deb else [deb_text]:
-        clean_c = scrub_sensitive_output(getattr(c, "content", c) if not isinstance(c, str) else c)
-        full_boardroom_text += clean_c
-        yield clean_c
-        await asyncio.sleep(0.01)
+        consensus_prompt = [
+            SystemMessage(content=(
+                "คุณคือ 'คิระ' เลขานุการคณะกรรมการบริหารระดับสูง สังเคราะห์มติเอกฉันท์ของที่ประชุม (Executive Board Resolution)\n"
+                f"{lang_directive}\n"
+                "จากวาระการประชุมและมุมมองของ 4 ผู้บริหาร (CEO, CFO, CPO, CTO) รวมถึงการถกเถียงกันในห้องประชุม:\n\n"
+                "จงจัดทำ 'เอกสารสรุปมติที่ประชุมและพิมพ์เขียวกลยุทธ์' ให้ผู้ใช้โดยต้องมีหัวข้อครบถ้วนตามโครงสร้างนี้อย่างเคร่งครัด:\n\n"
+                "### 🏛️ 1. มติเอกฉันท์ของที่ประชุม (The Executive Verdict)\n"
+                "(ฟันธง 2-3 ประโยคชัดเจนว่าควรเดินหน้าอย่างไร โมเดลไหน และเป้าหมายหลักคืออะไร)\n\n"
+                "### ⚖️ 2. ตารางประเมิน 4 มิติ (4D Evaluation Matrix)\n"
+                "| มิติการพิจารณา | ผู้รับผิดชอบ | คะแนนความพร้อม (1-10) | ข้อสรุปและจุดชี้ขาด |\n"
+                "| :--- | :--- | :---: | :--- |\n"
+                "| **กลยุทธ์และการเติบโต** | 👔 CEO คุณคิรินทร์ | .../10 | ... |\n"
+                "| **การเงินและความคุ้มทุน** | 💰 CFO คุณเมธัส | .../10 | ... |\n"
+                "| **ประสบการณ์ผู้ใช้** | 🎨 CPO คุณรินดา | .../10 | ... |\n"
+                "| **สถาปัตยกรรมเทคนิค** | 🛡️ CTO คุณธนิน | .../10 | ... |\n\n"
+                "### 🚀 3. แผนปฏิบัติการ 3 ระยะ (3-Phase Action Roadmap)\n"
+                "- **เฟส 1 (Day 1 - 30): สิ่งที่ต้องทำทันที (Quick Wins & Validation)** - ...\n"
+                "- **เฟส 2 (Day 31 - 60): การสร้างและทดสอบตลาด (Build & Pilot Launch)** - ...\n"
+                "- **เฟส 3 (Day 61 - 90): การขยายผลและคืนทุน (Scale & Monetization)** - ...\n\n"
+                "### ⚠️ 4. เกราะป้องกันความเสี่ยงสูงสุด (Top 3 Risk Safeguards)\n"
+                "1. ...\n2. ...\n3. ...\n\n"
+                "### 💡 5. คำแนะนำส่งท้ายจากประธานคิรินทร์\n"
+                "(คำคมหรือข้อคิดปิดท้าย 1-2 ประโยคที่สร้างพลังและความมั่นใจ)"
+            )),
+            HumanMessage(content=f"วาระการประชุม: {user_input}\n\nบทวิเคราะห์ 4 ผู้บริหาร:\nCEO: {statements.get('CEO', '')[:300]}\nCFO: {statements.get('CFO', '')[:300]}\nCPO: {statements.get('CPO', '')[:300]}\nCTO: {statements.get('CTO', '')[:300]}")
+        ]
+        ok_con, con_chunks, _ = await _try_all_keys_and_models(consensus_prompt, boardroom_model, ui_lang=ui_lang)
+        con_text = "".join([getattr(c, "content", c) for c in con_chunks]) if ok_con else "มติที่ประชุมสรุปให้ดำเนินการตามแผนงานแบบค่อยเป็นค่อยไปเพื่อลดความเสี่ยงสูงสุดค่ะ"
+        for c in con_chunks if ok_con else [con_text]:
+            clean_c = scrub_sensitive_output(getattr(c, "content", c) if not isinstance(c, str) else c)
+            full_boardroom_text += clean_c
+            yield clean_c
+            await asyncio.sleep(0.01)
 
-    debate_footer = "\n[/BOARDROOM_DEBATE]\n"
-    full_boardroom_text += debate_footer
-    yield debate_footer
-    await asyncio.sleep(0.04)
+        consensus_footer = "\n[/BOARDROOM_CONSENSUS]\n"
+        full_boardroom_text += consensus_footer
+        yield consensus_footer
+        await asyncio.sleep(0.02)
 
-    # ----------------------------------------------------
-    # PHASE 3: Consensus & Strategic Blueprint
-    # ----------------------------------------------------
-    consensus_header = "[BOARDROOM_CONSENSUS:มติที่ประชุมและพิมพ์เขียวกลยุทธ์ (Strategic Blueprint)]\n"
-    full_boardroom_text += consensus_header
-    yield consensus_header
-    await asyncio.sleep(0.02)
-
-    consensus_prompt = [
-        SystemMessage(content=(
-            "คุณคือ 'คิระ' เลขานุการคณะกรรมการบริหารระดับสูง สังเคราะห์มติเอกฉันท์ของที่ประชุม (Executive Board Resolution)\n"
-            f"{lang_directive}\n"
-            "จากวาระการประชุมและมุมมองของ 4 ผู้บริหาร (CEO, CFO, CPO, CTO) รวมถึงการถกเถียงกันในห้องประชุม:\n\n"
-            "จงจัดทำ 'เอกสารสรุปมติที่ประชุมและพิมพ์เขียวกลยุทธ์' ให้ผู้ใช้โดยต้องมีหัวข้อครบถ้วนตามโครงสร้างนี้อย่างเคร่งครัด:\n\n"
-            "### 🏛️ 1. มติเอกฉันท์ของที่ประชุม (The Executive Verdict)\n"
-            "(ฟันธง 2-3 ประโยคชัดเจนว่าควรเดินหน้าอย่างไร โมเดลไหน และเป้าหมายหลักคืออะไร)\n\n"
-            "### ⚖️ 2. ตารางประเมิน 4 มิติ (4D Evaluation Matrix)\n"
-            "| มิติการพิจารณา | ผู้รับผิดชอบ | คะแนนความพร้อม (1-10) | ข้อสรุปและจุดชี้ขาด |\n"
-            "| :--- | :--- | :---: | :--- |\n"
-            "| **กลยุทธ์และการเติบโต** | 👔 CEO คุณคิรินทร์ | .../10 | ... |\n"
-            "| **การเงินและความคุ้มทุน** | 💰 CFO คุณเมธัส | .../10 | ... |\n"
-            "| **ประสบการณ์ผู้ใช้** | 🎨 CPO คุณรินดา | .../10 | ... |\n"
-            "| **สถาปัตยกรรมเทคนิค** | 🛡️ CTO คุณธนิน | .../10 | ... |\n\n"
-            "### 🚀 3. แผนปฏิบัติการ 3 ระยะ (3-Phase Action Roadmap)\n"
-            "- **เฟส 1 (Day 1 - 30): สิ่งที่ต้องทำทันที (Quick Wins & Validation)** - ...\n"
-            "- **เฟส 2 (Day 31 - 60): การสร้างและทดสอบตลาด (Build & Pilot Launch)** - ...\n"
-            "- **เฟส 3 (Day 61 - 90): การขยายผลและคืนทุน (Scale & Monetization)** - ...\n\n"
-            "### ⚠️ 4. เกราะป้องกันความเสี่ยงสูงสุด (Top 3 Risk Safeguards)\n"
-            "1. ...\n2. ...\n3. ...\n\n"
-            "### 💡 5. คำแนะนำส่งท้ายจากประธานคิรินทร์\n"
-            "(คำคมหรือข้อคิดปิดท้าย 1-2 ประโยคที่สร้างพลังและความมั่นใจ)"
-        )),
-        HumanMessage(content=f"วาระการประชุม: {user_input}\n\nบทวิเคราะห์ 4 ผู้บริหาร:\nCEO: {statements.get('CEO', '')[:300]}\nCFO: {statements.get('CFO', '')[:300]}\nCPO: {statements.get('CPO', '')[:300]}\nCTO: {statements.get('CTO', '')[:300]}")
-    ]
-    ok_con, con_chunks, _ = await _try_all_keys_and_models(consensus_prompt, boardroom_model)
-    con_text = "".join([getattr(c, "content", c) for c in con_chunks]) if ok_con else "มติที่ประชุมสรุปให้ดำเนินการตามแผนงานแบบค่อยเป็นค่อยไปเพื่อลดความเสี่ยงสูงสุดค่ะ"
-    for c in con_chunks if ok_con else [con_text]:
-        clean_c = scrub_sensitive_output(getattr(c, "content", c) if not isinstance(c, str) else c)
-        full_boardroom_text += clean_c
-        yield clean_c
-        await asyncio.sleep(0.01)
-
-    consensus_footer = "\n[/BOARDROOM_CONSENSUS]\n"
-    full_boardroom_text += consensus_footer
-    yield consensus_footer
-    await asyncio.sleep(0.02)
-
-    done_signal = "[BOARDROOM_DONE]\n"
-    full_boardroom_text += done_signal
-    yield done_signal
-
-    # 4. บันทึกประวัติและเพิ่มคะแนนโควตา
-    execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
-                  (uname, session_id, timestamp, "Boardroom", full_boardroom_text))
-    use_user_quota(uname)
-    execute_query("UPDATE users SET points = points + 2 WHERE username=?", (uname,))
+        done_signal = "[BOARDROOM_DONE]\n"
+        full_boardroom_text += done_signal
+        yield done_signal
+    except Exception as _b_err:
+        print(f"🚨 [Boardroom Streaming Exception] user={uname}:", _tb.format_exc())
+        err_fallbacks = {
+            "th": "\n\n⚠️ **ขออภัยค่ะ!** สภาผู้บริหารเผชิญกับข้อจำกัดโควตาของเครือข่าย กรุณาลองใหม่อีกครั้งในอีกสักครู่นะคะ 🙏",
+            "en": "\n\n⚠️ **Apologies!** The Virtual Boardroom session encountered a temporary network limitation. Please try again in a moment. 🙏",
+            "zh": "\n\n⚠️ **抱歉！** 虚拟董事会会话遇到临时网络限制，请稍后重试。🙏",
+            "ko": "\n\n⚠️ **죄송합니다!** 가상 이사회 세션 중 일시적인 네트워크 제한이 발생했습니다. 잠시 후 다시 시도해 주세요. 🙏",
+            "ja": "\n\n⚠️ **申し訳ありません！** バーチャル役員会セッション中に一時的な制限が発生しました。しばらくしてからもう一度お試しください。🙏"
+        }
+        b_apology = err_fallbacks.get(ui_lang, err_fallbacks["th"])
+        full_boardroom_text += b_apology
+        yield b_apology
+        yield "\n[BOARDROOM_DONE]\n"
+    finally:
+        if full_boardroom_text.strip():
+            try:
+                execute_query("INSERT INTO logs (username, session_id, timestamp, role, content) VALUES (?, ?, ?, ?, ?)",
+                              (uname, session_id, timestamp, "Boardroom", full_boardroom_text))
+                use_user_quota(uname)
+                execute_query("UPDATE users SET points = points + 2 WHERE username=?", (uname,))
+            except Exception as _b_log_err:
+                print("Error saving boardroom log in finally:", _b_log_err)
 
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest, request: Request):
