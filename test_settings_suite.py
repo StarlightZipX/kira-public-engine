@@ -18,7 +18,7 @@ def get_client():
         pass
     
     mock_groq_resp = mock.MagicMock(status_code=200)
-    mock_groq_resp.json.return_value = {"data": [{"id": "llama3-8b-8192"}, {"id": "llama3-70b-8192"}]}
+    mock_groq_resp.json.return_value = {"data": [{"id": "llama-3.1-8b-instant"}, {"id": "llama-3.3-70b-versatile"}]}
     with mock.patch.object(requests, "get", return_value=mock_groq_resp):
         from app import app, init_db
     from fastapi.testclient import TestClient

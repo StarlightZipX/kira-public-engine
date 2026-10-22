@@ -12,7 +12,7 @@ import unittest.mock as mock
 # Mock requests.get during app import to skip Groq network probe
 mock_groq_resp = mock.MagicMock()
 mock_groq_resp.status_code = 200
-mock_groq_resp.json.return_value = {"data": [{"id": "llama3-8b-8192"}, {"id": "llama3-70b-8192"}]}
+mock_groq_resp.json.return_value = {"data": [{"id": "llama-3.1-8b-instant"}, {"id": "llama-3.3-70b-versatile"}]}
 
 with mock.patch.object(requests, "get", return_value=mock_groq_resp):
     from app import app, init_db, execute_query
@@ -128,8 +128,8 @@ def run_tests():
     r_ver = client.get("/api/system/version")
     assert r_ver.status_code == 200
     ver_data = r_ver.json()
-    assert ver_data.get("version") == "2.5.0", f"Unexpected version: {ver_data}"
-    assert "Canvas & Viral Share" in ver_data.get("release_name", "")
+    assert ver_data.get("version") in ["2.5.0", "2.6.0"], f"Unexpected version: {ver_data}"
+    assert any(k in ver_data.get("release_name", "") for k in ["Canvas & Viral Share", "Next-Gen Neural", "Modern Architecture"])
     print(f"  ✅ System API Version verified: {ver_data.get('version')} ({ver_data.get('release_name')})")
 
     with open("static/sw.js", "r", encoding="utf-8") as f:

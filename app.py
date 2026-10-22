@@ -22,7 +22,15 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 import io
-import PyPDF2
+try:
+    import pypdf
+    PdfReader = pypdf.PdfReader
+except ImportError:
+    try:
+        import PyPDF2
+        PdfReader = PyPDF2.PdfReader
+    except ImportError:
+        PdfReader = None
 import docx
 import requests
 
@@ -134,7 +142,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.5.0"
+KIRA_SYSTEM_VERSION = "2.6.0"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -145,8 +153,8 @@ async def get_system_version():
         "version": KIRA_SYSTEM_VERSION,
         "build_id": APP_BUILD_ID,
         "timestamp": APP_START_TIME,
-        "release_name": "Kira Next-Gen Canvas & Viral Share Edition",
-        "message": "ระบบ Kira AI v2.5 พร้อม Interactive Canvas & Viral Share Engine อัปเดตเรียบร้อยแล้วค่ะ 🌸"
+        "release_name": "Kira Next-Gen Neural & Modern Architecture Edition",
+        "message": "ระบบ Kira AI v2.6 พร้อม Next-Gen Neural Engine & Modern Architecture อัปเดตเรียบร้อยแล้วค่ะ 🌸"
     }, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
 # --- Autonomous Keep-Alive & Server Health Guard ---
@@ -1020,11 +1028,10 @@ ALL_MODEL_CANDIDATES = [
     "openai/gpt-oss-20b",
     "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
-    "llama3-70b-8192",
-    "llama3-8b-8192"
+    "llama-3.1-70b-versatile"
 ]
 
-# ========== Multi-Brain Profiles (Kira 2.1) ==========
+# ========== Multi-Brain Profiles (Kira 2.6) ==========
 # เลือกสมองที่เหมาะสมที่สุดตามประเภทคำถาม รองรับทั้ง Qwen, DeepSeek, และ Groq
 BRAIN_PROFILES = {
     "vision": {
@@ -1033,19 +1040,19 @@ BRAIN_PROFILES = {
         "description": "โหมดประมวลผลภาพและสายตา (Multimodal Vision Engine)"
     },
     "logic": {
-        "model": "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else "llama3-70b-8192",
+        "model": "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else "llama-3.3-70b-versatile",
         "keywords": ["คำนวณ", "วิเคราะห์", "เปรียบเทียบ", "สถิติ", "ตรรกะ", "เหตุผล", "ข้อดี", "ข้อเสีย", 
                      "แผน", "กลยุทธ์", "strategy", "analyze", "calculate", "compare", "pros", "cons",
                      "วางแผน", "ออกแบบ", "สถาปัตยกรรม", "ระบบ", "โครงสร้าง", "ธุรกิจ", "การตลาด", "math", "คณิต"],
         "description": "โหมดวิเคราะห์ตรรกะและแผนงาน (Advanced Logic Engine)"
     },
     "reasoning": {
-        "model": "deepseek/deepseek-r1" if OPENROUTER_API_KEYS else "llama3-70b-8192",
+        "model": "deepseek/deepseek-r1" if OPENROUTER_API_KEYS else "llama-3.3-70b-versatile",
         "keywords": ["วิจัย", "ทำไม", "เพราะอะไร", "สรุปเชิงลึก", "ทฤษฎี", "ปรัชญา", "think", "reason", "proof", "พิสูจน์"],
         "description": "โหมดคิดวิเคราะห์เชิงลึก (Deep Reasoning Engine)"
     },
     "code": {
-        "model": "qwen/qwen-2.5-coder-32b-instruct" if OPENROUTER_API_KEYS else "llama3-70b-8192",
+        "model": "qwen/qwen-2.5-coder-32b-instruct" if OPENROUTER_API_KEYS else "llama-3.3-70b-versatile",
         "keywords": ["โค้ด", "code", "python", "javascript", "html", "css", "เขียนโปรแกรม", "debug",
                      "แก้บั๊ก", "function", "api", "database", "sql", "เว็บ", "แอป", "app",
                      "programming", "developer", "github", "server", "deploy", "react", "typescript"],
@@ -1065,7 +1072,7 @@ BRAIN_PROFILES = {
         "description": "โหมดภาษาศาสตร์และการแปลภาษา (Linguistic Engine)"
     },
     "chat": {
-        "model": "llama3-8b-8192",
+        "model": "llama-3.1-8b-instant",
         "keywords": [],  # Default fallback
         "description": "โหมดประมวลผลความเร็วสูง (Instant Fast Engine)"
     }
@@ -1655,8 +1662,8 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
     return False, [], last_error
 
 # ========== เลือกโมเดลหลักตอนบูท ==========
-PREFERRED_FLASH = "llama3-8b-8192"
-PREFERRED_PRO = "llama3-70b-8192"
+PREFERRED_FLASH = "llama-3.1-8b-instant"
+PREFERRED_PRO = "llama-3.3-70b-versatile"
 
 print("🔍 กำลังสแกนหาสมองที่ใช้ได้จาก Groq...")
 groq_available_models = []
@@ -1665,7 +1672,7 @@ for key_idx, api_key in enumerate(API_KEYS):
         url = "https://api.groq.com/openai/v1/models"
         headers = {
             "Authorization": f"Bearer {api_key}",
-            "User-Agent": "Kira-Engine/2.1"
+            "User-Agent": "Kira-Engine/2.6"
         }
         resp = requests.get(url, headers=headers, timeout=15)
         if resp.status_code == 200:
@@ -1710,8 +1717,8 @@ else:
 
 
 print(f"🤖 ========================================")
-print(f"🤖 Kira 2.1 Flash  = {PREFERRED_FLASH}")
-print(f"🤖 Kira 2.1 Pro    = {PREFERRED_PRO}")
+print(f"🤖 Kira 2.6 Flash  = {PREFERRED_FLASH}")
+print(f"🤖 Kira 2.6 Pro    = {PREFERRED_PRO}")
 print(f"🤖 API Keys = {len(API_KEYS)} ดอก")
 print(f"🤖 ========================================")
 
@@ -4087,11 +4094,14 @@ async def upload_file(username: str = Form(...), session_id: Optional[str] = For
         if filename.endswith(".txt") or filename.endswith(".csv"):
             extracted_text = content.decode("utf-8", errors="ignore")
         elif filename.endswith(".pdf"):
-            pdf_reader = PyPDF2.PdfReader(io.BytesIO(content))
-            for page in pdf_reader.pages:
-                text = page.extract_text()
-                if text:
-                    extracted_text += text + "\n"
+            if PdfReader is not None:
+                pdf_reader = PdfReader(io.BytesIO(content))
+                for page in pdf_reader.pages:
+                    text = page.extract_text()
+                    if text:
+                        extracted_text += text + "\n"
+            else:
+                return {"status": "error", "message": "ระบบไม่พบโมดูลอ่านไฟล์ PDF (pypdf/PyPDF2) ค่ะ"}
         elif filename.endswith(".docx"):
             doc = docx.Document(io.BytesIO(content))
             extracted_text = "\n".join([p.text for p in doc.paragraphs])
@@ -4449,6 +4459,23 @@ def _execute_search(search_term: str, version: str) -> str:
                 print(f"DuckDuckGo fallback search error: {e}")
                 
             if not raw_snippets:
+                try:
+                    from duckduckgo_search import DDGS
+                    with DDGS() as ddgs:
+                        ddgs_results = list(ddgs.text(search_term, max_results=4))
+                        if ddgs_results:
+                            snippets = []
+                            for r in ddgs_results:
+                                u = r.get("href") or r.get("link", "")
+                                if u and not any(bad in u.lower() for bad in ['youtube.com', 'facebook.com', 'tiktok.com', 'instagram.com', 'twitter.com', 'x.com', '.pdf', '.mp4']):
+                                    if u not in links:
+                                        links.append(u)
+                                snippets.append(f"Title: {r.get('title', '')}\nSnippet: {r.get('body', '')}\nLink: {u}")
+                            raw_snippets = "\n\n".join(snippets)
+                except Exception as ddgs_direct_err:
+                    print(f"Direct DDGS fallback notice: {ddgs_direct_err}")
+
+            if not raw_snippets:
                 return ""
                 
             if version == "1.0":
@@ -4510,9 +4537,14 @@ def _parse_document(base64_data: str, filename: str) -> str:
         text = ""
         
         if filename.lower().endswith(".pdf"):
-            pdf = PyPDF2.PdfReader(io.BytesIO(file_bytes))
-            for page in pdf.pages:
-                text += page.extract_text() + "\n"
+            if PdfReader is not None:
+                pdf = PdfReader(io.BytesIO(file_bytes))
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+            else:
+                text = "[PDF parser pypdf/PyPDF2 not installed]"
         elif filename.lower().endswith(".docx"):
             doc = docx.Document(io.BytesIO(file_bytes))
             for para in doc.paragraphs:

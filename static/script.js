@@ -109,7 +109,14 @@ let currentUser = localStorage.getItem('kira_username');
 let currentUserMode = localStorage.getItem('kira_user_mode') || 'general';
 let isGenerating = false;
 let currentImageBase64 = null;
-let currentSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+// --- Modern Cryptographically-Secure Session ID Generator ---
+function generateKiraSessionId() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+let currentSessionId = generateKiraSessionId();
 let currentTasksList = [];
 let currentGuideStep = 1;
 const totalGuideSteps = 4;
@@ -1971,7 +1978,7 @@ async function sendMessage() {
 // --- Event Listeners ---
 newChatBtn.addEventListener('click', () => {
     // Generate new unique session ID without wiping historical chat logs
-    currentSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+    currentSessionId = generateKiraSessionId();
     document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
     renderWelcomeHub();
     userInput.focus();
@@ -11421,6 +11428,8 @@ const KIRA_I18N = {
         chip_openrouter: "OpenRouter (เครือข่ายสำรองระดับโลก)",
         chip_gemini: "Gemini 2.5 Flash (ขุมพลังวิเคราะห์หลัก)",
         chip_circuit: "Iron Citadel Circuit Breaker (เปิดใช้งาน)",
+        custom_instructions_title: "คำสั่งพิเศษประจำตัว (Custom Instructions)",
+        custom_instructions_desc: "ให้ Kira รู้จักคุณดีขึ้นและตอบตรงใจคุณในทุกการสนทนาโดยไม่ต้องบอกซ้ำ",
         custom_about_label: "เกี่ยวกับตัวคุณและงานของคุณ:",
         custom_about_ph: "เช่น ฉันเป็นผู้จัดการฝ่ายการตลาด บริษัทซอฟต์แวร์ ชอบคำตอบที่สั้นกระชับและมุ่งเน้นตัวเลข KPI",
         custom_style_label: "คุณต้องการให้คิระตอบกลับอย่างไรเป็นพิเศษ:",
@@ -11815,6 +11824,8 @@ const KIRA_I18N = {
         chip_openrouter: "OpenRouter (Global redundancy network)",
         chip_gemini: "Gemini 2.5 Flash (Primary reasoning powerhouse)",
         chip_circuit: "Iron Citadel Circuit Breaker (Active)",
+        custom_instructions_title: "Custom Instructions",
+        custom_instructions_desc: "Help Kira understand you better and tailor every response without repeating yourself",
         custom_about_label: "About you and your work:",
         custom_about_ph: "e.g. I am a marketing manager at a tech company, prefer concise answers with clear KPIs",
         custom_style_label: "How would you like Kira to respond:",
@@ -11822,7 +11833,7 @@ const KIRA_I18N = {
         voice_suite_title: "Voice Suite & Speech-to-Text",
         auto_speak_title: "Auto-Speak Responses",
         auto_speak_desc: "Kira will automatically read out the answer aloud upon completion",
-        voice_group_th: "Thai (ภาษาไทย)",
+        voice_group_th: "Thai (Standard)",
         voice_group_en: "English (US)",
         voice_group_zh: "Chinese (Mandarin)",
         voice_group_ko: "Korean (한국어)",
@@ -12209,6 +12220,8 @@ const KIRA_I18N = {
         chip_openrouter: "OpenRouter（全球冗余备份网）",
         chip_gemini: "Gemini 2.5 Flash（核心深度分析主力）",
         chip_circuit: "Iron Citadel 智能熔断防线（已启用）",
+        custom_instructions_title: "自定义指令 (Custom Instructions)",
+        custom_instructions_desc: "让 Kira 更好地了解您，并在每次对话中定制回答，无需重复说明",
         custom_about_label: "关于您及您的业务背景：",
         custom_about_ph: "例如：我是科技公司的市场总监，倾向简洁、聚焦 KPI 数据的回答",
         custom_style_label: "您希望 Kira 采用怎样的专属答复风格：",
@@ -12603,6 +12616,8 @@ const KIRA_I18N = {
         chip_openrouter: "OpenRouter (글로벌 이중화 백업)",
         chip_gemini: "Gemini 2.5 Flash (주력 분석 엔진)",
         chip_circuit: "Iron Citadel 서킷 브레이커 (활성화됨)",
+        custom_instructions_title: "사용자 맞춤 지침 (Custom Instructions)",
+        custom_instructions_desc: "Kira가 귀하를 더 잘 이해하고 반복 없이 맞춤형 답변을 제공하도록 설정하세요",
         custom_about_label: "귀하와 귀하의 업무에 대해:",
         custom_about_ph: "예: 테크 기업 마케팅 총괄, KPI 중심의 간결한 답변 선호",
         custom_style_label: "Kira가 어떤 방식으로 답변하길 원하시나요:",
@@ -12997,6 +13012,8 @@ const KIRA_I18N = {
         chip_openrouter: "OpenRouter（グローバル冗余バックアップ）",
         chip_gemini: "Gemini 2.5 Flash（コア推论・主力分析エンジン）",
         chip_circuit: "Iron Citadel サーキットブレーカー（常時稼働）",
+        custom_instructions_title: "カスタム指示 (Custom Instructions)",
+        custom_instructions_desc: "Kiraがあなたをより深く理解し、繰り返すことなく最適な回答を提供できるようにします",
         custom_about_label: "あなたと業務内容について：",
         custom_about_ph: "例：IT企業のマーケティング責任者です。KPI数値を重視した簡潔な回答を好みます。",
         custom_style_label: "Kiraに期待する特別な応答スタイル：",
