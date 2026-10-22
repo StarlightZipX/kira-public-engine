@@ -592,7 +592,7 @@ def is_rate_limited(client_ip: str) -> bool:
 
 # --- TTS & Voice Bandwidth Shield ---
 tts_request_history = collections.defaultdict(list)
-MAX_TTS_PER_MINUTE = 15
+MAX_TTS_PER_MINUTE = 35
 
 def is_tts_rate_limited(client_ip: str) -> bool:
     return _check_rate_limit(client_ip, tts_request_history, MAX_TTS_PER_MINUTE)
@@ -4611,12 +4611,13 @@ async def generate_tts(req: TTSRequest, request: Request):
     """Kira 2.1 Free Natural Neural TTS: แปลงข้อความเป็นเสียงพากย์คุณภาพสูงแบบ Real-time (ฟรี 100%)"""
     client_ip = _get_client_ip(request)
     if is_tts_rate_limited(client_ip):
-        return JSONResponse(status_code=429, content={"status": "error", "message": "⚠️ ใช้งานฟังก์ชันเสียงรัวเกินไป กรุณารอสักครู่ค่ะ (Rate Limit: 15 req/min)"})
+        return JSONResponse(status_code=429, content={"status": "error", "message": "⚠️ ใช้งานฟังก์ชันเสียงรัวเกินไป กรุณารอสักครู่ค่ะ (Rate Limit: 35 req/min)"})
 
     try:
         import edge_tts
         import io
         import re
+        import urllib.parse
         from fastapi.responses import Response
         
         # Clean text from thinking tags, markdown links, code blocks, images
@@ -4637,9 +4638,31 @@ async def generate_tts(req: TTSRequest, request: Request):
             "th-TH-PremwadeeNeural", "th-TH-NiwatNeural", 
             "en-US-JennyNeural", "en-US-GuyNeural", "en-US-AriaNeural",
             "zh-CN-XiaoxiaoNeural", "zh-CN-YunxiNeural",
-            "ko-KR-SunHiNeural", "ko-KR-InJoonNeural"
+            "ko-KR-SunHiNeural", "ko-KR-InJoonNeural",
+            "ja-JP-NanamiNeural", "ja-JP-KeitaNeural"
         ]
         voice = req.voice if req.voice in allowed_voices else "th-TH-PremwadeeNeural"
+
+        # Smart Voice Adaptation based on script detection
+        # Edge-TTS neural models only have phoneme dictionaries for their target language.
+        # If text is written in Thai, a Japanese/Chinese/Korean/English voice cannot synthesize it.
+        is_thai_script = bool(re.search(r'[\u0E00-\u0E7F]', clean_text))
+        is_japanese_script = bool(re.search(r'[\u3040-\u30FF]', clean_text))
+        is_korean_script = bool(re.search(r'[\uAC00-\uD7AF]', clean_text))
+        is_chinese_script = bool(re.search(r'[\u4E00-\u9FFF]', clean_text)) and not is_japanese_script
+        
+        is_male_preference = voice in ["th-TH-NiwatNeural", "en-US-GuyNeural", "zh-CN-YunxiNeural", "ko-KR-InJoonNeural", "ja-JP-KeitaNeural"]
+        
+        effective_voice = voice
+        if is_thai_script and not voice.startswith("th-"):
+            effective_voice = "th-TH-NiwatNeural" if is_male_preference else "th-TH-PremwadeeNeural"
+        elif is_japanese_script and not voice.startswith("ja-"):
+            effective_voice = "ja-JP-KeitaNeural" if is_male_preference else "ja-JP-NanamiNeural"
+        elif is_korean_script and not voice.startswith("ko-"):
+            effective_voice = "ko-KR-InJoonNeural" if is_male_preference else "ko-KR-SunHiNeural"
+        elif is_chinese_script and not voice.startswith("zh-"):
+            effective_voice = "zh-CN-YunxiNeural" if is_male_preference else "zh-CN-XiaoxiaoNeural"
+
         raw_rate = getattr(req, "rate", "+0%") or "+0%"
         if isinstance(raw_rate, (int, float)):
             pct = int(round((float(raw_rate) - 1.0) * 100))
@@ -4657,14 +4680,49 @@ async def generate_tts(req: TTSRequest, request: Request):
         else:
             rate_val = "+0%"
         
-        communicate = edge_tts.Communicate(clean_text, voice, rate=rate_val)
-        audio_buffer = io.BytesIO()
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                audio_buffer.write(chunk["data"])
+        # 1. Primary Engine: Microsoft Edge TTS Neural
+        audio_data = bytearray()
+        try:
+            communicate = edge_tts.Communicate(clean_text, effective_voice, rate=rate_val)
+            async def _stream_edge():
+                async for chunk in communicate.stream():
+                    if chunk["type"] == "audio":
+                        audio_data.extend(chunk["data"])
+            await asyncio.wait_for(_stream_edge(), timeout=8.0)
+        except Exception as edge_err:
+            print(f"[TTS] Primary Edge-TTS notice ({edge_err}). Switching to secondary resilient engine...")
+        
+        if len(audio_data) > 300:
+            return Response(content=bytes(audio_data), media_type="audio/mpeg")
+            
+        # 2. Secondary Engine: Ultra-Fast Server Fallback (Google Translate TTS API)
+        try:
+            lang_code = "th"
+            if effective_voice.startswith("en-"):
+                lang_code = "en"
+            elif effective_voice.startswith("zh-"):
+                lang_code = "zh-CN"
+            elif effective_voice.startswith("ja-"):
+                lang_code = "ja"
+            elif effective_voice.startswith("ko-"):
+                lang_code = "ko"
+            elif effective_voice.startswith("th-"):
+                lang_code = "th"
                 
-        audio_buffer.seek(0)
-        return Response(content=audio_buffer.getvalue(), media_type="audio/mpeg")
+            short_query = urllib.parse.quote(clean_text[:250])
+            gtts_url = f"https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl={lang_code}&q={short_query}"
+            
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                gresp = await client.get(
+                    gtts_url,
+                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"}
+                )
+                if gresp.status_code == 200 and len(gresp.content) > 300:
+                    return Response(content=gresp.content, media_type="audio/mpeg")
+        except Exception as gtts_err:
+            print(f"[TTS] Secondary Google TTS fallback notice: {gtts_err}")
+            
+        return JSONResponse(status_code=503, content={"status": "error", "message": "Upstream voice synthesis services currently unavailable"})
     except Exception as e:
         print("TTS Generation Error:", e)
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})

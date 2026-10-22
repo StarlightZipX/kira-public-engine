@@ -123,6 +123,7 @@ let lastUserActivityTime = Date.now();
 let proactiveToastDismissed = false;
 let currentAudio = null;
 let currentSpeakingBtn = null;
+let isBrowserSpeaking = false;
 let currentArtifactCode = '';
 let artifactVersions = [];
 let activeVersionId = 1;
@@ -2446,6 +2447,92 @@ function updateAutoSpeakUI() {
     }
 }
 
+// --- 🎙️ Universal Resilient Speech Synthesis & Fallback Suite ---
+function stopCurrentSpeech() {
+    if (currentAudio) {
+        try { currentAudio.pause(); } catch (e) {}
+        currentAudio = null;
+    }
+    if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+    isBrowserSpeaking = false;
+    if (currentSpeakingBtn) {
+        currentSpeakingBtn.classList.remove('speaking');
+        currentSpeakingBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
+        currentSpeakingBtn = null;
+    }
+}
+
+function speakWithBrowserFallback(text, voiceName, rate = 1.0, onEndCallback = null, onErrorCallback = null) {
+    if (!('speechSynthesis' in window)) {
+        if (onErrorCallback) onErrorCallback(new Error("speechSynthesis not supported"));
+        return false;
+    }
+    
+    try {
+        window.speechSynthesis.cancel();
+        
+        let clean = (text || '')
+            .replace(/\[THINKING\].*?\[\/THINKING\]/gs, '')
+            .replace(/\[THINKING_DONE\]/g, '')
+            .replace(/```.*?```/gs, 'มีบล็อกโค้ดแสดงบนหน้าจอค่ะ')
+            .replace(/!\[.*?\]\(.*?\)/g, '')
+            .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+            .replace(/[*#_`~>]/g, '')
+            .trim();
+            
+        if (!clean) clean = "สวัสดีค่ะ มีอะไรให้คิระช่วยไหมคะ";
+        if (clean.length > 600) clean = clean.substring(0, 600) + "...";
+        
+        const utterance = new SpeechSynthesisUtterance(clean);
+        utterance.rate = Math.min(Math.max(parseFloat(rate) || 1.0, 0.8), 1.5);
+        
+        let lang = 'th-TH';
+        if (voiceName) {
+            if (voiceName.startsWith('en-')) lang = 'en-US';
+            else if (voiceName.startsWith('zh-')) lang = 'zh-CN';
+            else if (voiceName.startsWith('ja-')) lang = 'ja-JP';
+            else if (voiceName.startsWith('ko-')) lang = 'ko-KR';
+            else if (voiceName.startsWith('th-')) lang = 'th-TH';
+        }
+        
+        // Auto-adapt if script differs
+        if (/[\u0E00-\u0E7F]/.test(clean)) lang = 'th-TH';
+        else if (/[\u3040-\u30FF]/.test(clean)) lang = 'ja-JP';
+        else if (/[\uAC00-\uD7AF]/.test(clean)) lang = 'ko-KR';
+        else if (/[\u4E00-\u9FFF]/.test(clean)) lang = 'zh-CN';
+        
+        utterance.lang = lang;
+        
+        const voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length > 0) {
+            const match = voices.find(v => v.lang === lang || v.lang.startsWith(lang.split('-')[0]));
+            if (match) utterance.voice = match;
+        }
+        
+        isBrowserSpeaking = true;
+        utterance.onend = () => {
+            isBrowserSpeaking = false;
+            if (onEndCallback) onEndCallback();
+        };
+        utterance.onerror = (e) => {
+            console.warn("Browser SpeechSynthesis notice:", e);
+            isBrowserSpeaking = false;
+            if (onErrorCallback) onErrorCallback(e);
+            else if (onEndCallback) onEndCallback();
+        };
+        
+        window.speechSynthesis.speak(utterance);
+        return true;
+    } catch (e) {
+        console.error("speakWithBrowserFallback error:", e);
+        isBrowserSpeaking = false;
+        if (onErrorCallback) onErrorCallback(e);
+        return false;
+    }
+}
+
 const btnAutoSpeak = document.getElementById('btn-autospeak');
 if (btnAutoSpeak) {
     updateAutoSpeakUI();
@@ -2454,13 +2541,7 @@ if (btnAutoSpeak) {
         localStorage.setItem('kira_auto_speak', isAutoSpeakEnabled);
         updateAutoSpeakUI();
         if (!isAutoSpeakEnabled) {
-            if (currentAudio) {
-                currentAudio.pause();
-                if (currentSpeakingBtn) {
-                    currentSpeakingBtn.classList.remove('speaking');
-                    currentSpeakingBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
-                }
-            }
+            stopCurrentSpeech();
         }
     });
 }
@@ -2468,31 +2549,51 @@ if (btnAutoSpeak) {
 async function playKiraVoice(text, btn) {
     if (!text) return;
     
-    // Toggle Pause if same button is playing
-    if (currentAudio && !currentAudio.paused && currentSpeakingBtn === btn) {
-        currentAudio.pause();
-        btn.classList.remove('speaking');
-        btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
+    // Toggle Pause/Stop if same button is playing
+    const isSameBtnActive = currentSpeakingBtn === btn && (
+        (currentAudio && !currentAudio.paused) || 
+        isBrowserSpeaking || 
+        (window.speechSynthesis && window.speechSynthesis.speaking)
+    );
+
+    if (isSameBtnActive) {
+        stopCurrentSpeech();
         return;
     }
 
-    // Stop any existing audio
-    if (currentAudio) {
-        currentAudio.pause();
-        if (currentSpeakingBtn) {
-            currentSpeakingBtn.classList.remove('speaking');
-            currentSpeakingBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
-        }
-    }
+    // Stop any existing speech
+    stopCurrentSpeech();
 
     if (btn) {
         btn.classList.add('speaking');
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดเสียง...';
+        currentSpeakingBtn = btn;
     }
 
+    const activeVoice = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
+    const activeRate = parseFloat(localStorage.getItem('kira_speech_rate') || '1.0');
+
+    const restoreBtn = () => {
+        if (btn) {
+            btn.classList.remove('speaking');
+            btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
+        }
+        if (currentSpeakingBtn === btn) currentSpeakingBtn = null;
+        isBrowserSpeaking = false;
+        currentAudio = null;
+    };
+
+    const runBrowserFallback = () => {
+        isBrowserSpeaking = true;
+        if (btn) {
+            btn.classList.add('speaking');
+            btn.innerHTML = '<i class="fa-solid fa-waveform-lines"></i> กำลังพูด...';
+        }
+        const ok = speakWithBrowserFallback(text, activeVoice, activeRate, restoreBtn, restoreBtn);
+        if (!ok) restoreBtn();
+    };
+
     try {
-        const activeVoice = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
-        const activeRate = parseFloat(localStorage.getItem('kira_speech_rate') || '1.0');
         const res = await fetch('/api/tts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2500,13 +2601,16 @@ async function playKiraVoice(text, btn) {
         });
 
         if (!res.ok) {
-            throw new Error(`TTS Error: ${res.statusText}`);
+            throw new Error(`TTS server responded with ${res.status}`);
         }
 
         const blob = await res.blob();
+        if (!blob || blob.size < 300) {
+            throw new Error("TTS audio blob too small");
+        }
+
         const audioUrl = URL.createObjectURL(blob);
         currentAudio = new Audio(audioUrl);
-        currentSpeakingBtn = btn;
 
         currentAudio.onplay = () => {
             if (btn) {
@@ -2515,32 +2619,16 @@ async function playKiraVoice(text, btn) {
             }
         };
 
-        currentAudio.onended = () => {
-            if (btn) {
-                btn.classList.remove('speaking');
-                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
-            }
-            currentAudio = null;
-            currentSpeakingBtn = null;
-        };
-
-        currentAudio.onerror = () => {
-            if (btn) {
-                btn.classList.remove('speaking');
-                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
-            }
+        currentAudio.onended = restoreBtn;
+        currentAudio.onerror = (e) => {
+            console.warn("Audio playback failed, attempting browser fallback...", e);
+            runBrowserFallback();
         };
 
         await currentAudio.play();
     } catch (e) {
-        console.error("Audio playback error:", e);
-        if (btn) {
-            btn.classList.remove('speaking');
-            btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> เล่นเสียงไม่สำเร็จ';
-            setTimeout(() => {
-                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
-            }, 3000);
-        }
+        console.warn("Primary TTS server playback error, running browser fallback:", e);
+        runBrowserFallback();
     }
 }
 
@@ -4365,14 +4453,37 @@ async function previewVoiceSample() {
     const voice = document.getElementById('setting-voice-name')?.value || 'th-TH-PremwadeeNeural';
     const rate = parseFloat(document.getElementById('setting-speech-rate')?.value || 1.0);
     
-    const sampleText = voice.startsWith('en-') 
-        ? "Hello, I am Kira. Your next-generation intelligent AI assistant, ready to help you."
-        : "สวัสดีค่ะ ฉันคือคิระ ระบบปัญญาประดิษฐ์อัจฉริยะ พร้อมช่วยเหลือคุณแล้วค่ะ";
+    let sampleText = "สวัสดีค่ะ ฉันคือคิระ ระบบปัญญาประดิษฐ์อัจฉริยะ พร้อมช่วยเหลือคุณแล้วค่ะ";
+    if (voice.startsWith('en-')) {
+        sampleText = "Hello! I am Kira, your next-generation intelligent AI assistant, ready to assist you.";
+    } else if (voice.startsWith('zh-')) {
+        sampleText = "你好！我是Kira，你的新一代智能AI助手，很高兴为你服务。";
+    } else if (voice.startsWith('ja-')) {
+        sampleText = "こんにちは！私はKiraです。次世代のAIアシスタントとして、お手伝いいたします。";
+    } else if (voice.startsWith('ko-')) {
+        sampleText = "안녕하세요! 저는 키라입니다. 차세대 인공지능 비서로서 도와드리겠습니다.";
+    }
         
     if (previewBtn) {
         previewBtn.disabled = true;
         previewBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด...';
     }
+
+    const resetBtn = () => {
+        if (previewBtn) {
+            previewBtn.disabled = false;
+            previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> ทดลองฟัง';
+        }
+    };
+
+    const fallbackToBrowser = () => {
+        if (previewBtn) {
+            previewBtn.disabled = false;
+            previewBtn.innerHTML = '<i class="fa-solid fa-waveform-lines"></i> กำลังเล่น...';
+        }
+        const ok = speakWithBrowserFallback(sampleText, voice, rate, resetBtn, resetBtn);
+        if (!ok) resetBtn();
+    };
     
     try {
         const res = await fetch('/api/tts', {
@@ -4381,34 +4492,25 @@ async function previewVoiceSample() {
             body: JSON.stringify({ text: sampleText, voice: voice, rate: rate })
         });
         
-        if (!res.ok) throw new Error("TTS failed");
+        if (!res.ok) throw new Error("TTS server error " + res.status);
         
         const blob = await res.blob();
+        if (!blob || blob.size < 300) throw new Error("Empty audio blob");
+
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         
         if (previewBtn) previewBtn.innerHTML = '<i class="fa-solid fa-waveform-lines"></i> กำลังเล่น...';
         
-        audio.onended = () => {
-            if (previewBtn) {
-                previewBtn.disabled = false;
-                previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> ทดลองฟัง';
-            }
-        };
+        audio.onended = resetBtn;
         audio.onerror = () => {
-            if (previewBtn) {
-                previewBtn.disabled = false;
-                previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> ทดลองฟัง';
-            }
+            console.warn("Audio element error, falling back to browser speech synthesis...");
+            fallbackToBrowser();
         };
         await audio.play();
     } catch (err) {
-        console.error("Preview voice error:", err);
-        alert("ไม่สามารถเล่นเสียงตัวอย่างได้ กรุณาลองใหม่อีกครั้ง");
-        if (previewBtn) {
-            previewBtn.disabled = false;
-            previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> ทดลองฟัง';
-        }
+        console.warn("Preview voice error, falling back to browser speech synthesis:", err);
+        fallbackToBrowser();
     }
 }
 
@@ -9431,9 +9533,25 @@ function initLiveVoiceAssistant() {
 
             await liveVoiceAudio.play();
         } catch (ttsErr) {
-            console.warn("TTS error in live voice:", ttsErr);
-            isKiraSpeakingNow = false;
-            if (isLiveVoiceActive) startLiveListening();
+            console.warn("TTS error in live voice, attempting browser fallback:", ttsErr);
+            const ok = speakWithBrowserFallback(textToSpeak, activeVoice, activeRate, () => {
+                isKiraSpeakingNow = false;
+                if (isLiveVoiceActive && !isLiveVoiceMuted) {
+                    if (card) {
+                        card.classList.remove('speaking');
+                        card.classList.add('listening');
+                    }
+                    if (statusText) statusText.textContent = "🎙️ พร้อมรับฟังคุณแล้วค่ะ พูดต่อได้เลยนะคะ...";
+                    startLiveListening();
+                }
+            }, () => {
+                isKiraSpeakingNow = false;
+                if (isLiveVoiceActive) startLiveListening();
+            });
+            if (!ok) {
+                isKiraSpeakingNow = false;
+                if (isLiveVoiceActive) startLiveListening();
+            }
         }
     }
 
@@ -9441,6 +9559,9 @@ function initLiveVoiceAssistant() {
         if (liveVoiceAudio) {
             liveVoiceAudio.pause();
             liveVoiceAudio = null;
+        }
+        if ('speechSynthesis' in window) {
+            try { window.speechSynthesis.cancel(); } catch (e) {}
         }
         isKiraSpeakingNow = false;
         if (card) {
