@@ -4635,33 +4635,38 @@ async def generate_tts(req: TTSRequest, request: Request):
             clean_text = clean_text[:1500] + " ... และข้อมูลส่วนที่เหลือแสดงบนหน้าจอแล้วค่ะ"
             
         allowed_voices = [
-            "th-TH-PremwadeeNeural", "th-TH-NiwatNeural", 
-            "en-US-JennyNeural", "en-US-GuyNeural", "en-US-AriaNeural",
-            "zh-CN-XiaoxiaoNeural", "zh-CN-YunxiNeural",
-            "ko-KR-SunHiNeural", "ko-KR-InJoonNeural",
-            "ja-JP-NanamiNeural", "ja-JP-KeitaNeural"
+            "th-TH-PremwadeeNeural",
+            "en-US-JennyNeural", "en-US-AriaNeural",
+            "ja-JP-NanamiNeural", "ja-JP-AoiNeural",
+            "zh-CN-XiaoxiaoNeural", "zh-CN-XiaoyiNeural",
+            "ko-KR-SunHiNeural", "ko-KR-JiMinNeural"
         ]
         voice = req.voice if req.voice in allowed_voices else "th-TH-PremwadeeNeural"
 
-        # Smart Voice Adaptation based on script detection
-        # Edge-TTS neural models only have phoneme dictionaries for their target language.
-        # If text is written in Thai, a Japanese/Chinese/Korean/English voice cannot synthesize it.
-        is_thai_script = bool(re.search(r'[\u0E00-\u0E7F]', clean_text))
-        is_japanese_script = bool(re.search(r'[\u3040-\u30FF]', clean_text))
-        is_korean_script = bool(re.search(r'[\uAC00-\uD7AF]', clean_text))
-        is_chinese_script = bool(re.search(r'[\u4E00-\u9FFF]', clean_text)) and not is_japanese_script
-        
-        is_male_preference = voice in ["th-TH-NiwatNeural", "en-US-GuyNeural", "zh-CN-YunxiNeural", "ko-KR-InJoonNeural", "ja-JP-KeitaNeural"]
+        # Multi-script character counting for high-accuracy dominant language detection
+        thai_chars = len(re.findall(r'[\u0E00-\u0E7F]', clean_text))
+        japanese_chars = len(re.findall(r'[\u3040-\u30FF]', clean_text))
+        korean_chars = len(re.findall(r'[\uAC00-\uD7AF]', clean_text))
+        chinese_chars = len(re.findall(r'[\u4E00-\u9FFF]', clean_text))
+        english_chars = len(re.findall(r'[a-zA-Z]', clean_text))
         
         effective_voice = voice
-        if is_thai_script and not voice.startswith("th-"):
-            effective_voice = "th-TH-NiwatNeural" if is_male_preference else "th-TH-PremwadeeNeural"
-        elif is_japanese_script and not voice.startswith("ja-"):
-            effective_voice = "ja-JP-KeitaNeural" if is_male_preference else "ja-JP-NanamiNeural"
-        elif is_korean_script and not voice.startswith("ko-"):
-            effective_voice = "ko-KR-InJoonNeural" if is_male_preference else "ko-KR-SunHiNeural"
-        elif is_chinese_script and not voice.startswith("zh-"):
-            effective_voice = "zh-CN-YunxiNeural" if is_male_preference else "zh-CN-XiaoxiaoNeural"
+        # 1. If text is predominantly Japanese and current voice is not Japanese
+        if japanese_chars >= 3 and not voice.startswith("ja-"):
+            effective_voice = "ja-JP-NanamiNeural"
+        # 2. If text is predominantly Korean and current voice is not Korean
+        elif korean_chars >= 3 and not voice.startswith("ko-"):
+            effective_voice = "ko-KR-SunHiNeural"
+        # 3. If text is predominantly Chinese (and not Japanese) and current voice is not Chinese
+        elif chinese_chars >= 4 and japanese_chars == 0 and not voice.startswith("zh-"):
+            effective_voice = "zh-CN-XiaoxiaoNeural"
+        # 4. If text is predominantly Thai and current voice is not Thai
+        elif thai_chars >= 4 and not voice.startswith("th-"):
+            if thai_chars >= english_chars:
+                effective_voice = "th-TH-PremwadeeNeural"
+        # 5. If text is predominantly English and current voice was left as default Thai
+        elif english_chars >= 8 and voice.startswith("th-") and thai_chars < 5:
+            effective_voice = "en-US-JennyNeural"
 
         raw_rate = getattr(req, "rate", "+0%") or "+0%"
         if isinstance(raw_rate, (int, float)):
@@ -4680,7 +4685,7 @@ async def generate_tts(req: TTSRequest, request: Request):
         else:
             rate_val = "+0%"
         
-        # 1. Primary Engine: Microsoft Edge TTS Neural
+        # 1. Primary Engine: Microsoft Edge TTS Neural (100% Female Ultra-Natural)
         audio_data = bytearray()
         try:
             communicate = edge_tts.Communicate(clean_text, effective_voice, rate=rate_val)
@@ -4688,7 +4693,7 @@ async def generate_tts(req: TTSRequest, request: Request):
                 async for chunk in communicate.stream():
                     if chunk["type"] == "audio":
                         audio_data.extend(chunk["data"])
-            await asyncio.wait_for(_stream_edge(), timeout=8.0)
+            await asyncio.wait_for(_stream_edge(), timeout=12.0)
         except Exception as edge_err:
             print(f"[TTS] Primary Edge-TTS notice ({edge_err}). Switching to secondary resilient engine...")
         

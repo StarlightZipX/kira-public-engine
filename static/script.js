@@ -2488,6 +2488,13 @@ function speakWithBrowserFallback(text, voiceName, rate = 1.0, onEndCallback = n
         const utterance = new SpeechSynthesisUtterance(clean);
         utterance.rate = Math.min(Math.max(parseFloat(rate) || 1.0, 0.8), 1.5);
         
+        // Character count for script detection
+        const thCount = (clean.match(/[\u0E00-\u0E7F]/g) || []).length;
+        const jaCount = (clean.match(/[\u3040-\u30FF]/g) || []).length;
+        const koCount = (clean.match(/[\uAC00-\uD7AF]/g) || []).length;
+        const zhCount = (clean.match(/[\u4E00-\u9FFF]/g) || []).length;
+        const enCount = (clean.match(/[a-zA-Z]/g) || []).length;
+
         let lang = 'th-TH';
         if (voiceName) {
             if (voiceName.startsWith('en-')) lang = 'en-US';
@@ -2497,18 +2504,31 @@ function speakWithBrowserFallback(text, voiceName, rate = 1.0, onEndCallback = n
             else if (voiceName.startsWith('th-')) lang = 'th-TH';
         }
         
-        // Auto-adapt if script differs
-        if (/[\u0E00-\u0E7F]/.test(clean)) lang = 'th-TH';
-        else if (/[\u3040-\u30FF]/.test(clean)) lang = 'ja-JP';
-        else if (/[\uAC00-\uD7AF]/.test(clean)) lang = 'ko-KR';
-        else if (/[\u4E00-\u9FFF]/.test(clean)) lang = 'zh-CN';
+        // Auto-adapt based on dominant script in clean text
+        if (jaCount >= 3) lang = 'ja-JP';
+        else if (koCount >= 3) lang = 'ko-KR';
+        else if (zhCount >= 4 && jaCount === 0) lang = 'zh-CN';
+        else if (thCount >= 4 && thCount >= enCount) lang = 'th-TH';
+        else if (enCount >= 8 && thCount < 4) lang = 'en-US';
         
         utterance.lang = lang;
         
-        const voices = window.speechSynthesis.getVoices();
-        if (voices && voices.length > 0) {
-            const match = voices.find(v => v.lang === lang || v.lang.startsWith(lang.split('-')[0]));
-            if (match) utterance.voice = match;
+        const allVoices = window.speechSynthesis.getVoices();
+        if (allVoices && allVoices.length > 0) {
+            const prefix = lang.split('-')[0].toLowerCase();
+            const matchingVoices = allVoices.filter(v => {
+                const vLang = (v.lang || '').replace('_', '-').toLowerCase();
+                return vLang === lang.toLowerCase() || vLang.startsWith(prefix);
+            });
+            
+            // Prioritize female voices
+            const femaleKeywords = /female|woman|samantha|victoria|karen|zira|jenny|aria|kanya|premwadee|nanami|aoi|xiaoxiao|xiaoyi|sunhi|jimin|kyoko|yuna|tingting/i;
+            const femaleMatch = matchingVoices.find(v => femaleKeywords.test(v.name));
+            if (femaleMatch) {
+                utterance.voice = femaleMatch;
+            } else if (matchingVoices.length > 0) {
+                utterance.voice = matchingVoices[0];
+            }
         }
         
         isBrowserSpeaking = true;
@@ -2546,11 +2566,19 @@ if (btnAutoSpeak) {
     });
 }
 
-async function playKiraVoice(text, btn) {
+async function playKiraVoice(text, btn, rateOverride = null) {
     if (!text) return;
+
+    let targetBtn = null;
+    let voiceOverride = null;
+    if (btn && typeof btn === 'object' && btn.classList) {
+        targetBtn = btn;
+    } else if (typeof btn === 'string') {
+        voiceOverride = btn;
+    }
     
     // Toggle Pause/Stop if same button is playing
-    const isSameBtnActive = currentSpeakingBtn === btn && (
+    const isSameBtnActive = targetBtn && currentSpeakingBtn === targetBtn && (
         (currentAudio && !currentAudio.paused) || 
         isBrowserSpeaking || 
         (window.speechSynthesis && window.speechSynthesis.speaking)
@@ -2564,30 +2592,49 @@ async function playKiraVoice(text, btn) {
     // Stop any existing speech
     stopCurrentSpeech();
 
-    if (btn) {
-        btn.classList.add('speaking');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดเสียง...';
-        currentSpeakingBtn = btn;
+    if (targetBtn) {
+        targetBtn.classList.add('speaking');
+        targetBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดเสียง...';
+        currentSpeakingBtn = targetBtn;
     }
 
-    const activeVoice = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
-    const activeRate = parseFloat(localStorage.getItem('kira_speech_rate') || '1.0');
+    let activeVoice = voiceOverride || localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
+    const activeRate = rateOverride || parseFloat(localStorage.getItem('kira_speech_rate') || '1.0');
+
+    // Multi-script text counting for auto-routing to native female voices
+    const thChars = (text.match(/[\u0E00-\u0E7F]/g) || []).length;
+    const jaChars = (text.match(/[\u3040-\u30FF]/g) || []).length;
+    const koChars = (text.match(/[\uAC00-\uD7AF]/g) || []).length;
+    const zhChars = (text.match(/[\u4E00-\u9FFF]/g) || []).length;
+    const enChars = (text.match(/[a-zA-Z]/g) || []).length;
+
+    if (jaChars >= 3 && !activeVoice.startsWith('ja-')) {
+        activeVoice = 'ja-JP-NanamiNeural';
+    } else if (koChars >= 3 && !activeVoice.startsWith('ko-')) {
+        activeVoice = 'ko-KR-SunHiNeural';
+    } else if (zhChars >= 4 && jaChars === 0 && !activeVoice.startsWith('zh-')) {
+        activeVoice = 'zh-CN-XiaoxiaoNeural';
+    } else if (thChars >= 4 && !activeVoice.startsWith('th-')) {
+        if (thChars >= enChars) activeVoice = 'th-TH-PremwadeeNeural';
+    } else if (enChars >= 8 && activeVoice.startsWith('th-') && thChars < 5) {
+        activeVoice = 'en-US-JennyNeural';
+    }
 
     const restoreBtn = () => {
-        if (btn) {
-            btn.classList.remove('speaking');
-            btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
+        if (targetBtn) {
+            targetBtn.classList.remove('speaking');
+            targetBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> ฟังเสียง';
         }
-        if (currentSpeakingBtn === btn) currentSpeakingBtn = null;
+        if (currentSpeakingBtn === targetBtn) currentSpeakingBtn = null;
         isBrowserSpeaking = false;
         currentAudio = null;
     };
 
     const runBrowserFallback = () => {
         isBrowserSpeaking = true;
-        if (btn) {
-            btn.classList.add('speaking');
-            btn.innerHTML = '<i class="fa-solid fa-waveform-lines"></i> กำลังพูด...';
+        if (targetBtn) {
+            targetBtn.classList.add('speaking');
+            targetBtn.innerHTML = '<i class="fa-solid fa-waveform-lines"></i> กำลังพูด...';
         }
         const ok = speakWithBrowserFallback(text, activeVoice, activeRate, restoreBtn, restoreBtn);
         if (!ok) restoreBtn();
@@ -2613,9 +2660,9 @@ async function playKiraVoice(text, btn) {
         currentAudio = new Audio(audioUrl);
 
         currentAudio.onplay = () => {
-            if (btn) {
-                btn.classList.add('speaking');
-                btn.innerHTML = '<i class="fa-solid fa-waveform-lines"></i> กำลังพูด...';
+            if (targetBtn) {
+                targetBtn.classList.add('speaking');
+                targetBtn.innerHTML = '<i class="fa-solid fa-waveform-lines"></i> กำลังพูด...';
             }
         };
 
@@ -4453,15 +4500,23 @@ async function previewVoiceSample() {
     const voice = document.getElementById('setting-voice-name')?.value || 'th-TH-PremwadeeNeural';
     const rate = parseFloat(document.getElementById('setting-speech-rate')?.value || 1.0);
     
-    let sampleText = "สวัสดีค่ะ ฉันคือคิระ ระบบปัญญาประดิษฐ์อัจฉริยะ พร้อมช่วยเหลือคุณแล้วค่ะ";
-    if (voice.startsWith('en-')) {
-        sampleText = "Hello! I am Kira, your next-generation intelligent AI assistant, ready to assist you.";
-    } else if (voice.startsWith('zh-')) {
-        sampleText = "你好！我是Kira，你的新一代智能AI助手，很高兴为你服务。";
-    } else if (voice.startsWith('ja-')) {
-        sampleText = "こんにちは！私はKiraです。次世代のAIアシスタントとして、お手伝いいたします。";
-    } else if (voice.startsWith('ko-')) {
-        sampleText = "안녕하세요! 저는 키라입니다. 차세대 인공지능 비서로서 도와드리겠습니다.";
+    let sampleText = "สวัสดีค่ะ ฉันคือคิระ ระบบปัญญาประดิษฐ์อัจฉริยะ พร้อมดูแลและช่วยเหลือคุณอย่างเต็มที่แล้วค่ะ";
+    if (voice === 'en-US-JennyNeural') {
+        sampleText = "Hello! I am Kira, your next-generation intelligent AI companion, ready to assist you today.";
+    } else if (voice === 'en-US-AriaNeural') {
+        sampleText = "Welcome to Kira AI. I am Aria, your executive copilot, ready to empower your workflow.";
+    } else if (voice === 'ja-JP-NanamiNeural') {
+        sampleText = "こんにちは！私はキラです。次世代AIアシスタントとして、お手伝いいたします。";
+    } else if (voice === 'ja-JP-AoiNeural') {
+        sampleText = "初めまして、キラです。高度な知能と丁寧なサポートで、あなたのお役に立ちます。";
+    } else if (voice === 'zh-CN-XiaoxiaoNeural') {
+        sampleText = "你好！我是Kira，你的新一代智能AI助手，很高兴为你提供全方位的支持。";
+    } else if (voice === 'zh-CN-XiaoyiNeural') {
+        sampleText = "您好！很高兴与您相遇，我是小伊，随时准备为您解答各种问题。";
+    } else if (voice === 'ko-KR-SunHiNeural') {
+        sampleText = "안녕하세요! 저는 키라입니다. 차세대 인공지능 비서로서 최선을 다해 도와드리겠습니다.";
+    } else if (voice === 'ko-KR-JiMinNeural') {
+        sampleText = "반가워요! 차세대 AI 어시스턴트 지민입니다. 어떤 작업이든 스마트하게 도와드릴게요.";
     }
         
     if (previewBtn) {
@@ -11378,16 +11433,15 @@ const KIRA_I18N = {
         voice_group_zh: "ภาษาจีน (Chinese)",
         voice_group_ko: "ภาษาเกาหลี (Korean)",
         voice_group_ja: "ภาษาญี่ปุ่น (Japanese)",
-        voice_th_premwadee: "Premwadee (หญิง - อบอุ่น นุ่มนวล แนะนำ)",
-        voice_th_niwat: "Niwat (ชาย - สุภาพ เป็นทางการ)",
-        voice_en_jenny: "Jenny (หญิง - ชัดเจน มืออาชีพ)",
-        voice_en_guy: "Guy (ชาย - ทุ้ม นิ่ง น่าเชื่อถือ)",
-        voice_zh_xiaoxiao: "Xiaoxiao (หญิง - นุ่มนวล ชัดถ้อยชัดคำ)",
-        voice_zh_yunxi: "Yunxi (ชาย - คล่องแคล่ว ทันสมัย)",
-        voice_ko_sunhi: "SunHi (หญิง - ไพเราะ เป็นธรรมชาติ)",
-        voice_ko_injoon: "InJoon (ชาย - สุภาพ อบอุ่น)",
-        voice_ja_nanami: "Nanami (หญิง - ไพเราะ นุ่มนวล แนะนำ)",
-        voice_ja_keita: "Keita (ชาย - สุภาพ หนักแน่น)",
+        voice_th_premwadee: "Premwadee (หญิง - นุ่มนวล อบอุ่น เป็นธรรมชาติ แนะนำ)",
+        voice_en_jenny: "Jenny (หญิง - ชัดเจน คล่องแคล่ว ทันสมัย สดใส แนะนำ)",
+        voice_en_aria: "Aria (หญิง - นุ่มนวล มั่นใจ มืออาชีพ)",
+        voice_zh_xiaoxiao: "Xiaoxiao (หญิง - นุ่มนวล ชัดถ้อยชัดคำ อบอุ่น แนะนำ)",
+        voice_zh_xiaoyi: "Xiaoyi (หญิง - อ่อนหวาน สดใส น่ารัก)",
+        voice_ko_sunhi: "SunHi (หญิง - หวานละมุน ไพเราะ เป็นธรรมชาติ แนะนำ)",
+        voice_ko_jimin: "JiMin (หญิง - สดใส มีชีวิตชีวา)",
+        voice_ja_nanami: "Nanami (หญิง - สดใส อ่อนโยน มีชีวิตชีวา แนะนำ)",
+        voice_ja_aoi: "Aoi (หญิง - สุภาพ นุ่มลึก ไพเราะ)",
         stt_opt_th: "ภาษาไทย (Thai - th-TH)",
         stt_opt_en: "ภาษาอังกฤษ (English - en-US)",
         stt_opt_zh: "ภาษาจีนกลาง (Chinese - zh-CN)",
@@ -11773,16 +11827,15 @@ const KIRA_I18N = {
         voice_group_zh: "Chinese (Mandarin)",
         voice_group_ko: "Korean (한국어)",
         voice_group_ja: "Japanese (日本語)",
-        voice_th_premwadee: "Premwadee (Female - Warm & Natural, Recommended)",
-        voice_th_niwat: "Niwat (Male - Polite & Formal)",
-        voice_en_jenny: "Jenny (Female - Clear & Professional)",
-        voice_en_guy: "Guy (Male - Deep & Confident)",
-        voice_zh_xiaoxiao: "Xiaoxiao (Female - Gentle & Expressive)",
-        voice_zh_yunxi: "Yunxi (Male - Fluent & Energetic)",
-        voice_ko_sunhi: "SunHi (Female - Melodic & Natural)",
-        voice_ko_injoon: "InJoon (Male - Warm & Courteous)",
+        voice_th_premwadee: "Premwadee (Female - Warm, Melodic & Natural, Recommended)",
+        voice_en_jenny: "Jenny (Female - Clear, Modern & Fluent, Recommended)",
+        voice_en_aria: "Aria (Female - Smooth, Confident & Professional)",
+        voice_zh_xiaoxiao: "Xiaoxiao (Female - Gentle & Expressive, Recommended)",
+        voice_zh_xiaoyi: "Xiaoyi (Female - Sweet, Charming & Lively)",
+        voice_ko_sunhi: "SunHi (Female - Melodic, Gentle & Natural, Recommended)",
+        voice_ko_jimin: "JiMin (Female - Bright, Energetic & Modern)",
         voice_ja_nanami: "Nanami (Female - Sweet & Polite, Recommended)",
-        voice_ja_keita: "Keita (Male - Polite & Reliable)",
+        voice_ja_aoi: "Aoi (Female - Elegant, Calm & Melodic)",
         stt_opt_th: "Thai (th-TH)",
         stt_opt_en: "English (US - en-US)",
         stt_opt_zh: "Chinese (Mandarin - zh-CN)",
@@ -12169,15 +12222,14 @@ const KIRA_I18N = {
         voice_group_ko: "韩语 (Korean)",
         voice_group_ja: "日语 (Japanese)",
         voice_th_premwadee: "Premwadee（女声 - 温暖自然，推荐）",
-        voice_th_niwat: "Niwat（男声 - 沉稳得体）",
-        voice_en_jenny: "Jenny（女声 - 清晰专业）",
-        voice_en_guy: "Guy（男声 - 沉稳有力）",
-        voice_zh_xiaoxiao: "晓晓（女声 - 亲切自然）",
-        voice_zh_yunxi: "云希（男声 - 阳光明朗）",
-        voice_ko_sunhi: "善熙（女声 - 甜美自然）",
-        voice_ko_injoon: "仁俊（男声 - 儒雅稳重）",
+        voice_en_jenny: "Jenny（女声 - 清晰流畅，推荐）",
+        voice_en_aria: "Aria（女声 - 自信温和，专业）",
+        voice_zh_xiaoxiao: "晓晓（女声 - 亲切自然，字正腔圆，推荐）",
+        voice_zh_xiaoyi: "晓伊（女声 - 甜美生动，可爱自然）",
+        voice_ko_sunhi: "善熙（女声 - 甜美自然，推荐）",
+        voice_ko_jimin: "智敏（女声 - 活泼生动，现代自然）",
         voice_ja_nanami: "七海（女声 - 甜美温和，推荐）",
-        voice_ja_keita: "圭太（男声 - 沉稳可靠）",
+        voice_ja_aoi: "葵（女声 - 礼貌沉稳，悦耳）",
         stt_opt_th: "泰语 (th-TH)",
         stt_opt_en: "英语 (en-US)",
         stt_opt_zh: "中文普通话 (zh-CN)",
@@ -12564,15 +12616,14 @@ const KIRA_I18N = {
         voice_group_ko: "한국어 (Korean)",
         voice_group_ja: "일본어 (Japanese)",
         voice_th_premwadee: "Premwadee (여성 - 따뜻하고 자연스러움, 추천)",
-        voice_th_niwat: "Niwat (남성 - 정중하고 공식적임)",
-        voice_en_jenny: "Jenny (여성 - 명확하고 전문적임)",
-        voice_en_guy: "Guy (남성 - 중후하고 신뢰감 있음)",
-        voice_zh_xiaoxiao: "Xiaoxiao (여성 - 부드럽고 정확한 발음)",
-        voice_zh_yunxi: "Yunxi (남성 - 유창하고 현대적임)",
-        voice_ko_sunhi: "선희 (여성 - 부드럽고 자연스러움)",
-        voice_ko_injoon: "인준 (남성 - 정중하고 따뜻함)",
+        voice_en_jenny: "Jenny (여성 - 또렷하고 유창함, 추천)",
+        voice_en_aria: "Aria (여성 - 부드럽고 자신감 있는 목소리)",
+        voice_zh_xiaoxiao: "Xiaoxiao (여성 - 부드럽고 정확한 발음, 추천)",
+        voice_zh_xiaoyi: "Xiaoyi (여성 - 발랄하고 사랑스러운 목소리)",
+        voice_ko_sunhi: "선희 (여성 - 부드럽고 자연스러움, 추천)",
+        voice_ko_jimin: "지민 (여성 - 밝고 활기찬 목소리)",
         voice_ja_nanami: "Nanami (여성 - 상냥하고 정중함, 추천)",
-        voice_ja_keita: "Keita (남성 - 정중하고 든든함)",
+        voice_ja_aoi: "Aoi (여성 - 단정하고 차분한 목소리)",
         stt_opt_th: "태국어 (th-TH)",
         stt_opt_en: "영어 (en-US)",
         stt_opt_zh: "중국어 표준어 (zh-CN)",
@@ -12959,15 +13010,14 @@ const KIRA_I18N = {
         voice_group_ko: "韓国語 (Korean)",
         voice_group_ja: "日本語 (Japanese)",
         voice_th_premwadee: "Premwadee（女性 - 温かみのある自然な声、推奨）",
-        voice_th_niwat: "Niwat（男性 - 丁寧で公式的）",
-        voice_en_jenny: "Jenny（女性 - 明瞭・プロフェッショナル）",
-        voice_en_guy: "Guy（男性 - 落ち着きと信頼感）",
-        voice_zh_xiaoxiao: "Xiaoxiao（女性 - 優しく表情豊か）",
-        voice_zh_yunxi: "Yunxi（男性 - スムーズで明快）",
-        voice_ko_sunhi: "SunHi（女性 - 自然で心地よい声）",
-        voice_ko_injoon: "InJoon（男性 - 丁寧で温かみのある声）",
+        voice_en_jenny: "Jenny（女性 - 明瞭で流暢、推奨）",
+        voice_en_aria: "Aria（女性 - 落ち着きと自信のある声）",
+        voice_zh_xiaoxiao: "Xiaoxiao（女性 - 優しく表情豊か、推奨）",
+        voice_zh_xiaoyi: "Xiaoyi（女性 - 愛らしく親しみやすい声）",
+        voice_ko_sunhi: "SunHi（女性 - 自然で心地よい声、推奨）",
+        voice_ko_jimin: "JiMin（女性 - 明るく元気な声）",
         voice_ja_nanami: "Nanami（女性 - 優しく丁寧、推奨）",
-        voice_ja_keita: "Keita（男性 - 爽やかで信頼感のある声）",
+        voice_ja_aoi: "葵（女性 - 丁寧で落ち着いた声）",
         stt_opt_th: "タイ語 (th-TH)",
         stt_opt_en: "英語 (en-US)",
         stt_opt_zh: "中国語普通話 (zh-CN)",
