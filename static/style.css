@@ -1961,13 +1961,17 @@ body.glow-1-1 .chat-input-wrapper {
     border-left: 1px solid rgba(59, 130, 246, 0.3);
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
     z-index: 1060;
-    transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    visibility: hidden;
+    pointer-events: none;
+    transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s ease;
     display: flex;
     flex-direction: column;
 }
 
 .artifacts-drawer.open {
     right: 0;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 .artifacts-header {
@@ -4045,6 +4049,21 @@ body.light-theme .drag-drop-box h4 {
     color: #f8fafc;
     width: 90%;
     max-width: 540px;
+}
+
+body.light-theme .modal-overlay,
+body.light-mode .modal-overlay {
+    background: rgba(15, 23, 42, 0.38);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+body.light-theme .modal-card,
+body.light-mode .modal-card {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
 }
 
 .onboarding-card {
@@ -7492,11 +7511,15 @@ input[name="sub-model-flavor"]:checked + .chip-creative {
     display: flex;
     flex-direction: column;
     transform: translateX(100%);
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.3s ease;
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.3s ease, visibility 0.35s ease;
 }
 
 .artifacts-drawer.open {
     transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
 }
 
 /* Split Workspace Active State (Desktop) */
@@ -14745,6 +14768,30 @@ body.oled-mode .vault-modal-card {
     border-color: rgba(244, 63, 94, 0.7);
     color: #fda4af;
     box-shadow: 0 4px 14px rgba(244, 63, 94, 0.3);
+}
+
+/* Light Theme overrides for Study Chips */
+body.light-theme .study-chip,
+body.light-mode .study-chip {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+body.light-theme .study-chip:hover,
+body.light-mode .study-chip:hover {
+    background: #f1f5f9 !important;
+    border-color: #0284c7 !important;
+    color: #0284c7 !important;
+    box-shadow: 0 3px 10px rgba(2, 132, 199, 0.15) !important;
+}
+
+body.light-theme .study-chip.hub-trigger,
+body.light-mode .study-chip.hub-trigger {
+    background: linear-gradient(135deg, #fff1f2, #fdf4ff) !important;
+    border-color: #f43f5e !important;
+    color: #e11d48 !important;
 }
 
 /* Study Hub Modal Card */
