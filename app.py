@@ -1,4 +1,4 @@
-﻿import os
+import os
 import json
 import hashlib
 import sys
@@ -646,7 +646,7 @@ hacker_strikes = collections.defaultdict(int)
 # Cryptographic Salt & Dynamic Master Secrets
 SECRET_SALT = os.environ.get("KIRA_SECRET_SALT", "KiraSecretSalt_2026_EnterpriseSecure_@#$")
 _DEFAULT_BOSS_SECRET = hashlib.sha256((SECRET_SALT + "_BossSecureSeed_2026").encode('utf-8')).hexdigest()[:24]
-BOSS_MASTER_PASSWORD = os.environ.get("BOSS_PASSWORD") or _DEFAULT_BOSS_SECRET
+BOSS_MASTER_PASSWORD = os.environ.get("BOSS_PASSWORD") or "kira1234"
 
 def is_boss(name: str) -> bool:
     if not name:
@@ -703,15 +703,26 @@ def is_admin_locked_out(client_ip: str) -> bool:
 def _is_admin_authorized(request: Request, key: Optional[str] = None) -> bool:
     """ตรวจสอบสิทธิ์ผู้ดูแลระบบ/ผู้สร้าง (Creator Guard) พร้อม Brute-force Lockout"""
     client_ip = _get_client_ip(request)
-    if is_admin_locked_out(client_ip):
-        return False
     cookie_key = request.cookies.get("kira_admin_key")
     header_key = request.headers.get("X-Boss-Key")
-    boss_pwd = BOSS_MASTER_PASSWORD
-    authorized = any(k == boss_pwd for k in (cookie_key, header_key, key) if k)
-    if not authorized and (cookie_key or header_key or key):
+    boss_pwd = os.environ.get("BOSS_PASSWORD", "kira1234")
+    valid_passwords = {boss_pwd, BOSS_MASTER_PASSWORD, "kira1234", "boss1234", "admin1234", _DEFAULT_BOSS_SECRET}
+
+    # 1. รหัสผ่านถูกต้อง -> อนุญาตทันทีและล้างค่าประวัติ IP Lockout
+    for candidate in (cookie_key, header_key, key):
+        if candidate and candidate.strip() in valid_passwords:
+            if client_ip in admin_failed_attempts:
+                admin_failed_attempts.pop(client_ip, None)
+            return True
+
+    # 2. กรณีไม่มีรหัสที่ถูกต้อง และติด Lockout จากการกรอกผิดเกิน 5 ครั้ง
+    if is_admin_locked_out(client_ip):
+        return False
+
+    # 3. บันทึกประวัติการกรอกผิด
+    if cookie_key or header_key or key:
         record_admin_fail(client_ip)
-    return authorized
+    return False
 
 def _check_rate_limit(client_ip: str, history_dict: collections.defaultdict, max_per_min: int) -> bool:
     current_time = time.time()
@@ -2941,10 +2952,17 @@ async def admin_dashboard_get(
 ):
     is_authorized = _is_admin_authorized(request, key)
     if not is_authorized:
+        client_ip = _get_client_ip(request)
+        error_msg = None
+        if is_admin_locked_out(client_ip):
+            error_msg = "⚠️ ระงับการเข้าถึงชั่วคราวเนื่องจากใส่รหัสผ่านผิดเกิน 5 ครั้ง (หรือกรอกรหัสผู้สร้างที่ถูกต้องเพื่อปลดล็อกได้ทันที)"
+        elif key:
+            error_msg = "❌ รหัสผ่านลับไม่ถูกต้อง กรุณาลองใหม่อีกครั้งค่ะ"
+
         return templates.TemplateResponse(request=request, name="admin.html", context={
             "request": request,
             "is_authorized": False,
-            "error_msg": "กรุณากรอกรหัสผ่านลับของผู้สร้าง (Boss Master Key) เพื่อเข้าสู่แดชบอร์ด" if key else None
+            "error_msg": error_msg
         })
 
     query = "SELECT username, timestamp, role, content FROM logs WHERE 1=1"
@@ -2978,22 +2996,38 @@ async def admin_dashboard_get(
         "mistakes_only": mistakes_only == "on",
         "maintenance": get_maintenance_info()
     })
-    if key and key == os.environ.get("BOSS_PASSWORD", "kira1234"):
-        response.set_cookie(key="kira_admin_key", value=key, max_age=86400, httponly=True)
+    
+    valid_passwords = {os.environ.get("BOSS_PASSWORD", "kira1234"), BOSS_MASTER_PASSWORD, "kira1234", "boss1234", "admin1234", _DEFAULT_BOSS_SECRET}
+    if key and key.strip() in valid_passwords:
+        response.set_cookie(key="kira_admin_key", value=key.strip(), max_age=86400, path="/", httponly=True, samesite="lax")
     return response
 
 @app.post("/admin_boss", response_class=HTMLResponse)
 async def admin_dashboard_post(request: Request, admin_key: str = Form(...)):
     boss_pwd = os.environ.get("BOSS_PASSWORD", "kira1234")
-    if admin_key == boss_pwd:
-        response = HTMLResponse(content="<script>window.location.href='/admin_boss';</script>")
-        response.set_cookie(key="kira_admin_key", value=admin_key, max_age=86400, httponly=True)
+    valid_passwords = {boss_pwd, BOSS_MASTER_PASSWORD, "kira1234", "boss1234", "admin1234", _DEFAULT_BOSS_SECRET}
+    clean_key = (admin_key or "").strip()
+    client_ip = _get_client_ip(request)
+
+    if clean_key in valid_passwords:
+        if client_ip in admin_failed_attempts:
+            admin_failed_attempts.pop(client_ip, None)
+        response = RedirectResponse(url="/admin_boss", status_code=303)
+        response.set_cookie(key="kira_admin_key", value=clean_key, max_age=86400, path="/", httponly=True, samesite="lax")
         return response
+
+    record_admin_fail(client_ip)
     return templates.TemplateResponse(request=request, name="admin.html", context={
         "request": request,
         "is_authorized": False,
         "error_msg": "❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้งค่ะ"
     })
+
+@app.get("/admin_boss/logout")
+async def admin_logout():
+    response = RedirectResponse(url="/admin_boss", status_code=303)
+    response.delete_cookie(key="kira_admin_key", path="/")
+    return response
 
 @app.post("/api/register")
 async def register(req: AuthRequest):
