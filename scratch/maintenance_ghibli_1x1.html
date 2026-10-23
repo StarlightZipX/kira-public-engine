@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Mali:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 1080px;
+            height: 1080px;
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: 'Prompt', 'Leelawadee UI', sans-serif;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 45px 55px;
+        }
+
+        .ambient-glow-1 {
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0) 70%);
+            filter: blur(80px);
+            z-index: 1;
+        }
+        .ambient-glow-2 {
+            position: absolute;
+            bottom: -80px;
+            left: -80px;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.16) 0%, rgba(16, 185, 129, 0) 70%);
+            filter: blur(80px);
+            z-index: 1;
+        }
+        .texture-overlay {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 32px 32px;
+            z-index: 2;
+        }
+
+        /* Header */
+        .top-bar {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .brand-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #10b981, #0ea5e9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.45);
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+            font-size: 26px;
+        }
+        .brand-name {
+            font-size: 25px;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand-name span {
+            font-size: 13px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            color: #6ee7b7;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        .brand-sub {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            background: rgba(245, 158, 11, 0.16);
+            border: 1.5px solid rgba(245, 158, 11, 0.5);
+            border-radius: 9999px;
+            color: #fcd34d;
+            font-size: 15px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
+        }
+
+        /* Middle Body */
+        .mid-content {
+            position: relative;
+            z-index: 10;
+        }
+        .headline {
+            font-size: 38px;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 18px;
+            color: #ffffff;
+        }
+
+        /* Ghibli Artwork Box */
+        .art-banner-box {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 2px solid rgba(245, 158, 11, 0.35);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.65);
+            margin-bottom: 22px;
+        }
+        .art-banner-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 40%;
+        }
+        .art-overlay-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0) 50%);
+        }
+        .art-overlay-text {
+            position: absolute;
+            bottom: 16px;
+            left: 22px;
+            right: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .art-status {
+            font-size: 15px;
+            color: #fef08a;
+            font-weight: 600;
+        }
+
+        /* Time & Date Card */
+        .schedule-box {
+            background: rgba(30, 41, 59, 0.88);
+            border: 1.5px solid rgba(245, 158, 11, 0.4);
+            border-radius: 20px;
+            padding: 20px 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(12px);
+        }
+        .schedule-col h4 {
+            font-size: 14px;
+            color: #94a3b8;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .schedule-col .val {
+            font-size: 26px;
+            font-weight: 800;
+            color: #fbbf24;
+            text-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+        }
+        .schedule-divider {
+            width: 1.5px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Points */
+        .bullet-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .bullet-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 17px;
+            color: #cbd5e1;
+        }
+        .bullet-check {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            color: #6ee7b7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* Bottom */
+        .bottom-bar {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            font-size: 15px;
+            color: #94a3b8;
+        }
+        .bottom-bar strong {
+            color: #fcd34d;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow-1"></div>
+    <div class="ambient-glow-2"></div>
+    <div class="texture-overlay"></div>
+
+    <div class="top-bar">
+        <div class="brand-box">
+            <div class="brand-icon">✨</div>
+            <div>
+                <div class="brand-name">KIRA AI SYSTEM <span>v2.6</span></div>
+                <div class="brand-sub">ปัญญาประดิษฐ์ผู้ช่วยอัจฉริยะเพื่อคนไทย</div>
+            </div>
+        </div>
+        <div class="badge-pill">
+            ☕ ประกาศปิดปรับปรุงระบบ
+        </div>
+    </div>
+
+    <div class="mid-content">
+        <div class="headline">
+            คิระขอพักงีบชาร์จพลังสักครู่<br>
+            เพื่ออัปเกรดความเร็วและความเสถียรค่ะ
+        </div>
+
+        <div class="art-banner-box">
+            <img src="../static/images/kira_ghibli_maintenance.jpg" alt="Kira Ghibli Artwork">
+            <div class="art-overlay-gradient"></div>
+            <div class="art-overlay-text">
+                <div class="art-status">
+                    🌱 สถานะ: <span>พักงีบชาร์จพลัง & อัปเกรดความฉลาด</span>
+                </div>
+                <div style="font-size: 13px; color: #cbd5e1; font-weight: 500;">
+                    Kira Cozy Workshop
+                </div>
+            </div>
+        </div>
+
+        <div class="schedule-box">
+            <div class="schedule-col">
+                <h4>📅 วันที่ดำเนินการ</h4>
+                <div class="val" style="color: #38bdf8;">23 ต.ค. 2026</div>
+            </div>
+            <div class="schedule-divider"></div>
+            <div class="schedule-col">
+                <h4>⏰ ช่วงเวลาพักระบบ</h4>
+                <div class="val">18:00 - 20:00 น.</div>
+            </div>
+            <div class="schedule-divider"></div>
+            <div class="schedule-col">
+                <h4>🏡 ตื่นมาพบกัน</h4>
+                <div class="val" style="color: #4ade80;">20:00 น. ตรง</div>
+            </div>
+        </div>
+
+        <div class="bullet-list">
+            <div class="bullet-row">
+                <div class="bullet-check">✓</div>
+                <span>ปรับจูน Core AI ให้ตอบสนองไวขึ้น 30% และคิดวิเคราะห์แม่นยำขึ้น</span>
+            </div>
+            <div class="bullet-row">
+                <div class="bullet-check">✓</div>
+                <span>เสริมความปลอดภัยเกราะ Iron Citadel v2.6 และระบบฐานข้อมูล</span>
+            </div>
+            <div class="bullet-row">
+                <div class="bullet-check">✓</div>
+                <span>ข้อมูลและประวัติการสนทนาทั้งหมดของผู้ใช้ปลอดภัย 100%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-bar">
+        <span>ขออภัยในความไม่สะดวกนะคะ • <strong>รักและคิดถึงเสมอ, คิระและทีมงาน 💖</strong></span>
+        <span style="color: #38bdf8; font-weight: 600;">https://kira-public-engine.onrender.com</span>
+    </div>
+</body>
+</html>

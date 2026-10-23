@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Mali:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 1920px;
+            height: 1080px;
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: 'Prompt', 'Leelawadee UI', sans-serif;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+        }
+
+        /* Warm Cozy Ambient Lighting */
+        .ambient-glow-warm {
+            position: absolute;
+            top: -100px;
+            left: 10%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0) 70%);
+            filter: blur(90px);
+            z-index: 1;
+            pointer-events: none;
+        }
+        .ambient-glow-green {
+            position: absolute;
+            bottom: -150px;
+            left: 20%;
+            width: 750px;
+            height: 750px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.14) 0%, rgba(16, 185, 129, 0) 70%);
+            filter: blur(100px);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Subtle organic texture */
+        .texture-overlay {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 32px 32px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Content Layout: Left Information (56%), Right Visual Art (44%) */
+        .left-col {
+            width: 56%;
+            height: 100%;
+            padding: 70px 85px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            z-index: 10;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .logo-box {
+            width: 70px;
+            height: 70px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #10b981, #0ea5e9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.45);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            font-size: 34px;
+        }
+        .brand-info h2 {
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-info h2 span {
+            font-size: 14px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            color: #6ee7b7;
+            padding: 3px 12px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        .brand-info p {
+            font-size: 18px;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        /* Badge */
+        .badge-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 24px;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1.5px solid rgba(245, 158, 11, 0.5);
+            border-radius: 9999px;
+            width: fit-content;
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);
+            margin-bottom: 22px;
+        }
+        .badge-icon {
+            font-size: 20px;
+        }
+        .badge-text {
+            font-size: 19px;
+            font-weight: 700;
+            color: #fcd34d;
+            letter-spacing: 0.5px;
+        }
+
+        /* Title */
+        .main-title {
+            font-size: 54px;
+            font-weight: 800;
+            line-height: 1.24;
+            margin-bottom: 14px;
+            color: #ffffff;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+        .sub-desc {
+            font-size: 21px;
+            color: #cbd5e1;
+            font-weight: 400;
+            margin-bottom: 26px;
+            line-height: 1.5;
+        }
+
+        /* Time Highlight Card */
+        .time-card {
+            background: rgba(30, 41, 59, 0.85);
+            border: 2px solid rgba(245, 158, 11, 0.35);
+            border-radius: 24px;
+            padding: 26px 36px;
+            margin-bottom: 28px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+        }
+        .time-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .time-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .time-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+        .time-val {
+            font-size: 32px;
+            font-weight: 800;
+            color: #38bdf8;
+        }
+        .time-val.clock {
+            color: #fbbf24;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.35);
+        }
+        .time-val.ready {
+            color: #4ade80;
+            text-shadow: 0 0 20px rgba(74, 222, 128, 0.35);
+        }
+        .time-divider {
+            width: 1.5px;
+            height: 55px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Bullet Points */
+        .details-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 20px;
+            color: #e2e8f0;
+            font-weight: 400;
+        }
+        .detail-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6ee7b7;
+            font-size: 16px;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+
+        /* Footer */
+        .footer-note {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            color: #94a3b8;
+            font-size: 18px;
+        }
+        .footer-note strong {
+            color: #fcd34d;
+        }
+
+        /* Right Visual Art Container */
+        .right-col {
+            width: 44%;
+            height: 100%;
+            position: relative;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .image-frame {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        .image-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+        /* Soft natural watercolor mask */
+        .image-mask {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, #0f172a 0%, rgba(15, 23, 42, 0.75) 15%, rgba(15, 23, 42, 0) 45%),
+                        linear-gradient(0deg, #0f172a 0%, rgba(15, 23, 42, 0) 20%),
+                        linear-gradient(180deg, #0f172a 0%, rgba(15, 23, 42, 0) 15%);
+            pointer-events: none;
+        }
+        .ghibli-tag {
+            position: absolute;
+            bottom: 45px;
+            right: 50px;
+            padding: 14px 24px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1.5px solid rgba(245, 158, 11, 0.4);
+            border-radius: 20px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fef08a;
+            font-weight: 600;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow-warm"></div>
+    <div class="ambient-glow-green"></div>
+    <div class="texture-overlay"></div>
+
+    <div class="left-col">
+        <div class="brand-header">
+            <div class="logo-box">✨</div>
+            <div class="brand-info">
+                <h2>KIRA AI SYSTEM <span>v2.6 Enterprise</span></h2>
+                <p>ปัญญาประดิษฐ์ผู้ช่วยอัจฉริยะเพื่อคนไทย</p>
+            </div>
+        </div>
+
+        <div>
+            <div class="badge-bar">
+                <span class="badge-icon">☕</span>
+                <span class="badge-text">ประกาศปิดปรับปรุงระบบชั่วคราว (Maintenance Notice)</span>
+            </div>
+
+            <h1 class="main-title">
+                คิระขอพักงีบชาร์จพลังสักครู่<br>
+                เพื่ออัปเกรดความเร็วและความเสถียรค่ะ
+            </h1>
+            <p class="sub-desc">
+                ทีมงานกำลังทำการปรับจูนระบบประมวลผล เพื่อให้ทุกคำตอบของคิระรวดเร็วและชาญฉลาดยิ่งขึ้นค่ะ
+            </p>
+
+            <div class="time-card">
+                <div class="time-row">
+                    <div class="time-item">
+                        <span class="time-label">📅 วันที่ดำเนินการ</span>
+                        <span class="time-val">23 ต.ค. 2026</span>
+                    </div>
+                    <div class="time-divider"></div>
+                    <div class="time-item">
+                        <span class="time-label">⏰ ช่วงเวลาพักระบบ (~ 2 ชม.)</span>
+                        <span class="time-val clock">18:00 - 20:00 น.</span>
+                    </div>
+                    <div class="time-divider"></div>
+                    <div class="time-item">
+                        <span class="time-label">🏡 ตื่นมาพบกัน</span>
+                        <span class="time-val ready">20:00 น. ตรง</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-list">
+                <div class="detail-item">
+                    <div class="detail-icon">✓</div>
+                    <span><strong>ปรับจูนสมองกล Core Processing:</strong> ตอบสนองไวขึ้น 30% และคิดวิเคราะห์แม่นยำขึ้น</span>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">✓</div>
+                    <span><strong>เสริมความเสถียรและเกราะความปลอดภัย:</strong> ยกระดับ Iron Citadel และระบบฐานข้อมูล</span>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">✓</div>
+                    <span><strong>ข้อมูลปลอดภัย 100%:</strong> ประวัติการสนทนาและการตั้งค่าทั้งหมดของผู้ใช้ปลอดภัยสมบูรณ์</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            <span>ขออภัยในความไม่สะดวกนะคะ • <strong>รักและคิดถึงเสมอ, คิระและทีมงาน 💖</strong></span>
+            <span style="color: #64748b;">https://kira-public-engine.onrender.com</span>
+        </div>
+    </div>
+
+    <div class="right-col">
+        <div class="image-frame">
+            <img src="../static/images/kira_ghibli_maintenance.jpg" alt="Kira Ghibli Artwork">
+            <div class="image-mask"></div>
+            <div class="ghibli-tag">
+                <span>🌱</span>
+                <span>Kira Cozy Recharge Mode</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
