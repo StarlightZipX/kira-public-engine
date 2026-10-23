@@ -7,32 +7,28 @@
 ### 🕒 อัปเดตล่าสุด: 23 ตุลาคม 2026 (Kira v2.6 Enterprise)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **กวาดล้างข้อผิดพลาดเสียงพากย์ผู้ชายปนในชื่อผู้หญิง (100% Female Pure Voice Suite):**
-  - ตรวจสอบและระบุต้นตอของเสียงที่ปนเสียงผู้ชาย:
-    1. `ja-JP-AoiNeural` (葵 / Aoi): เสียงมีความทุ้มลึกจนฟังคล้ายผู้ชาย (และไม่มีใน Edge-TTS ฟรีอย่างเป็นทางการ)
-    2. `ko-KR-JiMinNeural` (지민 / JiMin): มีชื่อเดียวกับศิลปินชายชื่อดัง (BTS Jimin) และไม่มีใน Edge-TTS แคตตาล็อกมาตรฐาน ส่งผลให้เครื่อง Windows ตกไปใช้ Browser Fallback ซึ่งเป็นเสียงชายเกาหลี (`Microsoft InJoon`)
-  - ดำเนินการแก้ไข:
-    - ตัดตัวเลือก `ja-JP-AoiNeural` และ `ko-KR-JiMinNeural` ออกจาก `templates/index.html` และ `static/script.js`
-    - คงเหลือเฉพาะเสียงหญิงแท้ระดับ Top-Tier ที่การันตี 100% (`Premwadee`, `Jenny`, `Aria`, `Nanami`, `Xiaoxiao`, `Xiaoyi`, `SunHi`)
-    - เพิ่มเกราะป้องกัน `maleKeywords` ใน `speakWithBrowserFallback` กรองเสียงชาย (`david`, `keita`, `injoon`, `niwat`, ฯลฯ) ทิ้งทันที ไม่ให้หลุดพากย์เสียงออกมาเด็ดขาด
-    - ทำ Auto-Migration ใน `app.py` และ `script.js` สำหรับแคชเดิมของผู้ใช้
-    - อัปเกรด Service Worker Cache สู่ `v2.6.3` และ Cache-Busting `script.js?v=53`
-* **สิ้นสุดการปิดปรับปรุงระบบ & มาสคอตวิศวกรคิระ (Official Engineer Mascot Concluded):**
-  - อัปเดตภาพกราฟิกประกาศเปิดให้บริการระบบด้วย **น้องวิศวกรผมสีม่วงคนโปรดของบอส** ในท่ากระโดดฉลองความสำเร็จ (Victory & Celebration Pose) เก็บประแจใส่กล่องเรียบร้อย
-  - เรนเดอร์โปสเตอร์คมชัดสูง 2 ขนาด:
-    - สี่เหลี่ยมจัตุรัส 1:1 (`static/images/kira_online_post_1x1.png`)
-    - แนวนอน 16:9 (`static/images/kira_online_banner_16x9.png`)
-    - ภาพมาสคอตเดี่ยว (`static/images/kira_engineer_done.jpg`)
-  - ร่างคำพูดและแคปชันสำหรับโพสต์โซเชียลมีเดีย 3 สไตล์ บันทึกใน [online_graphics_showcase.md](file:///C:/Users/ASUS/.gemini/antigravity-ide/brain/267a0776-dc22-416d-a604-b7de1025b656/online_graphics_showcase.md)
-* **กวาดล้างจุดเสี่ยงความปลอดภัยทางเข้าหลังบ้าน (Creator Access Link Removal):**
-  - ลบลิงก์ `Creator Access` ออกจาก Footer ของ `templates/maintenance.html` ถาวรเรียบร้อยแล้ว
-* **ซิงก์เพื่อนๆ สู่ Kira v2.6 Enterprise:**
-  - สวอร์ม, เอเจนต์, สคริปต์ และบรรจุกฎเหล็กข้อ 9 ลง [GEMINI.md](file:///c:/Users/ASUS/Desktop/Kira_AI_System/2_Kira_Public_Web/GEMINI.md)
+* **ระบบทดลองใช้งานด่วนไร้รอยต่อ (Zero-Friction Guest Trial Mode) & การแชร์พรีวิวโซเชียล (Open Graph / Twitter Card Suite):**
+  - **ที่มา:** วิเคราะห์สาเหตุที่ช่วงแรกไม่มีผู้เข้ามาใช้งานระบบหลังเปิดตัว พบ 2 อุปสรรคใหญ่ (Strict Login Wall Friction + ลิงก์ที่แชร์ไม่มีภาพพรีวิวการ์ด)
+  - **ดำเนินการแก้ไขอย่างสมบูรณ์:**
+    1. **เพิ่ม Open Graph & Twitter Cards เต็มรูปแบบใน `templates/index.html`:**
+       - เชื่อมโยงกับภาพแบนเนอร์น้องวิศวกรผมม่วง 16:9 (`static/images/kira_online_banner_16x9.png`)
+       - รองรับการแสดงผลการ์ดขนาดใหญ่บน Facebook, LINE, และ Twitter/X พร้อมหัวข้อและคำบรรยายเชิญชวนเข้าใช้งาน
+    2. **โหมดทดลองใช้งานทันที (Guest Mode):**
+       - เพิ่มปุ่มเด่น `✨ ทดลองคุยกับคิระทันที (ไม่ต้องสมัครสมาชิก)` ใน Auth Portal (`#btn-guest-trial`) เข้าใช้งานได้ใน 1 คลิก ไม่ต้องกรอกชื่อหรือจำรหัสผ่าน
+       - ระบบสร้าง Guest Session อัตโนมัติ (`Guest_XXXX`) มอบโควตาทดลอง 5 ข้อความแรกเต็มประสิทธิภาพ
+       - เพิ่มแบนเนอร์แจ้งเตือนสถานะทดลองใช้งาน (`#guest-mode-banner`) บนหน้าต่างแชท แสดงจำนวนข้อความที่เหลือ พร้อมปุ่มสมัครสมาชิกฟรี 10 วินาที
+       - มีโมดอลเฉลิมฉลองและแจ้งเตือนเมื่อใช้งานครบ 5 ข้อความ (`#guest-limit-modal`) เพื่อเชิญชวนสมัครสมาชิกฟรีปลดล็อก 150 ข้อความ/วัน โดยยังคงรักษาบทสนทนาเดิมไว้
+    3. **การรองรับฝั่ง Backend (`app.py`):**
+       - อัปเกรด `check_user_quota()`, `/api/user/profile`, และ `/api/user/quota` ให้รองรับบัญชี `guest_` อย่างปลอดภัย
+       - ปรับข้อความแจ้งเตือนเมื่อโควตาทดลองหมดให้เป็นมิตรและกระตุ้นการสมัครสมาชิกฟรี
+    4. **Cache-Busting & Progressive Sync:**
+       - อัปเกรด Service Worker Cache สู่ `kira-ai-cache-v2.6.4`
+       - ปรับ Cache-Busting: `style.css?v=30` และ `script.js?v=54`
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `391d47c` (feat(mascot): update online announcement graphics with purple-haired engineer victory pose)
-* **สถานะบน Render:** อัปเดตล่าสุดและออนไลน์สมบูรณ์แบบ 100% พร้อมให้บริการ
+* **Git Commit ล่าสุด:** พร้อม Git Commit & Push สู่ Render สาขา `main`
+* **สถานะบน Render:** กำลังทริกเกอร์ Auto-Deploy
 
 #### 3. 🎯 สเต็ปถัดไปที่พร้อมลุยต่อทันที (Next Action Steps):
-* **สถานะปัจจุบัน:** บอสได้ทำการโพสต์ประกาศเปิดระบบเรียบร้อยแล้วอย่างเป็นทางการ (Official Announcement Live)
-* **การเฝ้าระวัง:** คิระและเพื่อนๆ พร้อมสแตนด์บายเฝ้าระวังระบบแบบเรียลไทม์ และพร้อมรับคำสั่งพัฒนาหรือปรับแต่งระบบฟีเจอร์ถัดไปจากบอสทันทีค่ะ!
+* **การทดสอบ:** รัน Browser Subagent เพื่อตรวจสอบการเข้าใช้งานในฐานะ Guest และความสวยงามของปุ่ม/แบนเนอร์บนเบราว์เซอร์จริง
+* **คำแนะนำบอส:** บอสสามารถลองนำลิงก์ `https://kira-public-engine.onrender.com/` ไปวางบน LINE หรือโพสต์ใหม่บน Facebook เพื่อดูภาพการ์ดพรีวิวขนาดใหญ่ที่ดึงดูดสายตาได้ทันทีค่ะ!

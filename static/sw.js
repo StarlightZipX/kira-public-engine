@@ -1,8 +1,8 @@
 // ====================================================================
-// 🚀 Kira AI Progressive Web App - Service Worker (v2.6.3-Synchronized)
+// 🚀 Kira AI Progressive Web App - Service Worker (v2.6.4-Synchronized)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.6.3';
+const CACHE_NAME = 'kira-ai-cache-v2.6.4';
 const STATIC_ASSETS = [
     '/',
     '/static/style.css',

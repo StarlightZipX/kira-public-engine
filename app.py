@@ -2091,6 +2091,15 @@ user_daily_count = {}
 def check_user_quota(uname: str) -> tuple:
     if is_boss(uname):
         return True, 999999
+    if str(uname or "").lower().startswith("guest_"):
+        limit = 5  # โหมดทดลองใช้งานด่วนสำหรับผู้เยี่ยมชม (Guest Trial)
+        today = date.today().isoformat()
+        if uname not in user_daily_count:
+            user_daily_count[uname] = {"date": today, "count": 0}
+        if user_daily_count[uname]["date"] != today:
+            user_daily_count[uname] = {"date": today, "count": 0}
+        remaining = limit - user_daily_count[uname]["count"]
+        return (True, remaining) if remaining > 0 else (False, 0)
     plan_status = get_user_plan_status(uname)
     limit = plan_status.get("daily_quota", 15)  # โควตาตามสิทธิ์จริงของผู้ใช้ (Free 15, Starter 100, Pro 500, Founder 1000)
     today = date.today().isoformat()
@@ -3181,6 +3190,18 @@ async def login(req: AuthRequest):
 
 @app.get("/api/user/profile/{username}")
 async def get_user_profile(username: str):
+    if str(username or "").lower().startswith("guest_"):
+        return {
+            "status": "success",
+            "points": 0,
+            "is_guest": True,
+            "plan": "guest",
+            "plan_name": "โหมดผู้เยี่ยมชม (Guest Trial)",
+            "badge": "Guest Trial",
+            "is_active": False,
+            "days_left": 0,
+            "expire_date": None
+        }
     sub_status = get_user_plan_status(username)
     row = execute_query("SELECT points FROM users WHERE username=?", (username,), fetch='one')
     points = row[0] if row else 0
@@ -3199,6 +3220,25 @@ async def get_user_profile(username: str):
 async def get_user_quota(username: str):
     """ส่งคืนสถานะโควตาการใช้งานรายวันของผู้ใช้ พร้อมระดับสมาชิก"""
     try:
+        if str(username or "").lower().startswith("guest_"):
+            tz = timezone(timedelta(hours=7))
+            today_prefix = datetime.now(tz).strftime("%Y-%m-%d")
+            row = execute_query("SELECT COUNT(*) FROM logs WHERE username=? AND role='User' AND timestamp LIKE ?", (username, f"{today_prefix}%"), fetch='one')
+            used = row[0] if row else 0
+            limit = 5
+            remaining = max(0, limit - used)
+            return {
+                "status": "success", 
+                "is_boss": False,
+                "is_guest": True,
+                "plan": "guest",
+                "is_pro": False,
+                "used": used, 
+                "remaining": remaining, 
+                "limit": limit, 
+                "badge": f"ทดลอง: {remaining}/{limit}"
+            }
+
         sub_status = get_user_plan_status(username)
         is_boss_user = is_boss(username)
         
@@ -5994,6 +6034,16 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     allowed, remaining = check_user_quota(uname)
 
     if not allowed:
+        if str(uname or "").lower().startswith("guest_"):
+            return StreamingResponse(
+                iter([
+                    "### ✨ สิทธิ์ทดลองใช้งานด่วนครบ 5 ข้อความแล้วค่ะ!\n\n"
+                    "คุณได้สัมผัสความเร็วและความฉลาดของ **คิระ (Kira AI 2.6)** ครบ 5 ข้อความแล้วนะคะ 💖\n\n"
+                    "เพื่อใช้งานต่อได้แบบฟรีๆ **150 ข้อความต่อวัน** พร้อมบันทึกประวัติการแชตอัตโนมัติ และฟังก์ชันผู้ช่วยครบวงจร "
+                    "คุณสามารถคลิกปุ่ม **'สมัครสมาชิกใหม่'** บนแถบเมนู เพื่อเปิดบัญชีใช้งานต่อได้ทันทีภายใน 10 วินาทีค่ะ!"
+                ]),
+                media_type="text/plain; charset=utf-8"
+            )
         return StreamingResponse(
             iter([
                 "### ข้อความแจ้งเตือนโควตาการใช้งาน\n\n"

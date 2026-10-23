@@ -233,29 +233,52 @@ function checkAuth() {
             currentUser = storedUser;
         }
 
+        const isGuest = localStorage.getItem('kira_is_guest') === 'true' || (currentUser && currentUser.toLowerCase().startsWith('guest_'));
+        const guestBanner = document.getElementById('guest-mode-banner');
+        const guestRemainingCount = document.getElementById('guest-remaining-count');
+        const planBadgeText = document.getElementById('plan-badge-text');
+        const quotaText = document.getElementById('quota-text');
+
         if (currentUser && currentUser !== 'null' && currentUser !== 'undefined') {
             localStorage.removeItem('kira_logged_out');
             if (authModal) authModal.style.display = 'none';
             if (appContainer) appContainer.style.display = 'flex';
-            if (profileName) profileName.textContent = currentUser;
-            const customAvatar = localStorage.getItem('kira_avatar');
-            if (profilePic) {
-                if (customAvatar) {
-                    profilePic.src = customAvatar;
-                } else {
-                    profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser)}&background=0D8ABC&color=fff`;
+
+            if (isGuest) {
+                if (guestBanner) guestBanner.style.display = 'flex';
+                let guestCount = parseInt(localStorage.getItem('kira_guest_msg_count') || '0', 10);
+                let remaining = Math.max(0, 5 - guestCount);
+                if (guestRemainingCount) guestRemainingCount.textContent = remaining;
+                if (profileName) profileName.textContent = "ผู้เยี่ยมชม (Guest)";
+                if (planBadgeText) planBadgeText.textContent = "Guest Trial";
+                if (quotaText) quotaText.textContent = `${remaining}/5`;
+                if (profilePic) {
+                    profilePic.src = "https://ui-avatars.com/api/?name=Guest&background=38BDF8&color=0f172a";
+                }
+            } else {
+                if (guestBanner) guestBanner.style.display = 'none';
+                if (profileName) profileName.textContent = currentUser;
+                const customAvatar = localStorage.getItem('kira_avatar');
+                if (profilePic) {
+                    if (customAvatar) {
+                        profilePic.src = customAvatar;
+                    } else {
+                        profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser)}&background=0D8ABC&color=fff`;
+                    }
                 }
             }
+
             const adminBtn = document.getElementById('btn-admin-dashboard');
             if (adminBtn) {
                 adminBtn.style.display = isBoss(currentUser) ? 'inline-flex' : 'none';
             }
             if (typeof loadHistory === 'function') loadHistory();
-            if (typeof loadUserProfile === 'function') loadUserProfile();
-            if (typeof loadSettingsPreferences === 'function') loadSettingsPreferences();
-            if (typeof loadOmniTasks === 'function') loadOmniTasks();
-            if (typeof checkAndTriggerOnboarding === 'function') checkAndTriggerOnboarding();
+            if (typeof loadUserProfile === 'function' && !isGuest) loadUserProfile();
+            if (typeof loadSettingsPreferences === 'function' && !isGuest) loadSettingsPreferences();
+            if (typeof loadOmniTasks === 'function' && !isGuest) loadOmniTasks();
+            if (typeof checkAndTriggerOnboarding === 'function' && !isGuest) checkAndTriggerOnboarding();
         } else {
+            if (guestBanner) guestBanner.style.display = 'none';
             if (authModal) authModal.style.display = 'flex';
             if (appContainer) appContainer.style.display = 'none';
             if (loginView) loginView.style.display = 'block';
@@ -577,6 +600,9 @@ if (btnLogin) {
                     localStorage.setItem('kira_auth_token', data.token);
                 }
                 localStorage.removeItem('kira_logged_out');
+                localStorage.removeItem('kira_is_guest');
+                localStorage.removeItem('kira_guest_msg_count');
+                localStorage.removeItem('kira_guest_id');
                 currentUser = data.username;
                 loginUsernameInput.value = '';
                 loginPasswordInput.value = '';
@@ -672,6 +698,9 @@ if (btnRegister) {
                     localStorage.setItem('kira_auth_token', data.token);
                 }
                 localStorage.removeItem('kira_logged_out');
+                localStorage.removeItem('kira_is_guest');
+                localStorage.removeItem('kira_guest_msg_count');
+                localStorage.removeItem('kira_guest_id');
                 currentUser = data.username;
 
                 setTimeout(() => {
@@ -701,12 +730,101 @@ if (btnLogout) {
         localStorage.removeItem('kira_user');
         localStorage.removeItem('kira_token');
         localStorage.removeItem('kira_avatar');
+        localStorage.removeItem('kira_is_guest');
+        localStorage.removeItem('kira_guest_msg_count');
+        localStorage.removeItem('kira_guest_id');
         localStorage.setItem('kira_logged_out', 'true');
         currentUser = null;
         chatBox.innerHTML = '';
         chatHistorySidebar.innerHTML = '<p class="history-title">ยังไม่มีประวัติการแชท</p>';
+        const guestBanner = document.getElementById('guest-mode-banner');
+        if (guestBanner) guestBanner.style.display = 'none';
         checkAuth();
         updateModelUI();
+    });
+}
+
+// ====================================================================
+// ✨ Kira Zero-Friction Instant Guest Mode Suite
+// ====================================================================
+function updateGuestUI(guestCount) {
+    const isGuest = localStorage.getItem('kira_is_guest') === 'true';
+    if (!isGuest) return;
+    const remaining = Math.max(0, 5 - guestCount);
+    const guestRemainingCount = document.getElementById('guest-remaining-count');
+    if (guestRemainingCount) guestRemainingCount.textContent = remaining;
+    const quotaText = document.getElementById('quota-text');
+    if (quotaText) quotaText.textContent = `${remaining}/5`;
+}
+
+function showGuestLimitModal() {
+    const modal = document.getElementById('guest-limit-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function hideGuestLimitModal() {
+    const modal = document.getElementById('guest-limit-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function enterGuestMode() {
+    let guestId = localStorage.getItem('kira_guest_id');
+    if (!guestId) {
+        guestId = 'Guest_' + Math.random().toString(36).substring(2, 7);
+        localStorage.setItem('kira_guest_id', guestId);
+    }
+    localStorage.setItem('kira_username', guestId);
+    localStorage.setItem('kira_is_guest', 'true');
+    if (!localStorage.getItem('kira_guest_msg_count')) {
+        localStorage.setItem('kira_guest_msg_count', '0');
+    }
+    localStorage.removeItem('kira_logged_out');
+    currentUser = guestId;
+    checkAuth();
+    updateModelUI();
+}
+
+// Bind Guest Mode triggers
+const btnGuestTrial = document.getElementById('btn-guest-trial');
+if (btnGuestTrial) {
+    btnGuestTrial.addEventListener('click', () => {
+        enterGuestMode();
+    });
+}
+
+const btnGuestRegisterNow = document.getElementById('btn-guest-register-now');
+if (btnGuestRegisterNow) {
+    btnGuestRegisterNow.addEventListener('click', () => {
+        if (authModal) authModal.style.display = 'flex';
+        const tabReg = document.getElementById('tab-register');
+        if (tabReg) tabReg.click();
+    });
+}
+
+const btnGuestModalRegister = document.getElementById('btn-guest-modal-register');
+if (btnGuestModalRegister) {
+    btnGuestModalRegister.addEventListener('click', () => {
+        hideGuestLimitModal();
+        if (authModal) authModal.style.display = 'flex';
+        const tabReg = document.getElementById('tab-register');
+        if (tabReg) tabReg.click();
+    });
+}
+
+const btnGuestModalLogin = document.getElementById('btn-guest-modal-login');
+if (btnGuestModalLogin) {
+    btnGuestModalLogin.addEventListener('click', () => {
+        hideGuestLimitModal();
+        if (authModal) authModal.style.display = 'flex';
+        const tabLog = document.getElementById('tab-login');
+        if (tabLog) tabLog.click();
+    });
+}
+
+const btnGuestModalClose = document.getElementById('btn-guest-modal-close');
+if (btnGuestModalClose) {
+    btnGuestModalClose.addEventListener('click', () => {
+        hideGuestLimitModal();
     });
 }
 
@@ -1776,6 +1894,19 @@ async function sendMessage() {
     const imgBase64ToSend = currentImageBase64;
     if ((!text && !imgBase64ToSend) || !currentUser) return;
 
+    // 🌟 Guest Mode Limit Guard
+    const isGuest = localStorage.getItem('kira_is_guest') === 'true' || (currentUser && currentUser.toLowerCase().startsWith('guest_'));
+    if (isGuest) {
+        let guestCount = parseInt(localStorage.getItem('kira_guest_msg_count') || '0', 10);
+        if (guestCount >= 5) {
+            showGuestLimitModal();
+            return;
+        }
+        guestCount++;
+        localStorage.setItem('kira_guest_msg_count', guestCount.toString());
+        updateGuestUI(guestCount);
+    }
+
     addMessage(text || 'ส่งรูปภาพเพื่อตรวจสอบ (Visual Diagnostic)', true, imgBase64ToSend);
     playKiraSound('send');
 
@@ -1959,7 +2090,16 @@ async function sendMessage() {
         }
 
         chatBox.scrollTop = chatBox.scrollHeight;
-        loadUserProfile(); // Refresh points & quota after message
+        if (!isGuest) {
+            loadUserProfile(); // Refresh points & quota after message
+        } else {
+            let currentGuestCount = parseInt(localStorage.getItem('kira_guest_msg_count') || '0', 10);
+            if (currentGuestCount >= 5) {
+                setTimeout(() => {
+                    showGuestLimitModal();
+                }, 1400);
+            }
+        }
         
     } catch (error) {
         console.error("Chat streaming error:", error);
