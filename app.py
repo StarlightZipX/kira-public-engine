@@ -244,6 +244,27 @@ KIRA_RELEASE_DATA = {
     }
 }
 
+def _get_latest_git_commit_info():
+    try:
+        import subprocess
+        out = subprocess.check_output(
+            ["git", "log", "-1", "--pretty=format:%h|||%s|||%cd", "--date=short"],
+            stderr=subprocess.DEVNULL,
+            timeout=2
+        )
+        parts = out.decode("utf-8", errors="ignore").split("|||")
+        if len(parts) >= 2:
+            return {
+                "hash": parts[0].strip(),
+                "subject": parts[1].strip(),
+                "date": parts[2].strip() if len(parts) > 2 else ""
+            }
+    except Exception:
+        pass
+    return None
+
+LATEST_GIT_COMMIT = _get_latest_git_commit_info()
+
 @app.get("/api/system/version")
 async def get_system_version():
     return JSONResponse({
@@ -258,7 +279,8 @@ async def get_system_version():
         "description": KIRA_RELEASE_DATA["description"],
         "quote": KIRA_RELEASE_DATA["quote"],
         "highlights": KIRA_RELEASE_DATA["highlights"],
-        "i18n": KIRA_RELEASE_DATA["i18n"]
+        "i18n": KIRA_RELEASE_DATA["i18n"],
+        "latest_commit": LATEST_GIT_COMMIT
     }, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
 # --- Autonomous Keep-Alive & Server Health Guard ---
