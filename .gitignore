@@ -28,5 +28,6 @@ logs/
 # User Uploads (If any get saved locally)
 uploads/
 *.pdf
+scratch/
 *.docx
 *.csv

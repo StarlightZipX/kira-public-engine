@@ -2530,13 +2530,15 @@ function speakWithBrowserFallback(text, voiceName, rate = 1.0, onEndCallback = n
                 return vLang === lang.toLowerCase() || vLang.startsWith(prefix);
             });
             
-            // Prioritize female voices
-            const femaleKeywords = /female|woman|samantha|victoria|karen|zira|jenny|aria|kanya|premwadee|nanami|aoi|xiaoxiao|xiaoyi|sunhi|jimin|kyoko|yuna|tingting/i;
-            const femaleMatch = matchingVoices.find(v => femaleKeywords.test(v.name));
+            // Prioritize female voices and strictly reject male voices
+            const maleKeywords = /male|man|guy|david|mark|george|niwat|injoon|keita|ichiro|kangkang|yunxi|daichi|naoki|masaru/i;
+            const femaleKeywords = /female|woman|samantha|victoria|karen|zira|jenny|aria|kanya|premwadee|nanami|xiaoxiao|xiaoyi|sunhi|kyoko|yuna|tingting/i;
+            const candidateVoices = matchingVoices.filter(v => !maleKeywords.test(v.name));
+            const femaleMatch = candidateVoices.find(v => femaleKeywords.test(v.name));
             if (femaleMatch) {
                 utterance.voice = femaleMatch;
-            } else if (matchingVoices.length > 0) {
-                utterance.voice = matchingVoices[0];
+            } else if (candidateVoices.length > 0) {
+                utterance.voice = candidateVoices[0];
             }
         }
         
@@ -4206,7 +4208,11 @@ async function loadSettingsPreferences() {
     if (thinkingSelect) thinkingSelect.value = localStorage.getItem('kira_thinking_accordion') || 'auto_collapse';
 
     const voiceSel = document.getElementById('setting-voice-name');
-    if (voiceSel) voiceSel.value = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
+    let currentSavedVoice = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
+    if (currentSavedVoice === 'ja-JP-AoiNeural') currentSavedVoice = 'ja-JP-NanamiNeural';
+    if (currentSavedVoice === 'ko-KR-JiMinNeural') currentSavedVoice = 'ko-KR-SunHiNeural';
+    localStorage.setItem('kira_voice_name', currentSavedVoice);
+    if (voiceSel) voiceSel.value = currentSavedVoice;
 
     const rateSlider = document.getElementById('setting-speech-rate');
     const rateVal = document.getElementById('speech-rate-val');
@@ -4516,16 +4522,12 @@ async function previewVoiceSample() {
         sampleText = "Welcome to Kira AI. I am Aria, your executive copilot, ready to empower your workflow.";
     } else if (voice === 'ja-JP-NanamiNeural') {
         sampleText = "こんにちは！私はキラです。次世代AIアシスタントとして、お手伝いいたします。";
-    } else if (voice === 'ja-JP-AoiNeural') {
-        sampleText = "初めまして、キラです。高度な知能と丁寧なサポートで、あなたのお役に立ちます。";
     } else if (voice === 'zh-CN-XiaoxiaoNeural') {
         sampleText = "你好！我是Kira，你的新一代智能AI助手，很高兴为你提供全方位的支持。";
     } else if (voice === 'zh-CN-XiaoyiNeural') {
         sampleText = "您好！很高兴与您相遇，我是小伊，随时准备为您解答各种问题。";
     } else if (voice === 'ko-KR-SunHiNeural') {
         sampleText = "안녕하세요! 저는 키라입니다. 차세대 인공지능 비서로서 최선을 다해 도와드리겠습니다.";
-    } else if (voice === 'ko-KR-JiMinNeural') {
-        sampleText = "반가워요! 차세대 AI 어시스턴트 지민입니다. 어떤 작업이든 스마트하게 도와드릴게요.";
     }
         
     if (previewBtn) {
@@ -11525,9 +11527,7 @@ const KIRA_I18N = {
         voice_zh_xiaoxiao: "Xiaoxiao (หญิง - นุ่มนวล ชัดถ้อยชัดคำ อบอุ่น แนะนำ)",
         voice_zh_xiaoyi: "Xiaoyi (หญิง - อ่อนหวาน สดใส น่ารัก)",
         voice_ko_sunhi: "SunHi (หญิง - หวานละมุน ไพเราะ เป็นธรรมชาติ แนะนำ)",
-        voice_ko_jimin: "JiMin (หญิง - สดใส มีชีวิตชีวา)",
         voice_ja_nanami: "Nanami (หญิง - สดใส อ่อนโยน มีชีวิตชีวา แนะนำ)",
-        voice_ja_aoi: "Aoi (หญิง - สุภาพ นุ่มลึก ไพเราะ)",
         stt_opt_th: "ภาษาไทย (Thai - th-TH)",
         stt_opt_en: "ภาษาอังกฤษ (English - en-US)",
         stt_opt_zh: "ภาษาจีนกลาง (Chinese - zh-CN)",
@@ -11921,9 +11921,7 @@ const KIRA_I18N = {
         voice_zh_xiaoxiao: "Xiaoxiao (Female - Gentle & Expressive, Recommended)",
         voice_zh_xiaoyi: "Xiaoyi (Female - Sweet, Charming & Lively)",
         voice_ko_sunhi: "SunHi (Female - Melodic, Gentle & Natural, Recommended)",
-        voice_ko_jimin: "JiMin (Female - Bright, Energetic & Modern)",
         voice_ja_nanami: "Nanami (Female - Sweet & Polite, Recommended)",
-        voice_ja_aoi: "Aoi (Female - Elegant, Calm & Melodic)",
         stt_opt_th: "Thai (th-TH)",
         stt_opt_en: "English (US - en-US)",
         stt_opt_zh: "Chinese (Mandarin - zh-CN)",
@@ -12317,9 +12315,7 @@ const KIRA_I18N = {
         voice_zh_xiaoxiao: "晓晓（女声 - 亲切自然，字正腔圆，推荐）",
         voice_zh_xiaoyi: "晓伊（女声 - 甜美生动，可爱自然）",
         voice_ko_sunhi: "善熙（女声 - 甜美自然，推荐）",
-        voice_ko_jimin: "智敏（女声 - 活泼生动，现代自然）",
         voice_ja_nanami: "七海（女声 - 甜美温和，推荐）",
-        voice_ja_aoi: "葵（女声 - 礼貌沉稳，悦耳）",
         stt_opt_th: "泰语 (th-TH)",
         stt_opt_en: "英语 (en-US)",
         stt_opt_zh: "中文普通话 (zh-CN)",
@@ -12713,9 +12709,7 @@ const KIRA_I18N = {
         voice_zh_xiaoxiao: "Xiaoxiao (여성 - 부드럽고 정확한 발음, 추천)",
         voice_zh_xiaoyi: "Xiaoyi (여성 - 발랄하고 사랑스러운 목소리)",
         voice_ko_sunhi: "선희 (여성 - 부드럽고 자연스러움, 추천)",
-        voice_ko_jimin: "지민 (여성 - 밝고 활기찬 목소리)",
         voice_ja_nanami: "Nanami (여성 - 상냥하고 정중함, 추천)",
-        voice_ja_aoi: "Aoi (여성 - 단정하고 차분한 목소리)",
         stt_opt_th: "태국어 (th-TH)",
         stt_opt_en: "영어 (en-US)",
         stt_opt_zh: "중국어 표준어 (zh-CN)",
@@ -13109,9 +13103,7 @@ const KIRA_I18N = {
         voice_zh_xiaoxiao: "Xiaoxiao（女性 - 優しく表情豊か、推奨）",
         voice_zh_xiaoyi: "Xiaoyi（女性 - 愛らしく親しみやすい声）",
         voice_ko_sunhi: "SunHi（女性 - 自然で心地よい声、推奨）",
-        voice_ko_jimin: "JiMin（女性 - 明るく元気な声）",
         voice_ja_nanami: "Nanami（女性 - 優しく丁寧、推奨）",
-        voice_ja_aoi: "葵（女性 - 丁寧で落ち着いた声）",
         stt_opt_th: "タイ語 (th-TH)",
         stt_opt_en: "英語 (en-US)",
         stt_opt_zh: "中国語普通話 (zh-CN)",

@@ -4983,11 +4983,19 @@ async def generate_tts(req: TTSRequest, request: Request):
         allowed_voices = [
             "th-TH-PremwadeeNeural",
             "en-US-JennyNeural", "en-US-AriaNeural",
-            "ja-JP-NanamiNeural", "ja-JP-AoiNeural",
+            "ja-JP-NanamiNeural",
             "zh-CN-XiaoxiaoNeural", "zh-CN-XiaoyiNeural",
-            "ko-KR-SunHiNeural", "ko-KR-JiMinNeural"
+            "ko-KR-SunHiNeural"
         ]
-        voice = req.voice if req.voice in allowed_voices else "th-TH-PremwadeeNeural"
+        
+        # Transparent migration for legacy or ambiguous voice IDs
+        incoming_voice = req.voice
+        if incoming_voice == "ja-JP-AoiNeural":
+            incoming_voice = "ja-JP-NanamiNeural"
+        elif incoming_voice == "ko-KR-JiMinNeural":
+            incoming_voice = "ko-KR-SunHiNeural"
+            
+        voice = incoming_voice if incoming_voice in allowed_voices else "th-TH-PremwadeeNeural"
 
         # Multi-script character counting for high-accuracy dominant language detection
         thai_chars = len(re.findall(r'[\u0E00-\u0E7F]', clean_text))
