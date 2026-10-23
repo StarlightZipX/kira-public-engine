@@ -1089,6 +1089,20 @@ def init_db():
         if not check_p2:
             execute_query("INSERT INTO system_settings (key_name, value) VALUES (?, ?)", ('prompt_1.1', system_prompt_boss))
 
+        # Seed default Server Maintenance config if not exists
+        check_maint = execute_query("SELECT id FROM system_settings WHERE key_name='server_maintenance'", fetch='one')
+        if not check_maint:
+            default_maint_json = json.dumps({
+                "enabled": False,
+                "start_time": 0,
+                "end_time": 0,
+                "title": f"\u2728 \u0e23\u0e30\u0e1a\u0e1a\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2d\u0e31\u0e1b\u0e40\u0e01\u0e23\u0e14\u0e04\u0e23\u0e31\u0e49\u0e07\u0e43\u0e2b\u0e0d\u0e48\u0e2a\u0e39\u0e48 Kira AI v{KIRA_SYSTEM_VERSION}",
+                "version": KIRA_SYSTEM_VERSION,
+                "message": "\u0e17\u0e35\u0e21\u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e12\u0e19\u0e32\u0e41\u0e25\u0e30\u0e04\u0e34\u0e23\u0e30\u0e01\u0e33\u0e25\u0e31\u0e07\u0e17\u0e33\u0e01\u0e32\u0e23\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d\u0e42\u0e04\u0e23\u0e07\u0e02\u0e48\u0e22\u0e2a\u0e21\u0e2d\u0e07\u0e01\u0e25\u0e43\u0e2b\u0e21\u0e48 (Neural Matrix Migration) \u0e1b\u0e23\u0e31\u0e1a\u0e41\u0e15\u0e48\u0e07\u0e04\u0e27\u0e32\u0e21\u0e40\u0e23\u0e47\u0e27\u0e41\u0e2a\u0e07 \u0e41\u0e25\u0e30\u0e22\u0e01\u0e23\u0e30\u0e14\u0e31\u0e1a\u0e23\u0e30\u0e1a\u0e1a\u0e23\u0e31\u0e01\u0e29\u0e32\u0e04\u0e27\u0e32\u0e21\u0e1b\u0e25\u0e2d\u0e14\u0e20\u0e31\u0e22 \u0e23\u0e30\u0e1a\u0e1a\u0e08\u0e30\u0e40\u0e1b\u0e34\u0e14\u0e43\u0e2b\u0e49\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34\u0e17\u0e31\u0e19\u0e17\u0e35\u0e17\u0e35\u0e48\u0e40\u0e27\u0e25\u0e32\u0e19\u0e31\u0e1a\u0e16\u0e2d\u0e22\u0e2b\u0e25\u0e31\u0e07\u0e2a\u0e34\u0e49\u0e19\u0e2a\u0e38\u0e14\u0e04\u0e48\u0e30",
+                "progress_percent": 82
+            }, ensure_ascii=False)
+            execute_query("INSERT INTO system_settings (key_name, value) VALUES ('server_maintenance', ?)", (default_maint_json,))
+
         # Initialize MCP Protocol tables and seed builtin servers
         try:
             init_mcp_tables()
@@ -2240,6 +2254,14 @@ class SystemSettingRequest(BaseModel):
     key_name: str
     value: str
 
+class MaintenanceUpdateRequest(BaseModel):
+    enabled: bool
+    duration_minutes: Optional[int] = 0
+    custom_end_timestamp: Optional[int] = 0
+    title: Optional[str] = None
+    message: Optional[str] = None
+    version: Optional[str] = None
+
 class DictionaryRequest(BaseModel):
     term: str
     meaning: str
@@ -2418,13 +2440,102 @@ async def get_system_providers(request: Request):
         "circuit_breaker": summary
     }
 
+# ========== Kira Server Maintenance & Countdown Hub Engine ==========
+def get_maintenance_info() -> dict:
+    default_info = {
+        "enabled": False,
+        "is_active": False,
+        "start_time": 0,
+        "end_time": 0,
+        "remaining_seconds": 0,
+        "title": f"\u2728 \u0e23\u0e30\u0e1a\u0e1a\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2d\u0e31\u0e1b\u0e40\u0e01\u0e23\u0e14\u0e04\u0e23\u0e31\u0e49\u0e07\u0e43\u0e2b\u0e0d\u0e48\u0e2a\u0e39\u0e48 Kira AI v{KIRA_SYSTEM_VERSION}",
+        "version": KIRA_SYSTEM_VERSION,
+        "message": "\u0e17\u0e35\u0e21\u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e12\u0e19\u0e32\u0e41\u0e25\u0e30\u0e04\u0e34\u0e23\u0e30\u0e01\u0e33\u0e25\u0e31\u0e07\u0e17\u0e33\u0e01\u0e32\u0e23\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d\u0e42\u0e04\u0e23\u0e07\u0e02\u0e48\u0e22\u0e2a\u0e21\u0e2d\u0e07\u0e01\u0e25\u0e43\u0e2b\u0e21\u0e48 (Neural Matrix Migration) \u0e1b\u0e23\u0e31\u0e1a\u0e41\u0e15\u0e48\u0e07\u0e04\u0e27\u0e32\u0e21\u0e40\u0e23\u0e47\u0e27\u0e41\u0e2a\u0e07 \u0e41\u0e25\u0e30\u0e22\u0e01\u0e23\u0e30\u0e14\u0e31\u0e1a\u0e23\u0e30\u0e1a\u0e1a\u0e23\u0e31\u0e01\u0e29\u0e32\u0e04\u0e27\u0e32\u0e21\u0e1b\u0e25\u0e2d\u0e14\u0e20\u0e31\u0e22 \u0e23\u0e30\u0e1a\u0e1a\u0e08\u0e30\u0e40\u0e1b\u0e34\u0e14\u0e43\u0e2b\u0e49\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34\u0e17\u0e31\u0e19\u0e17\u0e35\u0e17\u0e35\u0e48\u0e40\u0e27\u0e25\u0e32\u0e19\u0e31\u0e1a\u0e16\u0e2d\u0e22\u0e2b\u0e25\u0e31\u0e07\u0e2a\u0e34\u0e49\u0e19\u0e2a\u0e38\u0e14\u0e04\u0e48\u0e30",
+        "progress_percent": 82
+    }
+    try:
+        row = execute_query("SELECT value FROM system_settings WHERE key_name='server_maintenance'", fetch='one')
+        if row and row[0]:
+            data = json.loads(row[0])
+            now = int(time.time())
+            end_time = int(data.get("end_time") or 0)
+            enabled = bool(data.get("enabled", False))
+
+            # Auto-expire if end_time reached
+            if enabled and end_time > 0 and now >= end_time:
+                data["enabled"] = False
+                execute_query("UPDATE system_settings SET value=? WHERE key_name='server_maintenance'", (json.dumps(data, ensure_ascii=False),))
+                enabled = False
+
+            remaining = max(0, end_time - now) if end_time > 0 else 0
+            data["is_active"] = enabled
+            data["remaining_seconds"] = remaining
+            if "version" not in data:
+                data["version"] = KIRA_SYSTEM_VERSION
+            return data
+    except Exception as e:
+        print("Error reading maintenance status:", e)
+    return default_info
+
+def set_maintenance_info(data: dict) -> bool:
+    try:
+        payload_str = json.dumps(data, ensure_ascii=False)
+        row = execute_query("SELECT id FROM system_settings WHERE key_name='server_maintenance'", fetch='one')
+        if row:
+            execute_query("UPDATE system_settings SET value=? WHERE key_name='server_maintenance'", (payload_str,))
+        else:
+            execute_query("INSERT INTO system_settings (key_name, value) VALUES ('server_maintenance', ?)", (payload_str,))
+        return True
+    except Exception as e:
+        print("Error saving maintenance info:", e)
+        return False
+
+@app.get("/api/system/maintenance")
+async def get_system_maintenance_status():
+    m_info = get_maintenance_info()
+    return JSONResponse({
+        "status": "success",
+        "is_maintenance": m_info.get("is_active", False),
+        "enabled": m_info.get("enabled", False),
+        "start_time": m_info.get("start_time", 0),
+        "end_time": m_info.get("end_time", 0),
+        "remaining_seconds": m_info.get("remaining_seconds", 0),
+        "version": m_info.get("version", KIRA_SYSTEM_VERSION),
+        "title": m_info.get("title", ""),
+        "message": m_info.get("message", ""),
+        "progress_percent": m_info.get("progress_percent", 82)
+    }, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
+    m_info = get_maintenance_info()
+    preview_req = request.query_params.get("preview_maint") == "1"
+
+    if m_info.get("is_active") or preview_req:
+        # Check Creator/Boss authorization
+        is_boss_auth = _is_admin_authorized(request)
+        if not is_boss_auth:
+            boss_pass = request.query_params.get("boss_pass")
+            if boss_pass and boss_pass == BOSS_MASTER_PASSWORD:
+                is_boss_auth = True
+
+        if preview_req or not is_boss_auth:
+            return templates.TemplateResponse(
+                request=request, 
+                name="maintenance.html", 
+                context={
+                    "request": request, 
+                    "maintenance": m_info,
+                    "app_version": KIRA_SYSTEM_VERSION,
+                    "build_id": APP_BUILD_ID
+                }
+            )
+
     return templates.TemplateResponse(
         request=request, 
         name="index.html", 
         context={
-            "request": request,
+            "request": request, 
             "build_id": APP_BUILD_ID,
             "app_version": KIRA_SYSTEM_VERSION
         }
@@ -2864,7 +2975,8 @@ async def admin_dashboard_get(
         "feedbacks": feedbacks or [],
         "search_username": username or "",
         "date_filter": date_filter or "all",
-        "mistakes_only": mistakes_only == "on"
+        "mistakes_only": mistakes_only == "on",
+        "maintenance": get_maintenance_info()
     })
     if key and key == os.environ.get("BOSS_PASSWORD", "kira1234"):
         response.set_cookie(key="kira_admin_key", value=key, max_age=86400, httponly=True)
@@ -4326,6 +4438,46 @@ async def update_settings(req: SystemSettingRequest, request: Request):
     user_sessions = {}
     return {"status": "success"}
 
+@app.post("/api/admin/maintenance")
+async def update_admin_maintenance(req: MaintenanceUpdateRequest, request: Request):
+    if not _is_admin_authorized(request):
+        return JSONResponse(status_code=403, content={"status": "error", "message": "Unauthorized: Creator Master Key required"})
+
+    current = get_maintenance_info()
+    now = int(time.time())
+
+    new_enabled = req.enabled
+    if new_enabled:
+        if req.custom_end_timestamp and req.custom_end_timestamp > now:
+            end_time = req.custom_end_timestamp
+        elif req.duration_minutes and req.duration_minutes > 0:
+            end_time = now + (req.duration_minutes * 60)
+        else:
+            end_time = now + 3600
+        start_time = now
+    else:
+        end_time = 0
+        start_time = 0
+
+    updated_data = {
+        "enabled": new_enabled,
+        "start_time": start_time,
+        "end_time": end_time,
+        "version": req.version or current.get("version", KIRA_SYSTEM_VERSION),
+        "title": req.title if req.title else current.get("title", f"\u2728 \u0e23\u0e30\u0e1a\u0e1a\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2d\u0e31\u0e1b\u0e40\u0e01\u0e23\u0e14\u0e04\u0e23\u0e31\u0e49\u0e07\u0e43\u0e2b\u0e0d\u0e48\u0e2a\u0e39\u0e48 Kira AI v{KIRA_SYSTEM_VERSION}"),
+        "message": req.message if req.message else current.get("message", "\u0e23\u0e30\u0e1a\u0e1a\u0e01\u0e33\u0e25\u0e31\u0e07\u0e1b\u0e23\u0e31\u0e1a\u0e1b\u0e23\u0e38\u0e07\u0e41\u0e25\u0e30\u0e2d\u0e31\u0e1b\u0e40\u0e01\u0e23\u0e14\u0e2a\u0e39\u0e48\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e0a\u0e31\u0e19\u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14\u0e04\u0e48\u0e30"),
+        "progress_percent": current.get("progress_percent", 82)
+    }
+
+    ok = set_maintenance_info(updated_data)
+    if ok:
+        return JSONResponse({
+            "status": "success",
+            "message": "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e41\u0e25\u0e30\u0e2d\u0e31\u0e1b\u0e40\u0e14\u0e15\u0e42\u0e2b\u0e21\u0e14\u0e1b\u0e34\u0e14\u0e1b\u0e23\u0e31\u0e1a\u0e1b\u0e23\u0e38\u0e07\u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e40\u0e23\u0e35\u0e22\u0e1a\u0e23\u0e49\u0e2d\u0e22\u0e41\u0e25\u0e49\u0e27\u0e04\u0e48\u0e30",
+            "maintenance": get_maintenance_info()
+        })
+    return JSONResponse(status_code=500, content={"status": "error", "message": "Failed to save maintenance state"})
+
 @app.get("/api/admin/dictionary")
 async def get_dictionary(request: Request):
     if not _is_admin_authorized(request):
@@ -5733,6 +5885,15 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     if user_input and len(user_input) > 8000 and not is_boss_user:
         return StreamingResponse(
             iter(["🛑 **[Kira Security Guard]**\n\n⚠️ ข้อความมีความยาวเกินกำหนด (จำกัดไม่เกิน 8,000 ตัวอักษรต่อรอบ เพื่อป้องกันการโอเวอร์โหลดของระบบสมองกลค่ะ)"]),
+            media_type="text/plain; charset=utf-8"
+        )
+
+    # Server Maintenance Guard: Block normal users during scheduled upgrade
+    m_info = get_maintenance_info()
+    if m_info.get("is_active") and not is_boss_user and not _is_admin_authorized(request):
+        rem_min = max(1, m_info.get("remaining_seconds", 0) // 60)
+        return StreamingResponse(
+            iter([f"\u23f3 **[Kira Server Maintenance Sentinel]**\n\n\u0e02\u0e13\u0e30\u0e19\u0e35\u0e49\u0e23\u0e30\u0e1a\u0e1a\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2d\u0e22\u0e39\u0e48\u0e43\u0e19\u0e23\u0e30\u0e2b\u0e27\u0e48\u0e32\u0e07\u0e01\u0e32\u0e23\u0e1b\u0e34\u0e14\u0e1b\u0e23\u0e31\u0e1a\u0e1b\u0e23\u0e38\u0e07\u0e41\u0e25\u0e30\u0e2d\u0e31\u0e1b\u0e40\u0e01\u0e23\u0e14\u0e43\u0e2b\u0e0d\u0e48\u0e2a\u0e39\u0e48 **Kira AI v{m_info.get('version', KIRA_SYSTEM_VERSION)}** \u0e04\u0e48\u0e30 \U0001f338\n\n\u23f1\ufe0f **\u0e40\u0e2b\u0e25\u0e37\u0e2d\u0e40\u0e27\u0e25\u0e32\u0e2d\u0e35\u0e01\u0e1b\u0e23\u0e31\u0e21\u0e32\u0e13:** ~{rem_min} \u0e19\u0e32\u0e17\u0e35\n\U0001f680 \u0e23\u0e30\u0e1a\u0e1a\u0e08\u0e30\u0e40\u0e1b\u0e34\u0e14\u0e43\u0e2b\u0e49\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34\u0e17\u0e31\u0e19\u0e17\u0e35\u0e17\u0e35\u0e48\u0e40\u0e27\u0e25\u0e32\u0e19\u0e31\u0e1a\u0e16\u0e2d\u0e22\u0e2b\u0e25\u0e31\u0e07\u0e2a\u0e34\u0e49\u0e19\u0e2a\u0e38\u0e14\u0e25\u0e07\u0e04\u0e48\u0e30 \u0e02\u0e2d\u0e2d\u0e20\u0e31\u0e22\u0e43\u0e19\u0e04\u0e27\u0e32\u0e21\u0e44\u0e21\u0e48\u0e2a\u0e30\u0e14\u0e27\u0e01\u0e19\u0e32\u0e04\u0e30!"]),
             media_type="text/plain; charset=utf-8"
         )
 

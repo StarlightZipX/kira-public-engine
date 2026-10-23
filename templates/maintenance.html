@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kira AI - Scheduled Server Maintenance & System Upgrade</title>
+    <meta name="description" content="Kira AI is currently undergoing scheduled system upgrades to version 2.6.0. System will auto-resume upon completion.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --neon-cyan: #38bdf8;
+            --neon-blue: #3b82f6;
+            --neon-purple: #a855f7;
+            --neon-pink: #ec4899;
+            --neon-emerald: #10b981;
+            --neon-amber: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .cyber-font {
+            font-family: 'Chakra Petch', sans-serif;
+        }
+
+        /* Ambient Cyber Grid Background */
+        .bg-grid-pattern {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+        }
+
+        .glow-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            background: 
+                radial-gradient(circle at 20% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 45%),
+                radial-gradient(circle at 80% 25%, rgba(236, 72, 153, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(56, 189, 248, 0.12) 0%, transparent 50%);
+        }
+
+        /* Glassmorphism Styles */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-hud {
+            background: rgba(10, 15, 30, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.12), inset 0 0 20px rgba(56, 189, 248, 0.04);
+        }
+
+        /* Futuristic Neon Animations */
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 25px rgba(56, 189, 248, 0.3), inset 0 0 15px rgba(56, 189, 248, 0.2);
+                border-color: rgba(56, 189, 248, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 45px rgba(168, 85, 247, 0.4), inset 0 0 25px rgba(168, 85, 247, 0.3);
+                border-color: rgba(168, 85, 247, 0.8);
+            }
+        }
+
+        .neon-pulse {
+            animation: pulseGlow 4s infinite ease-in-out;
+        }
+
+        @keyframes coreSpinClockwise {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes coreSpinCounter {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+        }
+
+        .spin-cw {
+            animation: coreSpinClockwise 20s linear infinite;
+        }
+
+        .spin-ccw {
+            animation: coreSpinCounter 15s linear infinite;
+        }
+
+        .spin-cw-fast {
+            animation: coreSpinClockwise 8s linear infinite;
+        }
+
+        /* Countdown Digits Glow */
+        .digit-glow {
+            text-shadow: 0 0 18px rgba(56, 189, 248, 0.6), 0 0 35px rgba(56, 189, 248, 0.2);
+        }
+
+        /* Scanning Line Animation */
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(1000%); }
+        }
+
+        .scan-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.8), transparent);
+            animation: scanline 6s linear infinite;
+            opacity: 0.7;
+        }
+
+        /* Step Checkmark Ripple */
+        @keyframes radarRipple {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        .radar-ping {
+            position: absolute;
+            inset: -4px;
+            border-radius: 9999px;
+            border: 2px solid #38bdf8;
+            animation: radarRipple 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+        }
+
+        /* Sneak Peek Card Hover */
+        .feature-card {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 15px 35px -10px rgba(56, 189, 248, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-grid-pattern relative flex flex-col justify-between p-4 md:p-8 selection:bg-cyan-500/30 selection:text-cyan-200">
+
+    <!-- Ambient Ambient Glow Backdrop -->
+    <div class="glow-mesh"></div>
+
+    <!-- Scanning Overlay -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-10">
+        <div class="scan-bar"></div>
+    </div>
+
+    <!-- Top Navigation Bar & Language Switcher -->
+    <header class="relative z-20 max-w-6xl w-full mx-auto flex items-center justify-between py-2 mb-6">
+        <div class="flex items-center gap-3">
+            <div class="relative group cursor-pointer" onclick="handleCoreClick()" title="Kira Holographic Core">
+                <img src="/static/images/kira_logo.jpg" alt="Kira AI" class="w-10 h-10 rounded-xl object-cover border border-cyan-500/40 shadow-[0_0_15px_rgba(56,189,248,0.4)]">
+                <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-amber-400 border-2 border-slate-900 rounded-full animate-ping"></div>
+                <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-amber-400 border-2 border-slate-900 rounded-full"></div>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-lg tracking-wide text-white cyber-font">KIRA AI</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 mono">v{{ app_version }}</span>
+                </div>
+                <span class="text-xs text-slate-400 flex items-center gap-1">
+                    <i class="fa-solid fa-satellite-dish text-amber-400 text-[10px]"></i>
+                    <span id="txt-status-pill">Maintenance Sentinel Active</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- 5-Language Switcher Pill -->
+        <div class="flex items-center gap-1 bg-slate-900/80 border border-slate-700/80 rounded-full p-1 backdrop-blur-md shadow-lg">
+            <button onclick="setLang('th')" class="lang-btn px-2.5 py-1 rounded-full text-xs font-medium transition-all" data-lang="th">🇹🇭 TH</button>
+            <button onclick="setLang('en')" class="lang-btn px-2.5 py-1 rounded-full text-xs font-medium transition-all" data-lang="en">🇬🇧 EN</button>
+            <button onclick="setLang('zh')" class="lang-btn px-2.5 py-1 rounded-full text-xs font-medium transition-all" data-lang="zh">🇨🇳 中文</button>
+            <button onclick="setLang('ja')" class="lang-btn px-2.5 py-1 rounded-full text-xs font-medium transition-all" data-lang="ja">🇯🇵 日本語</button>
+            <button onclick="setLang('ko')" class="lang-btn px-2.5 py-1 rounded-full text-xs font-medium transition-all" data-lang="ko">🇰🇷 한국어</button>
+        </div>
+    </header>
+
+    <!-- Main Maintenance Stage -->
+    <main class="relative z-20 max-w-5xl w-full mx-auto my-auto flex flex-col items-center text-center">
+
+        <!-- Holographic Core Avatar & Pulse Rings -->
+        <div class="relative w-44 h-44 mb-8 flex items-center justify-center cursor-pointer select-none" onclick="handleCoreClick()" title="คลิกที่นี่ 5 ครั้งเพื่อเปิดโหมดทดสอบของผู้สร้าง (Boss Mode)">
+            <!-- Outer Cyber Dial (Counter-Clockwise) -->
+            <svg class="absolute inset-0 w-full h-full spin-ccw opacity-40 text-cyan-400" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 8 2 12" />
+            </svg>
+
+            <!-- Mid Neon Ring (Clockwise) -->
+            <svg class="absolute inset-3 w-[calc(100%-24px)] h-[calc(100%-24px)] spin-cw opacity-60 text-purple-400" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="14 10 30 15" />
+            </svg>
+
+            <!-- Inner Fast Scanner Ring -->
+            <svg class="absolute inset-7 w-[calc(100%-56px)] h-[calc(100%-56px)] spin-cw-fast opacity-50 text-pink-400" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 20" />
+            </svg>
+
+            <!-- Core Pulsing Sphere -->
+            <div class="relative w-24 h-24 rounded-full overflow-hidden neon-pulse bg-gradient-to-tr from-cyan-950 via-slate-900 to-purple-950 p-1 flex items-center justify-center">
+                <img src="/static/images/kira_logo.jpg" alt="Kira Core" class="w-full h-full rounded-full object-cover">
+                <div class="absolute inset-0 bg-cyan-500/10 mix-blend-overlay"></div>
+            </div>
+
+            <!-- Orbiting Particle Dots -->
+            <div class="absolute -top-1 w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_12px_#38bdf8]"></div>
+            <div class="absolute -bottom-1 w-2.5 h-2.5 rounded-full bg-pink-400 shadow-[0_0_12px_#f43f5e]"></div>
+        </div>
+
+        <!-- Maintenance Status Badge -->
+        <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs md:text-sm font-semibold mb-4 tracking-wide shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            <span id="txt-badge-status">⚡ SYSTEM UPGRADE IN PROGRESS</span>
+            <span class="text-amber-500/60">•</span>
+            <span class="mono text-xs text-amber-200">v{{ app_version }} ➔ v2.6.0</span>
+        </div>
+
+        <!-- Headline & Subtitle -->
+        <h1 id="txt-main-title" class="text-3xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-slate-300 mb-4 tracking-tight">
+            ระบบกำลังอัปเกรดครั้งใหญ่สู่ Kira AI v2.6
+        </h1>
+        <p id="txt-main-desc" class="text-slate-400 text-sm md:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
+            ทีมผู้พัฒนาและคิระกำลังทำการเชื่อมต่อโครงข่ายสมองกลใหม่ (Neural Matrix Migration) ปรับแต่งความเร็วแสง และยกระดับระบบรักษาความปลอดภัย ระบบจะเปิดให้บริการอัตโนมัติทันทีที่เวลานับถอยหลังสิ้นสุดค่ะ
+        </p>
+
+        <!-- Live Countdown Timer HUD -->
+        <div class="glass-hud rounded-3xl p-6 md:p-8 w-full max-w-3xl mb-8 border border-cyan-500/30">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800/80">
+                <div class="flex items-center gap-2 text-left">
+                    <i class="fa-solid fa-hourglass-half text-cyan-400 animate-spin text-sm" style="animation-duration: 8s;"></i>
+                    <span id="txt-cd-title" class="text-xs md:text-sm font-semibold text-slate-300 uppercase tracking-wider cyber-font">Estimated Time Remaining</span>
+                </div>
+                <div class="flex items-center gap-2 mono text-xs text-cyan-400 bg-cyan-950/40 px-3 py-1 rounded-full border border-cyan-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+                    <span id="txt-live-sync">Auto-Reload Active</span>
+                </div>
+            </div>
+
+            <!-- Digital Blocks -->
+            <div class="grid grid-cols-4 gap-2 md:gap-6 mb-6">
+                <!-- Days -->
+                <div class="flex flex-col items-center bg-slate-900/80 border border-slate-800 rounded-2xl p-3 md:p-5 relative overflow-hidden">
+                    <div class="text-2xl md:text-5xl font-black text-white mono digit-glow" id="cd-days">00</div>
+                    <span id="lbl-days" class="text-[10px] md:text-xs text-slate-400 uppercase font-semibold mt-1">วัน (Days)</span>
+                    <div class="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-60"></div>
+                </div>
+
+                <!-- Hours -->
+                <div class="flex flex-col items-center bg-slate-900/80 border border-slate-800 rounded-2xl p-3 md:p-5 relative overflow-hidden">
+                    <div class="text-2xl md:text-5xl font-black text-cyan-400 mono digit-glow" id="cd-hours">00</div>
+                    <span id="lbl-hours" class="text-[10px] md:text-xs text-slate-400 uppercase font-semibold mt-1">ชั่วโมง (Hours)</span>
+                    <div class="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-60"></div>
+                </div>
+
+                <!-- Minutes -->
+                <div class="flex flex-col items-center bg-slate-900/80 border border-slate-800 rounded-2xl p-3 md:p-5 relative overflow-hidden">
+                    <div class="text-2xl md:text-5xl font-black text-purple-400 mono digit-glow" id="cd-minutes">00</div>
+                    <span id="lbl-minutes" class="text-[10px] md:text-xs text-slate-400 uppercase font-semibold mt-1">นาที (Minutes)</span>
+                    <div class="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-60"></div>
+                </div>
+
+                <!-- Seconds -->
+                <div class="flex flex-col items-center bg-slate-900/80 border border-slate-800 rounded-2xl p-3 md:p-5 relative overflow-hidden">
+                    <div class="text-2xl md:text-5xl font-black text-pink-400 mono digit-glow" id="cd-seconds">00</div>
+                    <span id="lbl-seconds" class="text-[10px] md:text-xs text-slate-400 uppercase font-semibold mt-1">วินาที (Seconds)</span>
+                    <div class="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-pink-500 to-transparent opacity-60"></div>
+                </div>
+            </div>
+
+            <!-- Migration Progress Bar -->
+            <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-2 font-medium">
+                    <span id="txt-prog-label">ความคืบหน้าการย้ายข้อมูลและจัดสรรทรัพยากร (System Migration)</span>
+                    <span class="mono text-cyan-400 font-bold" id="progress-percent">82%</span>
+                </div>
+                <div class="w-full bg-slate-950/80 h-3 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                    <div id="progress-fill" class="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(56,189,248,0.5)]" style="width: 82%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Migration Pipeline Status Steps -->
+        <div class="w-full max-w-3xl glass-card rounded-2xl p-5 md:p-6 mb-8 text-left">
+            <h3 id="txt-pipeline-title" class="text-xs uppercase tracking-wider font-bold text-slate-400 mb-4 flex items-center gap-2 cyber-font">
+                <i class="fa-solid fa-microchip text-cyan-400"></i>
+                System Upgrade Pipeline (สถานะขั้นตอนการทำงาน)
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                <!-- Step 1 -->
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/60 border border-emerald-500/30">
+                    <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-check text-[10px]"></i>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-slate-200" id="step1-title">DB & Vault Snapshot</div>
+                        <div class="text-[10px] text-emerald-400" id="step1-status">สำรองข้อมูล 100% เรียบร้อย</div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/60 border border-emerald-500/30">
+                    <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-check text-[10px]"></i>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-slate-200" id="step2-title">Neural Brain Align</div>
+                        <div class="text-[10px] text-emerald-400" id="step2-status">เชื่อมต่อ Llama 3.3 สำเร็จ</div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/40 relative overflow-hidden">
+                    <div class="relative w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center flex-shrink-0">
+                        <div class="radar-ping"></div>
+                        <i class="fa-solid fa-bolt text-[10px] animate-pulse"></i>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-cyan-300" id="step3-title">i18n & Multi-Brain</div>
+                        <div class="text-[10px] text-cyan-400 animate-pulse" id="step3-status">กำลังปรับจูน 5 ภาษา...</div>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/30 border border-slate-800">
+                    <div class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-lock text-[10px]"></i>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-slate-400" id="step4-title">Citadel Armor Scan</div>
+                        <div class="text-[10px] text-slate-500" id="step4-status">รอตรวจเช็กขั้นตอนสุดท้าย</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Major Update Sneak Peek (What's in Kira 2.6) -->
+        <div class="w-full max-w-4xl mb-8 text-left">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="txt-sneak-title" class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 cyber-font">
+                    <i class="fa-solid fa-sparkles text-pink-400"></i>
+                    Major Update Sneak Peek: ไฮไลต์ใหม่ใน Kira AI v2.6
+                </h3>
+                <span class="text-xs text-slate-500 mono">Cloud Synchronized</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                <!-- Card 1 -->
+                <div class="feature-card glass-card p-4 rounded-2xl border border-slate-800">
+                    <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-brain text-sm"></i>
+                    </div>
+                    <h4 class="font-bold text-white text-sm mb-1" id="feat1-title">Next-Gen Multi-Brain Matrix</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed" id="feat1-desc">
+                        อัปเกรดขุมพลัง Llama 3.3 70B และ DeepSeek-R1 Super-Brains ตอบคำถามลึกซึ้ง ให้เหตุผลเฉียบคม และสลับโมเดลอัตโนมัติ
+                    </p>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="feature-card glass-card p-4 rounded-2xl border border-slate-800">
+                    <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-graduation-cap text-sm"></i>
+                    </div>
+                    <h4 class="font-bold text-white text-sm mb-1" id="feat2-title">Study Co-Pilot Hub</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed" id="feat2-desc">
+                        5 โหมดการเรียนรู้อัจฉริยะ สรุป 3 ระดับ ตะลุยโจทย์ สร้างบัตรคำศัพท์ Flashcards และขัดเกลารายงานวิชาการไร้ที่ติ
+                    </p>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="feature-card glass-card p-4 rounded-2xl border border-slate-800">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-columns text-sm"></i>
+                    </div>
+                    <h4 class="font-bold text-white text-sm mb-1" id="feat3-title">Split Canvas & Mind Map</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed" id="feat3-desc">
+                        พื้นที่ทำงาน 2 จอคู่ขนาน (Split Canvas) พร้อมกระดาน Living Mind Map วาดแผนผังความคิดโต้ตอบสดแบบ Interactive
+                    </p>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="feature-card glass-card p-4 rounded-2xl border border-slate-800">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-users-viewfinder text-sm"></i>
+                    </div>
+                    <h4 class="font-bold text-white text-sm mb-1" id="feat4-title">Virtual Boardroom 4 C-Suites</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed" id="feat4-desc">
+                        ห้องประชุมจำลองระดมสมอง 4 ผู้บริหารระดับสูง (CEO, CTO, CMO, CFO) สรุปมติกลยุทธ์ธุรกิจและเทคโนโลยีแบบครบวงจร
+                    </p>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="feature-card glass-card p-4 rounded-2xl border border-slate-800">
+                    <div class="w-9 h-9 rounded-xl bg-pink-500/10 border border-pink-500/30 text-pink-400 flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-language text-sm"></i>
+                    </div>
+                    <h4 class="font-bold text-white text-sm mb-1" id="feat5-title">Global 5-Language Suite</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed" id="feat5-desc">
+                        รองรับ 5 ภาษาทั่วโลกอย่างสมบูรณ์แบบ (ไทย, อังกฤษ, จีน, เกาหลี, ญี่ปุ่น) ทั้งหน้าต่างระบบและสรุปการบรรยาย Proactive
+                    </p>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="feature-card glass-card p-4 rounded-2xl border border-slate-800">
+                    <div class="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-shield-halved text-sm"></i>
+                    </div>
+                    <h4 class="font-bold text-white text-sm mb-1" id="feat6-title">Iron Citadel & Offline Vault</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed" id="feat6-desc">
+                        เกราะความปลอดภัยหลายชั้น เข้ารหัสระดับองค์กร พร้อมคลังความจำ Offline Vault ปลอดภัยสูงสุด 100%
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto-Refresh Information Note -->
+        <div class="text-xs text-slate-500 flex items-center justify-center gap-2 mb-4">
+            <i class="fa-solid fa-arrows-rotate text-cyan-400 text-xs animate-spin" style="animation-duration: 4s;"></i>
+            <span id="txt-auto-note">หน้าจอนี้จะรีเฟรชและนำท่านเข้าสู่ระบบ Kira AI อัตโนมัติทันทีที่การอัปเกรดเสร็จสิ้น โดยไม่ต้องกดปุ่มใดๆ ค่ะ</span>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-20 max-w-5xl w-full mx-auto text-center py-4 border-t border-slate-800/60 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+        <div>
+            <span>© 2026 Kira AI System. Crafted with precision for the Boss & Global Users.</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="hover:text-slate-400 transition cursor-pointer" onclick="checkStatusManual()">
+                <i class="fa-solid fa-signal text-cyan-400 mr-1"></i> Check Server Sync
+            </span>
+            <a href="/admin_boss" class="hover:text-slate-400 transition">Creator Access</a>
+        </div>
+    </footer>
+
+    <!-- Secret Boss Unlock Challenge Modal (Equal Access & Stealth Inspection) -->
+    <div id="bossModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden animate-fade-in">
+        <div class="glass-hud p-6 md:p-8 rounded-3xl max-w-md w-full border border-cyan-500/40 shadow-2xl text-center relative mx-4">
+            <button onclick="closeBossModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="w-14 h-14 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto mb-4 border border-cyan-500/30 shadow-[0_0_20px_rgba(56,189,248,0.3)]">
+                <i class="fa-solid fa-fingerprint text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-1">Creator Gateway Challenge</h3>
+            <p class="text-xs text-slate-400 mb-5">ป้อนรหัสผ่านลับของผู้สร้าง (Boss Master Key) เพื่อข้ามการปิดปรับปรุงและตรวจสอบระบบก่อนเปิดจริง</p>
+            
+            <form onsubmit="submitBossBypass(event)" class="space-y-4">
+                <input type="password" id="bossSecretInput" placeholder="Master Secret Key..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 text-sm mono" required autofocus>
+                <div id="bossErrorMsg" class="text-xs text-red-400 hidden"></div>
+                <button type="submit" id="btnBossSubmit" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold py-3 rounded-xl transition duration-200 shadow-lg shadow-cyan-500/25 text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    ยืนยันตัวตนผู้สร้าง & เข้าสู่ระบบ
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script: Countdown, Polling, i18n & Boss Mode -->
+    <script>
+        // Server Maintenance State
+        const MAINTENANCE_DATA = {
+            enabled: {{ 'true' if maintenance.enabled else 'false' }},
+            endTime: {{ maintenance.end_time | default(0) }},
+            remainingSeconds: {{ maintenance.remaining_seconds | default(3600) }},
+            title: {{ maintenance.title | default('✨ ระบบกำลังอัปเกรดครั้งใหญ่สู่ Kira AI v2.6') | tojson }},
+            version: {{ maintenance.version | default('2.6.0') | tojson }}
+        };
+
+        let currentRemainingSec = Math.max(0, parseInt(MAINTENANCE_DATA.remainingSeconds) || 3600);
+        let coreClickCount = 0;
+        let coreClickTimer = null;
+
+        // 5-Language Dictionary
+        const I18N_DICT = {
+            th: {
+                statusPill: "โหมดปิดปรับปรุงระบบทำงานอยู่",
+                badgeStatus: "⚡ ระบบกำลังอัปเกรดครั้งใหญ่",
+                mainTitle: "ระบบกำลังอัปเกรดครั้งใหญ่สู่ Kira AI v2.6",
+                mainDesc: "ทีมผู้พัฒนาและคิระกำลังทำการเชื่อมต่อโครงข่ายสมองกลใหม่ (Neural Matrix Migration) ปรับแต่งความเร็วแสง และยกระดับระบบรักษาความปลอดภัย ระบบจะเปิดให้บริการอัตโนมัติทันทีที่เวลานับถอยหลังสิ้นสุดค่ะ",
+                cdTitle: "เวลาที่เหลือโดยประมาณ (Estimated Time)",
+                days: "วัน",
+                hours: "ชั่วโมง",
+                minutes: "นาที",
+                seconds: "วินาที",
+                progLabel: "ความคืบหน้าการย้ายข้อมูลและจัดสรรทรัพยากร (System Migration)",
+                pipelineTitle: "System Upgrade Pipeline (สถานะขั้นตอนการทำงาน)",
+                step1Title: "DB & Vault Snapshot",
+                step1Status: "สำรองข้อมูล 100% เรียบร้อย",
+                step2Title: "Neural Brain Align",
+                step2Status: "เชื่อมต่อ Llama 3.3 สำเร็จ",
+                step3Title: "i18n & Multi-Brain",
+                step3Status: "กำลังปรับจูน 5 ภาษา...",
+                step4Title: "Citadel Armor Scan",
+                step4Status: "รอตรวจเช็กขั้นตอนสุดท้าย",
+                sneakTitle: "Major Update Sneak Peek: ไฮไลต์ใหม่ใน Kira AI v2.6",
+                feat1Title: "Next-Gen Multi-Brain Matrix",
+                feat1Desc: "อัปเกรดขุมพลัง Llama 3.3 70B และ DeepSeek-R1 Super-Brains ตอบคำถามลึกซึ้ง ให้เหตุผลเฉียบคม และสลับโมเดลอัตโนมัติ",
+                feat2Title: "Study Co-Pilot Hub",
+                feat2Desc: "5 โหมดการเรียนรู้อัจฉริยะ สรุป 3 ระดับ ตะลุยโจทย์ สร้างบัตรคำศัพท์ Flashcards และขัดเกลารายงานวิชาการไร้ที่ติ",
+                feat3Title: "Split Canvas & Mind Map",
+                feat3Desc: "พื้นที่ทำงาน 2 จอคู่ขนาน (Split Canvas) พร้อมกระดาน Living Mind Map วาดแผนผังความคิดโต้ตอบสดแบบ Interactive",
+                feat4Title: "Virtual Boardroom 4 C-Suites",
+                feat4Desc: "ห้องประชุมจำลองระดมสมอง 4 ผู้บริหารระดับสูง (CEO, CTO, CMO, CFO) สรุปมติกลยุทธ์ธุรกิจและเทคโนโลยีแบบครบวงจร",
+                feat5Title: "Global 5-Language Suite",
+                feat5Desc: "รองรับ 5 ภาษาทั่วโลกอย่างสมบูรณ์แบบ (ไทย, อังกฤษ, จีน, เกาหลี, ญี่ปุ่น) ทั้งหน้าต่างระบบและสรุปการบรรยาย Proactive",
+                feat6Title: "Iron Citadel & Offline Vault",
+                feat6Desc: "เกราะความปลอดภัยหลายชั้น เข้ารหัสระดับองค์กร พร้อมคลังความจำ Offline Vault ปลอดภัยสูงสุด 100%",
+                autoNote: "หน้าจอนี้จะรีเฟรชและนำท่านเข้าสู่ระบบ Kira AI อัตโนมัติทันทีที่การอัปเกรดเสร็จสิ้น โดยไม่ต้องกดปุ่มใดๆ ค่ะ"
+            },
+            en: {
+                statusPill: "Maintenance Sentinel Active",
+                badgeStatus: "⚡ MAJOR SYSTEM UPGRADE IN PROGRESS",
+                mainTitle: "Upgrading to Kira AI v2.6 Next-Gen System",
+                mainDesc: "Kira and the engineering team are currently executing the Neural Matrix Migration, speed optimization, and security armor enhancements. The portal will automatically launch once the countdown reaches zero.",
+                cdTitle: "Estimated Time Remaining",
+                days: "Days",
+                hours: "Hours",
+                minutes: "Minutes",
+                seconds: "Seconds",
+                progLabel: "System Migration & Neural Matrix Alignment Progress",
+                pipelineTitle: "System Upgrade Pipeline (Real-Time Stages)",
+                step1Title: "DB & Vault Snapshot",
+                step1Status: "100% Backed Up & Verified",
+                step2Title: "Neural Brain Align",
+                step2Status: "Llama 3.3 Matrix Synced",
+                step3Title: "i18n & Multi-Brain",
+                step3Status: "Fine-Tuning 5 Languages...",
+                step4Title: "Citadel Armor Scan",
+                step4Status: "Queued for Final Inspection",
+                sneakTitle: "Major Update Sneak Peek: What's New in Kira AI v2.6",
+                feat1Title: "Next-Gen Multi-Brain Matrix",
+                feat1Desc: "Powered by Llama 3.3 70B & DeepSeek-R1 with autonomous dynamic model routing and deep contextual reasoning.",
+                feat2Title: "Study Co-Pilot Hub",
+                feat2Desc: "5 dedicated academic modes: 3-Tier Summarization, Exam Prep, Interactive Flashcards, and Report Polishing.",
+                feat3Title: "Split Canvas & Mind Map",
+                feat3Desc: "Dual-pane parallel productivity workspace with interactive, node-expanding Living Mind Maps.",
+                feat4Title: "Virtual Boardroom 4 C-Suites",
+                feat4Desc: "Simulated C-Level executive boardroom (CEO, CTO, CMO, CFO) synthesizing strategic consensus in real time.",
+                feat5Title: "Global 5-Language Suite",
+                feat5Desc: "Full native localization for Thai, English, Chinese, Korean, and Japanese across all UI and briefings.",
+                feat6Title: "Iron Citadel & Offline Vault",
+                feat6Desc: "Multi-layered enterprise defense armor with zero-leak Offline Vault local storage architecture.",
+                autoNote: "This page will automatically reload and welcome you to Kira AI once the maintenance completes."
+            },
+            zh: {
+                statusPill: "维护监控系统运行中",
+                badgeStatus: "⚡ 系统重大升级进行中",
+                mainTitle: "系统正在进行重大升级至 Kira AI v2.6",
+                mainDesc: "工程团队与 Kira 正在执行新一代神经计算矩阵迁移与全球云端调度。倒计时归零后，系统将自动无缝刷新进入主界面。",
+                cdTitle: "预计剩余维护时间",
+                days: "天",
+                hours: "小时",
+                minutes: "分钟",
+                seconds: "秒",
+                progLabel: "数据迁移与神经拓扑对齐进度 (System Migration)",
+                pipelineTitle: "升级进度流水线 (Upgrade Pipeline)",
+                step1Title: "数据库与记忆快照",
+                step1Status: "100% 备份完成",
+                step2Title: "核心模型对接",
+                step2Status: "Llama 3.3 矩阵连接成功",
+                step3Title: "多语言引擎优化",
+                step3Status: "五国语言实时微调中...",
+                step4Title: "Citadel 安全装甲扫描",
+                step4Status: "等待最终安全核验",
+                sneakTitle: "全新版本亮点：Kira AI v2.6 核心功能预览",
+                feat1Title: "新一代多脑智能矩阵",
+                feat1Desc: "搭载 Llama 3.3 70B 与 DeepSeek-R1，支持动态模型自主切换与深度思维链路。",
+                feat2Title: "学术与学习副驾驶 Hub",
+                feat2Desc: "5大专业学术模式：三级精要总结、考前冲刺、抽认卡生成器与专业报告润色。",
+                feat3Title: "分屏工作区与动态思维导图",
+                feat3Desc: "双屏并行高效工作台，配套可交互与动态展开的 Living Mind Map 节点画布。",
+                feat4Title: "虚拟董事会 4 位 C-Suite 高管",
+                feat4Desc: "模拟 CEO、CTO、CMO、CFO 四方高管跨领域头脑风暴，秒级输出综合决策方案。",
+                feat5Title: "五国语言原生国际化套件",
+                feat5Desc: "全面支持中、泰、英、韩、日五国语言与自然语音套件，跨语言流畅交流。",
+                feat6Title: "钢铁堡垒与离线保险库",
+                feat6Desc: "企业级多层防护网与 Offline Vault 隐私保护机制，保障数据 100% 安全。",
+                autoNote: "系统升级完成后将自动无感知刷新并带您进入 Kira AI，无需手动操作。"
+            },
+            ja: {
+                statusPill: "メンテナンス監視稼働中",
+                badgeStatus: "⚡ システム大型アップデート進行中",
+                mainTitle: "Kira AI v2.6 大型アップデート中",
+                mainDesc: "開発チームとKiraは次世代ニューラルマトリックスの移行とセキュリティ強化を行っています。カウントダウン終了後、自動的に新システムへ移行します。",
+                cdTitle: "メンテナンス残り時間（概算）",
+                days: "日",
+                hours: "時間",
+                minutes: "分",
+                seconds: "秒",
+                progLabel: "システム移行およびニューラル同期の進捗率",
+                pipelineTitle: "システムアップグレード パイプライン",
+                step1Title: "DB & 保管庫スナップショット",
+                step1Status: "100% バックアップ完了",
+                step2Title: "ニューラルモデル同期",
+                step2Status: "Llama 3.3 接続成功",
+                step3Title: "多言語エンジン調整",
+                step3Status: "5カ国語の微調整中...",
+                step4Title: "Citadel セキュリティスキャン",
+                step4Status: "最終検証待ち",
+                sneakTitle: "新バージョン速報: Kira AI v2.6 の注目機能",
+                feat1Title: "次世代マルチブレインマトリックス",
+                feat1Desc: "Llama 3.3 70B と DeepSeek-R1 を搭載し、深い推論と自動モデルルーティングを実現。",
+                feat2Title: "学習コパイロット Hub",
+                feat2Desc: "3段階要約、試験対策、フラッシュカード生成、学術レポート添削など5つの専門学習モード。",
+                feat3Title: "スプリットキャンバス & マインドマップ",
+                feat3Desc: "並行作業を可能にする2画面キャンバスと、動的にノードが広がるマインドマップを統合。",
+                feat4Title: "バーチャル取締役会 (4 C-Suites)",
+                feat4Desc: "CEO、CTO、CMO、CFO の4役員が多角的に討議し、総合的な意思決定を支援。",
+                feat5Title: "グローバル5カ国語スイート",
+                feat5Desc: "日本語、タイ語、英語、中国語、韓国語に完全対応し、プロアクティブな報告を提供。",
+                feat6Title: "Iron Citadel & オフライン保管庫",
+                feat6Desc: "多層セキュリティアーマーとオフライン保管技術でユーザーデータを強固に保護。",
+                autoNote: "アップデート完了後、自動的にリロードされて新バージョンの Kira AI が開きます。"
+            },
+            ko: {
+                statusPill: "서버 점검 센티널 가동 중",
+                badgeStatus: "⚡ 대규모 시스템 업그레이드 진행 중",
+                mainTitle: "Kira AI v2.6 대규모 시스템 업그레이드",
+                mainDesc: "Kira 개발팀이 차세대 신경망 매트릭스 전환과 초고속 가속화 및 보안 강화를 진행하고 있습니다. 카운트다운이 완료되면 자동으로 시스템이 재가동됩니다.",
+                cdTitle: "점검 완료까지 예상 시간",
+                days: "일",
+                hours: "시간",
+                minutes: "분",
+                seconds: "초",
+                progLabel: "시스템 마이그레이션 및 리소스 정렬 진행도",
+                pipelineTitle: "시스템 업그레이드 파이프라인 (실시간 단계)",
+                step1Title: "DB & Vault 스냅샷",
+                step1Status: "100% 백업 및 검증 완료",
+                step2Title: "신경망 모델 정렬",
+                step2Status: "Llama 3.3 매트릭스 연동 완료",
+                step3Title: "다국어 엔진 미세조정",
+                step3Status: "5개 국어 최적화 진행 중...",
+                step4Title: "Citadel 보안 장갑 스캔",
+                step4Status: "최종 무결성 검사 대기",
+                sneakTitle: "주요 업데이트 미리보기: Kira AI v2.6 핵심 기능",
+                feat1Title: "차세대 멀티 브레인 매트릭스",
+                feat1Desc: "Llama 3.3 70B 및 DeepSeek-R1 탑재로 심층 추론과 동적 모델 자율 라우팅 지원.",
+                feat2Title: "스터디 코파일럿 Hub",
+                feat2Desc: "3단계 요약, 시험 대비, 플래시카드 생성기, 학술 보고서 윤문 등 5가지 전용 모드.",
+                feat3Title: "스플릿 캔버스 & 마인드맵",
+                feat3Desc: "듀얼 패널 병렬 작업 공간 및 실시간 상호작용 가능한 인터랙티브 마인드맵 통합.",
+                feat4Title: "가상 이사회 4대 C-Suite 임원",
+                feat4Desc: "CEO, CTO, CMO, CFO 임원이 다각도로 심층 토론하여 종합 전략을 실시간 도출.",
+                feat5Title: "글로벌 5개 국어 통합 지원",
+                feat5Desc: "한국어, 태국어, 영어, 중국어, 일본어 인터페이스 및 능동적 다국어 브리핑 지원.",
+                feat6Title: "아이언 시타델 & 오프라인 볼트",
+                feat6Desc: "다계층 엔터프라이즈 보안 장갑 및 안전한 로컬 오프라인 데이터 스토리지 아키텍처.",
+                autoNote: "점검이 완료되면 별도의 버튼 조작 없이 자동으로 새로운 Kira AI 화면으로 이동합니다."
+            }
+        };
+
+        let currentLang = 'th';
+
+        function setLang(lang) {
+            if(!I18N_DICT[lang]) lang = 'th';
+            currentLang = lang;
+            localStorage.setItem('kira_maintenance_lang', lang);
+
+            // Update button styles
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                if(btn.getAttribute('data-lang') === lang) {
+                    btn.classList.add('bg-cyan-500', 'text-slate-950', 'shadow-[0_0_10px_rgba(56,189,248,0.5)]');
+                    btn.classList.remove('text-slate-400');
+                } else {
+                    btn.classList.remove('bg-cyan-500', 'text-slate-950', 'shadow-[0_0_10px_rgba(56,189,248,0.5)]');
+                    btn.classList.add('text-slate-400');
+                }
+            });
+
+            const d = I18N_DICT[lang];
+            const setTxt = (id, val) => {
+                const el = document.getElementById(id);
+                if(el && val) el.innerText = val;
+            };
+
+            setTxt('txt-status-pill', d.statusPill);
+            setTxt('txt-badge-status', d.badgeStatus);
+            setTxt('txt-main-title', d.mainTitle);
+            setTxt('txt-main-desc', d.mainDesc);
+            setTxt('txt-cd-title', d.cdTitle);
+            setTxt('lbl-days', d.days);
+            setTxt('lbl-hours', d.hours);
+            setTxt('lbl-minutes', d.minutes);
+            setTxt('lbl-seconds', d.seconds);
+            setTxt('txt-prog-label', d.progLabel);
+            setTxt('txt-pipeline-title', d.pipelineTitle);
+            setTxt('step1-title', d.step1Title);
+            setTxt('step1-status', d.step1Status);
+            setTxt('step2-title', d.step2Title);
+            setTxt('step2-status', d.step2Status);
+            setTxt('step3-title', d.step3Title);
+            setTxt('step3-status', d.step3Status);
+            setTxt('step4-title', d.step4Title);
+            setTxt('step4-status', d.step4Status);
+            setTxt('txt-sneak-title', d.sneakTitle);
+            setTxt('feat1-title', d.feat1Title);
+            setTxt('feat1-desc', d.feat1Desc);
+            setTxt('feat2-title', d.feat2Title);
+            setTxt('feat2-desc', d.feat2Desc);
+            setTxt('feat3-title', d.feat3Title);
+            setTxt('feat3-desc', d.feat3Desc);
+            setTxt('feat4-title', d.feat4Title);
+            setTxt('feat4-desc', d.feat4Desc);
+            setTxt('feat5-title', d.feat5Title);
+            setTxt('feat5-desc', d.feat5Desc);
+            setTxt('feat6-title', d.feat6Title);
+            setTxt('feat6-desc', d.feat6Desc);
+            setTxt('txt-auto-note', d.autoNote);
+        }
+
+        // Countdown Ticker
+        function updateCountdown() {
+            if (currentRemainingSec <= 0) {
+                document.getElementById('cd-days').innerText = "00";
+                document.getElementById('cd-hours').innerText = "00";
+                document.getElementById('cd-minutes').innerText = "00";
+                document.getElementById('cd-seconds').innerText = "00";
+                document.getElementById('progress-percent').innerText = "100%";
+                document.getElementById('progress-fill').style.width = "100%";
+                triggerLaunchCelebration();
+                return;
+            }
+
+            const d = Math.floor(currentRemainingSec / 86400);
+            const h = Math.floor((currentRemainingSec % 86400) / 3600);
+            const m = Math.floor((currentRemainingSec % 3600) / 60);
+            const s = currentRemainingSec % 60;
+
+            document.getElementById('cd-days').innerText = String(d).padStart(2, '0');
+            document.getElementById('cd-hours').innerText = String(h).padStart(2, '0');
+            document.getElementById('cd-minutes').innerText = String(m).padStart(2, '0');
+            document.getElementById('cd-seconds').innerText = String(s).padStart(2, '0');
+
+            // Dynamic Progress Calculation
+            // Base progress formula: start at 75% and move towards 99% as time decays
+            const progress = Math.min(99, Math.max(65, 100 - Math.floor((currentRemainingSec / 7200) * 30)));
+            document.getElementById('progress-percent').innerText = progress + "%";
+            document.getElementById('progress-fill').style.width = progress + "%";
+
+            currentRemainingSec--;
+        }
+
+        let isTriggering = false;
+        function triggerLaunchCelebration() {
+            if(isTriggering) return;
+            isTriggering = true;
+            const badge = document.getElementById('txt-badge-status');
+            if(badge) badge.innerText = "🚀 UPGRADE COMPLETE - WAKING UP SYSTEM...";
+            
+            // Auto reload after brief celebration delay
+            setTimeout(() => {
+                window.location.href = '/?upgrade_complete=true';
+            }, 2500);
+        }
+
+        // Polling Sentinel
+        async function checkStatusManual() {
+            try {
+                const res = await fetch('/api/system/maintenance');
+                if(!res.ok) return;
+                const data = await res.json();
+                
+                if (data.is_maintenance === false) {
+                    triggerLaunchCelebration();
+                } else if (typeof data.remaining_seconds === 'number') {
+                    currentRemainingSec = data.remaining_seconds;
+                }
+            } catch(e) {
+                console.log("Sentinel poll sync:", e);
+            }
+        }
+
+        // Secret Boss Modal Gateway
+        function handleCoreClick() {
+            coreClickCount++;
+            clearTimeout(coreClickTimer);
+            coreClickTimer = setTimeout(() => {
+                coreClickCount = 0;
+            }, 2000);
+
+            if (coreClickCount >= 5) {
+                coreClickCount = 0;
+                openBossModal();
+            }
+        }
+
+        // Hotkey Ctrl + Shift + B for Boss bypass
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && (e.key === 'B' || e.key === 'b')) {
+                e.preventDefault();
+                openBossModal();
+            }
+        });
+
+        function openBossModal() {
+            const modal = document.getElementById('bossModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('bossSecretInput').focus();
+            }, 100);
+        }
+
+        function closeBossModal() {
+            document.getElementById('bossModal').classList.add('hidden');
+            document.getElementById('bossErrorMsg').classList.add('hidden');
+        }
+
+        async function submitBossBypass(e) {
+            e.preventDefault();
+            const key = document.getElementById('bossSecretInput').value.trim();
+            const errEl = document.getElementById('bossErrorMsg');
+            const btn = document.getElementById('btnBossSubmit');
+            
+            if(!key) return;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบสิทธิ์ผู้สร้าง...';
+
+            try {
+                const res = await fetch('/admin_boss', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: new URLSearchParams({'admin_key': key})
+                });
+
+                if(res.ok) {
+                    // Set cookie and reload into app
+                    document.cookie = `kira_admin_key=${key}; path=/; max-age=86400`;
+                    window.location.href = '/?boss_bypass=1';
+                } else {
+                    errEl.innerText = "❌ รหัสผ่านลับผู้สร้างไม่ถูกต้องค่ะ กรุณาลองใหม่อีกครั้ง";
+                    errEl.classList.remove('hidden');
+                    btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> ยืนยันตัวตนผู้สร้าง & เข้าสู่ระบบ';
+                }
+            } catch(err) {
+                errEl.innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อ: " + err;
+                errEl.classList.remove('hidden');
+                btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> ยืนยันตัวตนผู้สร้าง & เข้าสู่ระบบ';
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('kira_maintenance_lang') || 'th';
+            setLang(savedLang);
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+
+            // Sentinel Polling every 15 seconds
+            setInterval(checkStatusManual, 15000);
+        });
+    </script>
+</body>
+</html>

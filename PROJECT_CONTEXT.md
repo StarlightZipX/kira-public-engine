@@ -109,6 +109,16 @@ graph TD
 * **5-Language Global Engine:** รองรับ ไทย (TH), อังกฤษ (EN), จีน (ZH), เกาหลี (KO), และญี่ปุ่น (JA) ครอบคลุม UI, Modal, Tooltips และ Proactive Briefing
 * **Dynamic Changelog Modal & Live Commit Detection:** ดึง Commit ล่าสุดจาก GitHub API แสดงผลอัปเดตแบบเรียลไทม์พร้อมปุ่มอัปเกรดระบบ
 
+### ⏳ เสาหลักพิเศษ: Major Update Server Maintenance & Live Countdown Hub (Phase 6 - Kira 2.6) [✅ สำเร็จสมบูรณ์ 100%]
+* **เป้าหมาย:** ระบบปิดปรับปรุงเซิร์ฟเวอร์สำหรับการอัปเกรดใหญ่ (Major Update) ล็อกการเข้าถึงชั่วคราว พร้อมพอร์ทัลนับถอยหลังสู่อนาคตแบบ Cyber-Glassmorphic และเปิดระบบให้อัตโนมัติเมื่อครบกำหนด
+* **ฟังก์ชันที่สร้างสำเร็จ:**
+  * **Cyber-Glassmorphic Maintenance Portal (`templates/maintenance.html`):** แกนกลางโฮโลแกรมคิระหมุนวน แถบนับถอยหลังดิจิทัล (วัน/ชั่วโมง/นาที/วินาที) และหลอด Progress Bar ซิงก์เรียลไทม์
+  * **Real-time Auto-Wakeup & Auto-Reload:** ตรวจสอบสถานะผ่าน `/api/system/maintenance` ทุก 15 วินาที เมื่อหมดเวลาหรือบอสเปิดระบบ จะรีเฟรชเข้าหน้า Kira AI อัตโนมัติแบบ Zero-Touch
+  * **5-Language Global i18n Switcher:** สลับภาษาหน้านับถอยหลังได้ทันที 5 ภาษา (ไทย, อังกฤษ, จีน, ญี่ปุ่น, เกาหลี)
+  * **Major Update Sneak Peek & Pipeline:** แสดงสถานะขั้นตอนการย้ายข้อมูล (Pipeline) และไฮไลต์ 6 ฟีเจอร์ใหม่ของ Kira 2.6
+  * **Stealth Boss Security Gateway:** คลิกที่แกนกลางคิระ 5 ครั้ง หรือกด `Ctrl + Shift + B` เพื่อเปิดกล่องป้อน Master Key ข้ามการล็อกเพื่อเข้าไปตรวจสอบและทดสอบระบบได้ตลอดเวลา
+  * **Boss Executive Maintenance Control Hub (`templates/admin.html`):** แผงควบคุมในหน้า `/admin_boss` ตั้งเวลานับถอยหลังได้ทันทีผ่าน Preset (+15น, +30น, +1ชม, +2ชม, +6ชม, +12ชม) หรือระบุเวลาเอง พร้อมปุ่ม Emergency Open ปลดล็อกเซิร์ฟเวอร์ทันที
+
 ---
 
 ## ⚙️ 5. สถานะระบบปัจจุบัน (System Status)

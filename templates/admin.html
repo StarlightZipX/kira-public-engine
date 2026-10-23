@@ -114,6 +114,10 @@
                 <span>👑</span> Subscription Orders
                 <span id="tab-pending-count" class="bg-amber-500/20 text-amber-300 text-xs px-2 py-0.5 rounded-full border border-amber-500/30">0</span>
             </button>
+            <button onclick="switchTab('maintenance')" id="tab-btn-maintenance" class="whitespace-nowrap px-4 py-2 font-semibold text-slate-400 border-b-2 border-transparent hover:text-cyan-300 transition-all flex items-center gap-2">
+                <span>🛠️</span> Server Maintenance
+                <span id="tab-maint-status-badge" class="{% if maintenance and maintenance.is_active %}inline-block{% else %}hidden{% endif %} text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">Active</span>
+            </button>
         </div>
 
         <!-- Tab Content 1: Dashboard -->
@@ -384,6 +388,107 @@
             </div>
         </div>
 
+        <!-- Tab Content 6: Server Maintenance Control Hub -->
+        <div id="tab-maintenance" class="tab-content hidden">
+            <!-- Header Status Banner -->
+            <div class="glass-panel rounded-2xl p-6 md:p-8 mb-8 border border-slate-700/60 shadow-xl">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-slate-700/60">
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">🛠️</span>
+                            <h2 class="text-2xl font-bold text-white">Server Maintenance & Live Countdown Hub</h2>
+                            <span id="maint-active-pill" class="{% if maintenance and maintenance.is_active %}bg-red-500/20 text-red-400 border-red-500/40{% else %}bg-emerald-500/20 text-emerald-400 border-emerald-500/40{% endif %} border text-xs px-3 py-1 rounded-full font-semibold flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full {% if maintenance and maintenance.is_active %}bg-red-400 animate-ping{% else %}bg-emerald-400{% endif %}"></span>
+                                <span id="maint-active-text">{% if maintenance and maintenance.is_active %}🔴 ปิดปรับปรุงอยู่ (Locked){% else %}🟢 ระบบเปิดให้บริการปกติ (Online){% endif %}</span>
+                            </span>
+                        </div>
+                        <p class="text-slate-400 text-sm mt-1">ควบคุมโหมดปิดปรับปรุงเซิร์ฟเวอร์สำหรับการอัปเกรดใหญ่ (Major Update) กำหนดเวลานับถอยหลัง และเปิดระบบอัตโนมัติ</p>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <a href="/?preview_maint=1" target="_blank" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold border border-slate-700 transition flex items-center gap-2 shadow-sm">
+                            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            ดูหน้าจอที่ผู้ใช้เห็น (Preview)
+                        </a>
+                        <button type="button" onclick="instantEmergencyOpen()" class="px-4 py-2.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-300 text-sm font-semibold border border-red-500/40 transition flex items-center gap-2">
+                            <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            ปลดล็อกเปิดระบบทันที (Emergency Open)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form Controls -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                    <!-- Column 1: Duration Presets & Timer -->
+                    <div class="lg:col-span-1 space-y-5">
+                        <div class="bg-slate-900/60 rounded-xl p-5 border border-slate-800">
+                            <label class="block text-xs uppercase tracking-wider text-slate-400 font-bold mb-3">1. กำหนดระยะเวลาปิดปรับปรุง</label>
+                            
+                            <!-- Preset Buttons -->
+                            <div class="grid grid-cols-2 gap-2 mb-4">
+                                <button type="button" onclick="setPresetMinutes(15)" class="preset-btn px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700/60 transition">+15 นาที</button>
+                                <button type="button" onclick="setPresetMinutes(30)" class="preset-btn px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700/60 transition">+30 นาที</button>
+                                <button type="button" onclick="setPresetMinutes(60)" class="preset-btn px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700/60 transition">+1 ชั่วโมง</button>
+                                <button type="button" onclick="setPresetMinutes(120)" class="preset-btn px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700/60 transition">+2 ชั่วโมง</button>
+                                <button type="button" onclick="setPresetMinutes(360)" class="preset-btn px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700/60 transition">+6 ชั่วโมง</button>
+                                <button type="button" onclick="setPresetMinutes(720)" class="preset-btn px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700/60 transition">+12 ชั่วโมง</button>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">ระยะเวลา (นาที)</label>
+                                    <input type="number" id="maint_duration_minutes" value="60" min="1" max="10080" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-cyan-300 font-mono focus:border-cyan-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">หรือระบุวันเวลาสิ้นสุดเอง (Custom Target Time)</label>
+                                    <input type="datetime-local" id="maint_custom_end" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-300 font-mono focus:border-cyan-500 focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Countdown Stats -->
+                        <div class="bg-cyan-950/20 border border-cyan-500/30 rounded-xl p-4">
+                            <span class="text-xs uppercase font-bold text-cyan-400 block mb-1">เวลาที่เหลืออยู่ (Live Countdown)</span>
+                            <div class="text-2xl font-mono font-bold text-white digit-glow" id="admin_live_countdown">--:--:--</div>
+                            <span class="text-[11px] text-slate-400 mt-1 block">เมื่อหมดเวลานี้ ประตูเซิร์ฟเวอร์จะเปิดให้ทุกคนเข้าใช้งานอัตโนมัติทันที</span>
+                        </div>
+                    </div>
+
+                    <!-- Column 2 & 3: Announcement Text & Actions -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="bg-slate-900/60 rounded-xl p-5 border border-slate-800 space-y-4">
+                            <label class="block text-xs uppercase tracking-wider text-slate-400 font-bold mb-2">2. ข้อมูลการประกาศอัปเกรด (Announcement & Highlights)</label>
+                            
+                            <div>
+                                <label class="block text-xs text-slate-300 font-medium mb-1">หัวข้อการอัปเกรด (Headline Title)</label>
+                                <input type="text" id="maint_title" value="✨ ระบบกำลังอัปเกรดครั้งใหญ่สู่ Kira AI v2.6" placeholder="ระบุหัวข้อ..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:border-cyan-500 focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-slate-300 font-medium mb-1">เวอร์ชันเป้าหมาย (Target Version)</label>
+                                <input type="text" id="maint_version" value="2.6.0" placeholder="2.6.0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm text-cyan-300 font-mono focus:border-cyan-500 focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-slate-300 font-medium mb-1">ข้อความรายละเอียดสำหรับผู้ใช้งาน (Public Message)</label>
+                                <textarea id="maint_message" rows="4" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none">ทีมผู้พัฒนาและคิระกำลังทำการเชื่อมต่อโครงข่ายสมองกลใหม่ (Neural Matrix Migration) ปรับแต่งความเร็วแสง และยกระดับระบบรักษาความปลอดภัย ระบบจะเปิดให้บริการอัตโนมัติทันทีที่เวลานับถอยหลังสิ้นสุดค่ะ</textarea>
+                            </div>
+
+                            <!-- Action Bar -->
+                            <div class="pt-4 border-t border-slate-800 flex flex-col sm:flex-row gap-3">
+                                <button type="button" onclick="saveAndStartMaintenance(true)" class="flex-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 px-6 rounded-xl transition duration-200 shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 text-sm">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                    เปิดโหมดปิดปรับปรุงเซิร์ฟเวอร์ & เริ่มนับถอยหลัง
+                                </button>
+                                <button type="button" onclick="saveAndStartMaintenance(false)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-3 px-5 rounded-xl border border-slate-700 transition text-sm">
+                                    ปิดโหมดปรับปรุง (ยกเลิก)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -405,6 +510,7 @@
             if(tabName === 'prompts') loadPrompts();
             if(tabName === 'dictionary') loadDictionary();
             if(tabName === 'orders') loadAdminOrders();
+            if(tabName === 'maintenance') loadMaintenanceConfig();
         }
 
         async function loadPrompts() {
@@ -640,6 +746,131 @@
 
         // Auto-check orders count on initial load
         setTimeout(loadAdminOrders, 1000);
+
+        // ========== Server Maintenance Hub Controls ==========
+        let adminMaintTimer = null;
+        let adminRemainingSeconds = 0;
+
+        function setPresetMinutes(mins) {
+            document.getElementById('maint_duration_minutes').value = mins;
+            const targetDate = new Date(Date.now() + mins * 60000);
+            const pad = n => String(n).padStart(2, '0');
+            const localStr = `${targetDate.getFullYear()}-${pad(targetDate.getMonth()+1)}-${pad(targetDate.getDate())}T${pad(targetDate.getHours())}:${pad(targetDate.getMinutes())}`;
+            document.getElementById('maint_custom_end').value = localStr;
+        }
+
+        async function loadMaintenanceConfig() {
+            try {
+                const res = await fetch('/api/system/maintenance');
+                if(!res.ok) return;
+                const data = await res.json();
+                
+                if(data.title) document.getElementById('maint_title').value = data.title;
+                if(data.version) document.getElementById('maint_version').value = data.version;
+                if(data.message) document.getElementById('maint_message').value = data.message;
+                
+                updateMaintenanceUI(data);
+
+                if(data.remaining_seconds) {
+                    adminRemainingSeconds = data.remaining_seconds;
+                    startAdminCountdown();
+                } else {
+                    document.getElementById('admin_live_countdown').innerText = "00:00:00 (ระบบเปิด)";
+                }
+            } catch(e) {
+                console.error("Failed to load maintenance config:", e);
+            }
+        }
+
+        function updateMaintenanceUI(data) {
+            const pill = document.getElementById('maint-active-pill');
+            const txt = document.getElementById('maint-active-text');
+            const tabBadge = document.getElementById('tab-maint-status-badge');
+
+            if(data.is_maintenance) {
+                if(pill) pill.className = "bg-red-500/20 text-red-400 border border-red-500/40 text-xs px-3 py-1 rounded-full font-semibold flex items-center gap-1.5";
+                if(txt) txt.innerHTML = "🔴 ปิดปรับปรุงอยู่ (Locked)";
+                if(tabBadge) {
+                    tabBadge.className = "inline-block text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30";
+                }
+            } else {
+                if(pill) pill.className = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs px-3 py-1 rounded-full font-semibold flex items-center gap-1.5";
+                if(txt) txt.innerHTML = "🟢 ระบบเปิดให้บริการปกติ (Online)";
+                if(tabBadge) {
+                    tabBadge.className = "hidden text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30";
+                }
+            }
+        }
+
+        function startAdminCountdown() {
+            clearInterval(adminMaintTimer);
+            adminMaintTimer = setInterval(() => {
+                if(adminRemainingSeconds <= 0) {
+                    document.getElementById('admin_live_countdown').innerText = "00:00:00 (ระบบเปิดแล้ว)";
+                    clearInterval(adminMaintTimer);
+                    loadMaintenanceConfig();
+                    return;
+                }
+                const h = Math.floor(adminRemainingSeconds / 3600);
+                const m = Math.floor((adminRemainingSeconds % 3600) / 60);
+                const s = adminRemainingSeconds % 60;
+                const pad = n => String(n).padStart(2, '0');
+                document.getElementById('admin_live_countdown').innerText = `${pad(h)}:${pad(m)}:${pad(s)}`;
+                adminRemainingSeconds--;
+            }, 1000);
+        }
+
+        async function saveAndStartMaintenance(enabled) {
+            const title = document.getElementById('maint_title').value.trim();
+            const version = document.getElementById('maint_version').value.trim();
+            const message = document.getElementById('maint_message').value.trim();
+            const durationMins = parseInt(document.getElementById('maint_duration_minutes').value) || 60;
+            const customEndVal = document.getElementById('maint_custom_end').value;
+
+            let customTimestamp = 0;
+            if(customEndVal) {
+                customTimestamp = Math.floor(new Date(customEndVal).getTime() / 1000);
+            }
+
+            const promptMsg = enabled ? 
+                `ยืนยันการเปิดโหมดปิดปรับปรุงเซิร์ฟเวอร์หรือไม่?\nระบบจะทำการล็อกการเข้าถึงของผู้ใช้ทั่วไป และแสดงหน้านับถอยหลังเป็นเวลา ${durationMins} นาที` : 
+                `ยืนยันการยกเลิกโหมดปิดปรับปรุงและเปิดเซิร์ฟเวอร์ทันทีหรือไม่?`;
+
+            if(!confirm(promptMsg)) return;
+
+            try {
+                const res = await fetch('/api/admin/maintenance', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        enabled: enabled,
+                        duration_minutes: durationMins,
+                        custom_end_timestamp: customTimestamp,
+                        title: title,
+                        version: version,
+                        message: message
+                    })
+                });
+
+                const data = await res.json();
+                if(data.status === 'success') {
+                    alert(data.message || 'บันทึกสถานะเรียบร้อยแล้ว');
+                    loadMaintenanceConfig();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (data.message || data.detail));
+                }
+            } catch(e) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + e);
+            }
+        }
+
+        async function instantEmergencyOpen() {
+            if(!confirm("⚠️ ยืนยันการปลดล็อกเซิร์ฟเวอร์ทันที (Emergency Open)?\nผู้ใช้งานทุกคนจะสามารถเข้าใช้งานระบบได้ทันที")) return;
+            await saveAndStartMaintenance(false);
+        }
+
+        // Auto-check on load if maintenance is active
+        setTimeout(loadMaintenanceConfig, 1200);
     </script>
     {% endif %}
 </body>
