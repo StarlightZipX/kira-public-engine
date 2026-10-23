@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 1920px;
+            height: 1080px;
+            background: #0f1422;
+            color: #f8fafc;
+            font-family: 'Prompt', 'Leelawadee UI', sans-serif;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+        }
+
+        /* Ambient Glows */
+        .ambient-glow-yellow {
+            position: absolute;
+            top: -100px;
+            right: 25%;
+            width: 750px;
+            height: 750px;
+            background: radial-gradient(circle, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0) 70%);
+            filter: blur(90px);
+            z-index: 1;
+            pointer-events: none;
+        }
+        .ambient-glow-cyan {
+            position: absolute;
+            bottom: -150px;
+            left: 15%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.16) 0%, rgba(6, 182, 212, 0) 70%);
+            filter: blur(100px);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Cute polka dot background pattern */
+        .pattern-overlay {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1.5px, transparent 1.5px);
+            background-size: 32px 32px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Layout: Left Content (56%), Right Chibi Mascot (44%) */
+        .left-col {
+            width: 56%;
+            height: 100%;
+            padding: 70px 85px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            z-index: 10;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .logo-box {
+            width: 72px;
+            height: 72px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #f59e0b, #ec4899);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            font-size: 34px;
+        }
+        .brand-info h2 {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-info h2 span {
+            font-size: 14px;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            color: #fcd34d;
+            padding: 3px 12px;
+            border-radius: 999px;
+            font-weight: 700;
+        }
+        .brand-info p {
+            font-size: 18px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        /* Cute Pill Badge */
+        .badge-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 24px;
+            background: rgba(245, 158, 11, 0.16);
+            border: 2px solid rgba(245, 158, 11, 0.5);
+            border-radius: 9999px;
+            width: fit-content;
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.25);
+            margin-bottom: 20px;
+        }
+        .badge-icon {
+            font-size: 22px;
+        }
+        .badge-text {
+            font-size: 19px;
+            font-weight: 800;
+            color: #fcd34d;
+            letter-spacing: 0.5px;
+        }
+
+        /* Title */
+        .main-title {
+            font-size: 54px;
+            font-weight: 900;
+            line-height: 1.22;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #ffffff 40%, #fed7aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sub-desc {
+            font-size: 21px;
+            color: #cbd5e1;
+            font-weight: 400;
+            margin-bottom: 26px;
+            line-height: 1.5;
+        }
+
+        /* Time Highlight Card */
+        .time-card {
+            background: rgba(30, 41, 59, 0.85);
+            border: 2px solid rgba(245, 158, 11, 0.45);
+            border-radius: 24px;
+            padding: 26px 36px;
+            margin-bottom: 28px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+        }
+        .time-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .time-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .time-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+        .time-val {
+            font-size: 32px;
+            font-weight: 900;
+            color: #38bdf8;
+        }
+        .time-val.clock {
+            color: #fbbf24;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+        }
+        .time-val.ready {
+            color: #4ade80;
+            text-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
+        }
+        .time-divider {
+            width: 2px;
+            height: 55px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Bullet Points */
+        .details-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 20px;
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+        .detail-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1.5px solid rgba(245, 158, 11, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fbbf24;
+            font-size: 17px;
+            flex-shrink: 0;
+            font-weight: 800;
+        }
+
+        /* Footer */
+        .footer-note {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            color: #94a3b8;
+            font-size: 18px;
+        }
+        .footer-note strong {
+            color: #fcd34d;
+        }
+
+        /* Right Chibi Mascot Container */
+        .right-col {
+            width: 44%;
+            height: 100%;
+            position: relative;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        .chibi-frame {
+            position: relative;
+            width: 680px;
+            height: 680px;
+            border-radius: 36px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.7);
+            border: 3px solid rgba(245, 158, 11, 0.45);
+            background: #ffffff;
+        }
+        .chibi-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .chibi-badge {
+            position: absolute;
+            bottom: -20px;
+            right: 40px;
+            background: #1e293b;
+            border: 2px solid #fbbf24;
+            border-radius: 20px;
+            padding: 12px 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fef08a;
+            font-weight: 800;
+            font-size: 17px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow-yellow"></div>
+    <div class="ambient-glow-cyan"></div>
+    <div class="pattern-overlay"></div>
+
+    <div class="left-col">
+        <div class="brand-header">
+            <div class="logo-box">🛠️</div>
+            <div class="brand-info">
+                <h2>KIRA AI SYSTEM <span>v2.6 Chibi Edition</span></h2>
+                <p>ปัญญาประดิษฐ์ผู้ช่วยอัจฉริยะเพื่อคนไทย</p>
+            </div>
+        </div>
+
+        <div>
+            <div class="badge-bar">
+                <span class="badge-icon">🔧</span>
+                <span class="badge-text">ประกาศปิดปรับปรุงระบบชั่วคราว (Maintenance Notice)</span>
+            </div>
+
+            <h1 class="main-title">
+                คิระขอเวลาขันน็อต<br>
+                ปรับแต่งระบบสักครู่นะคะ! 🛠️✨
+            </h1>
+            <p class="sub-desc">
+                กำลังอัปเกรดเครื่องยนต์ AI และเสริมความเร็ว เพื่อให้กลับมาตอบคำถามบอสและทุกคนได้อย่างว่องไวค่ะ!
+            </p>
+
+            <div class="time-card">
+                <div class="time-row">
+                    <div class="time-item">
+                        <span class="time-label">📅 วันที่ดำเนินการ</span>
+                        <span class="time-val">23 ต.ค. 2026</span>
+                    </div>
+                    <div class="time-divider"></div>
+                    <div class="time-item">
+                        <span class="time-label">⏰ ช่วงเวลาขันน็อต (~ 2 ชม.)</span>
+                        <span class="time-val clock">18:00 - 20:00 น.</span>
+                    </div>
+                    <div class="time-divider"></div>
+                    <div class="time-item">
+                        <span class="time-label">🚀 พร้อมเปิดระบบ</span>
+                        <span class="time-val ready">20:00 น. ตรง</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-list">
+                <div class="detail-item">
+                    <div class="detail-icon">⚡</div>
+                    <span><strong>ปรับจูนสมองกล AI:</strong> ตอบสนองรวดเร็วขึ้น 30% ทันใจและวิเคราะห์ฉลาดขึ้น</span>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">🛡️</div>
+                    <span><strong>เสริมเกราะความปลอดภัย:</strong> ปรับปรุงระบบฐานข้อมูลและเกราะป้องกัน Iron Citadel</span>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">🔒</div>
+                    <span><strong>ข้อมูลปลอดภัย 100%:</strong> ประวัติการคุยและการตั้งค่าทั้งหมดของผู้ใช้ปลอดภัยสมบูรณ์</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            <span>ขออภัยในความไม่สะดวกนะคะ • <strong>สู้ๆ ค่ะ คิระกำลังรีบขันน็อตให้เสร็จทันเวลาค่ะ! 💖</strong></span>
+            <span style="color: #64748b;">https://kira-public-engine.onrender.com</span>
+        </div>
+    </div>
+
+    <div class="right-col">
+        <div style="position: relative;">
+            <div class="chibi-frame">
+                <img src="../static/images/kira_chibi_maintenance.jpg" alt="Kira Chibi Maintenance">
+            </div>
+            <div class="chibi-badge">
+                <span>⭐</span>
+                <span>KIRA HARD AT WORK!</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
