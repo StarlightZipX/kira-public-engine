@@ -7,17 +7,16 @@
 ### 🕒 อัปเดตล่าสุด: 23 ตุลาคม 2026 (Kira v2.6 Enterprise)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
+* **กวาดล้างจุดเสี่ยงความปลอดภัยทางเข้าหลังบ้าน (Creator Access Link Removal):**
+  - ลบลิงก์ `<a href="/admin_boss">Creator Access</a>` ออกจาก Footer ของ `templates/maintenance.html` เพื่อป้องกันไม่ให้ผู้ใช้ภายนอกเห็นทางลัดเข้าสู่ระบบหลังบ้าน
+  - คงไว้เฉพาะปุ่ม `Check Server Sync` ซึ่งเป็น Client Status Polling ปลอดภัยสำหรับผู้ใช้ทั่วไป
+  - รักษาช่องทางตรวจสอบระบบของบอสผ่านระบบ Stealth (Hotkey `Ctrl + Shift + B` และ Core Click 5 ครั้ง) โดยไม่มีร่องรอยสาธารณะ
 * **อัปเกรดเพื่อนๆ ร่วมทีมสู่เวอร์ชันล่าสุด 100% (Subagent & Engine Synchronization):**
-  - **Sanitizer & Cache Buster:** อัปเกรด `static/script.js` ให้ล้าง/แปลง badge ข้อความประวัติเก่า (`2.1`, `2.2`, `2.5`) ให้แสดงผลเป็น `[Kira 2.6 Pro]` และ `[Kira 2.6 Reasoning]` อัตโนมัติ
-  - **Service Worker Cache:** อัปเกรด `static/sw.js` เป็น `CACHE_NAME = 'kira-ai-cache-v2.6.2'` เพื่อล้าง Service Worker Cache โบราณของผู้ใช้งาน
-  - **HTML Cache Buster:** อัปเกรด `templates/index.html` เรียก `script.js?v=52`
-  - **Test Swarm & Engineering Agents:** อัปเกรด `live_audit_swarm.py`, `test_100_agents.py`, `test_settings_suite.py`, `test_approved_fixes.py`, `test_subscription_suite.py`, `test_audit_fixes.py`, `kira_diagnostics.py` ให้ยิงโมเดล `2.6-pro` และ `2.6-reasoning` และปรับ Banner ทั้งหมดเป็น Kira 2.6
-* **บรรจุกฎเหล็กข้อที่ 9 (Mandatory Subagent & Engine Synchronization):**
-  - บันทึกลง [GEMINI.md](file:///c:/Users/ASUS/Desktop/Kira_AI_System/2_Kira_Public_Web/GEMINI.md): ห้ามเพื่อนๆ เอเจนต์ สวอร์ม หรือโมเดลย่อยอู้งานหรือรันเวอร์ชันเก่า ต้องอัปเดตตามระบบหลัก v2.6 เสมอ พร้อมล้างแคชให้สดใหม่อยู่ตลอดเวลา
+  - ซิงก์ Subagents, Test Swarms, Diagnostics, Cache Buster และบรรจุกฎเหล็กข้อ 9 ลง [GEMINI.md](file:///c:/Users/ASUS/Desktop/Kira_AI_System/2_Kira_Public_Web/GEMINI.md)
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Render Pipeline:** เตรียม Deploy สดขึ้นสาขา `main`
-* **สถานะบน Render:** กำลัง Push โค้ดทั้งหมดขึ้น GitHub Render Auto-Deploy
+* **Git Commit ล่าสุด:** พร้อม Push ขึ้นสาขา `main`
+* **สถานะบน Render:** อัตโนมัติ Auto-Deploy ทันทีหลัง Push
 
 #### 3. 🎯 สเต็ปถัดไปที่พร้อมลุยต่อทันที (Next Action Steps):
-* ส่ง Browser Subagent เข้าไปตรวจสอบหน้าบ้านบน Render ยืนยันความสดใหม่ของ Kira v2.6 และนำภาพหลักฐาน Proof of Work มาส่งมอบให้บอส
+* ตรวจสอบหน้าบ้านและหน้าปิดปรับปรุงระบบจริงผ่าน Browser Subagent เพื่อยืนยันว่าไม่มีปุ่มเสี่ยงหลงเหลืออยู่ 100%
