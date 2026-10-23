@@ -146,6 +146,104 @@ KIRA_SYSTEM_VERSION = "2.6.0"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
+# Detailed Release Notes & Dynamic Changelog Engine
+KIRA_RELEASE_DATA = {
+    "version": KIRA_SYSTEM_VERSION,
+    "build_id": APP_BUILD_ID,
+    "timestamp": APP_START_TIME,
+    "release_name": "Kira Next-Gen Neural & Modern Architecture Edition",
+    "badge_text": f"v{KIRA_SYSTEM_VERSION} Live Update",
+    "title": f"✨ อัปเกรดระบบ Kira AI v{KIRA_SYSTEM_VERSION} เรียบร้อยแล้วค่ะ!",
+    "description": "คิระได้รับการอัปเกรดขุมพลังและสถาปัตยกรรมครั้งใหญ่ เพื่อความฉลาด ความเร็ว และความเสถียรสูงสุดในทุกการใช้งานค่ะ",
+    "quote": "ตอนนี้ระบบพร้อมให้คุณและบอสสัมผัสความเร็วแสงและความฉลาดแบบใหม่แล้วค่ะ ข้อมูลและประวัติแชตทั้งหมดยังคงปลอดภัย 100% ค่ะ 🌸",
+    "highlights": [
+        {
+            "icon": "fa-brain",
+            "color": "text-violet",
+            "tag": "สมองกลใหม่",
+            "text": "อัปเกรดสู่ Llama 3.3 70B & Llama 3.1 8B Instant พร้อม Dynamic Model Scanner สลับโมเดลอัจฉริยะ"
+        },
+        {
+            "icon": "fa-file-lines",
+            "color": "text-cyan",
+            "tag": "เอกสารแม่นยำ",
+            "text": "ยกระดับเอนจินประมวลผล PDF สู่ pypdf รุ่นล่าสุด อ่านและวิเคราะห์สไลด์วิชาการรวดเร็วไร้ที่ติ"
+        },
+        {
+            "icon": "fa-globe",
+            "color": "text-emerald",
+            "tag": "ค้นหาเว็บสด",
+            "text": "เสริมเกราะค้นหาเว็บตรง Direct DDGS Engine สรุปข้อมูลสดจากอินเทอร์เน็ตทันท่วงทีไม่มีสะดุด"
+        },
+        {
+            "icon": "fa-shield-halved",
+            "color": "text-amber",
+            "tag": "ความปลอดภัย",
+            "text": "เพิ่มการป้องกัน Session และข้อมูลด้วย Web Cryptography API (crypto.randomUUID)"
+        },
+        {
+            "icon": "fa-language",
+            "color": "text-pink",
+            "tag": "5 ภาษา",
+            "text": "ระบบ Multi-Language & Voice Suite รองรับ ไทย, อังกฤษ, จีน, เกาหลี, ญี่ปุ่น เต็มรูปแบบ"
+        }
+    ],
+    "i18n": {
+        "en": {
+            "title": f"✨ Kira AI v{KIRA_SYSTEM_VERSION} Update Ready!",
+            "description": "Kira has been upgraded with Next-Gen Neural Architecture for faster responses, deeper reasoning, and enhanced reliability.",
+            "quote": "The system is fully updated and ready for you! All your chats, data, and workspace stay 100% secure. 🌸",
+            "badge_text": f"v{KIRA_SYSTEM_VERSION} Live Update",
+            "highlights": [
+                {"icon": "fa-brain", "color": "text-violet", "tag": "Next-Gen AI", "text": "Upgraded to Llama 3.3 70B & 3.1 8B with Dynamic Auto-Scanning"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDF Engine", "text": "Modern pypdf integration for flawless document & academic analysis"},
+                {"icon": "fa-globe", "color": "text-emerald", "tag": "Deep Search", "text": "Direct DDGS Autonomous Surfer for real-time web intelligence"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "Security", "text": "Web Cryptography API (crypto.randomUUID) for secure sessions"},
+                {"icon": "fa-language", "color": "text-pink", "tag": "5 Languages", "text": "Full i18n & Voice Suite support for TH, EN, ZH, KO, and JA"}
+            ]
+        },
+        "zh": {
+            "title": f"✨ Kira AI v{KIRA_SYSTEM_VERSION} 现已完成重大更新！",
+            "description": "Kira 现已升级至新一代神经计算与现代系统架构，提供更快的响应速度与更深度的推理能力。",
+            "quote": "新版本已就绪！您的所有对话历史和数据依然 100% 安全保存。🌸",
+            "badge_text": f"v{KIRA_SYSTEM_VERSION} 在线更新",
+            "highlights": [
+                {"icon": "fa-brain", "color": "text-violet", "tag": "新一代模型", "text": "全面升级至 Llama 3.3 70B 与 3.1 8B，具备动态多模型路由"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "文档解析", "text": "升级现代 pypdf 引擎，精准秒级解析 PDF 与学术课件"},
+                {"icon": "fa-globe", "color": "text-emerald", "tag": "实时搜索", "text": "集成 Direct DDGS 智能引擎，实时抓取全网最新资讯"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "加密安全", "text": "全面接入 Web Cryptography API (crypto.randomUUID) 会话防篡改"},
+                {"icon": "fa-language", "color": "text-pink", "tag": "五国语言", "text": "完整支持中、泰、英、韩、日五国语言与自然多语种语音套件"}
+            ]
+        },
+        "ko": {
+            "title": f"✨ Kira AI v{KIRA_SYSTEM_VERSION} 최신 업데이트가 준비되었습니다!",
+            "description": "Kira가 차세대 신경망 엔진과 현대적 아키텍처로 업그레이드되어 더 빠른 응답과 깊이 있는 추론을 제공합니다.",
+            "quote": "지금 바로 새로워진 Kira를 경험해보세요! 대화 내용과 데이터는 100% 안전하게 유지됩니다. 🌸",
+            "badge_text": f"v{KIRA_SYSTEM_VERSION} 라이브 업데이트",
+            "highlights": [
+                {"icon": "fa-brain", "color": "text-violet", "tag": "차세대 AI", "text": "Llama 3.3 70B & 3.1 8B 탑재 및 동적 모델 자동 탐색"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDF 엔진", "text": "최신 pypdf 엔진 도입으로 정확하고 빠른 학술 문서 분석"},
+                {"icon": "fa-globe", "color": "text-emerald", "tag": "실시간 검색", "text": "Direct DDGS 서퍼 엔진으로 실시간 웹 검색 안정성 강화"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "보안 강화", "text": "Web Cryptography API (crypto.randomUUID) 기반 고보안 세션"},
+                {"icon": "fa-language", "color": "text-pink", "tag": "5개 국어", "text": "한국어, 태국어, 영어, 중국어, 일본어 완전 지원 및 음성 세트"}
+            ]
+        },
+        "ja": {
+            "title": f"✨ Kira AI v{KIRA_SYSTEM_VERSION} 新バージョンへアップデート完了！",
+            "description": "Kiraは次世代ニューラルエンジンとモダンアーキテクチャに進化し、応答速度と推論精度が大幅に向上しました。",
+            "quote": "新バージョンがいつでもご利用いただけます！会話履歴とデータは100%安全に保護されています。🌸",
+            "badge_text": f"v{KIRA_SYSTEM_VERSION} 最新アップデート",
+            "highlights": [
+                {"icon": "fa-brain", "color": "text-violet", "tag": "次世代AI", "text": "Llama 3.3 70B & 3.1 8B への移行と動的モデル自動検知"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDFエンジン", "text": "最新の pypdf 採用で学術論文やスライドを高精度解析"},
+                {"icon": "fa-globe", "color": "text-emerald", "tag": "リアルタイム検索", "text": "Direct DDGS エンジンで最新のウェブ情報を高速取得"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "高セキュリティ", "text": "Web Cryptography API (crypto.randomUUID) による安全なセッション管理"},
+                {"icon": "fa-language", "color": "text-pink", "tag": "5カ国語", "text": "日本語・タイ語・英語・中国語・韓国語の完全対応と音声スイート"}
+            ]
+        }
+    }
+}
+
 @app.get("/api/system/version")
 async def get_system_version():
     return JSONResponse({
@@ -153,8 +251,14 @@ async def get_system_version():
         "version": KIRA_SYSTEM_VERSION,
         "build_id": APP_BUILD_ID,
         "timestamp": APP_START_TIME,
-        "release_name": "Kira Next-Gen Neural & Modern Architecture Edition",
-        "message": "ระบบ Kira AI v2.6 พร้อม Next-Gen Neural Engine & Modern Architecture อัปเดตเรียบร้อยแล้วค่ะ 🌸"
+        "release_name": KIRA_RELEASE_DATA["release_name"],
+        "message": "ระบบ Kira AI v2.6 พร้อม Next-Gen Neural Engine & Modern Architecture อัปเดตเรียบร้อยแล้วค่ะ 🌸",
+        "badge_text": KIRA_RELEASE_DATA["badge_text"],
+        "title": KIRA_RELEASE_DATA["title"],
+        "description": KIRA_RELEASE_DATA["description"],
+        "quote": KIRA_RELEASE_DATA["quote"],
+        "highlights": KIRA_RELEASE_DATA["highlights"],
+        "i18n": KIRA_RELEASE_DATA["i18n"]
     }, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 
 # --- Autonomous Keep-Alive & Server Health Guard ---

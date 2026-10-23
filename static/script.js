@@ -7052,8 +7052,66 @@ function initKiraUpdateController() {
     const btnUpdateClose = document.getElementById('btn-kira-update-close');
     const chipBtn = document.getElementById('kira-update-chip-btn');
     const versionTag = document.getElementById('kira-new-version-tag');
+    const updateModalTitle = document.getElementById('kira-update-title');
+    const updateModalDesc = document.getElementById('kira-update-desc');
+    const updateQuoteText = document.getElementById('kira-update-quote-text');
+    const updateHighlights = document.getElementById('kira-update-highlights');
 
     let waitingWorker = null;
+
+    // Render Dynamic Changelog & Release Details
+    function renderUpdateContent(info = {}) {
+        if (!info) return;
+        const currentLang = (localStorage.getItem('kira_ui_lang') || 'th').toLowerCase();
+        
+        let activeData = info;
+        if (currentLang !== 'th' && info.i18n && info.i18n[currentLang]) {
+            activeData = Object.assign({}, info, info.i18n[currentLang]);
+        }
+
+        // Version badge
+        if (versionTag && info.version) {
+            const vText = String(info.version);
+            versionTag.textContent = vText.startsWith('v') ? vText : `v${vText}`;
+        }
+
+        // Modal Title
+        if (updateModalTitle && activeData.title) {
+            updateModalTitle.textContent = activeData.title;
+        }
+
+        // Description
+        if (updateModalDesc && activeData.description) {
+            updateModalDesc.textContent = activeData.description;
+        }
+
+        // Quote
+        if (updateQuoteText && activeData.quote) {
+            updateQuoteText.textContent = `"${activeData.quote}"`;
+        }
+
+        // Dynamic Highlights List
+        if (updateHighlights && Array.isArray(activeData.highlights) && activeData.highlights.length > 0) {
+            updateHighlights.innerHTML = '';
+            activeData.highlights.forEach((item) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'highlight-item';
+                
+                const iconHtml = `<i class="fa-solid ${item.icon || 'fa-sparkles'} ${item.color || 'text-cyan'}"></i>`;
+                const tagHtml = item.tag ? `<span class="highlight-tag">${item.tag}</span>` : '';
+                const textHtml = `<span class="highlight-text">${item.text || ''}</span>`;
+                
+                itemDiv.innerHTML = `${iconHtml} ${tagHtml} ${textHtml}`;
+                updateHighlights.appendChild(itemDiv);
+            });
+        }
+
+        // Floating Chip text
+        const chipText = document.querySelector('#kira-update-chip .chip-text');
+        if (chipText && info.version) {
+            chipText.textContent = `มีอัปเดตใหม่ v${info.version}${info.release_name ? ': ' + info.release_name : ''}`;
+        }
+    }
 
     // Show Update Modal Dialog
     function showUpdatePrompt(options = {}) {
@@ -7068,9 +7126,17 @@ function initKiraUpdateController() {
             waitingWorker = options.worker;
         }
 
-        if (options.version && versionTag) {
-            const vText = String(options.version);
-            versionTag.textContent = vText.startsWith('v') ? vText : `v${vText}`;
+        // If rich highlights are already in options, render immediately
+        if (options.highlights && Array.isArray(options.highlights) && options.highlights.length > 0) {
+            renderUpdateContent(options);
+        } else {
+            // Fetch live changelog details from backend
+            fetch('/api/system/version?_t=' + Date.now(), { cache: 'no-store' })
+                .then(r => r.ok ? r.json() : null)
+                .then(vData => {
+                    if (vData) renderUpdateContent(vData);
+                })
+                .catch(() => {});
         }
 
         if (updateModal) {
@@ -7180,10 +7246,7 @@ function initKiraUpdateController() {
                 currentBuildId = data.build_id;
             } else if (data.build_id && currentBuildId && data.build_id !== currentBuildId) {
                 console.log('🚀 Kira Update Detected from backend! Current:', currentBuildId, 'New:', data.build_id);
-                showUpdatePrompt({
-                    version: data.version,
-                    release_name: data.release_name
-                });
+                showUpdatePrompt(data);
             }
         } catch (e) {
             // Silently ignore network errors
@@ -7206,14 +7269,26 @@ function initKiraUpdateController() {
     });
     window.addEventListener('focus', checkBackendVersion);
 
-    // Welcome-back toast after reload
+    // Welcome-back toast after reload with dynamic version & release name
     if (sessionStorage.getItem('kira_just_updated') === '1') {
         sessionStorage.removeItem('kira_just_updated');
         setTimeout(() => {
-            if (typeof showConnectionToast === 'function') {
-                showConnectionToast('✨ อัปเดต Kira AI เรียบร้อยแล้วค่ะ! พร้อมให้บริการคุณแล้วนะคะ 🌸', 'ready');
-                if (typeof hideConnectionToast === 'function') hideConnectionToast(4500);
-            }
+            fetch('/api/system/version?_t=' + Date.now(), { cache: 'no-store' })
+                .then(r => r.ok ? r.json() : null)
+                .then(d => {
+                    const v = d && d.version ? `v${d.version}` : 'v2.6.0';
+                    const rel = d && d.release_name ? ` (${d.release_name})` : '';
+                    if (typeof showConnectionToast === 'function') {
+                        showConnectionToast(`✨ อัปเดต Kira AI ${v}${rel} สำเร็จแล้วค่ะ! พร้อมให้บริการคุณแล้วนะคะ 🌸`, 'ready');
+                        if (typeof hideConnectionToast === 'function') hideConnectionToast(5500);
+                    }
+                })
+                .catch(() => {
+                    if (typeof showConnectionToast === 'function') {
+                        showConnectionToast('✨ อัปเดต Kira AI เรียบร้อยแล้วค่ะ! พร้อมให้บริการคุณแล้วนะคะ 🌸', 'ready');
+                        if (typeof hideConnectionToast === 'function') hideConnectionToast(4500);
+                    }
+                });
         }, 1200);
     }
 
