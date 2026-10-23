@@ -870,7 +870,7 @@ textarea::placeholder {
 }
 
 /* =========================================================================
-   🔐 MODERN AUTH PORTAL & FUTURISTIC ANIMATIONS (KIRA 2.1)
+   🔐 MODERN AUTH PORTAL & FUTURISTIC ANIMATIONS (KIRA 2.6)
    ========================================================================= */
 .auth-modal {
     position: fixed;
@@ -3284,7 +3284,7 @@ body.light-mode .welcome-cat-btn.active {
 }
 
 /* ==========================================================================
-   ⚡ Kira 2.1 Neural Core Connection & Cold-Start Toast
+   ⚡ Kira 2.6 Neural Core Connection & Cold-Start Toast
    ========================================================================== */
 .kira-connection-toast {
     position: fixed;
@@ -4595,7 +4595,7 @@ body.light-mode .modal-card {
 }
 
 /* ==========================================================================
-   ⚙️ Kira 2.1 Full-Featured Glassmorphic Settings Modal & Preferences
+   ⚙️ Kira 2.6 Full-Featured Glassmorphic Settings Modal & Preferences
    ========================================================================== */
 
 /* Font Size Modifiers */
