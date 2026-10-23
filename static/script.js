@@ -1379,8 +1379,10 @@ async function loadSession(sessionId) {
             renderWelcomeHub();
         } else {
             data.history.forEach(msg => {
-                // Strip badge when rendering old history
-                let displayTxt = msg.content.replace(/^(✨ \*\*\[Kira 1\.1 PRO\]\*\*\n\n|🤖 \*\*\[Kira 1\.0\]\*\*\n\n|✨ \*\*\[Kira 1\.1 👑\]\*\*\n\n|✨ \*\*\[Kira 1\.2 PRO\]\*\*\n\n)/i, "");
+                // Strip legacy badges when rendering old history so everything displays as unified Kira 2.6
+                let displayTxt = msg.content.replace(/^([✨🤖👁️🧠👑💼⚙️]?[ ]*\**\[Kira (?:1\.[0-9]|2\.[0-5]).*?\]\**(?:\n\n|\n)?)/i, "")
+                                            .replace(/\[Kira (?:1\.[0-9]|2\.[0-5])\s+Pro\]/gi, "[Kira 2.6 Pro]")
+                                            .replace(/\[Kira (?:1\.[0-9]|2\.[0-5])\s+Reasoning\]/gi, "[Kira 2.6 Reasoning]");
                 addMessage(displayTxt, msg.role === 'User');
             });
         }

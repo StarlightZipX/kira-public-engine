@@ -14,12 +14,12 @@ class TestApprovedFixes(unittest.TestCase):
         from app import _should_trigger_moa
         
         # Simple greetings should bypass MoA (fast path)
-        is_active, reason, hint = _should_trigger_moa("สวัสดีครับ", "2.1-reasoning", "")
+        is_active, reason, hint = _should_trigger_moa("สวัสดีครับ", "2.6-reasoning", "")
         self.assertFalse(is_active)
         self.assertEqual(reason, "simple_greeting")
         
         # Deep complex queries should activate Multi-Model Consensus
-        is_active, reason, hint = _should_trigger_moa("ช่วยวิเคราะห์ architecture และออกแบบ database หน่อยครับ", "2.1-pro", "")
+        is_active, reason, hint = _should_trigger_moa("ช่วยวิเคราะห์ architecture และออกแบบ database หน่อยครับ", "2.6-pro", "")
         self.assertTrue(is_active)
         self.assertIn("Consensus", hint)
         self.assertNotIn("Swarm", hint)

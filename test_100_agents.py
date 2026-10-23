@@ -18,7 +18,7 @@ if BASE_DIR not in sys.path:
 from app import app, init_db, execute_query, DB_FILE, _should_trigger_moa, _compress_and_roll_history, get_user_briefing, HumanMessage, AIMessage, SystemMessage, BRAIN_PROFILES, _route_brain
 
 print("====================================================================")
-print("🌐 KIRA 2.1 - 100 ENGINEERING AGENTS DIAGNOSTIC & AUDIT SWARM")
+print("🌐 KIRA 2.6 - 100 ENGINEERING AGENTS DIAGNOSTIC & AUDIT SWARM")
 print("====================================================================\n")
 
 init_db()
@@ -107,9 +107,9 @@ log_result(30, "SEC", "Audio Streaming Buffer Overflow Protection", "PASS")
 
 # --- SQUAD 4: Multi-Model Gateway & Adaptive MoA Swarm (Agents 31-40) ---
 print("\n--- 🧠 SQUAD 4: Multi-Model Gateway & Adaptive MoA Swarm ---")
-greeting_moa, _, _ = _should_trigger_moa("สวัสดีครับ", "2.1-pro", "fast")
-code_moa, _, _ = _should_trigger_moa("เขียนโค้ด Python", "2.1-pro", "fast")
-reason_moa, _, _ = _should_trigger_moa("วาดแผนผังระบบ", "2.1-reasoning", "fast")
+greeting_moa, _, _ = _should_trigger_moa("สวัสดีครับ", "2.6-pro", "fast")
+code_moa, _, _ = _should_trigger_moa("เขียนโค้ด Python", "2.6-pro", "fast")
+reason_moa, _, _ = _should_trigger_moa("วาดแผนผังระบบ", "2.6-reasoning", "fast")
 
 log_result(31, "MOA", "Adaptive Router - Fast Greeting Bypass (0.2s)", "PASS" if not greeting_moa else "FAIL")
 log_result(32, "MOA", "Adaptive Router - Deep Coding Swarm Activation", "PASS" if code_moa and reason_moa else "FAIL")

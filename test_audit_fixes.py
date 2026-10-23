@@ -9,7 +9,7 @@ BASE_URL = "http://127.0.0.1:8000"
 
 def run_tests():
     print("==================================================")
-    print("🔍 KIRA 2.1 - SYSTEM AUDIT & OPTIMIZATION TEST SUITE")
+    print("🔍 KIRA 2.6 - SYSTEM AUDIT & OPTIMIZATION TEST SUITE")
     print("==================================================\n")
 
     # 1. Health check

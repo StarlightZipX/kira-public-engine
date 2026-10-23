@@ -13,7 +13,7 @@ DUMMY_SLIP = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ
 
 def run_tests():
     print("==================================================")
-    print("👑 KIRA 2.1 - SUBSCRIPTION & MONETIZATION TEST SUITE")
+    print("👑 KIRA 2.6 - SUBSCRIPTION & MONETIZATION TEST SUITE")
     print("==================================================\n")
 
     # 1. Health check

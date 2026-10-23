@@ -40,7 +40,7 @@ def get_client():
 def run_tests():
     http = get_client()
     print("==================================================")
-    print("⚙️ KIRA 2.1 - SETTINGS & PREFERENCES TEST SUITE")
+    print("⚙️ KIRA 2.6 - SETTINGS & PREFERENCES TEST SUITE")
     print("==================================================\n")
 
     # 1. Health check
@@ -68,7 +68,7 @@ def run_tests():
         "auto_speak": True,
         "voice_name": "th-TH-PremwadeeNeural",
         "speech_rate": 1.1,
-        "default_model": "2.1-reasoning",
+        "default_model": "2.6-reasoning",
         "persona": "default",
         "custom_about": "Full Stack Lead Architect",
         "custom_style": "Concise, precise with full code examples",
@@ -95,7 +95,7 @@ def run_tests():
     # 4. Test TTS with custom voice and rate
     print("\n[4/6] Testing POST /api/tts with voice & rate...")
     tts_payload = {
-        "text": "ทดสอบระบบเสียงคิระเวอร์ชัน 2.1",
+        "text": "ทดสอบระบบเสียงคิระเวอร์ชัน 2.6",
         "voice": "th-TH-PremwadeeNeural",
         "rate": 1.1
     }
