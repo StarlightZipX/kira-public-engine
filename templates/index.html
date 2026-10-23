@@ -18,8 +18,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kira AI">
-    <meta name="kira-build-id" content="{{ build_id or 'kira-v2.5.0' }}">
-    <meta name="kira-app-version" content="{{ app_version or '2.5.0' }}">
+    <meta name="kira-build-id" content="{{ build_id or 'kira-v2.6.0' }}">
+    <meta name="kira-app-version" content="{{ app_version or '2.6.0' }}">
     <link rel="apple-touch-icon" href="/static/images/kira_logo.png?v=6">
     <link rel="icon" type="image/png" href="/static/images/kira_logo.png?v=6">
     <!-- MathJax for LaTeX Rendering -->
@@ -342,7 +342,7 @@
                         <span class="brand-title">Kira AI</span>
                         <div id="kira-unified-status" class="unified-status-pill" title="ระบบพร้อมใช้งาน 100% | Cloud Multi-Brain Engine พร้อมทำงาน">
                             <span class="status-live-dot"></span>
-                            <span class="status-live-label" id="unified-status-text" data-i18n="engine_cloud">Cloud Engine 2.1</span>
+                            <span class="status-live-label" id="unified-status-text" data-i18n="engine_cloud">Cloud Engine 2.6</span>
                             <!-- Hidden legacy hooks for JS compatibility -->
                             <span id="heartbeat-badge" style="display:none;"><span class="heartbeat-pulse-dot"></span></span>
                             <span id="engine-status-badge" style="display:none;"><span class="pulse-dot cloud"></span></span>
@@ -371,13 +371,13 @@
                     <!-- Model Select -->
                     <div class="model-select-wrapper">
                         <select id="model-select" class="model-select" title="เลือกมันสมองประมวลผล Kira AI">
-                            <optgroup label="Kira 2.1 Brain Engines">
-                                <option value="2.1-reasoning" selected>Kira 2.1 Reasoning</option>
-                                <option value="2.1-pro">Kira 2.1 Pro</option>
-                                <option value="2.0-flash">Kira 2.1 Flash</option>
+                            <optgroup label="Kira 2.6 Brain Engines">
+                                <option value="2.6-reasoning" selected>Kira 2.6 Reasoning</option>
+                                <option value="2.6-pro">Kira 2.6 Pro</option>
+                                <option value="2.6-flash">Kira 2.6 Flash</option>
                             </optgroup>
                             <optgroup label="Executive Simulation">
-                                <option value="boardroom">Kira 2.1 Boardroom</option>
+                                <option value="boardroom">Kira 2.6 Boardroom</option>
                             </optgroup>
                         </select>
                     </div>
@@ -427,7 +427,7 @@
                     </div>
 
                     <!-- Virtual Boardroom Quick Toggle (Consolidated into Tools dropdown & Model selector) -->
-                    <button title="เปิดสภาที่ปรึกษาเสมือน Kira 2.1 Boardroom" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn" style="display: none;">
+                    <button title="เปิดสภาที่ปรึกษาเสมือน Kira 2.6 Boardroom" id="btn-boardroom-toggle" class="header-action-btn boardroom-toggle-btn" style="display: none;">
                         <i class="fa-solid fa-users-viewfinder"></i>
                         <span class="boardroom-btn-text" data-i18n="header_boardroom">สภา</span>
                     </button>
@@ -601,7 +601,7 @@
                                         <span class="tool-item-desc" data-i18n="tools_guide_desc">ทัวร์ระบบและฟีเจอร์เด่น</span>
                                     </div>
                                 </button>
-                                <button class="tools-menu-item" id="btn-info" title="เกี่ยวกับ Kira 2.1">
+                                <button class="tools-menu-item" id="btn-info" title="เกี่ยวกับ Kira 2.6 Next-Gen">
                                     <span class="tool-item-icon icon-slate"><i class="fa-solid fa-circle-info"></i></span>
                                     <div class="tool-item-info">
                                         <span class="tool-item-title" data-i18n="tools_info_title">เกี่ยวกับ Kira AI</span>
@@ -754,7 +754,7 @@
                     <button class="attach-btn" id="attach-toggle-btn" data-i18n-title="attach_title" title="แนบไฟล์หรือรูปภาพ"><i class="fa-solid fa-paperclip"></i></button>
                     <input type="file" id="img-input" accept="image/*" style="display: none;">
                     <input type="file" id="doc-input" accept=".pdf,.docx,.txt,.csv" style="display: none;">
-                    <textarea id="user-input" placeholder="พิมพ์ข้อความหรือคำถามถึง Kira 2.1..." rows="1"></textarea>
+                    <textarea id="user-input" placeholder="พิมพ์ข้อความหรือคำถามถึง Kira 2.6..." rows="1"></textarea>
                     <button class="send-btn" id="send-btn" data-i18n-title="send_title"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
                 <p class="disclaimer" data-i18n="footer_disclaimer">Kira อาจให้ข้อมูลที่ไม่ถูกต้องได้ กรุณาตรวจสอบก่อนนำไปใช้งาน</p>
@@ -979,27 +979,27 @@
         <div class="modal-card" style="max-width: 520px; text-align: left;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
                 <h3 style="margin: 0; display: flex; align-items: center; gap: 8px; color: #38bdf8;">
-                    <i class="fa-solid fa-circle-info"></i> เกี่ยวกับ Kira AI System 2.1
+                    <i class="fa-solid fa-circle-info"></i> เกี่ยวกับ Kira AI System 2.6 Next-Gen
                 </h3>
                 <button id="close-info-modal" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
                 <div>
                     <strong style="color: #f8fafc;">สถาปัตยกรรมระบบ:</strong>
-                    <p style="margin: 4px 0 0 0; color: #94a3b8;">Kira AI สถาปัตยกรรมอัจฉริยะแบบ Hybrid Cognitive Engine ผสานโมเดลระดับท็อป (Qwen 72B, DeepSeek-R1, Llama 70B, Gemini) พร้อมระบบความจำระยะยาว Knowledge Graph Memory และ Live Canvas</p>
+                    <p style="margin: 4px 0 0 0; color: #94a3b8;">Kira AI สถาปัตยกรรมอัจฉริยะแบบ Next-Gen Multi-Brain Consensus & Neural Resilience Mesh ผสานโมเดลระดับท็อปของโลก (Llama 3.3 70B, DeepSeek-R1, Qwen 2.5 72B, Llama 3.1 8B, Gemini 2.5) พร้อมสภาบริหารเสมือน 4 ผู้บริหาร (Virtual Boardroom), Living Mind Map, Split Canvas & Viral Share, และ Academic Study Co-Pilot Hub</p>
                 </div>
                 <div style="background: rgba(255,255,255,0.03); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                     <strong style="color: #38bdf8;"><i class="fa-solid fa-layer-group"></i> ไฮไลต์ฟีเจอร์เด่น:</strong>
                     <ul style="margin: 6px 0 0 16px; padding: 0; color: #94a3b8; font-size: 0.85rem;">
-                        <li><strong>Kira 2.1 Reasoning:</strong> คิดวิเคราะห์ตรรกะและแผนงานเชิงลึก</li>
-                        <li><strong>Interactive Diagram:</strong> ผังงานและไดอะแกรมสถาปัตยกรรมอัตโนมัติ</li>
-                        <li><strong>Live Code Canvas:</strong> พรีวิวหน้าเว็บและโค้ดแบบ Interactive</li>
-                        <li><strong>Knowledge Graph:</strong> ผังโครงข่ายความจำระยะยาว</li>
-                        <li><strong>Natural Voice:</strong> สั่งงานและฟังเสียงอ่านภาษาไทยสมจริง (Edge-TTS)</li>
+                        <li><strong>Kira 2.6 Deep Reasoning:</strong> คิดวิเคราะห์ตรรกะและยุทธศาสตร์เชิงลึก (DeepSeek-R1 & Llama 3.3)</li>
+                        <li><strong>Virtual Boardroom:</strong> สภา 4 ผู้บริหารเสมือน (CEO, CTO, CFO, CMO) ถกเถียงและวิเคราะห์ยุทธศาสตร์รอบด้าน</li>
+                        <li><strong>Living Mind Map & Split Canvas:</strong> ผังความคิดเรนเดอร์สด พร้อมพรีวิวโค้ดและแชร์ Snapshot สู่สาธารณะ</li>
+                        <li><strong>Academic Study Co-Pilot Hub:</strong> สรุปบทเรียน จัดทำชุดข้อสอบจำลอง และ Flashcards ทบทวน</li>
+                        <li><strong>Multi-Language & Voice Suite:</strong> รองรับ 5 ภาษา (ไทย, อังกฤษ, จีน, เกาหลี, ญี่ปุ่น) และเสียงพากย์ธรรมชาติ</li>
                     </ul>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
-                    <span>เวอร์ชัน: <strong>Kira 2.1 Next-Gen (Build 2026.8)</strong></span>
+                    <span>เวอร์ชัน: <strong>Kira 2.6 Next-Gen (Build 2026.10)</strong></span>
                     <span>ผู้สร้าง: <strong>Kira AI System Team</strong></span>
                 </div>
             </div>
@@ -1017,7 +1017,7 @@
                     </div>
                     <div>
                         <h2 class="settings-modal-title"><span data-i18n="settings_modal_title">การตั้งค่าระบบ</span> <span class="settings-version-pill">Settings</span></h2>
-                        <p class="settings-modal-subtitle" data-i18n="settings_header_subtitle">ปรับแต่งประสบการณ์ใช้งาน Kira AI 2.1 ตามสไตล์ของคุณ</p>
+                        <p class="settings-modal-subtitle" data-i18n="settings_header_subtitle">ปรับแต่งประสบการณ์ใช้งาน Kira AI 2.6 ตามสไตล์ของคุณ</p>
                     </div>
                 </div>
                 <button type="button" class="settings-modal-close" id="btn-close-settings" title="ปิดหน้าต่าง (Esc)" data-i18n-title="close_esc">
@@ -1249,10 +1249,10 @@
                                     <p class="setting-desc" data-i18n="settings_default_model_desc">เลือกโมเดลที่ต้องการให้ระบบเรียกใช้เป็นค่าเริ่มต้น</p>
                                 </div>
                                 <select id="setting-default-model" class="settings-select">
-                                    <option value="2.1-reasoning">Kira 2.1 Reasoning</option>
-                                    <option value="2.1-pro">Kira 2.1 Pro</option>
-                                    <option value="2.0-flash">Kira 2.1 Flash</option>
-                                    <option value="2.0-vision">Kira 2.0 Vision</option>
+                                    <option value="2.6-reasoning">Kira 2.6 Reasoning</option>
+                                    <option value="2.6-pro">Kira 2.6 Pro</option>
+                                    <option value="2.6-flash">Kira 2.6 Flash</option>
+                                    <option value="2.6-vision">Kira 2.6 Vision</option>
                                 </select>
                             </div>
                         </div>
@@ -1568,7 +1568,7 @@
                         <div class="slide-icon-wrapper pulse-glow">
                             <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo" class="slide-hero-logo">
                         </div>
-                        <h2 class="slide-title">ยินดีต้อนรับสู่ <span class="gradient-text">Kira AI 2.1</span></h2>
+                        <h2 class="slide-title">ยินดีต้อนรับสู่ <span class="gradient-text">Kira AI 2.6</span></h2>
                         <p class="slide-subtitle">ระบบประสาทสังเคราะห์อัจฉริยะ (Next-Gen Hybrid Cognitive Intelligence)</p>
                     </div>
                     <div class="slide-features-grid">
@@ -1599,13 +1599,13 @@
                 <!-- Slide 2: Model & Super-Engine Guide -->
                 <div class="onboarding-slide" data-step="2">
                     <div class="slide-header-mini">
-                        <h2 class="slide-title-sm"><i class="fa-solid fa-microchip text-cyan"></i> สถาปัตยกรรมโมเดลและเครื่องมือ (Kira 2.1 Engines)</h2>
+                        <h2 class="slide-title-sm"><i class="fa-solid fa-microchip text-cyan"></i> สถาปัตยกรรมโมเดลและเครื่องมือ (Kira 2.6 Multi-Brain Engines)</h2>
                         <p class="slide-subtitle-sm">เลือกใช้เครื่องมือให้ตรงกับโจทย์ เพื่อประสิทธิผลและผลลัพธ์ที่ดีที่สุด</p>
                     </div>
                     <div class="model-cards-list">
                         <div class="model-guide-card">
                             <div class="model-badge-col">
-                                <span class="model-tag tag-standard" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;">Kira 2.1 Reasoning</span>
+                                <span class="model-tag tag-standard" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;">Kira 2.6 Reasoning</span>
                             </div>
                             <div class="model-desc-col">
                                 <strong>คิดวิเคราะห์ตรรกะและแผนงานเชิงลึก</strong>
@@ -1614,7 +1614,7 @@
                         </div>
                         <div class="model-guide-card">
                             <div class="model-badge-col">
-                                <span class="model-tag tag-nextgen" style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff;">Kira 2.1 Flash</span>
+                                <span class="model-tag tag-nextgen" style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff;">Kira 2.6 Flash</span>
                             </div>
                             <div class="model-desc-col">
                                 <strong>ประมวลผลความเร็วสูง</strong>
@@ -1623,7 +1623,7 @@
                         </div>
                         <div class="model-guide-card">
                             <div class="model-badge-col">
-                                <span class="model-tag tag-enterprise" style="background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff;">Kira 2.1 Boardroom</span>
+                                <span class="model-tag tag-enterprise" style="background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff;">Kira 2.6 Boardroom</span>
                             </div>
                             <div class="model-desc-col">
                                 <strong>สภา 4 ผู้บริหารเสมือน</strong>
@@ -2484,7 +2484,7 @@
             <div class="mcp-hub-header">
                 <div class="mcp-hub-title-group">
                     <div class="mcp-hub-badge"><i class="fa-solid fa-network-wired text-cyan"></i> Model Context Protocol (MCP) Core</div>
-                    <h2>Kira 2.2 MCP Integration Hub & Tool Studio</h2>
+                    <h2>Kira 2.6 MCP Integration Hub & Tool Studio</h2>
                     <p class="mcp-hub-subtitle">ศูนย์รวมการเชื่อมต่อระบบนิเวศและเครื่องมือภายนอกตามมาตรฐานสากล Model Context Protocol (Anthropic / Linux Foundation)</p>
                 </div>
                 <button id="btn-close-mcp-hub" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
@@ -3168,7 +3168,7 @@
                         <i class="fa-solid fa-graduation-cap text-cyan"></i>
                     </div>
                     <div>
-                        <h2 class="study-hub-title">Kira Study Co-Pilot <span class="study-badge">Academic 2.5</span></h2>
+                        <h2 class="study-hub-title">Kira Study Co-Pilot <span class="study-badge">Academic 2.6</span></h2>
                         <p class="study-hub-subtitle" data-i18n="study_modal_subtitle">ผู้ช่วยติวเข้ม สรุปชีทสไลด์ เก็งข้อสอบ และเตรียมความพร้อมก่อนเข้าห้องเรียน</p>
                     </div>
                 </div>
