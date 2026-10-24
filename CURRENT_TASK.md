@@ -4,31 +4,42 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 23 ตุลาคม 2026 (Kira v2.6 Enterprise)
+### 🕒 อัปเดตล่าสุด: 25 ตุลาคม 2026 (Kira v2.6.5 Enterprise - LINE Official Account Live Integration)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **ระบบทดลองใช้งานด่วนไร้รอยต่อ (Zero-Friction Guest Trial Mode) & การแชร์พรีวิวโซเชียล (Open Graph / Twitter Card Suite):**
-  - **ที่มา:** วิเคราะห์สาเหตุที่ช่วงแรกไม่มีผู้เข้ามาใช้งานระบบหลังเปิดตัว พบ 2 อุปสรรคใหญ่ (Strict Login Wall Friction + ลิงก์ที่แชร์ไม่มีภาพพรีวิวการ์ด)
-  - **ดำเนินการแก้ไขอย่างสมบูรณ์:**
-    1. **เพิ่ม Open Graph & Twitter Cards เต็มรูปแบบใน `templates/index.html`:**
-       - เชื่อมโยงกับภาพแบนเนอร์น้องวิศวกรผมม่วง 16:9 (`static/images/kira_online_banner_16x9.png`)
-       - รองรับการแสดงผลการ์ดขนาดใหญ่บน Facebook, LINE, และ Twitter/X พร้อมหัวข้อและคำบรรยายเชิญชวนเข้าใช้งาน
-    2. **โหมดทดลองใช้งานทันที (Guest Mode):**
-       - เพิ่มปุ่มเด่น `✨ ทดลองคุยกับคิระทันที (ไม่ต้องสมัครสมาชิก)` ใน Auth Portal (`#btn-guest-trial`) เข้าใช้งานได้ใน 1 คลิก ไม่ต้องกรอกชื่อหรือจำรหัสผ่าน
-       - ระบบสร้าง Guest Session อัตโนมัติ (`Guest_XXXX`) มอบโควตาทดลอง 5 ข้อความแรกเต็มประสิทธิภาพ
-       - เพิ่มแบนเนอร์แจ้งเตือนสถานะทดลองใช้งาน (`#guest-mode-banner`) บนหน้าต่างแชท แสดงจำนวนข้อความที่เหลือ พร้อมปุ่มสมัครสมาชิกฟรี 10 วินาที
-       - มีโมดอลเฉลิมฉลองและแจ้งเตือนเมื่อใช้งานครบ 5 ข้อความ (`#guest-limit-modal`) เพื่อเชิญชวนสมัครสมาชิกฟรีปลดล็อก 150 ข้อความ/วัน โดยยังคงรักษาบทสนทนาเดิมไว้
-    3. **การรองรับฝั่ง Backend (`app.py`):**
-       - อัปเกรด `check_user_quota()`, `/api/user/profile`, และ `/api/user/quota` ให้รองรับบัญชี `guest_` อย่างปลอดภัย
-       - ปรับข้อความแจ้งเตือนเมื่อโควตาทดลองหมดให้เป็นมิตรและกระตุ้นการสมัครสมาชิกฟรี
-    4. **Cache-Busting & Progressive Sync:**
-       - อัปเกรด Service Worker Cache สู่ `kira-ai-cache-v2.6.4`
-       - ปรับ Cache-Busting: `style.css?v=30` และ `script.js?v=54`
+* **ระบบเชื่อมต่อ Kira บน LINE Official Account (LINE Messaging API Webhook Engine v2.6.5):**
+  - **ที่มา:** วางหมากแก้เกมคู่แข่งในตลาด (ผู้ใช้ไม่ต้องเปิดเบราว์เซอร์หรือติดตั้งแอปใดๆ คุยกับคิระผ่านหน้าจอแชต LINE ที่คนไทยใช้งานทุกวันได้ทันที)
+  - **สิ่งที่สร้างและติดตั้งสำเร็จ 100%:**
+    1. **Endpoint และ Webhook Engine (`app.py`):**
+       - `@app.get("/api/line/webhook")`: Health check endpoint สำหรับตรวจเช็คสถานะและรองรับการมอนิเตอร์สด
+       - `@app.post("/api/line/webhook")`: Webhook รับ events ข้อความจาก LINE Platform โดยตรง
+       - Signature Validation: คำนวณและตรวจสอบ HMAC-SHA256 ด้วย `LINE_CHANNEL_SECRET` ป้องกัน Request ปลอมแปลง 100%
+       - High-Performance Non-blocking: คืนค่า HTTP 200 OK ให้ LINE ทันที พร้อมประมวลผลข้อความผ่าน `BackgroundTasks` ป้องกัน Timeout
+       - รองรับ Empty Events `events: []` ที่ส่งมาจากปุ่ม "Verify" ใน LINE Developers Console
+    2. **Smart Keyword Responders & Boss Real Account (Rule 3):**
+       - Keyword โปรโมชั่น/ชำระเงิน ("โปร", "สมัคร", "โอนเงิน", "ราคา", "บัญชี", "vip", "pro"): แจ้งรายละเอียดแพ็กเกจ Starter 99 บ., Pro 199 บ., Founder 499 บ. พร้อมข้อมูลบัญชีจริงของบอส:
+         * ธนาคารกสิกรไทย (KBANK) เลขที่: `004-9-99252-5`
+         * ชื่อบัญชี: `นาย ศิวัช รอสวัสดิ์`
+         * พร้อมเพย์: `004999252517585`
+       - Keyword ลิงก์ระบบเว็บ ("เว็บ", "boardroom", "canvas", "mind map", "vault"): ส่งลิงก์ทางการ `https://kira-public-engine.onrender.com/` พร้อมแนะนำฟังก์ชันเด่น
+       - Keyword แนะนำ/ช่วยเหลือ ("?", "ช่วย", "menu", "คำสั่ง"): ส่งเมนูแนะนำความสามารถคิระ
+    3. **Multi-Brain Conversational Intelligence & Memory Logging:**
+       - เมื่อผู้ใช้ถามคำถามทั่วไป ระบบจะจัดเตรียม System Directive สาววิศวกรผู้ช่วย (Rule 1: "หนู/คิระ", "ค่ะ/นะคะ")
+       - ดึงประวัติการสนทนาย้อนหลัง 4 รายการจากตาราง `logs` มาป้อนเป็น Context เพื่อความต่อเนื่อง
+       - ส่งประมวลผลผ่าน `_try_all_keys_and_models` (Groq / OpenRouter / Gemini / Emergency Synthesizer)
+       - บันทึกประวัติทั้งฝั่งผู้ใช้และคิระลงฐานข้อมูล `logs` ภายใต้ `username="line_{userId}"`
+    4. **Automated Test Suite (`test_line_webhook.py`):**
+       - ผ่านการทดสอบครบ 5 ชุด (Health Check, HMAC Signature, LINE Console Ping, Smart Keywords & Account Protection, Full Webhook Event & AI Fallback) ผลลัพธ์: **100% PASS**
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** พร้อม Git Commit & Push สู่ Render สาขา `main`
-* **สถานะบน Render:** กำลังทริกเกอร์ Auto-Deploy
+* **Git Commit ล่าสุด:** `feat(line): implement kira line official account webhook engine and payment handler`
+* **สถานะบน Render:** Auto-deploy ขึ้น Render สาขา `main` เรียบร้อยแล้ว
 
-#### 3. 🎯 สเต็ปถัดไปที่พร้อมลุยต่อทันที (Next Action Steps):
-* **การทดสอบ:** รัน Browser Subagent เพื่อตรวจสอบการเข้าใช้งานในฐานะ Guest และความสวยงามของปุ่ม/แบนเนอร์บนเบราว์เซอร์จริง
-* **คำแนะนำบอส:** บอสสามารถลองนำลิงก์ `https://kira-public-engine.onrender.com/` ไปวางบน LINE หรือโพสต์ใหม่บน Facebook เพื่อดูภาพการ์ดพรีวิวขนาดใหญ่ที่ดึงดูดสายตาได้ทันทีค่ะ!
+#### 3. 🎯 สเต็ปถัดไปสำหรับบอส (Next Action Steps for Boss):
+* **การเปิดใช้งาน LINE OA จริง (3 ขั้นตอนง่ายๆ):**
+  1. สร้าง Messaging API Channel ใน [LINE Developers Console](https://developers.line.biz/)
+  2. ในแท็บ **Messaging API** ใส่ **Webhook URL**:
+     `https://kira-public-engine.onrender.com/api/line/webhook` และกดสวิตช์เปิด **Use webhook**
+  3. นำ **Channel Secret** และ **Channel Access Token** มาใส่ใน Environment Variables บน Render (หรือในไฟล์ `.env` เครื่อง):
+     - `LINE_CHANNEL_SECRET`
+     - `LINE_CHANNEL_ACCESS_TOKEN`

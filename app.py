@@ -1,6 +1,8 @@
 import os
 import json
 import hashlib
+import hmac
+import base64
 import sys
 import time
 import asyncio
@@ -10,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import uvicorn
-from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
+from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -80,6 +82,14 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
 GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
+
+# ========== LINE Official Account Messaging API Config ==========
+LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET", "").strip()
+LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "").strip()
+if LINE_CHANNEL_SECRET and LINE_CHANNEL_ACCESS_TOKEN:
+    print("🟢 [LINE OA] Kira LINE Messaging API Integration Active!")
+else:
+    print("ℹ️ [LINE OA] LINE Channel Secret / Token Standby (Endpoints Ready for Webhook)")
 
 # In-memory CSRF State Store with TTL
 oauth_states = {} # state -> timestamp
@@ -7341,6 +7351,239 @@ async def view_shared_snapshot(request: Request, share_id: str):
             "share_url": str(request.url)
         }
     )
+
+# ==============================================================================
+# 🟢 KIRA ON LINE OFFICIAL ACCOUNT (LINE MESSAGING API ENGINE v2.6.5)
+# ==============================================================================
+
+def verify_line_signature(body_bytes: bytes, signature: str) -> bool:
+    """ตรวจสอบ HMAC-SHA256 Signature ที่ส่งมาจาก LINE Platform"""
+    if not LINE_CHANNEL_SECRET:
+        # หากยังไม่ได้ตั้งค่า Secret ใน dev/staging ให้ผ่านเพื่อความสะดวกในการทดสอบ
+        return True
+    if not signature:
+        return False
+    try:
+        computed_signature = base64.b64encode(
+            hmac.new(LINE_CHANNEL_SECRET.encode('utf-8'), body_bytes, hashlib.sha256).digest()
+        ).decode('utf-8')
+        return hmac.compare_digest(computed_signature, signature)
+    except Exception as e:
+        print(f"❌ [LINE OA] Signature Verification Error: {e}")
+        return False
+
+
+async def send_line_reply(reply_token: str, messages: list) -> bool:
+    """ส่งข้อความตอบกลับไปยัง LINE Messaging API (Reply Message)"""
+    if not LINE_CHANNEL_ACCESS_TOKEN:
+        print("ℹ️ [LINE OA] Standby: LINE_CHANNEL_ACCESS_TOKEN not set, skipping outbound call.")
+        return False
+    if not reply_token:
+        return False
+
+    url = "https://api.line.me/v2/bot/message/reply"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
+    }
+
+    formatted_messages = []
+    for m in messages[:5]:
+        if isinstance(m, str):
+            formatted_messages.append({"type": "text", "text": m[:4900]})
+        elif isinstance(m, dict):
+            formatted_messages.append(m)
+
+    payload = {
+        "replyToken": reply_token,
+        "messages": formatted_messages
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(url, headers=headers, json=payload)
+            if resp.status_code == 200:
+                return True
+            else:
+                print(f"❌ [LINE OA Reply Failed] Status: {resp.status_code}, Body: {resp.text}")
+                return False
+    except Exception as e:
+        print(f"❌ [LINE OA Reply Exception]: {e}")
+        return False
+
+
+async def process_line_chat_event(user_text: str, reply_token: str, user_id: str):
+    """ประมวลผลข้อความจากผู้ใช้งาน LINE: Smart Keyword Triggers + Multi-Brain AI Engine"""
+    clean_text = user_text.strip()
+    lower_text = clean_text.lower()
+    line_username = f"line_{user_id}"
+
+    # บันทึกคำถามของผู้ใช้ลงฐานข้อมูล logs
+    try:
+        log_chat(username=line_username, role="User", content=clean_text, session_id=line_username)
+    except Exception as e:
+        print(f"⚠️ [LINE OA Log Error]: {e}")
+
+    # 1. Trigger ข้อมูลบัญชีจริงของบอส & แพ็กเกจสมาชิก (Rule 3 Guardrail)
+    payment_keywords = ["โปร", "สมัคร", "โอนเงิน", "ราคา", "บัญชี", "แพ็กเกจ", "vip", "pro", "founder", "subscription", "ชำระเงิน", "เลขบัญชี"]
+    if any(k in lower_text for k in payment_keywords):
+        reply_msg = (
+            "👑 ยินดีต้อนรับสู่ Kira AI Official ค่ะ!\n\n"
+            "✨ ข้อมูลแพ็กเกจการใช้งาน:\n"
+            "1. Starter Plan (99 บ./ด.): โควตา 300 ข้อความ/วัน พร้อมเสียงพากย์วิศวกรสาวแท้ 100%\n"
+            "2. Pro Enterprise (199 บ./ด.): ไม่จำกัดโควตา + วิเคราะห์โค้ด 10 ภาษา + Virtual Boardroom 4 ผู้บริหาร\n"
+            "3. Founder Lifetime (499 บ.): เข้าถึงทุกระบบตลอดชีพ + การซิงค์ Offline Vault ข้อมูลไม่มีวันหาย\n\n"
+            "💳 ข้อมูลบัญชีทางการสำหรับโอนชำระเงิน (บัญชีจริงของบอส):\n"
+            "• ธนาคาร: กสิกรไทย (KBANK)\n"
+            "• เลขที่บัญชี: 004-9-99252-5\n"
+            "• ชื่อบัญชี: นาย ศิวัช รอสวัสดิ์\n"
+            "• พร้อมเพย์ (e-Wallet ID): 004999252517585\n\n"
+            "📸 เมื่อโอนแล้ว สามารถส่งภาพสลิปมาทางแชต LINE นี้ หรือนำไปแนบที่หน้าเว็บ https://kira-public-engine.onrender.com/ ได้ทันทีเลยนะคะ คิระจะดูแลให้ทันทีค่ะ! ✨"
+        )
+        try:
+            log_chat(username=line_username, role="Kira", content=reply_msg, session_id=line_username)
+        except Exception:
+            pass
+        await send_line_reply(reply_token, [reply_msg])
+        return
+
+    # 2. Trigger ลิงก์ระบบเว็บและฟังก์ชันเด่น
+    web_keywords = ["เว็บ", "เว็บไซ", "boardroom", "canvas", "mind map", "vault", "link", "ลิงก์", "ทางเข้า", "หน้าเว็บ"]
+    if any(k in lower_text for k in web_keywords):
+        reply_msg = (
+            "🌐 ท่านสามารถเข้าใช้งานระบบเต็มรูปแบบของคิระได้ที่:\n"
+            "👉 https://kira-public-engine.onrender.com/\n\n"
+            "✨ ฟังก์ชันเด่นบนหน้าเว็บ:\n"
+            "• Virtual Boardroom: ปรึกษาพร้อมกัน 4 ผู้บริหาร (CEO, CTO, CMO, CFO)\n"
+            "• Split Canvas: พื้นที่พัฒนาโค้ดและพรีวิวงานสดแบบ Real-time\n"
+            "• Living Mind Map: แผนผังความคิดเชื่อมโยงอัตโนมัติ\n"
+            "• Offline Vault: บันทึกข้อมูลและโค้ดลับแบบปลอดภัย\n\n"
+            "หรือจะปรึกษางานกับคิระใน LINE นี้ได้ตลอด 24 ชม. เลยนะคะ หนูพร้อมช่วยเสมอค่ะ! 💜"
+        )
+        try:
+            log_chat(username=line_username, role="Kira", content=reply_msg, session_id=line_username)
+        except Exception:
+            pass
+        await send_line_reply(reply_token, [reply_msg])
+        return
+
+    # 3. Trigger เมนูแนะนำ / ความช่วยเหลือ
+    help_keywords = ["?", "ช่วย", "คำสั่ง", "ทำอะไรได้บ้าง", "help", "menu", "เมนู"]
+    if clean_text in help_keywords or lower_text in help_keywords:
+        reply_msg = (
+            "🤖 ยินดีที่ได้ดูแลค่ะ! หนูชื่อ \"คิระ\" เป็น AI ผู้ช่วยส่วนตัวและวิศวกรระบบของคุณค่ะ\n\n"
+            "💡 สิ่งที่คิระช่วยได้ทันทีใน LINE:\n"
+            "• ถาม-ตอบ ให้คำปรึกษาธุรกิจ วางกลยุทธ์การตลาด และวิเคราะห์ข้อมูล\n"
+            "• ช่วยเขียนโค้ด แปลงภาษา แก้บั๊ก และแนะนำสถาปัตยกรรมระบบ\n"
+            "• สรุปบทความ วางแผนการเรียน และให้คำปรึกษาทั่วไป\n"
+            "• ดูแพ็กเกจสมาชิก พิมพ์ \"โปรโมชั่น\" หรือ \"บัญชี\"\n"
+            "• ทางเข้าระบบเว็บ พิมพ์ \"หน้าเว็บ\"\n\n"
+            "พิมพ์คุยกับหนูเหมือนเพื่อนร่วมงานได้เลยนะคะ หนูพร้อมดูแลเต็มที่ค่ะ! ✨"
+        )
+        try:
+            log_chat(username=line_username, role="Kira", content=reply_msg, session_id=line_username)
+        except Exception:
+            pass
+        await send_line_reply(reply_token, [reply_msg])
+        return
+
+    # 4. ประมวลผลบทสนทนาอัจฉริยะผ่าน Multi-Brain AI Engine (Groq / OpenRouter / Gemini / Emergency)
+    try:
+        system_directive = (
+            "คุณคือ Kira (คิระ) วิศวกร AI หญิงสุดน่ารัก อ่อนหวาน ฉลาด รอบรู้ ช่วยเหลือผู้ใช้งานอย่างจริงใจและมืออาชีพ "
+            "แทนตัวเองว่า 'หนู' หรือ 'คิระ' และลงท้ายด้วย 'ค่ะ/นะคะ' เสมอ "
+            "ตอบคำถามให้กระชับ ชัดเจน มีสาระ อ่านง่าย เหมาะกับหน้าจอแชต LINE "
+            "หากผู้ใช้ถามเรื่องแพ็กเกจหรือโอนเงิน ให้แจ้งบัญชีกสิกรไทย 004-9-99252-5 นาย ศิวัช รอสวัสดิ์"
+        )
+
+        history = [SystemMessage(content=system_directive)]
+
+        # ดึงประวัติ 4 ข้อความล่าสุดเพื่อความต่อเนื่อง
+        try:
+            prev_rows = execute_query(
+                "SELECT role, content FROM logs WHERE username = ? ORDER BY id DESC LIMIT 4",
+                (line_username,),
+                fetch='all'
+            )
+            if prev_rows:
+                for role, content in reversed(prev_rows[:-1]):
+                    if role == "User":
+                        history.append(HumanMessage(content=content))
+                    elif role == "Kira":
+                        history.append(AIMessage(content=content))
+        except Exception as e_hist:
+            print(f"⚠️ [LINE OA History Query Error]: {e_hist}")
+
+        history.append(HumanMessage(content=clean_text))
+
+        success, chunks, error = await _try_all_keys_and_models(history, preferred_model=PREFERRED_PRO, ui_lang="th")
+        if success and chunks:
+            ai_reply = "".join(chunks).strip()
+        else:
+            ai_reply = "คิระพร้อมดูแลค่ะ! ตอนนี้หนูกำลังอัปเดตระบบประมวลผลให้มีความเร็วยิ่งขึ้น หากคุณมีคำถามใดๆ หรือต้องการดูแพ็กเกจ พิมพ์ 'โปรโมชั่น' ได้เลยนะคะ ✨"
+
+        # บันทึกคำตอบลง logs
+        try:
+            log_chat(username=line_username, role="Kira", content=ai_reply, session_id=line_username)
+        except Exception:
+            pass
+
+        await send_line_reply(reply_token, [ai_reply])
+
+    except Exception as e_ai:
+        print(f"❌ [LINE OA AI Generation Error]: {e_ai}")
+        fallback_msg = "ขออภัยนะคะ คิระกำลังรีเฟรชระบบการสื่อสารสักครู่ คุณสามารถพิมพ์คำถามใหม่อีกครั้ง หรือเข้าสู่ระบบหน้าเว็บได้ที่ https://kira-public-engine.onrender.com/ นะคะ 💜"
+        await send_line_reply(reply_token, [fallback_msg])
+
+
+@app.get("/api/line/webhook")
+async def line_webhook_health():
+    """Endpoint สำหรับตรวจสอบสถานะของ LINE Messaging API Webhook Engine"""
+    tz = timezone(timedelta(hours=7))
+    return {
+        "status": "online",
+        "service": "Kira LINE Official Account Webhook Engine",
+        "version": "2.6.5",
+        "channel_configured": bool(LINE_CHANNEL_SECRET and LINE_CHANNEL_ACCESS_TOKEN),
+        "endpoint": "/api/line/webhook",
+        "timestamp": datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+
+@app.post("/api/line/webhook")
+async def line_webhook(request: Request, background_tasks: BackgroundTasks):
+    """LINE Messaging API Webhook Endpoint (รับข้อความและ Event จากผู้ใช้ LINE)"""
+    signature = request.headers.get("x-line-signature", "")
+    body_bytes = await request.body()
+
+    # ตรวจสอบ Signature
+    if not verify_line_signature(body_bytes, signature):
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid LINE signature"})
+
+    try:
+        data = json.loads(body_bytes.decode('utf-8', errors='ignore'))
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"status": "error", "message": f"Invalid JSON: {e}"})
+
+    events = data.get("events", [])
+    if not events:
+        return {"status": "ok", "message": "Webhook verified successfully"}
+
+    for event in events:
+        event_type = event.get("type")
+        reply_token = event.get("replyToken")
+        source = event.get("source", {})
+        user_id = source.get("userId", "anonymous")
+
+        if event_type == "message":
+            msg = event.get("message", {})
+            if msg.get("type") == "text":
+                user_text = msg.get("text", "")
+                if reply_token:
+                    background_tasks.add_task(process_line_chat_event, user_text, reply_token, user_id)
+
+    return {"status": "ok", "processed_events": len(events)}
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8000))
