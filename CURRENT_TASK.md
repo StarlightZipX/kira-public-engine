@@ -30,16 +30,16 @@
        - บันทึกประวัติทั้งฝั่งผู้ใช้และคิระลงฐานข้อมูล `logs` ภายใต้ `username="line_{userId}"`
     4. **Automated Test Suite (`test_line_webhook.py`):**
        - ผ่านการทดสอบครบ 5 ชุด (Health Check, HMAC Signature, LINE Console Ping, Smart Keywords & Account Protection, Full Webhook Event & AI Fallback) ผลลัพธ์: **100% PASS**
+    5. **Official LINE Visual Assets Suite (`static/images/`):**
+       - `kira_line_avatar.jpg`: ภาพโปรไฟล์ 1:1 น้องคิระวิศวกรสาวผมม่วง ไฮไลต์นีออน สำหรับ Profile Picture
+       - `kira_line_cover.jpg`: ภาพหน้าปก 16:9 แนวนอน Holographic Virtual Command Center สำหรับ Cover Photo
+       - ตัวเลือก Status Message (ไม่เกิน 20 ตัวอักษร) และการตั้งค่าปุ่มลิงก์หน้าเว็บ `https://kira-public-engine.onrender.com/`
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `feat(line): implement kira line official account webhook engine and payment handler`
+* **Git Commit ล่าสุด:** `feat(assets): add official kira line profile avatar and cover banner`
 * **สถานะบน Render:** Auto-deploy ขึ้น Render สาขา `main` เรียบร้อยแล้ว
 
 #### 3. 🎯 สเต็ปถัดไปสำหรับบอส (Next Action Steps for Boss):
-* **การเปิดใช้งาน LINE OA จริง (3 ขั้นตอนง่ายๆ):**
-  1. สร้าง Messaging API Channel ใน [LINE Developers Console](https://developers.line.biz/)
-  2. ในแท็บ **Messaging API** ใส่ **Webhook URL**:
-     `https://kira-public-engine.onrender.com/api/line/webhook` และกดสวิตช์เปิด **Use webhook**
-  3. นำ **Channel Secret** และ **Channel Access Token** มาใส่ใน Environment Variables บน Render (หรือในไฟล์ `.env` เครื่อง):
-     - `LINE_CHANNEL_SECRET`
-     - `LINE_CHANNEL_ACCESS_TOKEN`
+* **ตั้งค่าหน้าโปรไฟล์ LINE OA:** อัปโหลด Avatar, Cover Photo, ใส่ Status Message และเพิ่มปุ่ม Website
+* **เชื่อมต่อ Messaging API Webhook:** ใส่ URL `https://kira-public-engine.onrender.com/api/line/webhook` และนำ Secret/Token ไปใส่ใน Render
+
