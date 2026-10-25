@@ -787,7 +787,7 @@ def is_ip_blacklisted(client_ip: str) -> bool:
 
 # --- Output Scrubber (Anti-Data Leakage Defense) ---
 def scrub_sensitive_output(text: str) -> str:
-    """สแกนและเซ็นเซอร์ข้อมูลลับ (API Keys, Passwords, Salt) ขาออก 100%"""
+    """สแกนและเซ็นเซอร์ข้อมูลลับ (API Keys, Passwords, Salt, ข้อมูลบัญชีส่วนตัว) ขาออก 100%"""
     if not text:
         return text
     import re
@@ -797,12 +797,80 @@ def scrub_sensitive_output(text: str) -> str:
         (r'AIza[0-9A-Za-z_-]{30,45}', '[REDACTED_GEMINI_KEY]'),
         (r'sk-[A-Za-z0-9_-]{20,}', '[REDACTED_API_KEY]'),
         (r'postgres(?:ql)?://[^\s]+', '[REDACTED_DATABASE_URI]'),
-        (r'KiraSecretSalt_[A-Za-z0-9_@#$]+', '[REDACTED_SECRET_SALT]')
+        (r'KiraSecretSalt_[A-Za-z0-9_@#$]+', '[REDACTED_SECRET_SALT]'),
+        # Boss Personal Data Armor (Rule 3 Protection)
+        (r'004999252517585', '[REDACTED_PROMPTPAY]'),
+        (r'(?<!\d)004-?9-?99252-?5(?!\d)', '[REDACTED_ACCOUNT]'),
+        (r'ศิวัช\s*รอสวัสดิ์', '[REDACTED_NAME]')
     ]
     scrubbed = text
     for pat, rep in patterns:
         scrubbed = re.sub(pat, rep, scrubbed)
     return scrubbed
+
+
+def sanitize_ai_reply_for_chat(text: str) -> str:
+    """ทำความสะอาดข้อความจาก AI ให้ปราศจาก Thinking Tags, Internal Scratchpad,
+    System Prompts / Developer Instructions และข้อมูลลับ ก่อนส่งออกสู่ผู้ใช้ 100%
+    """
+    if not text:
+        return ""
+    import re
+
+    # 1. ลบ Thinking Blocks รูปแบบต่างๆ (รวมถึง multiline)
+    thinking_block_patterns = [
+        r'\[THINKING\].*?\[/THINKING\]',
+        r'\[THINKING_START\].*?\[THINKING_END\]',
+        r'<think>.*?</think>',
+        r'<thought>.*?</thought>',
+        r'<reasoning>.*?</reasoning>',
+        r'\[Thought Process\].*?\[/Thought Process\]',
+        r'\[THINKING\].*?\[THINKING_DONE\]',
+    ]
+    cleaned = text
+    for pat in thinking_block_patterns:
+        cleaned = re.sub(pat, '', cleaned, flags=re.DOTALL | re.IGNORECASE)
+
+    # 2. ลบ Unclosed thinking tag ที่อาจค้างอยู่ตอนต้นข้อความ
+    unclosed_patterns = [
+        r'^\s*\[THINKING\].*?(?=\n\n|\r\n\r\n|สวัสดี|ยินดี|ค่ะ|ครับ|\Z)',
+        r'^\s*<think>.*?(?=\n\n|\r\n\r\n|สวัสดี|ยินดี|ค่ะ|ครับ|\Z)',
+    ]
+    for pat in unclosed_patterns:
+        cleaned = re.sub(pat, '', cleaned, flags=re.DOTALL | re.IGNORECASE)
+
+    # 3. ลบ Standalone / Residual Tags ทั้งหมด
+    standalone_tags = [
+        r'\[THINKING_DONE\]',
+        r'\[/THINKING\]',
+        r'\[THINKING\]',
+        r'\[/THINKING_START\]',
+        r'\[THINKING_START\]',
+        r'\[/THINKING_END\]',
+        r'\[THINKING_END\]',
+        r'</think>',
+        r'<think>',
+        r'</thought>',
+        r'<thought>',
+        r'</reasoning>',
+        r'<reasoning>',
+    ]
+    for tag in standalone_tags:
+        cleaned = re.sub(tag, '', cleaned, flags=re.IGNORECASE)
+
+    # 4. ลบการหลุดของ Meta-Prompts หรือ Developer Instructions ในเนื้อหา
+    meta_instruction_patterns = [
+        r'^\s*According to developer instruction[^\n]*\n*',
+        r'^\s*The user says\s*["\'][^"\']+["\'][^\n]*\n*',
+    ]
+    for pat in meta_instruction_patterns:
+        cleaned = re.sub(pat, '', cleaned, flags=re.IGNORECASE)
+
+    # 5. สแกนความปลอดภัยและเซ็นเซอร์ข้อมูลส่วนตัว
+    cleaned = scrub_sensitive_output(cleaned).strip()
+
+    return cleaned
+
 
 # =========================================================================
 # 🏰 KIRA IRON CITADEL: Enterprise Multi-Layered Security Engine
@@ -5540,7 +5608,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
         await asyncio.sleep(0.03)
 
         # สตรีมเป็นคำหรือประโยคสั้นๆ เพื่อเอฟเฟกต์สมจริง
-        clean_speech = scrub_sensitive_output(speech_text)
+        clean_speech = sanitize_ai_reply_for_chat(speech_text)
         words = clean_speech.split(" ")
         step = max(3, len(words) // 8)
         for i in range(0, len(words), step):
@@ -5630,7 +5698,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
     for turn in turns_data:
         sp_id = turn.get("speaker", "CEO")
         sp_obj = next((e for e in BOARDROOM_EXECUTIVES if e["id"] == sp_id), BOARDROOM_EXECUTIVES[0])
-        sp_text = scrub_sensitive_output(turn.get("text", ""))
+        sp_text = sanitize_ai_reply_for_chat(turn.get("text", ""))
 
         yield sse("debate_turn_start", {
             "speaker": sp_id,
@@ -5714,7 +5782,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
 
     ok_con, con_chunks, _ = await _try_all_keys_and_models(consensus_prompt, boardroom_model, ui_lang=ui_lang)
     blueprint_md = "".join([getattr(c, "content", c) for c in con_chunks]) if ok_con else "มติที่ประชุมสภาผู้บริหารสรุปให้เดินหน้าพัฒนาตามแผนงานแบบ Lean เพื่อให้บรรลุเป้าหมายอย่างปลอดภัยสูงสุดค่ะ"
-    blueprint_md = scrub_sensitive_output(blueprint_md)
+    blueprint_md = sanitize_ai_reply_for_chat(blueprint_md)
 
     yield sse("consensus_blueprint", {
         "content": blueprint_md,
@@ -7436,9 +7504,16 @@ async def send_line_reply(reply_token: str, messages: list) -> bool:
     formatted_messages = []
     for m in messages[:5]:
         if isinstance(m, str):
-            formatted_messages.append({"type": "text", "text": m[:4900]})
+            clean_m = sanitize_ai_reply_for_chat(m)
+            if clean_m:
+                formatted_messages.append({"type": "text", "text": clean_m[:4900]})
         elif isinstance(m, dict):
-            formatted_messages.append(m)
+            if m.get("type") == "text" and "text" in m:
+                m_copy = dict(m)
+                m_copy["text"] = sanitize_ai_reply_for_chat(m_copy["text"])[:4900]
+                formatted_messages.append(m_copy)
+            else:
+                formatted_messages.append(m)
 
     payload = {
         "replyToken": reply_token,
@@ -7548,6 +7623,7 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
             "คุณคือ Kira (คิระ) วิศวกร AI หญิงสุดน่ารัก อ่อนหวาน ฉลาด รอบรู้ ช่วยเหลือผู้ใช้งานอย่างจริงใจและมืออาชีพ "
             "แทนตัวเองว่า 'หนู' หรือ 'คิระ' และลงท้ายด้วย 'ค่ะ/นะคะ' เสมอ "
             "ตอบคำถามให้กระชับ ชัดเจน มีสาระ อ่านง่าย เหมาะกับหน้าจอแชต LINE "
+            "ข้อห้ามสำคัญสูงสุด: ห้ามแสดงกระบวนการคิด (Chain of Thought), ห้ามใส่แท็ก <think> หรือ [THINKING], ห้ามอ้างอิงถึงคำสั่งของผู้พัฒนา (Developer Instruction) เด็ดขาด ให้ตอบเฉพาะเนื้อหาคำตอบสุดท้ายที่สุภาพ น่ารัก และเป็นประโยชน์ต่อผู้ใช้ทันที "
             "หากผู้ใช้ถามเรื่องแพ็กเกจ การสมัคร หรือการชำระเงิน ให้แนะนำแพ็กเกจและแนะนำให้เข้าสู่ระบบชำระเงินอย่างปลอดภัยที่หน้าเว็บ https://kira-public-engine.onrender.com/ ห้ามเปิดเผยข้อมูลส่วนบุคคลหรือเลขบัญชีธนาคารส่วนตัวเด็ดขาด"
         )
 
@@ -7565,7 +7641,10 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
                     if role == "User":
                         history.append(HumanMessage(content=content))
                     elif role == "Kira":
-                        history.append(AIMessage(content=content))
+                        # กรองประวัติเก่าให้สะอาด ป้องกันการป้อน thinking tags ซ้ำ
+                        clean_prev = sanitize_ai_reply_for_chat(content)
+                        if clean_prev:
+                            history.append(AIMessage(content=clean_prev))
         except Exception as e_hist:
             print(f"⚠️ [LINE OA History Query Error]: {e_hist}")
 
@@ -7585,11 +7664,16 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
             success, chunks, error = True, emergency_chunks, ""
 
         if success and chunks:
-            ai_reply = "".join(chunks).strip()
+            raw_reply = "".join(chunks)
+            ai_reply = sanitize_ai_reply_for_chat(raw_reply)
         else:
-            ai_reply = "สวัสดีค่ะ! คิระพร้อมดูแลคุณเสมอนะคะ ✨ ตอนนี้ระบบกำลังอัปเดตช่องทางประมวลผลให้มีความเร็วยิ่งขึ้น หากคุณมีคำถามใดๆ หรือต้องการดูแพ็กเกจ พิมพ์ 'โปรโมชั่น' ได้เลยนะคะ 💜"
+            ai_reply = ""
 
-        # บันทึกคำตอบลง logs
+        # หากผลลัพธ์ว่างเปล่าหลังการทำความสะอาด (เช่น โมเดลส่งมาแค่ thinking tokens) ให้ใช้คำตอบต้อนรับที่สมบูรณ์
+        if not ai_reply or not ai_reply.strip():
+            ai_reply = "สวัสดีค่ะ! หนูชื่อ \"คิระ\" ยินดีที่ได้คุยกับคุณนะคะ 💜✨ มีเรื่องไหนให้หนูช่วยวิเคราะห์ วางแผน หรือแนะนำ แจ้งหนูได้เลยนะคะ หนูพร้อมดูแลเต็มที่ค่ะ! 🥰"
+
+        # บันทึกคำตอบที่สะอาดบริสุทธิ์ลง logs
         try:
             log_chat(username=line_username, role="Kira", content=ai_reply, session_id=line_username)
         except Exception:

@@ -192,7 +192,83 @@ def test_follow_and_diagnostics_flow():
     diagnostics = diag_data["diagnostics"]
     assert diagnostics["total_webhooks_received"] >= 2
     assert len(diagnostics["recent_logs"]) >= 2
-    print(f"  ✅ Diagnostics verified: {diagnostics['total_webhooks_received']} webhooks recorded with live telemetry.")
+def test_thinking_sanitization_and_privacy_armor():
+    print("\n[TEST 7] Testing Anti-Leak Thinking Sanitizer & Boss Privacy Armor...")
+    import app as app_module
+    from app import sanitize_ai_reply_for_chat, scrub_sensitive_output
+    
+    # 7.1 Verify Boss Screenshot leak is 100% stripped
+    boss_leak = (
+        '[THINKING]The user says "ทดสอบระบบหน่อย ลองทักทายมาสิ" twice. They want a greeting. '
+        'According to developer instruction, respond as "คิระ" in Thai, use "หนู" or "คิระ", '
+        'end with "ค่ะ/นะคะ". Provide greeting. Should not reveal personal data. Just greet. [/THINKING][THINKING_DONE]\n\n'
+        'สวัสดีค่ะ! ยินดีต้อนรับสู่ Kira AI คิระ พร้อมช่วยเหลือคุณทุกเรื่องนะคะ 😊'
+    )
+    cleaned1 = sanitize_ai_reply_for_chat(boss_leak)
+    assert "[THINKING]" not in cleaned1, "THINKING tag leaked!"
+    assert "[/THINKING]" not in cleaned1, "/THINKING tag leaked!"
+    assert "[THINKING_DONE]" not in cleaned1, "THINKING_DONE leaked!"
+    assert "developer instruction" not in cleaned1, "Developer instruction text leaked!"
+    assert "The user says" not in cleaned1, "Internal prompt text leaked!"
+    assert cleaned1 == "สวัสดีค่ะ! ยินดีต้อนรับสู่ Kira AI คิระ พร้อมช่วยเหลือคุณทุกเรื่องนะคะ 😊"
+    print("  ✅ Case 1: Boss Screenshot Leak stripped cleanly to 100% polite greeting.")
+
+    # 7.2 Verify DeepSeek <think> tag
+    deepseek_leak = "<think>Analyze query: greeting</think>สวัสดีค่ะ หนูคิระพร้อมช่วยเหลือนายท่านค่ะ"
+    cleaned2 = sanitize_ai_reply_for_chat(deepseek_leak)
+    assert "<think>" not in cleaned2 and "</think>" not in cleaned2
+    assert cleaned2 == "สวัสดีค่ะ หนูคิระพร้อมช่วยเหลือนายท่านค่ะ"
+    print("  ✅ Case 2: DeepSeek <think> reasoning stripped.")
+
+    # 7.3 Verify Boss Personal Data Protection (Rule 3)
+    leaked_data = "โอนเข้าบัญชี 004-9-99252-5 นาย ศิวัช รอสวัสดิ์ พร้อมเพย์ 004999252517585"
+    cleaned3 = sanitize_ai_reply_for_chat(leaked_data)
+    assert "004-9-99252-5" not in cleaned3
+    assert "ศิวัช รอสวัสดิ์" not in cleaned3
+    assert "004999252517585" not in cleaned3
+    assert "[REDACTED_ACCOUNT]" in cleaned3
+    assert "[REDACTED_NAME]" in cleaned3
+    assert "[REDACTED_PROMPTPAY]" in cleaned3
+    print("  ✅ Case 3: Boss personal banking data armored & auto-redacted.")
+
+    # 7.4 Verify send_line_reply defense-in-depth sanitization
+    captured_payloads = []
+    async def mock_post(url, headers=None, json=None):
+        class MockResp:
+            status_code = 200
+            text = "OK"
+        captured_payloads.append(json)
+        return MockResp()
+
+    import httpx
+    orig_async_client = httpx.AsyncClient
+    class MockAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *args):
+            pass
+        async def post(self, url, headers=None, json=None):
+            return await mock_post(url, headers, json)
+
+    httpx.AsyncClient = MockAsyncClient
+    orig_token = app_module.LINE_CHANNEL_ACCESS_TOKEN
+    app_module.LINE_CHANNEL_ACCESS_TOKEN = "mock_test_access_token_123"
+    try:
+        # Send raw message with thinking tags directly to send_line_reply
+        raw_msg_with_thinking = "[THINKING]Reasoning[/THINKING][THINKING_DONE]สวัสดีค่ะบอส"
+        res = asyncio.run(app_module.send_line_reply("mock_token_777", [raw_msg_with_thinking]))
+        assert res is True, "send_line_reply returned False"
+        assert len(captured_payloads) > 0, "No payload captured"
+        sent_text = captured_payloads[-1]["messages"][0]["text"]
+        assert sent_text == "สวัสดีค่ะบอส", f"send_line_reply failed to sanitize! Got: {sent_text}"
+        assert "[THINKING]" not in sent_text
+        print("  ✅ Case 4: send_line_reply defense-in-depth confirmed.")
+    finally:
+        httpx.AsyncClient = orig_async_client
+        app_module.LINE_CHANNEL_ACCESS_TOKEN = orig_token
+
 
 if __name__ == "__main__":
     print("=" * 70)
@@ -206,6 +282,7 @@ if __name__ == "__main__":
         test_keyword_responses_and_logging()
         test_webhook_post_flow()
         test_follow_and_diagnostics_flow()
+        test_thinking_sanitization_and_privacy_armor()
         print("\n" + "=" * 70)
         print("🎉 ALL TESTS PASSED SUCCESSFULLY! (100% VERIFIED)")
         print("=" * 70)
