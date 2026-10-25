@@ -7424,7 +7424,7 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
     except Exception as e:
         print(f"⚠️ [LINE OA Log Error]: {e}")
 
-    # 1. Trigger ข้อมูลบัญชีจริงของบอส & แพ็กเกจสมาชิก (Rule 3 Guardrail)
+    # 1. Trigger ข้อมูลแพ็กเกจสมาชิกและช่องทางชำระเงินที่ปลอดภัย (Privacy & Security First)
     payment_keywords = ["โปร", "สมัคร", "โอนเงิน", "ราคา", "บัญชี", "แพ็กเกจ", "vip", "pro", "founder", "subscription", "ชำระเงิน", "เลขบัญชี"]
     if any(k in lower_text for k in payment_keywords):
         reply_msg = (
@@ -7432,13 +7432,11 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
             "✨ ข้อมูลแพ็กเกจการใช้งาน:\n"
             "1. Starter Plan (99 บ./ด.): โควตา 300 ข้อความ/วัน พร้อมเสียงพากย์วิศวกรสาวแท้ 100%\n"
             "2. Pro Enterprise (199 บ./ด.): ไม่จำกัดโควตา + วิเคราะห์โค้ด 10 ภาษา + Virtual Boardroom 4 ผู้บริหาร\n"
-            "3. Founder Lifetime (499 บ.): เข้าถึงทุกระบบตลอดชีพ + การซิงค์ Offline Vault ข้อมูลไม่มีวันหาย\n\n"
-            "💳 ข้อมูลบัญชีทางการสำหรับโอนชำระเงิน (บัญชีจริงของบอส):\n"
-            "• ธนาคาร: กสิกรไทย (KBANK)\n"
-            "• เลขที่บัญชี: 004-9-99252-5\n"
-            "• ชื่อบัญชี: นาย ศิวัช รอสวัสดิ์\n"
-            "• พร้อมเพย์ (e-Wallet ID): 004999252517585\n\n"
-            "📸 เมื่อโอนแล้ว สามารถส่งภาพสลิปมาทางแชต LINE นี้ หรือนำไปแนบที่หน้าเว็บ https://kira-public-engine.onrender.com/ ได้ทันทีเลยนะคะ คิระจะดูแลให้ทันทีค่ะ! ✨"
+            "3. Founder Lifetime (499 บ.): สิทธิ์เข้าถึงทุกระบบตลอดชีพ + การซิงค์ Offline Vault ข้อมูลไม่มีวันหาย\n\n"
+            "🔐 ช่องทางการชำระเงินและเปิดใช้งานบัญชีอย่างปลอดภัย:\n"
+            "เพื่อความปลอดภัยสูงสุดของข้อมูลและการเปิดใช้งานสิทธิ์สมาชิกอัตโนมัติ กรุณาดำเนินการผ่านศูนย์บริการสมาชิกทางการของ Kira AI ได้ที่:\n"
+            "👉 https://kira-public-engine.onrender.com/\n\n"
+            "(ท่านสามารถเลือกแพ็กเกจ ชำระเงินผ่านระบบ QR Payment ที่ปลอดภัย และเปิดใช้งานสิทธิ์ได้ทันทีตลอด 24 ชั่วโมงค่ะ ✨)"
         )
         try:
             log_chat(username=line_username, role="Kira", content=reply_msg, session_id=line_username)
@@ -7493,7 +7491,7 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
             "คุณคือ Kira (คิระ) วิศวกร AI หญิงสุดน่ารัก อ่อนหวาน ฉลาด รอบรู้ ช่วยเหลือผู้ใช้งานอย่างจริงใจและมืออาชีพ "
             "แทนตัวเองว่า 'หนู' หรือ 'คิระ' และลงท้ายด้วย 'ค่ะ/นะคะ' เสมอ "
             "ตอบคำถามให้กระชับ ชัดเจน มีสาระ อ่านง่าย เหมาะกับหน้าจอแชต LINE "
-            "หากผู้ใช้ถามเรื่องแพ็กเกจหรือโอนเงิน ให้แจ้งบัญชีกสิกรไทย 004-9-99252-5 นาย ศิวัช รอสวัสดิ์"
+            "หากผู้ใช้ถามเรื่องแพ็กเกจ การสมัคร หรือการชำระเงิน ให้แนะนำแพ็กเกจและแนะนำให้เข้าสู่ระบบชำระเงินอย่างปลอดภัยที่หน้าเว็บ https://kira-public-engine.onrender.com/ ห้ามเปิดเผยข้อมูลส่วนบุคคลหรือเลขบัญชีธนาคารส่วนตัวเด็ดขาด"
         )
 
         history = [SystemMessage(content=system_directive)]

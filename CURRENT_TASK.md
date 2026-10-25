@@ -16,11 +16,10 @@
        - Signature Validation: คำนวณและตรวจสอบ HMAC-SHA256 ด้วย `LINE_CHANNEL_SECRET` ป้องกัน Request ปลอมแปลง 100%
        - High-Performance Non-blocking: คืนค่า HTTP 200 OK ให้ LINE ทันที พร้อมประมวลผลข้อความผ่าน `BackgroundTasks` ป้องกัน Timeout
        - รองรับ Empty Events `events: []` ที่ส่งมาจากปุ่ม "Verify" ใน LINE Developers Console
-    2. **Smart Keyword Responders & Boss Real Account (Rule 3):**
-       - Keyword โปรโมชั่น/ชำระเงิน ("โปร", "สมัคร", "โอนเงิน", "ราคา", "บัญชี", "vip", "pro"): แจ้งรายละเอียดแพ็กเกจ Starter 99 บ., Pro 199 บ., Founder 499 บ. พร้อมข้อมูลบัญชีจริงของบอส:
-         * ธนาคารกสิกรไทย (KBANK) เลขที่: `004-9-99252-5`
-         * ชื่อบัญชี: `นาย ศิวัช รอสวัสดิ์`
-         * พร้อมเพย์: `004999252517585`
+    2. **Smart Keyword Responders & Privacy-First Security (ความปลอดภัยสูงสุด):**
+       - **คุ้มครองข้อมูลส่วนบุคคลของบอส 100%:** ลบการเปิดเผยชื่อจริง, เลขบัญชีธนาคาร และพร้อมเพย์ออกจากแชท LINE อย่างถาวร
+       - **ลบข้อความ Debug ภายใน:** ลบคำว่า "(บัญชีจริงของบอส)" ออกจากระบบอย่างสิ้นเชิง
+       - **ระบบชำระเงินที่ปลอดภัย:** นำทางผู้ใช้เข้าสู่ระบบชำระเงินและสมัครสมาชิกผ่านหน้าเว็บทางการที่ปลอดภัย 100% (`https://kira-public-engine.onrender.com/`) ผ่านระบบยืนยันสลิปและคลาวด์ออเดอร์
        - Keyword ลิงก์ระบบเว็บ ("เว็บ", "boardroom", "canvas", "mind map", "vault"): ส่งลิงก์ทางการ `https://kira-public-engine.onrender.com/` พร้อมแนะนำฟังก์ชันเด่น
        - Keyword แนะนำ/ช่วยเหลือ ("?", "ช่วย", "menu", "คำสั่ง"): ส่งเมนูแนะนำความสามารถคิระ
     3. **Multi-Brain Conversational Intelligence & Memory Logging:**
@@ -29,18 +28,15 @@
        - ส่งประมวลผลผ่าน `_try_all_keys_and_models` (Groq / OpenRouter / Gemini / Emergency Synthesizer)
        - บันทึกประวัติทั้งฝั่งผู้ใช้และคิระลงฐานข้อมูล `logs` ภายใต้ `username="line_{userId}"`
     4. **Automated Test Suite (`test_line_webhook.py`):**
-       - ผ่านการทดสอบครบ 5 ชุด (Health Check, HMAC Signature, LINE Console Ping, Smart Keywords & Account Protection, Full Webhook Event & AI Fallback) ผลลัพธ์: **100% PASS**
+       - ผ่านการทดสอบครบ 5 ชุด (Health Check, HMAC Signature, LINE Console Ping, Privacy Verification & Safe Web Redirection, Full Webhook Event & AI Fallback) ผลลัพธ์: **100% PASS**
     5. **Official LINE Visual Assets Suite (`static/images/`):**
        - `kira_line_avatar.jpg`: ภาพโปรไฟล์ 1:1 น้องคิระวิศวกรสาวผมม่วง ไฮไลต์นีออน สำหรับ Profile Picture
        - `kira_wide_cover.jpg` & `kira_aurora_cover.jpg` (ตั้งเป็น `kira_line_cover.jpg`): ภาพหน้าปกแนวนอน 16:9 สไตล์ Panoramic Modern Tech (Cyber Wave & Crystalline Aurora) เรียบหรู สะอาดตา ไม่เบียว ไม่ซ้ำการ์ดโลโก้
        - ตัวเลือก Status Message (ไม่เกิน 20 ตัวอักษร) และการตั้งค่าปุ่มลิงก์หน้าเว็บ `https://kira-public-engine.onrender.com/`
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `feat(assets): add authentic panoramic modern tech covers for line oa`
+* **Git Commit ล่าสุด:** `fix(security): redact boss personal banking details and redirect line payments to secure web portal`
 * **สถานะบน Render:** Auto-deploy ขึ้น Render สาขา `main` เรียบร้อยแล้ว
 
 #### 3. 🎯 สเต็ปถัดไปสำหรับบอส (Next Action Steps for Boss):
-* **ตั้งค่าหน้าโปรไฟล์ LINE OA:** เลือกภาพ Cover แนวนอนที่บอสชอบ (`kira_aurora_cover.jpg` หรือ `kira_wide_cover.jpg`)
-* **เชื่อมต่อ Messaging API Webhook:** ใส่ URL `https://kira-public-engine.onrender.com/api/line/webhook` และนำ Secret/Token ไปใส่ใน Render
-
-
+* **ทดสอบทักแชท LINE อีกครั้ง:** ตรวจสอบว่าระบบส่งแพ็กเกจและลิงก์ความปลอดภัยของหน้าเว็บ โดยไม่มีข้อมูลส่วนตัวรั่วไหล 100%

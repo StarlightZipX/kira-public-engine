@@ -102,12 +102,14 @@ def test_keyword_responses_and_logging():
         assert len(captured_replies) > 0, "No reply sent for payment keyword"
         pay_reply = captured_replies[-1]
         
-        # Verify Boss Account info (Rule 3)
-        assert "004-9-99252-5" in pay_reply, "KBANK account missing"
-        assert "ศิวัช รอสวัสดิ์" in pay_reply, "Boss name missing"
-        assert "004999252517585" in pay_reply, "PromptPay missing"
+        # Verify Privacy & Security First: Boss personal info must NEVER be exposed
+        assert "004-9-99252-5" not in pay_reply, "KBANK account leaked!"
+        assert "ศิวัช" not in pay_reply, "Boss name leaked!"
+        assert "004999252517585" not in pay_reply, "PromptPay leaked!"
+        assert "บัญชีจริงของบอส" not in pay_reply, "Internal debug wording leaked!"
+        assert "https://kira-public-engine.onrender.com/" in pay_reply, "Official portal link missing"
         assert "Starter Plan" in pay_reply and "Founder Lifetime" in pay_reply, "Packages missing"
-        print("  ✅ Payment keyword returned Boss's verified account (Rule 3) and package rates.")
+        print("  ✅ Privacy & Security Verified: Zero personal data leaked, directed to secure web portal.")
         
         # Test Web Keyword
         captured_replies.clear()
