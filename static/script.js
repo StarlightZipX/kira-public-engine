@@ -6684,7 +6684,7 @@ function initSubscriptionController() {
                 }
                 if (subExpiryInfo) {
                     if (sub.is_boss) {
-                        subExpiryInfo.textContent = '• บัญชีผู้ดูแลระบบ / Boss Admin (สิทธิ์ไม่จำกัดตลอดชีพ)';
+                        subExpiryInfo.textContent = '• บัญชีผู้ดูแลระบบ / Boss Admin (สิทธิ์ผู้ดูแลระบบสูงสุด)';
                     } else if (sub.expire_date) {
                         const expStr = sub.expire_date.includes(' ') ? sub.expire_date.split(' ')[0] : sub.expire_date.split('T')[0];
                         subExpiryInfo.textContent = `• ใช้งานได้ถึง: ${expStr} (โควตา ${sub.daily_quota || 500} ข้อความ/วัน)`;

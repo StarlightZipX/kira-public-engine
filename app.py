@@ -7600,7 +7600,7 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
             "🌐 ท่านสามารถเข้าใช้งานระบบเต็มรูปแบบของคิระได้ที่:\n"
             "👉 https://kira-public-engine.onrender.com/\n\n"
             "✨ ฟังก์ชันเด่นบนหน้าเว็บ:\n"
-            "• Virtual Boardroom: ปรึกษาพร้อมกัน 4 ผู้บริหาร (CEO, CTO, CMO, CFO)\n"
+            "• Virtual Boardroom: ปรึกษาพร้อมกัน 4 ผู้บริหาร (CEO, CFO, CPO, CTO)\n"
             "• Split Canvas: พื้นที่พัฒนาโค้ดและพรีวิวงานสดแบบ Real-time\n"
             "• Living Mind Map: แผนผังความคิดเชื่อมโยงอัตโนมัติ\n"
             "• Offline Vault: บันทึกข้อมูลและโค้ดลับแบบปลอดภัย\n\n"
@@ -7622,7 +7622,7 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
             "• ถาม-ตอบ ให้คำปรึกษาธุรกิจ วางกลยุทธ์การตลาด และวิเคราะห์ข้อมูล\n"
             "• ช่วยเขียนโค้ด แปลงภาษา แก้บั๊ก และแนะนำสถาปัตยกรรมระบบ\n"
             "• สรุปบทความ วางแผนการเรียน และให้คำปรึกษาทั่วไป\n"
-            "• ดูแพ็กเกจสมาชิก พิมพ์ \"โปรโมชั่น\" หรือ \"บัญชี\"\n"
+            "• ดูแพ็กเกจสมาชิก พิมพ์ \"แพ็กเกจ\" หรือ \"โปรโมชั่น\"\n"
             "• ทางเข้าระบบเว็บ พิมพ์ \"หน้าเว็บ\"\n\n"
             "พิมพ์คุยกับหนูเหมือนเพื่อนร่วมงานได้เลยนะคะ หนูพร้อมดูแลเต็มที่ค่ะ! ✨"
         )
@@ -7640,7 +7640,11 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
             "แทนตัวเองว่า 'หนู' หรือ 'คิระ' และลงท้ายด้วย 'ค่ะ/นะคะ' เสมอ "
             "ตอบคำถามให้กระชับ ชัดเจน มีสาระ อ่านง่าย เหมาะกับหน้าจอแชต LINE "
             "ข้อห้ามสำคัญสูงสุด: ห้ามแสดงกระบวนการคิด (Chain of Thought), ห้ามใส่แท็ก <think> หรือ [THINKING], ห้ามอ้างอิงถึงคำสั่งของผู้พัฒนา (Developer Instruction) เด็ดขาด ให้ตอบเฉพาะเนื้อหาคำตอบสุดท้ายที่สุภาพ น่ารัก และเป็นประโยชน์ต่อผู้ใช้ทันที "
-            "หากผู้ใช้ถามเรื่องแพ็กเกจ การสมัคร หรือการชำระเงิน ให้แนะนำแพ็กเกจและแนะนำให้เข้าสู่ระบบชำระเงินอย่างปลอดภัยที่หน้าเว็บ https://kira-public-engine.onrender.com/ ห้ามเปิดเผยข้อมูลส่วนบุคคลหรือเลขบัญชีธนาคารส่วนตัวเด็ดขาด"
+            "ข้อมูลแพ็กเกจสมาชิกอย่างเป็นทางการของ Kira AI (ห้ามตอบนอกเหนือจากนี้เด็ดขาด):\n"
+            "- Starter Pass: 39 บาท ใช้งานได้ 7 วัน (โควตา 100 ข้อความ/วัน)\n"
+            "- Kira Pro: 129 บาท ใช้งานได้ 30 วัน (โควตา 500 ข้อความ/วัน)\n"
+            "- Founder Pass: 499 บาท ใช้งานได้ 365 วัน (1 ปีเต็ม, ไม่ใช่ตลอดชีพ, โควตา 1,000 ข้อความ/วัน)\n"
+            "ไม่มีแพ็กเกจตลอดชีพ (Lifetime) เด็ดขาด และการสมัครชำระเงินทุกครั้งต้องทำผ่านหน้าเว็บ https://kira-public-engine.onrender.com/ เท่านั้น ห้ามเปิดเผยข้อมูลส่วนบุคคลหรือเลขบัญชีธนาคารส่วนตัวเด็ดขาด"
         )
 
         history = [SystemMessage(content=system_directive)]
@@ -7781,7 +7785,8 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks):
 
         if event_type == "message":
             msg = event.get("message", {})
-            if msg.get("type") == "text":
+            msg_type = msg.get("type", "text")
+            if msg_type == "text":
                 user_text = msg.get("text", "")
                 _record_line_diagnostic(
                     "message_processed",
@@ -7791,6 +7796,29 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks):
                 )
                 if reply_token:
                     background_tasks.add_task(process_line_chat_event, user_text, reply_token, user_id)
+            elif msg_type == "sticker":
+                _record_line_diagnostic("sticker_received", user_id=user_id, has_token=bool(reply_token))
+                if reply_token:
+                    sticker_reply = "ขอบคุณสำหรับสติกเกอร์น่ารักๆ นะคะ! 🥰 คิระพร้อมช่วยเหลือคุณเสมอค่ะ มีคำถาม ปรึกษาธุรกิจ ช่วยเขียนโค้ด หรืออยากให้หนูช่วยงานอะไร พิมพ์บอกหนูได้เลยนะคะ 💜✨"
+                    background_tasks.add_task(send_line_reply, reply_token, [sticker_reply])
+            elif msg_type == "image":
+                _record_line_diagnostic("image_received", user_id=user_id, has_token=bool(reply_token))
+                if reply_token:
+                    img_reply = (
+                        "ได้รับรูปภาพเรียบร้อยแล้วค่ะ! 📸\n\n"
+                        "ตอนนี้ระบบวิเคราะห์ภาพ ตรวจโค้ด และอ่านเอกสารจากหน้าจอ เปิดให้บริการเต็มรูปแบบผ่านหน้าเว็บ Split Canvas นะคะ\n"
+                        "👉 https://kira-public-engine.onrender.com/\n\n"
+                        "หรือคุณสามารถพิมพ์คำถามหรือโจทย์ที่ต้องการให้คิระช่วยวิเคราะห์ในแชตนี้ได้เลยนะคะ หนูพร้อมดูแลเต็มที่ค่ะ! 💜"
+                    )
+                    background_tasks.add_task(send_line_reply, reply_token, [img_reply])
+            else:
+                _record_line_diagnostic("media_received", media_type=msg_type, user_id=user_id, has_token=bool(reply_token))
+                if reply_token:
+                    media_reply = (
+                        "ได้รับข้อมูลเรียบร้อยแล้วค่ะ! ✨\n\n"
+                        "เพื่อความสะดวกรวดเร็วและแม่นยำสูงสุด คุณสามารถพิมพ์ข้อความสิ่งที่ต้องการปรึกษา สอบถาม หรือให้คิระช่วยคิดงานในแชตนี้ได้ตลอด 24 ชั่วโมงเลยนะคะ หนูพร้อมดูแลเต็มที่ค่ะ 🥰"
+                    )
+                    background_tasks.add_task(send_line_reply, reply_token, [media_reply])
         elif event_type == "follow":
             _record_line_diagnostic("follow_event", user_id=user_id, has_token=bool(reply_token))
             if reply_token:
@@ -7803,6 +7831,13 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks):
                     "💡 เริ่มต้นคุยกับหนู พิมพ์คำถามที่อยากรู้ หรือพิมพ์ '?' เพื่อดูเมนูแนะนำได้เลยนะคะ หนูพร้อมดูแลเต็มที่ค่ะ! 🥰"
                 )
                 background_tasks.add_task(send_line_reply, reply_token, [welcome_msg])
+        elif event_type == "postback":
+            postback_data = event.get("postback", {}).get("data", "")
+            _record_line_diagnostic("postback_received", postback_data=postback_data, user_id=user_id, has_token=bool(reply_token))
+            if reply_token:
+                background_tasks.add_task(process_line_chat_event, postback_data, reply_token, user_id)
+        elif event_type == "unfollow":
+            _record_line_diagnostic("unfollow_event", user_id=user_id)
 
     return {"status": "ok", "processed_events": len(events)}
 

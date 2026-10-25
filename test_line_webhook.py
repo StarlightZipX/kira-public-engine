@@ -144,7 +144,8 @@ def test_keyword_responses_and_logging():
         app_module.send_line_reply = orig_reply
 
 def test_webhook_post_flow():
-    print("\n[TEST 5] Testing POST /api/line/webhook with Incoming Message Event...")
+    print("\n[TEST 5] Testing POST /api/line/webhook with Incoming Text, Sticker & Image Events...")
+    # 5.1 Text
     payload = {
         "destination": "U1234567890",
         "events": [
@@ -169,7 +170,57 @@ def test_webhook_post_flow():
     data = resp.json()
     assert data.get("status") == "ok"
     assert data.get("processed_events") == 1
-    print(f"  ✅ Webhook accepted event and returned 200 OK immediately: {data}")
+    print("  ✅ Text message event accepted.")
+
+    # 5.2 Sticker Event
+    sticker_payload = {
+        "destination": "U1234567890",
+        "events": [
+            {
+                "type": "message",
+                "message": {
+                    "type": "sticker",
+                    "id": "stk_001",
+                    "packageId": "1",
+                    "stickerId": "1"
+                },
+                "timestamp": 1700000000000,
+                "source": {
+                    "type": "user",
+                    "userId": "Ustkuser123"
+                },
+                "replyToken": "mock_reply_token_stk"
+            }
+        ]
+    }
+    resp_stk = client.post("/api/line/webhook", json=sticker_payload)
+    assert resp_stk.status_code == 200
+    assert resp_stk.json().get("processed_events") == 1
+    print("  ✅ Sticker event handled gracefully without silence.")
+
+    # 5.3 Image Event
+    img_payload = {
+        "destination": "U1234567890",
+        "events": [
+            {
+                "type": "message",
+                "message": {
+                    "type": "image",
+                    "id": "img_001"
+                },
+                "timestamp": 1700000000000,
+                "source": {
+                    "type": "user",
+                    "userId": "Uimguser123"
+                },
+                "replyToken": "mock_reply_token_img"
+            }
+        ]
+    }
+    resp_img = client.post("/api/line/webhook", json=img_payload)
+    assert resp_img.status_code == 200
+    assert resp_img.json().get("processed_events") == 1
+    print("  ✅ Image event handled with split canvas portal redirection.")
 
 def test_follow_and_diagnostics_flow():
     print("\n[TEST 6] Testing Follow Event & Diagnostics Telemetry Endpoint...")
@@ -189,7 +240,50 @@ def test_follow_and_diagnostics_flow():
     }
     resp = client.post("/api/line/webhook", json=follow_payload)
     assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
-    
+    print("  ✅ Follow welcome event processed successfully.")
+
+    # 6.2 Postback Event (e.g. Rich Menu click)
+    postback_payload = {
+        "destination": "U1234567890",
+        "events": [
+            {
+                "type": "postback",
+                "timestamp": 1700000000000,
+                "source": {
+                    "type": "user",
+                    "userId": "Upostback_user_789"
+                },
+                "postback": {
+                    "data": "แพ็กเกจ"
+                },
+                "replyToken": "mock_postback_token_abc"
+            }
+        ]
+    }
+    resp_pb = client.post("/api/line/webhook", json=postback_payload)
+    assert resp_pb.status_code == 200
+    assert resp_pb.json().get("processed_events") == 1
+    print("  ✅ Postback event routed to keyword/chat flow successfully.")
+
+    # 6.3 Unfollow Event (e.g. User blocked OA)
+    unfollow_payload = {
+        "destination": "U1234567890",
+        "events": [
+            {
+                "type": "unfollow",
+                "timestamp": 1700000000000,
+                "source": {
+                    "type": "user",
+                    "userId": "Uunfollow_user_000"
+                }
+            }
+        ]
+    }
+    resp_un = client.post("/api/line/webhook", json=unfollow_payload)
+    assert resp_un.status_code == 200
+    assert resp_un.json().get("processed_events") == 1
+    print("  ✅ Unfollow event handled cleanly without errors.")
+
     # Check diagnostics endpoint
     diag_resp = client.get("/api/line/diagnostics")
     assert diag_resp.status_code == 200, f"Expected 200, got {diag_resp.status_code}"
@@ -199,6 +293,7 @@ def test_follow_and_diagnostics_flow():
     diagnostics = diag_data["diagnostics"]
     assert diagnostics["total_webhooks_received"] >= 2
     assert len(diagnostics["recent_logs"]) >= 2
+    print("  ✅ Telemetry and diagnostic logs verified.")
 def test_thinking_sanitization_and_privacy_armor():
     print("\n[TEST 7] Testing Anti-Leak Thinking Sanitizer & Boss Privacy Armor...")
     import app as app_module

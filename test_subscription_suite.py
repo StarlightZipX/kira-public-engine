@@ -1,12 +1,13 @@
 import sys
-import requests
 import json
 import base64
+from fastapi.testclient import TestClient
+from app import app
 
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
 
-BASE_URL = "http://127.0.0.1:8000"
+client = TestClient(app)
 
 # Dummy base64 1x1 png image
 DUMMY_SLIP = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
@@ -18,13 +19,13 @@ def run_tests():
 
     # 1. Health check
     print("[1/10] Testing Server Health...")
-    r = requests.get(f"{BASE_URL}/api/health", timeout=5)
+    r = client.get("/api/health")
     assert r.status_code == 200, f"Health check failed: {r.status_code}"
     print("  ✅ Server is healthy (200 OK)")
 
     # 2. Get Subscription Plans
     print("\n[2/10] Testing GET /api/subscription/plans...")
-    r = requests.get(f"{BASE_URL}/api/subscription/plans", timeout=5)
+    r = client.get("/api/subscription/plans")
     assert r.status_code == 200, f"Failed GET /api/subscription/plans: {r.status_code}"
     data = r.json()
     assert data.get("status") == "success", f"Bad plans response: {data}"
@@ -42,7 +43,7 @@ def run_tests():
 
     # 3. Test Subscription Status for Normal Free User & Boss
     print("\n[3/10] Testing GET /api/subscription/status for free user and boss...")
-    r_free = requests.get(f"{BASE_URL}/api/subscription/status/sub_test_user_free", timeout=5)
+    r_free = client.get("/api/subscription/status/sub_test_user_free")
     assert r_free.status_code == 200
     sub_free = r_free.json()["subscription"]
     assert sub_free["plan"] == "free"
@@ -50,7 +51,7 @@ def run_tests():
     assert sub_free["daily_quota"] == 15
     print(f"  ✅ Free user status: {sub_free['badge']} (Quota: {sub_free['daily_quota']}/day, Pro: {sub_free['is_active_pro']})")
 
-    r_boss = requests.get(f"{BASE_URL}/api/subscription/status/boss", timeout=5)
+    r_boss = client.get("/api/subscription/status/boss")
     assert r_boss.status_code == 200
     sub_boss = r_boss.json()["subscription"]
     assert sub_boss["is_boss"] is True
@@ -65,7 +66,7 @@ def run_tests():
         "username": "sub_alice",
         "plan_id": "pro"
     }
-    r_order = requests.post(f"{BASE_URL}/api/subscription/create-order", json=order_payload, timeout=5)
+    r_order = client.post("/api/subscription/create-order", json=order_payload)
     assert r_order.status_code == 200, f"Order creation failed: {r_order.text}"
     order_data = r_order.json()
     assert order_data.get("status") == "success"
@@ -83,7 +84,7 @@ def run_tests():
         "slip_image_base64": DUMMY_SLIP,
         "transfer_note": "โอนจาก KBANK เวลา 14:30 น."
     }
-    r_slip = requests.post(f"{BASE_URL}/api/subscription/upload-slip", json=slip_payload, timeout=5)
+    r_slip = client.post("/api/subscription/upload-slip", json=slip_payload)
     assert r_slip.status_code == 200, f"Slip upload failed: {r_slip.text}"
     slip_data = r_slip.json()
     assert slip_data.get("status") == "success"
@@ -93,7 +94,7 @@ def run_tests():
 
     # 6. Admin Listing of Orders
     print("\n[6/10] Testing GET /api/admin/subscription/orders...")
-    r_admin = requests.get(f"{BASE_URL}/api/admin/subscription/orders", timeout=5)
+    r_admin = client.get("/api/admin/subscription/orders")
     assert r_admin.status_code == 200, f"Admin orders failed: {r_admin.text}"
     admin_data = r_admin.json()
     assert admin_data.get("status") == "success"
@@ -106,7 +107,7 @@ def run_tests():
 
     # 7. Admin Manual Re-Approval / Confirmation
     print(f"\n[7/10] Testing POST /api/admin/subscription/approve for Order {order_id}...")
-    r_approve = requests.post(f"{BASE_URL}/api/admin/subscription/approve", json={"order_id": order_id, "note": "Verified by boss audit"}, timeout=5)
+    r_approve = client.post("/api/admin/subscription/approve", json={"order_id": order_id, "note": "Verified by boss audit"})
     assert r_approve.status_code == 200, f"Approval failed: {r_approve.text}"
     appr_data = r_approve.json()
     assert appr_data.get("status") == "success"
@@ -114,7 +115,7 @@ def run_tests():
 
     # 8. Verify User Plan & Quota Upgrade
     print("\n[8/10] Verifying 'sub_alice' user status and quota after approval...")
-    r_alice = requests.get(f"{BASE_URL}/api/subscription/status/sub_alice", timeout=5)
+    r_alice = client.get("/api/subscription/status/sub_alice")
     assert r_alice.status_code == 200
     alice_sub = r_alice.json()["subscription"]
     assert alice_sub["plan"] == "pro", f"Expected 'pro', got {alice_sub['plan']}"
@@ -126,17 +127,17 @@ def run_tests():
 
     # 9. Test Order Rejection Workflow
     print("\n[9/10] Testing Rejection Workflow for another order...")
-    r_ord2 = requests.post(f"{BASE_URL}/api/subscription/create-order", json={"username": "sub_bob", "plan_id": "trial"}, timeout=5)
+    r_ord2 = client.post("/api/subscription/create-order", json={"username": "sub_bob", "plan_id": "trial"})
     ord2_id = r_ord2.json()["order_id"]
-    requests.post(f"{BASE_URL}/api/subscription/upload-slip", json={"order_id": ord2_id, "slip_image_base64": DUMMY_SLIP, "transfer_note": "Fake slip test"}, timeout=5)
+    client.post("/api/subscription/upload-slip", json={"order_id": ord2_id, "slip_image_base64": DUMMY_SLIP, "transfer_note": "Fake slip test"})
     
-    r_reject = requests.post(f"{BASE_URL}/api/admin/subscription/reject", json={"order_id": ord2_id, "reason": "ยอดเงินในสลิปไม่ตรง"}, timeout=5)
+    r_reject = client.post("/api/admin/subscription/reject", json={"order_id": ord2_id, "reason": "ยอดเงินในสลิปไม่ตรง"})
     assert r_reject.status_code == 200
     rej_data = r_reject.json()
     assert rej_data.get("status") == "success"
     assert rej_data.get("order_status") == "rejected"
     
-    r_bob = requests.get(f"{BASE_URL}/api/subscription/status/sub_bob", timeout=5)
+    r_bob = client.get("/api/subscription/status/sub_bob")
     assert r_bob.json()["subscription"]["plan"] == "free"
     print(f"  ✅ Order {ord2_id} rejected cleanly and user remains on Free tier")
 
@@ -148,7 +149,7 @@ def run_tests():
         "model_version": "boardroom",
         "boardroom_mode": True
     }
-    r_chat = requests.post(f"{BASE_URL}/api/chat", json=chat_payload, timeout=10)
+    r_chat = client.post("/api/chat", json=chat_payload)
     assert r_chat.status_code == 200
     chat_resp_text = r_chat.text
     assert "สิทธิพิเศษเฉพาะสมาชิก Kira Pro" in chat_resp_text or "Virtual Boardroom" in chat_resp_text, f"Unexpected response: {chat_resp_text}"
