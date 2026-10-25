@@ -164,6 +164,36 @@ def test_webhook_post_flow():
     assert data.get("processed_events") == 1
     print(f"  ✅ Webhook accepted event and returned 200 OK immediately: {data}")
 
+def test_follow_and_diagnostics_flow():
+    print("\n[TEST 6] Testing Follow Event & Diagnostics Telemetry Endpoint...")
+    follow_payload = {
+        "destination": "U1234567890",
+        "events": [
+            {
+                "type": "follow",
+                "timestamp": 1700000000000,
+                "source": {
+                    "type": "user",
+                    "userId": "Ufollow_user_456"
+                },
+                "replyToken": "mock_follow_token_xyz"
+            }
+        ]
+    }
+    resp = client.post("/api/line/webhook", json=follow_payload)
+    assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+    
+    # Check diagnostics endpoint
+    diag_resp = client.get("/api/line/diagnostics")
+    assert diag_resp.status_code == 200, f"Expected 200, got {diag_resp.status_code}"
+    diag_data = diag_resp.json()
+    assert diag_data.get("status") == "online"
+    assert "diagnostics" in diag_data
+    diagnostics = diag_data["diagnostics"]
+    assert diagnostics["total_webhooks_received"] >= 2
+    assert len(diagnostics["recent_logs"]) >= 2
+    print(f"  ✅ Diagnostics verified: {diagnostics['total_webhooks_received']} webhooks recorded with live telemetry.")
+
 if __name__ == "__main__":
     print("=" * 70)
     print("🚀 RUNNING KIRA LINE OFFICIAL ACCOUNT TEST SUITE")
@@ -175,6 +205,7 @@ if __name__ == "__main__":
         test_line_developer_console_verify_ping()
         test_keyword_responses_and_logging()
         test_webhook_post_flow()
+        test_follow_and_diagnostics_flow()
         print("\n" + "=" * 70)
         print("🎉 ALL TESTS PASSED SUCCESSFULLY! (100% VERIFIED)")
         print("=" * 70)

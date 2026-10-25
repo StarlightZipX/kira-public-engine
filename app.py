@@ -1766,7 +1766,9 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
 
     # Stage 2: Cross-Provider Failovers
     if primary_provider != "groq" and API_KEYS and API_KEYS[0] != "YOUR_GROQ_API_KEY_HERE":
-        groq_candidates = ["openai/gpt-oss-120b", PREFERRED_PRO, PREFERRED_FLASH] + ALL_MODEL_CANDIDATES
+        groq_candidates = [m for m in [PREFERRED_PRO, PREFERRED_FLASH] + ALL_MODEL_CANDIDATES if not any(x in m.lower() for x in ["openai/", "qwen/", "deepseek/"])]
+        if not groq_candidates:
+            groq_candidates = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
         execution_stages.append(("groq", groq_candidates, API_KEYS))
 
     if primary_provider != "openrouter" and OPENROUTER_API_KEYS:
@@ -1805,9 +1807,9 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
                         provider_monitor.mark_failure(provider, key, "429 Rate Limit", cooldown_seconds=60)
                         print(f"⚠️ [Cooldown] {provider} Key#{k_idx+1} ติด Rate Limit 429 → สลับคีย์/ค่ายถัดไป")
                         break
-                    elif any(c in err_lower for c in ["401", "403", "unauthorized", "forbidden", "invalid_api_key"]):
-                        provider_monitor.mark_failure(provider, key, "Auth Failed", cooldown_seconds=300)
-                        print(f"❌ [Auth] {provider} Key#{k_idx+1} คีย์หมดอายุ/ไม่ถูกต้อง → ข้าม")
+                    elif any(c in err_lower for c in ["401", "403", "unauthorized", "forbidden", "invalid_api_key", "402", "insufficient credits", "payment required", "credit"]):
+                        provider_monitor.mark_failure(provider, key, "Auth/Billing Failed", cooldown_seconds=1800)
+                        print(f"❌ [Auth/Billing] {provider} Key#{k_idx+1} คีย์หมดอายุหรือเครดิตหมด (402) → กักกัน 30 นาที สลับค่ายทันที")
                         break
                     elif any(c in err_lower for c in ["404", "model_not_found"]):
                         print(f"⏩ [Skip] {provider} {model_name}: 404 Model Not Found")
@@ -7353,21 +7355,61 @@ async def view_shared_snapshot(request: Request, share_id: str):
     )
 
 # ==============================================================================
-# 🟢 KIRA ON LINE OFFICIAL ACCOUNT (LINE MESSAGING API ENGINE v2.6.5)
+# 🟢 KIRA ON LINE OFFICIAL ACCOUNT (LINE MESSAGING API ENGINE v2.6.5 ENTERPRISE)
 # ==============================================================================
+
+LINE_DIAGNOSTICS = {
+    "total_webhooks_received": 0,
+    "total_messages_processed": 0,
+    "last_event_time": None,
+    "last_user_id": None,
+    "last_user_text": None,
+    "last_signature_valid": None,
+    "last_reply_status": None,
+    "last_reply_error": None,
+    "last_reply_time": None,
+    "recent_logs": []
+}
+
+def _record_line_diagnostic(action: str, **kwargs):
+    """บันทึก telemetry ประวัติการทำงานของ LINE Webhook สำหรับตรวจเช็คสด"""
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    entry = {"time": now_str, "action": action, **kwargs}
+    LINE_DIAGNOSTICS["recent_logs"].insert(0, entry)
+    if len(LINE_DIAGNOSTICS["recent_logs"]) > 30:
+        LINE_DIAGNOSTICS["recent_logs"] = LINE_DIAGNOSTICS["recent_logs"][:30]
+        
+    if action == "webhook_received":
+        LINE_DIAGNOSTICS["total_webhooks_received"] += 1
+        LINE_DIAGNOSTICS["last_event_time"] = now_str
+        LINE_DIAGNOSTICS["last_signature_valid"] = kwargs.get("signature_valid")
+    elif action == "message_processed":
+        LINE_DIAGNOSTICS["total_messages_processed"] += 1
+        LINE_DIAGNOSTICS["last_user_text"] = kwargs.get("user_text")
+        LINE_DIAGNOSTICS["last_user_id"] = kwargs.get("user_id")
+    elif action in ("reply_sent", "reply_skipped", "reply_exception"):
+        LINE_DIAGNOSTICS["last_reply_status"] = kwargs.get("status_code", "error")
+        LINE_DIAGNOSTICS["last_reply_error"] = kwargs.get("error")
+        LINE_DIAGNOSTICS["last_reply_time"] = now_str
+
 
 def verify_line_signature(body_bytes: bytes, signature: str) -> bool:
     """ตรวจสอบ HMAC-SHA256 Signature ที่ส่งมาจาก LINE Platform"""
-    if not LINE_CHANNEL_SECRET:
+    secret = (LINE_CHANNEL_SECRET or "").strip()
+    if not secret:
         # หากยังไม่ได้ตั้งค่า Secret ใน dev/staging ให้ผ่านเพื่อความสะดวกในการทดสอบ
         return True
     if not signature:
         return False
     try:
         computed_signature = base64.b64encode(
-            hmac.new(LINE_CHANNEL_SECRET.encode('utf-8'), body_bytes, hashlib.sha256).digest()
+            hmac.new(secret.encode('utf-8'), body_bytes, hashlib.sha256).digest()
         ).decode('utf-8')
-        return hmac.compare_digest(computed_signature, signature)
+        is_valid = hmac.compare_digest(computed_signature, signature.strip())
+        if not is_valid:
+            print(f"⚠️ [LINE OA] Signature Mismatch! Given: {signature[:10]}... Computed: {computed_signature[:10]}...")
+        return is_valid
     except Exception as e:
         print(f"❌ [LINE OA] Signature Verification Error: {e}")
         return False
@@ -7375,16 +7417,20 @@ def verify_line_signature(body_bytes: bytes, signature: str) -> bool:
 
 async def send_line_reply(reply_token: str, messages: list) -> bool:
     """ส่งข้อความตอบกลับไปยัง LINE Messaging API (Reply Message)"""
-    if not LINE_CHANNEL_ACCESS_TOKEN:
-        print("ℹ️ [LINE OA] Standby: LINE_CHANNEL_ACCESS_TOKEN not set, skipping outbound call.")
+    token = (LINE_CHANNEL_ACCESS_TOKEN or "").strip()
+    if not token:
+        err_msg = "LINE_CHANNEL_ACCESS_TOKEN is not set on server"
+        print(f"ℹ️ [LINE OA] Standby: {err_msg}, skipping outbound call.")
+        _record_line_diagnostic("reply_skipped", error=err_msg)
         return False
     if not reply_token:
+        _record_line_diagnostic("reply_skipped", error="reply_token empty")
         return False
 
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
+        "Authorization": f"Bearer {token}"
     }
 
     formatted_messages = []
@@ -7402,18 +7448,29 @@ async def send_line_reply(reply_token: str, messages: list) -> bool:
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(url, headers=headers, json=payload)
-            if resp.status_code == 200:
+            success = (resp.status_code == 200)
+            err_text = "" if success else resp.text[:200]
+            _record_line_diagnostic(
+                "reply_sent",
+                status_code=resp.status_code,
+                success=success,
+                error=err_text,
+                reply_token=reply_token[:10] if reply_token else ""
+            )
+            if success:
+                print(f"✅ [LINE OA Reply Success] HTTP 200 OK sent to replyToken: {reply_token[:10]}...")
                 return True
             else:
                 print(f"❌ [LINE OA Reply Failed] Status: {resp.status_code}, Body: {resp.text}")
                 return False
     except Exception as e:
         print(f"❌ [LINE OA Reply Exception]: {e}")
+        _record_line_diagnostic("reply_exception", error=str(e), reply_token=reply_token[:10] if reply_token else "")
         return False
 
 
 async def process_line_chat_event(user_text: str, reply_token: str, user_id: str):
-    """ประมวลผลข้อความจากผู้ใช้งาน LINE: Smart Keyword Triggers + Multi-Brain AI Engine"""
+    """ประมวลผลข้อความจากผู้ใช้งาน LINE: Smart Keyword Triggers + High-Speed Multi-Brain AI Engine"""
     clean_text = user_text.strip()
     lower_text = clean_text.lower()
     line_username = f"line_{user_id}"
@@ -7485,7 +7542,7 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
         await send_line_reply(reply_token, [reply_msg])
         return
 
-    # 4. ประมวลผลบทสนทนาอัจฉริยะผ่าน Multi-Brain AI Engine (Groq / OpenRouter / Gemini / Emergency)
+    # 4. ประมวลผลบทสนทนาอัจฉริยะผ่าน High-Speed AI Engine พร้อม 7-Second Latency Guard
     try:
         system_directive = (
             "คุณคือ Kira (คิระ) วิศวกร AI หญิงสุดน่ารัก อ่อนหวาน ฉลาด รอบรู้ ช่วยเหลือผู้ใช้งานอย่างจริงใจและมืออาชีพ "
@@ -7514,11 +7571,23 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
 
         history.append(HumanMessage(content=clean_text))
 
-        success, chunks, error = await _try_all_keys_and_models(history, preferred_model=PREFERRED_PRO, ui_lang="th")
+        # ส่งผ่าน AI Engine พร้อมการันตีส่งคำตอบก่อน LINE replyToken หมดอายุ (7.0s timeout)
+        # ใช้โมเดลความเร็วสูงที่ผ่านการตรวจสอบตอนบูท (PREFERRED_FLASH / PREFERRED_PRO)
+        fast_preferred_model = PREFERRED_FLASH or PREFERRED_PRO
+        try:
+            success, chunks, error = await asyncio.wait_for(
+                _try_all_keys_and_models(history, preferred_model=fast_preferred_model, ui_lang="th"),
+                timeout=7.0
+            )
+        except asyncio.TimeoutError:
+            print("⏱️ [LINE OA] AI Latency exceeded 7.0s. Activating instant emergency response.")
+            emergency_chunks = _synthesize_autonomous_emergency_response(history, "LINE Reply Token Expiry Guard", ui_lang="th")
+            success, chunks, error = True, emergency_chunks, ""
+
         if success and chunks:
             ai_reply = "".join(chunks).strip()
         else:
-            ai_reply = "คิระพร้อมดูแลค่ะ! ตอนนี้หนูกำลังอัปเดตระบบประมวลผลให้มีความเร็วยิ่งขึ้น หากคุณมีคำถามใดๆ หรือต้องการดูแพ็กเกจ พิมพ์ 'โปรโมชั่น' ได้เลยนะคะ ✨"
+            ai_reply = "สวัสดีค่ะ! คิระพร้อมดูแลคุณเสมอนะคะ ✨ ตอนนี้ระบบกำลังอัปเดตช่องทางประมวลผลให้มีความเร็วยิ่งขึ้น หากคุณมีคำถามใดๆ หรือต้องการดูแพ็กเกจ พิมพ์ 'โปรโมชั่น' ได้เลยนะคะ 💜"
 
         # บันทึกคำตอบลง logs
         try:
@@ -7538,13 +7607,39 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
 async def line_webhook_health():
     """Endpoint สำหรับตรวจสอบสถานะของ LINE Messaging API Webhook Engine"""
     tz = timezone(timedelta(hours=7))
+    token_set = bool(LINE_CHANNEL_ACCESS_TOKEN and len(LINE_CHANNEL_ACCESS_TOKEN.strip()) > 10)
+    secret_set = bool(LINE_CHANNEL_SECRET and len(LINE_CHANNEL_SECRET.strip()) > 5)
     return {
         "status": "online",
         "service": "Kira LINE Official Account Webhook Engine",
         "version": "2.6.5",
-        "channel_configured": bool(LINE_CHANNEL_SECRET and LINE_CHANNEL_ACCESS_TOKEN),
+        "channel_configured": bool(token_set and secret_set),
+        "channel_secret_set": secret_set,
+        "channel_access_token_set": token_set,
+        "total_webhooks_received": LINE_DIAGNOSTICS["total_webhooks_received"],
+        "total_messages_processed": LINE_DIAGNOSTICS["total_messages_processed"],
+        "last_event_time": LINE_DIAGNOSTICS["last_event_time"],
         "endpoint": "/api/line/webhook",
         "timestamp": datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+
+@app.get("/api/line/diagnostics")
+async def line_diagnostics_endpoint():
+    """Live diagnostic telemetry data for LINE Messaging API Webhook & Outbound Deliveries"""
+    tz = timezone(timedelta(hours=7))
+    token_set = bool(LINE_CHANNEL_ACCESS_TOKEN and len(LINE_CHANNEL_ACCESS_TOKEN.strip()) > 10)
+    secret_set = bool(LINE_CHANNEL_SECRET and len(LINE_CHANNEL_SECRET.strip()) > 5)
+    return {
+        "status": "online",
+        "service": "Kira LINE OA Diagnostics Hub",
+        "version": "2.6.5",
+        "timestamp": datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S"),
+        "channel_access_token_configured": token_set,
+        "channel_secret_configured": secret_set,
+        "channel_access_token_preview": (LINE_CHANNEL_ACCESS_TOKEN[:10] + "...") if token_set else None,
+        "channel_secret_preview": (LINE_CHANNEL_SECRET[:6] + "...") if secret_set else None,
+        "diagnostics": LINE_DIAGNOSTICS
     }
 
 
@@ -7555,16 +7650,27 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks):
     body_bytes = await request.body()
 
     # ตรวจสอบ Signature
-    if not verify_line_signature(body_bytes, signature):
+    sig_valid = verify_line_signature(body_bytes, signature)
+    _record_line_diagnostic(
+        "webhook_received",
+        signature_valid=sig_valid,
+        sig_len=len(signature),
+        body_len=len(body_bytes)
+    )
+
+    if not sig_valid:
+        print(f"❌ [LINE OA Webhook] Invalid signature from client! Sig: {signature[:12]}...")
         return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid LINE signature"})
 
     try:
         data = json.loads(body_bytes.decode('utf-8', errors='ignore'))
     except Exception as e:
+        _record_line_diagnostic("json_error", error=str(e))
         return JSONResponse(status_code=400, content={"status": "error", "message": f"Invalid JSON: {e}"})
 
     events = data.get("events", [])
     if not events:
+        print("✅ [LINE OA Webhook] LINE Console Verification Ping (events=[]) accepted successfully.")
         return {"status": "ok", "message": "Webhook verified successfully"}
 
     for event in events:
@@ -7577,8 +7683,26 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks):
             msg = event.get("message", {})
             if msg.get("type") == "text":
                 user_text = msg.get("text", "")
+                _record_line_diagnostic(
+                    "message_processed",
+                    user_text=user_text[:80],
+                    user_id=user_id,
+                    has_token=bool(reply_token)
+                )
                 if reply_token:
                     background_tasks.add_task(process_line_chat_event, user_text, reply_token, user_id)
+        elif event_type == "follow":
+            _record_line_diagnostic("follow_event", user_id=user_id, has_token=bool(reply_token))
+            if reply_token:
+                welcome_msg = (
+                    "สวัสดีค่ะ! หนูชื่อ \"คิระ\" (Kira AI) ยินดีที่ได้รู้จักนะคะ 💜✨\n\n"
+                    "หนูเป็น AI ผู้ช่วยส่วนตัวและวิศวกรระบบของคุณ พร้อมช่วยงานทั้ง:\n"
+                    "• ตอบคำถามและให้คำปรึกษาธุรกิจ\n"
+                    "• ช่วยเขียนโค้ด แปลงภาษา วิเคราะห์ระบบ\n"
+                    "• วางแผนการตลาดและสรุปเนื้อหา\n\n"
+                    "💡 เริ่มต้นคุยกับหนู พิมพ์คำถามที่อยากรู้ หรือพิมพ์ '?' เพื่อดูเมนูแนะนำได้เลยนะคะ หนูพร้อมดูแลเต็มที่ค่ะ! 🥰"
+                )
+                background_tasks.add_task(send_line_reply, reply_token, [welcome_msg])
 
     return {"status": "ok", "processed_events": len(events)}
 
