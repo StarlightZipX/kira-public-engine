@@ -108,8 +108,15 @@ def test_keyword_responses_and_logging():
         assert "004999252517585" not in pay_reply, "PromptPay leaked!"
         assert "บัญชีจริงของบอส" not in pay_reply, "Internal debug wording leaked!"
         assert "https://kira-public-engine.onrender.com/" in pay_reply, "Official portal link missing"
-        assert "Starter Plan" in pay_reply and "Founder Lifetime" in pay_reply, "Packages missing"
-        print("  ✅ Privacy & Security Verified: Zero personal data leaked, directed to secure web portal.")
+        
+        # Verify Consumer Protection: Absolutely NO false "Lifetime" or "ตลอดชีพ" claims
+        assert "ตลอดชีพ" not in pay_reply or "ไม่ใช่แพ็กเกจตลอดชีพ" in pay_reply, "Deceptive lifetime claim found!"
+        assert "Founder Lifetime" not in pay_reply, "Founder Lifetime label must not exist!"
+        assert "Starter Pass" in pay_reply and "39 บาท" in pay_reply, "Starter Pass 39 THB missing!"
+        assert "Kira Pro" in pay_reply and "129 บาท" in pay_reply, "Kira Pro 129 THB missing!"
+        assert "Founder Pass" in pay_reply and "499 บาท" in pay_reply, "Founder Pass 499 THB missing!"
+        assert "365 วัน" in pay_reply or "1 ปีเต็ม" in pay_reply, "Founder 365 days duration missing!"
+        print("  ✅ Truth-in-Advertising & Privacy Verified: 100% accurate plans (Starter 39, Pro 129, Founder 499/1yr - Zero Lifetime claims).")
         
         # Test Web Keyword
         captured_replies.clear()

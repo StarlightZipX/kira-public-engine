@@ -4,30 +4,27 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 25 ตุลาคม 2026 (Kira v2.6.6 Enterprise - Zero-Leak Thinking Sanitizer & Boss Privacy Armor)
+### 🕒 อัปเดตล่าสุด: 25 ตุลาคม 2026 (Kira v2.6.7 Enterprise - Truth-in-Advertising & Package Realignment)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **กำจัดปัญหาแท็กความคิดและคำสั่งหลุดใน LINE Chat (Zero-Leak Output Sanitization 100%):**
-  - **สาเหตุที่ตรวจพบอย่างละเอียด:**
-    1. โมเดลกลุ่ม Reasoning / Deep Thinking (เช่น DeepSeek R1, Qwen Reasoning หรือ Groq Models) ส่ง `reasoning_content` หรือ `<think>` ออกมา ซึ่ง `UnifiedLLM` ทำการครอบด้วย `[THINKING]...[/THINKING][THINKING_DONE]` เพื่อใช้แสดงผล Accordion บนหน้าเว็บ
-    2. หน้าต่างแชต LINE Official Account เป็น Messaging App ทั่วไป ไม่รองรับ JavaScript Accordion เหมือนหน้าเว็บ จึงแสดงแท็ก `[THINKING]...[/THINKING][THINKING_DONE]` และข้อความวิเคราะห์คำสั่ง (Developer Instruction) ออกมาทั้งดุ้น
-  - **มาตรการแก้ไขและเกราะป้องกันสมบูรณ์แบบ (100% Resolved):**
-    1. **สร้างระบบคลีนนิ่งขั้นสูง `sanitize_ai_reply_for_chat`:**
-       - ลบแท็ก Thinking ทุกรูปแบบ (`[THINKING]...[/THINKING]`, `<think>...</think>`, `<thought>`, `<reasoning>`, `[Thought Process]`)
-       - ดักจับ Unclosed Tags ที่อาจหลงเหลือกรณีโมเดลถูกตัดจังหวะ
-       - ลบ Standalone Residual Tags และ Meta Instruction Leaks เช่น `According to developer instruction...` และ `The user says...`
-    2. **เกราะป้องกันสองชั้น (Defense-in-Depth in `send_line_reply`):**
-       - กรองข้อความทุกข้อความ (ทั้ง string และ dict) ที่ส่งผ่าน `send_line_reply` ด้วย `sanitize_ai_reply_for_chat` เพื่อการันตีว่าจะไม่มีแท็กหลุดรอดสู่ผู้ใช้เด็ดขาด
-    3. **เกราะคุ้มครองข้อมูลส่วนตัวของบอส (Boss Personal Data Armor - Rule 3):**
-       - อัปเกรด `scrub_sensitive_output` ด้วย Negative Lookaround Boundaries ป้องกันการหลุดของเลขบัญชี (`004-9-99252-5`), พร้อมเพย์ (`004999252517585`), และชื่อจริงของบอส (`ศิวัช รอสวัสดิ์`) โดยเซ็นเซอร์เป็น `[REDACTED_...]` ทันที
-    4. **กระชับ System Directive ใน LINE Chat:**
-       - เพิ่มข้อห้ามเด็ดขาดไม่ให้โมเดลแสดง Chain of Thought หรือเอ่ยถึง Developer Instructions
-    5. **Automated Test Suite (`test_line_webhook.py` & `test_thinking_sanitizer.py`):**
-       - ผ่านการทดสอบครบ 7 ชุดรวด (100% PASS) รวมทั้งเคสจากภาพสกรีนช็อตของบอสแบบตรงเป๊ะ
+* **ตรวจสอบความจริงและแก้ไขข้อมูลแพ็กเกจให้ถูกต้องตามกฎหมาย 100% (Truth-in-Advertising Audit):**
+  - **ผลการตรวจสอบความจริงกับระบบจริง (`SUBSCRIPTION_PLANS` และหน้าเว็บ):**
+    1. **ยืนยันชัดเจน: ระบบไม่มีแพ็กเกจ "ตลอดชีพ (Lifetime)" สำหรับบุคคลทั่วไป** 
+       - ข้อความเดิมที่หลุดออกไปว่า *"Founder Lifetime (499 บ.) สิทธิ์เข้าถึงทุกระบบตลอดชีพ"* เป็นข้อความ Hardcoded เก่าที่ผิดพลาด ไม่ตรงกับระบบจริงและหน้าเว็บ
+       - แพ็กเกจ 499 บาทที่แท้จริงคือ **"Founder Pass (รายปี 1 ปีเต็ม / 365 วัน)"** ซึ่งให้สิทธิ์ Pro ตลอด 365 วัน (ตกเดือนละ ~41.5 บาท ประหยัด 68%)
+    2. **แพ็กเกจจริงในระบบมีเพียง 3 ระดับเท่านั้น:**
+       - **Starter Pass:** 39 บาท / 7 วัน (โควตา 100 ข้อความ/วัน, สภา 4 ผู้บริหารวันละ 3 ครั้ง, Auto-Draft วันละ 3 ชิ้น)
+       - **Kira Pro:** 129 บาท / เดือน (30 วัน) (โควตา 500 ข้อความ/วัน, สภา 4 ผู้บริหารไม่จำกัดครั้ง, Omni-Task Matrix ไม่จำกัด)
+       - **Founder Pass:** 499 บาท / 1 ปีเต็ม (365 วัน) (โควตา 1,000 ข้อความ/วัน, สิทธิ์ระดับ Pro ตลอด 365 วัน พร้อมเหรียญตรา Founder VIP)
+  - **การแก้ไขในโค้ด (`app.py` & `test_line_webhook.py`):**
+    1. แก้ไขข้อความตอบกลับใน `payment_keywords` ทั้งหมดใน `app.py` ให้ตรงกับระบบจริง 100%
+    2. ระบุหมายเหตุชัดเจน: *"เป็นแพ็กเกจรายปี 365 วัน ไม่ใช่แพ็กเกจตลอดชีพนะคะ"* ป้องกันการเข้าใจผิดของผู้บริโภค
+    3. เพิ่มเงื่อนไขตรวจสอบใน `test_line_webhook.py` ห้ามมีคำว่า "ตลอดชีพ" หรือ "Founder Lifetime" หลุดออกมาในระบบเด็ดขาด
+    4. รันชุดทดสอบผ่าน 100% ครบทั้ง 7 ชุด (`test_line_webhook.py`)
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `fix(security): sanitize ai thinking tags and strengthen boss privacy armor for line chat`
+* **Git Commit ล่าสุด:** `fix(pricing): correct package details to match official subscriptions and remove misleading lifetime claims`
 * **สถานะบน Render:** กำลังเตรียม Push ขึ้น Render สาขา `main`
 
 #### 3. 🎯 สเต็ปถัดไปสำหรับบอส (Next Action Steps for Boss):
-* คิระได้ทำความสะอาดข้อความและติดตั้งเกราะความปลอดภัยเรียบร้อยแล้ว บอสสามารถทดสอบพิมพ์ทักทายคิระใน LINE ได้อย่างสบายใจ ไม่มีข้อความหรือแท็กเบื้องหลังหลุดมาอีกแน่นอนค่ะ!
+* ข้อมูลแพ็กเกจและราคาในระบบถูกต้องตรงตามความเป็นจริงและเว็บไซต์ 100% แล้ว บอสสามารถตรวจสอบหรือทักถามเรื่องแพ็กเกจใน LINE ได้อย่างสบายใจและถูกต้องตามกฎหมายทุกประการค่ะ!
