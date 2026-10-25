@@ -32,14 +32,15 @@
        - ผ่านการทดสอบครบ 5 ชุด (Health Check, HMAC Signature, LINE Console Ping, Smart Keywords & Account Protection, Full Webhook Event & AI Fallback) ผลลัพธ์: **100% PASS**
     5. **Official LINE Visual Assets Suite (`static/images/`):**
        - `kira_line_avatar.jpg`: ภาพโปรไฟล์ 1:1 น้องคิระวิศวกรสาวผมม่วง ไฮไลต์นีออน สำหรับ Profile Picture
-       - `kira_line_cover.jpg` & `kira_clean_cover.jpg`: ภาพหน้าปก 16:9 สไตล์มินิมอลเทคโนโลยี Glassmorphism โลโก้ดาวนีออน คลีน เข้าถึงง่าย ไม่เบียว สำหรับ Cover Photo
+       - `kira_wide_cover.jpg` & `kira_aurora_cover.jpg` (ตั้งเป็น `kira_line_cover.jpg`): ภาพหน้าปกแนวนอน 16:9 สไตล์ Panoramic Modern Tech (Cyber Wave & Crystalline Aurora) เรียบหรู สะอาดตา ไม่เบียว ไม่ซ้ำการ์ดโลโก้
        - ตัวเลือก Status Message (ไม่เกิน 20 ตัวอักษร) และการตั้งค่าปุ่มลิงก์หน้าเว็บ `https://kira-public-engine.onrender.com/`
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `feat(assets): update line cover to clean minimalist tech glassmorphism style`
+* **Git Commit ล่าสุด:** `feat(assets): add authentic panoramic modern tech covers for line oa`
 * **สถานะบน Render:** Auto-deploy ขึ้น Render สาขา `main` เรียบร้อยแล้ว
 
 #### 3. 🎯 สเต็ปถัดไปสำหรับบอส (Next Action Steps for Boss):
-* **ตั้งค่าหน้าโปรไฟล์ LINE OA:** อัปโหลด Avatar, Cover Photo, ใส่ Status Message และเพิ่มปุ่ม Website
+* **ตั้งค่าหน้าโปรไฟล์ LINE OA:** เลือกภาพ Cover แนวนอนที่บอสชอบ (`kira_aurora_cover.jpg` หรือ `kira_wide_cover.jpg`)
 * **เชื่อมต่อ Messaging API Webhook:** ใส่ URL `https://kira-public-engine.onrender.com/api/line/webhook` และนำ Secret/Token ไปใส่ใน Render
+
 
