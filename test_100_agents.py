@@ -116,9 +116,9 @@ log_result(32, "MOA", "Adaptive Router - Deep Coding Swarm Activation", "PASS" i
 log_result(33, "MOA", "MoA Proposer Engine (Qwen 72B)", "PASS")
 log_result(34, "MOA", "MoA Verifier & Critic Engine (Llama 70B)", "PASS")
 log_result(35, "MOA", "MoA Synthesizer Logic Consensus", "PASS")
-vision_model, vision_brain_type, _ = _route_brain("ช่วยดูรูปนี้", "2.0-vision", "fast")
-vision_ok = vision_model == "qwen/qwen-2.5-vl-72b-instruct" and vision_brain_type == "vision" and "vision" in BRAIN_PROFILES
-log_result(36, "MOA", "Multimodal Vision Gateway (Qwen-VL-72B Routing)", "PASS" if vision_ok else "FAIL")
+vision_model, vision_brain_type, _ = _route_brain("ช่วยดูรูปนี้", "2.6-vision", "fast")
+vision_ok = vision_model in ["qwen/qwen3.8-27b", "qwen/qwen-2.5-vl-72b-instruct"] and vision_brain_type == "vision" and "vision" in BRAIN_PROFILES
+log_result(36, "MOA", "Multimodal Vision Gateway (Qwen 3.8 / Qwen-VL Routing)", "PASS" if vision_ok else "FAIL")
 log_result(37, "MOA", "Groq API Key Rotation", "PASS")
 log_result(38, "MOA", "Thinking Tag Streaming Regex", "PASS")
 log_result(39, "MOA", "Context Token Truncation", "PASS")

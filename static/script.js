@@ -1,3 +1,39 @@
+// ====================================================================
+// 🚀 Kira AI v2.7.0 Client State & Cache Synchronizer (Auto-Purge Legacy)
+// ====================================================================
+(function() {
+    const KIRA_CURRENT_VERSION = '2.7.0';
+    try {
+        const lastVersion = localStorage.getItem('kira_app_version');
+        if (lastVersion !== KIRA_CURRENT_VERSION) {
+            console.log(`[Kira Sync] Upgrading client state from ${lastVersion || 'legacy'} to ${KIRA_CURRENT_VERSION}`);
+            localStorage.setItem('kira_app_version', KIRA_CURRENT_VERSION);
+            
+            const currentModel = localStorage.getItem('kira_model');
+            if (!currentModel || currentModel.includes('2.1') || currentModel.includes('2.0') || currentModel.includes('1.')) {
+                localStorage.setItem('kira_model', '2.6-reasoning');
+            }
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then((registrations) => {
+                    registrations.forEach((reg) => reg.update());
+                });
+            }
+            if ('caches' in window) {
+                caches.keys().then((keys) => {
+                    keys.forEach((key) => {
+                        if (key !== 'kira-ai-cache-v2.7.0') {
+                            caches.delete(key);
+                        }
+                    });
+                });
+            }
+        }
+    } catch (e) {
+        console.warn('[Kira Sync] Migration Notice:', e);
+    }
+})();
+
 const renderer = new marked.Renderer();
 renderer.code = function(code, language) {
     const lang = (language || '').match(/\S*/)[0];
@@ -2212,7 +2248,13 @@ const modelSelect = document.getElementById('model-select');
 if (modelSelect) {
     const savedModel = localStorage.getItem('kira_model');
     if (savedModel) {
-        modelSelect.value = savedModel;
+        const hasOption = Array.from(modelSelect.options).some(opt => opt.value === savedModel);
+        if (hasOption) {
+            modelSelect.value = savedModel;
+        } else {
+            localStorage.setItem('kira_model', '2.6-reasoning');
+            modelSelect.value = '2.6-reasoning';
+        }
     }
 
     modelSelect.addEventListener('change', (e) => {

@@ -1170,13 +1170,18 @@ def init_db():
         execute_query('''CREATE INDEX IF NOT EXISTS idx_tasks_username ON tasks (username)''')
         execute_query('''CREATE INDEX IF NOT EXISTS idx_tasks_task_id ON tasks (task_id)''')
         
-        # Insert default prompts if not exists
-        check_p1 = execute_query("SELECT id FROM system_settings WHERE key_name='prompt_1.0'", fetch='one')
+        # Synchronize default prompts to current architecture (Auto-Upgrade legacy 1.0/1.1)
+        check_p1 = execute_query("SELECT value FROM system_settings WHERE key_name='prompt_1.0'", fetch='one')
         if not check_p1:
             execute_query("INSERT INTO system_settings (key_name, value) VALUES (?, ?)", ('prompt_1.0', system_prompt))
-        check_p2 = execute_query("SELECT id FROM system_settings WHERE key_name='prompt_1.1'", fetch='one')
+        elif "1.0" in str(check_p1[0]) or "Kira Studio" in str(check_p1[0]):
+            execute_query("UPDATE system_settings SET value=? WHERE key_name='prompt_1.0'", (system_prompt,))
+
+        check_p2 = execute_query("SELECT value FROM system_settings WHERE key_name='prompt_1.1'", fetch='one')
         if not check_p2:
             execute_query("INSERT INTO system_settings (key_name, value) VALUES (?, ?)", ('prompt_1.1', system_prompt_boss))
+        elif "1.1" in str(check_p2[0]):
+            execute_query("UPDATE system_settings SET value=? WHERE key_name='prompt_1.1'", (system_prompt_boss,))
 
         # Seed default Server Maintenance config if not exists
         check_maint = execute_query("SELECT id FROM system_settings WHERE key_name='server_maintenance'", fetch='one')

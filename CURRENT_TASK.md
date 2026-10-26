@@ -4,30 +4,34 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 26 ตุลาคม 2026 (Kira v2.7.0 Enterprise - Live AI Brain Verification & OTPM Stabilization Complete)
+### 🕒 อัปเดตล่าสุด: 26 ตุลาคม 2026 (Kira v2.7.0 Enterprise - Browser Cache Purge & UI/Engine Full Synchronization Complete)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **ทดสอบระบบสมองกลจริง (Live Brain Verification & Stress Test):**
-  1. **ยืนยันการตอบกลับจริงของทุกโมเดล (Verified Live Model Responses):**
-     - **Qwen 3.8 (`qwen/qwen3.8-27b`):** ทดสอบยิงจริง ตอบกลับเป็นภาษาไทยอย่างสละสลวย นอบน้อม ถูกต้อง 100% พร้อมระบบคิดวิเคราะห์
-     - **GPT-OSS 120B (`openai/gpt-oss-120b`):** ทดสอบคำนวณและคิดวิเคราะห์เชิงลึก ตอบได้เฉียบคม แม่นยำ แสดง Native Thinking Tokens ครบถ้วน
-     - **GPT-OSS 20B (`openai/gpt-oss-20b`):** ทำงานด้วยความเร็วสูง ตอบโต้ข้อความแชตเสี้ยววินาที
-  2. **ปรับปรุงความเสถียรของสถาปัตยกรรม (Architecture & Routing Fixes in `app.py`):**
-     - **OTPM Rate-Limit Guard:** เพิ่ม `max_tokens: 950` สำหรับโมเดล Qwen บน Groq ใน `UnifiedLLM.invoke` และ `UnifiedLLM.astream` ป้องกัน HTTP 413 Output Token Limit
-     - **Native Groq Routing:** ปรับปรุง `UnifiedLLM.__init__` และ `_try_all_keys_and_models` ให้จัดส่ง `qwen/qwen3.8-27b`, `openai/gpt-oss-120b`, `openai/gpt-oss-20b` ไปยังคลัสเตอร์ Groq โดยตรง ไม่หลงไป OpenRouter ที่โควตาติด 402
-     - **MoA Upgrade:** อัปเกรด Proposer และ Critic ในระบบ Consensus ให้เชื่อมต่อ `PREFERRED_PRO` และ `PREFERRED_FLASH` รุ่นใหม่ล่าสุด
-  3. **การทดสอบบนเบราว์เซอร์จริง (Mandatory Live Browser Proof of Work):**
-     - ส่ง Browser Subagent เข้าทดสอบที่ `http://127.0.0.1:8000/` พิมพ์ข้อความและรับคำตอบแบบสตรีมมิ่งสด
-     - บันทึกภาพถ่ายหน้าจอหลักฐาน: `kira_live_response_1792984935282.png`
-     - บันทึกวิดีโอปฏิบัติการ: `live_ai_brain_test_1792984385614.webp`
-  4. **ยืนยันผลการทดสอบเชิงลึก:**
-     - `test_line_webhook.py`: 7/7 ชุดผ่าน 100%
-     - `test_models_live.py`: 3/3 โมเดลผ่าน 100%
-     - `/api/chat` end-to-end: Flash, Pro, Reasoning HTTP 200 ผ่าน 100%
+* **แก้ปัญหาเบราว์เซอร์ค้างเวอร์ชันเก่า และซิงโครไนซ์เวอร์ชันสู่ปัจจุบัน 100% (Subagent & Engine Synchronization):**
+  1. **สืบค้นต้นตอ (Root Cause Discovery):**
+     - ตรวจพบ Service Worker (`static/sw.js`) ค้างแคชเดิม `kira-ai-cache-v2.6.4` และใช้ Stale-While-Revalidate บนหน้าหลัก `/` ทำให้เบราว์เซอร์ดึง HTML/JS รุ่นเก่าขึ้นมาแสดง
+     - ตรวจพบค่าในตาราง `system_settings` ในฐานข้อมูลมีข้อความพรอมต์เก่าค้าง (`prompt_1.0` / `prompt_1.1`) ที่ระบุว่า "Kira 1.0 (Standard)"
+     - ตรวจพบ `localStorage.getItem('kira_model')` ในเบราว์เซอร์จำโมเดลเก่าไว้
+  2. **ปรับปรุงระบบขนานใหญ่ (Full System Upgrade):**
+     - **Service Worker v2.7.0 (`static/sw.js`):** ปรับกลยุทธ์หน้า HTML Navigation เป็น **Network-First** โหลดเทมเพลตสดจากเซิร์ฟเวอร์เสมอ พร้อมสั่ง `self.skipWaiting()` และล้างแคชเก่าทิ้งทั้งหมดทันที
+     - **Client State Synchronizer (`static/script.js`):** ติดตั้งระบบ Auto-Purge ที่หัวไฟล์ สแกนและล้าง `localStorage` เก่าที่ค้างเวอร์ชัน 2.1/2.0 พร้อมสั่ง `navigator.serviceWorker.update()`
+     - **Model Select Option Guard:** ตรวจสอบว่าโมเดลที่กู้คืนจาก `localStorage` มีอยู่ในตัวเลือกจริงหรือไม่ หากเป็นรุ่นเก่าจะรีเซ็ตกลับสู่ `2.6-reasoning` ทันที
+     - **Database Prompts Modernization:** เขียนสคริปต์อัปเดต `prompt_1.0` และ `prompt_1.1` ในตาราง `system_settings` เป็นเวอร์ชันปัจจุบัน (Kira 2.6 / 2.7)
+     - **Cache-Busting (`templates/index.html`):** อัปเกรด `?v=20261026_270` ให้กับ `style.css` และ `script.js`
+     - **Test Suite Synchronization (`test_100_agents.py`):** อัปเกรดโมเดล Vision ในชุดทดสอบ 100 ข้อสู่ `2.6-vision` (`qwen/qwen3.8-27b`) ผ่าน 100/100 100%
+  3. **การทดสอบยืนยันบนเบราว์เซอร์จริง (Mandatory Live Browser Verification):**
+     - เปิดเบราว์เซอร์จริง เคลียร์แคชและกู้คืนหน้าใหม่สดใส
+     - ตรวจสอบ Badge แสดง: `Cloud Engine 2.6`
+     - ตรวจสอบ Dropdown แสดง: `Kira 2.6 Reasoning`
+     - ตรวจสอบ Greeting แสดง: `ระบบประมวลผล Kira 2.6 พร้อมช่วยงาน...`
+     - ตรวจสอบ Placeholder แสดง: `พิมพ์ข้อความหรือคำถามถึง Kira 2.6...`
+     - คิระตอบคำแนะนำตัวระดับ Executive ชัดเจน สมบูรณ์แบบ ไม่มีคำว่า 1.0 หลงเหลืออีกต่อไป
+     - บันทึกภาพยืนยัน: `kira_v26_synchronized_verified.png`
+     - บันทึกวิดีโอ: `new_chat_v26_proof_1792989600072.webp`
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `feat(engine): verify live AI brains, add Groq OTPM safeguard and native routing`
+* **Git Commit ล่าสุด:** `fix(ui): synchronize browser UI to v2.7.0, purge legacy SW caches and modernize db prompts`
 * **สถานะบน Render:** ทำการ Git Push ขึ้น Render เรียบร้อยแล้ว (`main`)
 
 #### 3. 🎯 สเต็ปถัดไปสำหรับบอส (Next Action Steps for Boss):
-* สมองกลยุค Next-Gen ทั้งหมด (Qwen 3.8, GPT-OSS 120B, GPT-OSS 20B) ทำงานได้จริง 100% ทั้งบนหน้าเว็บและ LINE OA พร้อมใช้งานทันทีค่ะ!
+* ระบบเบราว์เซอร์ หน้าบ้าน หลังบ้าน และฐานข้อมูล ได้รับการซิงโครไนซ์สู่เวอร์ชันปัจจุบันอย่างสมบูรณ์แบบ 100% ทุกจุดแล้วค่ะ!
