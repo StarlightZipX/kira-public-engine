@@ -1252,56 +1252,53 @@ def log_chat(username: str, role: str, content: str, session_id: str = None):
 
 # ========== โมเดลที่ปลอดภัยของ Groq & Multi-Provider ==========
 ALL_MODEL_CANDIDATES = [
-    "openai/gpt-oss-120b",
     "qwen/qwen3.8-27b",
-    "openai/gpt-oss-20b",
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant",
-    "llama-3.1-70b-versatile"
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b"
 ]
 
-# ========== Multi-Brain Profiles (Kira 2.6) ==========
-# เลือกสมองที่เหมาะสมที่สุดตามประเภทคำถาม รองรับทั้ง Qwen, DeepSeek, และ Groq
+# ========== Multi-Brain Profiles (Kira 2.6 - State-of-the-Art Upgrades) ==========
+# เลือกสมองที่เหมาะสมที่สุดตามประเภทคำถาม รองรับทั้ง Qwen 3.8, GPT-OSS 120B/20B, และ Groq
 BRAIN_PROFILES = {
     "vision": {
-        "model": "qwen/qwen-2.5-vl-72b-instruct" if OPENROUTER_API_KEYS else "meta-llama/llama-3.2-11b-vision-instruct",
+        "model": "qwen/qwen3.8-27b",
         "keywords": ["รูป", "ภาพ", "ตรวจภาพ", "ดูรูป", "ดูภาพ", "หน้าจอ", "แคป", "ui", "image", "photo", "screen", "screenshot", "inspect", "canvas"],
-        "description": "โหมดประมวลผลภาพและสายตา (Multimodal Vision Engine)"
+        "description": "โหมดประมวลผลภาพและสายตา (Multimodal Vision Engine - Qwen 3.8 Native)"
     },
     "logic": {
-        "model": "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else "llama-3.3-70b-versatile",
+        "model": "openai/gpt-oss-120b",
         "keywords": ["คำนวณ", "วิเคราะห์", "เปรียบเทียบ", "สถิติ", "ตรรกะ", "เหตุผล", "ข้อดี", "ข้อเสีย", 
                      "แผน", "กลยุทธ์", "strategy", "analyze", "calculate", "compare", "pros", "cons",
                      "วางแผน", "ออกแบบ", "สถาปัตยกรรม", "ระบบ", "โครงสร้าง", "ธุรกิจ", "การตลาด", "math", "คณิต"],
-        "description": "โหมดวิเคราะห์ตรรกะและแผนงาน (Advanced Logic Engine)"
+        "description": "โหมดวิเคราะห์ตรรกะและแผนงาน (Advanced Logic Engine 120B)"
     },
     "reasoning": {
-        "model": "deepseek/deepseek-r1" if OPENROUTER_API_KEYS else "llama-3.3-70b-versatile",
+        "model": "qwen/qwen3.8-27b",
         "keywords": ["วิจัย", "ทำไม", "เพราะอะไร", "สรุปเชิงลึก", "ทฤษฎี", "ปรัชญา", "think", "reason", "proof", "พิสูจน์"],
-        "description": "โหมดคิดวิเคราะห์เชิงลึก (Deep Reasoning Engine)"
+        "description": "โหมดคิดวิเคราะห์เชิงลึก (Deep Reasoning Engine - Qwen 3.8 Thinking)"
     },
     "code": {
-        "model": "qwen/qwen-2.5-coder-32b-instruct" if OPENROUTER_API_KEYS else "llama-3.3-70b-versatile",
+        "model": "openai/gpt-oss-120b",
         "keywords": ["โค้ด", "code", "python", "javascript", "html", "css", "เขียนโปรแกรม", "debug",
                      "แก้บั๊ก", "function", "api", "database", "sql", "เว็บ", "แอป", "app",
                      "programming", "developer", "github", "server", "deploy", "react", "typescript"],
-        "description": "โหมดวิศวกรรมซอฟต์แวร์และเขียนโค้ด (Software Engineering Engine)"
+        "description": "โหมดวิศวกรรมซอฟต์แวร์และเขียนโค้ด (Software Engineering 120B Engine)"
     },
     "creative": {
-        "model": "llama-3.3-70b-versatile",
+        "model": "openai/gpt-oss-120b",
         "keywords": ["เขียน", "แต่ง", "นิยาย", "บทกวี", "เรื่องสั้น", "ไอเดีย", "ครีเอทีฟ", "จินตนาการ",
                      "write", "story", "creative", "poem", "idea", "brainstorm", "สร้างสรรค์",
                      "ชื่อ", "ตั้งชื่อ", "สโลแกน", "โฆษณา", "caption", "คอนเทนต์", "content"],
-        "description": "โหมดสร้างสรรค์เนื้อหาและงานเขียน (Creative Content Engine)"
+        "description": "โหมดสร้างสรรค์เนื้อหาและงานเขียน (Creative Content 120B Engine)"
     },
     "translate": {
-        "model": "llama-3.1-8b-instant",
+        "model": "openai/gpt-oss-20b",
         "keywords": ["แปล", "translate", "ภาษาอังกฤษ", "ภาษาจีน", "ภาษาเกาหลี", "ภาษาญี่ปุ่น",
                      "english", "chinese", "korean", "japanese", "translation", "/แปลภาษา"],
-        "description": "โหมดภาษาศาสตร์และการแปลภาษา (Linguistic Engine)"
+        "description": "โหมดภาษาศาสตร์และการแปลภาษา (Linguistic 20B High-Speed Engine)"
     },
     "chat": {
-        "model": "llama-3.1-8b-instant",
+        "model": "openai/gpt-oss-20b",
         "keywords": [],  # Default fallback
         "description": "โหมดประมวลผลความเร็วสูง (Instant Fast Engine)"
     }
@@ -1812,16 +1809,16 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
     if primary_provider == "openrouter":
         models = [preferred_model]
         if is_vision:
-            for vm in ["qwen/qwen-2.5-vl-72b-instruct", "meta-llama/llama-3.2-11b-vision-instruct"]:
+            for vm in ["qwen/qwen3.8-27b", "qwen/qwen3.8-omni-flash", "qwen/qwen-2.5-vl-72b-instruct"]:
                 if vm not in models:
                     models.append(vm)
         else:
-            for rm in ["qwen/qwen-2.5-72b-instruct", "meta-llama/llama-3.3-70b-instruct", "deepseek/deepseek-chat"]:
+            for rm in ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "qwen/qwen3.8-max-prime", "deepseek/deepseek-r1"]:
                 if rm not in models:
                     models.append(rm)
         execution_stages.append(("openrouter", models, OPENROUTER_API_KEYS))
     elif primary_provider == "gemini":
-        models = [preferred_model, "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+        models = [preferred_model, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
         execution_stages.append(("gemini", models, GEMINI_API_KEYS))
     elif primary_provider == "ollama":
         execution_stages.append(("ollama", [preferred_model, "llama3.2", "qwen2.5"], ["ollama"]))
@@ -1834,20 +1831,20 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
 
     # Stage 2: Cross-Provider Failovers
     if primary_provider != "groq" and API_KEYS and API_KEYS[0] != "YOUR_GROQ_API_KEY_HERE":
-        groq_candidates = [m for m in [PREFERRED_PRO, PREFERRED_FLASH] + ALL_MODEL_CANDIDATES if not any(x in m.lower() for x in ["openai/", "qwen/", "deepseek/"])]
+        groq_candidates = [m for m in [PREFERRED_PRO, PREFERRED_FLASH] + ALL_MODEL_CANDIDATES]
         if not groq_candidates:
-            groq_candidates = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+            groq_candidates = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"]
         execution_stages.append(("groq", groq_candidates, API_KEYS))
 
     if primary_provider != "openrouter" and OPENROUTER_API_KEYS:
         if is_vision:
-            or_candidates = ["qwen/qwen-2.5-vl-72b-instruct", "meta-llama/llama-3.2-11b-vision-instruct"]
+            or_candidates = ["qwen/qwen3.8-27b", "qwen/qwen3.8-omni-flash", "qwen/qwen-2.5-vl-72b-instruct"]
         else:
-            or_candidates = ["qwen/qwen-2.5-72b-instruct", "meta-llama/llama-3.3-70b-instruct", "deepseek/deepseek-chat"]
+            or_candidates = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "qwen/qwen3.8-max-prime", "deepseek/deepseek-r1"]
         execution_stages.append(("openrouter", or_candidates, OPENROUTER_API_KEYS))
 
     if primary_provider != "gemini" and GEMINI_API_KEYS:
-        execution_stages.append(("gemini", ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"], GEMINI_API_KEYS))
+        execution_stages.append(("gemini", ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"], GEMINI_API_KEYS))
 
     if primary_provider != "ollama" and ENABLE_OLLAMA:
         execution_stages.append(("ollama", ["llama3.2", "qwen2.5"], ["ollama"]))
@@ -1895,8 +1892,8 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
     return False, [], last_error
 
 # ========== เลือกโมเดลหลักตอนบูท ==========
-PREFERRED_FLASH = "llama-3.1-8b-instant"
-PREFERRED_PRO = "llama-3.3-70b-versatile"
+PREFERRED_FLASH = "openai/gpt-oss-20b"
+PREFERRED_PRO = "qwen/qwen3.8-27b"
 
 print("🔍 กำลังสแกนหาสมองที่ใช้ได้จาก Groq...")
 groq_available_models = []
@@ -1929,8 +1926,8 @@ if groq_available_models:
     ALL_MODEL_CANDIDATES.clear()
     ALL_MODEL_CANDIDATES.extend(chat_models)
     
-    # Auto-assign Pro (120b / qwen / 70b)
-    pro_c = [m for m in chat_models if any(k in m.lower() for k in ["120b", "qwen", "70b"])]
+    # Auto-assign Pro (qwen 3.8 / 120b / qwen)
+    pro_c = [m for m in chat_models if any(k in m.lower() for k in ["qwen3.8", "qwen", "120b"])]
     PREFERRED_PRO = pro_c[0] if pro_c else chat_models[0]
     
     # Auto-assign Flash (20b / mini / 8b)

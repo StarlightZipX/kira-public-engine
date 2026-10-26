@@ -4,23 +4,29 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 25 ตุลาคม 2026 (Kira v2.6.9 Enterprise - Premium Marketing Copy & Anti-Jargon Guard)
+### 🕒 อัปเดตล่าสุด: 26 ตุลาคม 2026 (Kira v2.7.0 Enterprise - Modern Super-Brain Architecture & Qwen 3.8 / GPT-OSS Upgrade)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **ขัดเกลาสำนวนการตลาดและกำจัดคำศัพท์เชิงเทคนิคหลังบ้าน (Marketing Copy Polish & Commercial Security):**
-  1. **ลบข้อความหลุดแนวเทคนิค "(ตรงตามระบบจริง 100%)" ออกจาก `app.py`:**
-     - เดิม: `✨ ข้อมูลแพ็กเกจสมาชิกอย่างเป็นทางการ (ตรงตามระบบจริง 100%):` ซึ่งมีกลิ่นอายรายงานการตรวจสอบระบบเชิงเทคนิค และเผยให้เห็นเบื้องหลังการแก้ไข
-     - ปรับปรุงใหม่: เปลี่ยนเป็นหัวข้อสำนวนการตลาดระดับพรีเมียม `✨ สิทธิพิเศษและอัตราค่าบริการแพ็กเกจสมาชิก:` มีความเป็นมืออาชีพ น่าเชื่อถือ และไม่เปิดช่องให้คู่แข่งนำไปเป็นประเด็น
-  2. **ลบหมายเหตุด้านล่างที่ดูเหมือนข้อความแก้ตัวออก:**
-     - ตัด `*(หมายเหตุ: เป็นแพ็กเกจรายปี 365 วัน ไม่ใช่แพ็กเกจตลอดชีพนะคะ)*` ออก และคงไว้เฉพาะรายละเอียดแพ็กเกจที่ชัดเจน โปร่งใสตามกฎหมายในตัวรายการเอง (Starter 39฿ / 7 วัน, Pro 129฿ / 30 วัน, Founder 499฿ / 1 ปีเต็ม 365 วัน)
-  3. **เพิ่มข้อห้ามใน System Directive ของ AI และชุดทดสอบ:**
-     - ระบุใน `system_directive` ห้าม AI ตอบคำว่า "ตรงตามระบบจริง 100%" หรือศัพท์เทคนิคหลังบ้าน
-     - เพิ่ม `assert "ตรงตามระบบจริง" not in pay_reply` ใน `test_line_webhook.py` เพื่อป้องกัน Regression
-  4. **ผลการทดสอบ:** `test_line_webhook.py` ผ่าน 100% ครบทั้ง 7 ชุด
+* **สแกนตรวจสอบโมเดลสมองกลตกรุ่น และอัปเกรดสู่ Next-Gen State-of-the-Art Models (AI Model Modernization):**
+  1. **ปลดประจำการโมเดลล้าหลัง/ถูกยกเลิก (Decommissioned Legacy Models):**
+     - ปลด `llama-3.1-70b-versatile`, `llama-3.1-8b-instant`, `meta-llama/llama-3.2-11b-vision-instruct` (โมเดลเหล่านี้ตกรุ่นหรือถูก Decommission ออกจากระบบ Groq แล้ว)
+     - ปลด `gemini-pro` (Gemini 1.0) ออกจากชุดทดสอบ `test_models.py`
+  2. **อัปเกรด Multi-Brain Profiles สู่ขุมพลังรุ่นท็อปล่าสุด (`BRAIN_PROFILES` ใน `app.py`):**
+     - **Vision Profile (สายตามัลติโมดอล):** อัปเกรดเป็น `qwen/qwen3.8-27b` (ประมวลผลทั้งรูปภาพและวิดีโอแบบ Native)
+     - **Reasoning Profile (คิดวิเคราะห์เชิงลึก):** อัปเกรดเป็น `qwen/qwen3.8-27b` (มีระบบ Step-by-Step Thinking Control ในตัว)
+     - **Logic, Code, Creative (ตรรกะ โค้ด และงานเขียน):** อัปเกรดเป็น `openai/gpt-oss-120b` (สมองยักษ์ 120B parameter ตอบได้ลึกซึ้งและเฉียบคม)
+     - **Chat, Translate (แชตความเร็วสูงและแปลภาษา):** อัปเกรดเป็น `openai/gpt-oss-20b` (ความเร็วสูง ประมวลผลเสี้ยววินาที)
+  3. **ปรับสเตจ Failover อัจฉริยะ (Cross-Provider Stages):**
+     - เพิ่ม `gemini-2.5-flash` และ `gemini-2.0-flash` ในสายทดแทน Gemini
+     - เพิ่ม `qwen3.8-max-prime` และ `qwen3.8-omni-flash` ในสาย OpenRouter
+     - ปรับ `PREFERRED_PRO = qwen/qwen3.8-27b` และ `PREFERRED_FLASH = openai/gpt-oss-20b`
+  4. **ยืนยันผลการทดสอบ:**
+     - `test_line_webhook.py`: 7/7 ชุดผ่าน 100%
+     - `test_audit_stabilization_suite.py`: 6/6 ชุดผ่าน 100% (81 FastAPI routes conflict-free)
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `fix(copy): polish marketing copy and remove internal verification jargon`
+* **Git Commit ล่าสุด:** `feat(models): upgrade brain profiles to Qwen 3.8 and GPT-OSS 120B/20B engines`
 * **สถานะบน Render:** ทำการ Git Push ขึ้น Render เรียบร้อยแล้ว (Triggered Auto-Deploy)
 
 #### 3. 🎯 สเต็ปถัดไปสำหรับบอส (Next Action Steps for Boss):
-* ข้อความใน LINE OA ได้รับการขัดเกลาสำนวนการตลาดให้ดูหรูหรา เป็นมืออาชีพ และรักษาความลับทางการค้าได้อย่างสมบูรณ์แบบแล้วค่ะ!
+* สมองกลทั้งหมดของคิระทั้งบนหน้าเว็บและ LINE OA ได้รับการอัปเกรดเป็นเวอร์ชันใหม่ล่าสุดของยุค 2026 เรียบร้อยแล้ว พร้อมตอบสนองด้วยความฉลาดขั้นสูงสุดค่ะ!

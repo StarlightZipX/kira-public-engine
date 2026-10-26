@@ -7,11 +7,10 @@ if __name__ == "__main__":
     print("Testing models with API Key (masked):", API_KEY[:5] + "..." if API_KEY else "NONE")
 
     models_to_test = [
-        "gemini-pro",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
         "gemini-1.5-flash",
-        "gemini-1.5-flash-latest",
-        "gemini-1.5-pro",
-        "gemini-1.5-pro-latest"
+        "gemini-1.5-pro"
     ]
 
     for model_name in models_to_test:
