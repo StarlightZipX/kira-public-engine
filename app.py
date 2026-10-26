@@ -1500,6 +1500,8 @@ class UnifiedLLM:
         # Auto-detect provider
         if provider:
             self.provider = provider
+        elif model_name in ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"] and API_KEYS and API_KEYS[0] != "YOUR_GROQ_API_KEY_HERE":
+            self.provider = "groq"
         elif any(k in model_name.lower() for k in ["gemini"]):
             if GEMINI_API_KEYS:
                 self.provider = "gemini"
@@ -1566,10 +1568,12 @@ class UnifiedLLM:
             headers["HTTP-Referer"] = "https://kira-ai.local"
             headers["X-Title"] = "Kira AI System"
 
+        max_tok = 950 if ("qwen" in self.model.lower() and self.provider == "groq") else 2048
         payload = {
             "model": self.model,
             "messages": msgs,
-            "temperature": self.temperature
+            "temperature": self.temperature,
+            "max_tokens": max_tok
         }
         try:
             resp = requests.post(self.base_url, headers=headers, json=payload, timeout=60)
@@ -1602,10 +1606,12 @@ class UnifiedLLM:
             headers["HTTP-Referer"] = "https://kira-ai.local"
             headers["X-Title"] = "Kira AI System"
 
+        max_tok = 950 if ("qwen" in self.model.lower() and self.provider == "groq") else 2048
         payload = {
             "model": self.model,
             "messages": msgs,
             "temperature": self.temperature,
+            "max_tokens": max_tok,
             "stream": True
         }
 
@@ -1794,7 +1800,9 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
     
     # 0. ตรวจสอบ Provider หลัก
     primary_provider = "groq"
-    if any(k in preferred_model.lower() for k in ["gemini"]):
+    if preferred_model in ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"] and API_KEYS and API_KEYS[0] != "YOUR_GROQ_API_KEY_HERE":
+        primary_provider = "groq"
+    elif any(k in preferred_model.lower() for k in ["gemini"]):
         primary_provider = "gemini" if GEMINI_API_KEYS else "openrouter"
     elif any(k in preferred_model.lower() for k in ["qwen", "deepseek", "openrouter", "vl"]):
         primary_provider = "openrouter"
@@ -6426,7 +6434,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                 yield "[THINKING][Proposer Agent] กำลังร่างแนวคิดและโครงสร้างคำตอบ...[/THINKING]"
                 await asyncio.sleep(0.05)
                 
-                proposer_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
+                proposer_model = PREFERRED_PRO
                 draft_success, draft_chunks, _ = await _try_all_keys_and_models(temp_history, proposer_model, ui_lang=ui_lang)
                 draft_text = "".join([getattr(c, "content", c) for c in draft_chunks]) if draft_success else ""
                 
@@ -6434,7 +6442,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                     yield "[THINKING][Peer Review & Fact-Checker Agent] กำลังตรวจสอบความถูกต้อง ตรรกะ และจุดบกพร่อง...[/THINKING]"
                     await asyncio.sleep(0.05)
                     
-                    critic_model = "meta-llama/llama-3.3-70b-instruct" if OPENROUTER_API_KEYS else PREFERRED_FLASH
+                    critic_model = PREFERRED_FLASH
                     critic_prompt = [
                         SystemMessage(content="You are Kira's Peer Reviewer & Fact-Checker (Draft+Review phase). Evaluate this draft answer for logic, completeness, code accuracy, and natural Thai phrasing. Provide concise, actionable improvements."),
                         HumanMessage(content=f"User Query: {user_input}\n\nDraft Solution:\n{draft_text[:2000]}")
