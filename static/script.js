@@ -1881,10 +1881,14 @@ function addMessage(text, isUser, imageBase64 = null) {
             if (!finalMarkdown && normalizedTxt.includes("[THINKING]")) {
                 const curLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
                 const curDict = KIRA_I18N[curLang] || KIRA_I18N['th'];
-                const thinkingSummary = (curDict && curDict.thinking_summary_done) ? curDict.thinking_summary_done : "คิระได้วิเคราะห์และสรุปแนวทางไว้ในขั้นตอนการคิดเชิงลึกด้านบนเรียบร้อยแล้วค่ะ";
-                htmlContent += `<div class="thinking-summary-note" style="margin-top: 10px; padding: 10px 14px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; color: #7dd3fc; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-circle-check" style="color: #38bdf8;"></i>
-                    <span>${thinkingSummary}</span>
+                const uncertaintyTitle = (curDict && curDict.uncertainty_title) ? curDict.uncertainty_title : "ในประเด็นนี้คิระยังไม่แน่ใจในข้อมูลอย่างครบถ้วนค่ะ";
+                const uncertaintyDesc = (curDict && curDict.uncertainty_desc) ? curDict.uncertainty_desc : "ข้อมูลอาจยังไม่ชัดเจนหรือต้องการบริบทเพิ่มเติม รบกวนช่วยระบุรายละเอียดเพิ่มเติมอีกนิดนะคะ หนูพร้อมช่วยค้นหาและตอบอย่างเต็มที่ค่ะ 🌸";
+                htmlContent += `<div class="uncertainty-note" style="margin-top: 12px; padding: 14px 18px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 12px; color: #fde68a; font-size: 0.92rem; display: flex; align-items: flex-start; gap: 12px;">
+                    <i class="fa-solid fa-circle-question" style="color: #f59e0b; margin-top: 3px; font-size: 1.15rem;"></i>
+                    <div>
+                        <strong style="color: #fbbf24; font-size: 0.95rem;">${uncertaintyTitle}</strong><br>
+                        <span style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.5; display: inline-block; margin-top: 4px;">${uncertaintyDesc}</span>
+                    </div>
                 </div>`;
             }
             content.innerHTML = htmlContent;
@@ -2093,10 +2097,14 @@ async function sendMessage() {
             if (normalizedTxt.includes("[THINKING_DONE]") && !finalMarkdown) {
                 const curLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
                 const curDict = KIRA_I18N[curLang] || KIRA_I18N['th'];
-                const thinkingSummary = (curDict && curDict.thinking_summary_done) ? curDict.thinking_summary_done : "คิระได้วิเคราะห์รายละเอียดและขั้นตอนการคิดไว้ในบล็อกด้านบนนี้เรียบร้อยแล้วค่ะ";
-                htmlContent += `<div class="thinking-summary-note" style="margin-top: 10px; padding: 10px 14px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; color: #7dd3fc; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-circle-check" style="color: #38bdf8;"></i>
-                    <span>${thinkingSummary}</span>
+                const uncertaintyTitle = (curDict && curDict.uncertainty_title) ? curDict.uncertainty_title : "ในประเด็นนี้คิระยังไม่แน่ใจในข้อมูลอย่างครบถ้วนค่ะ";
+                const uncertaintyDesc = (curDict && curDict.uncertainty_desc) ? curDict.uncertainty_desc : "ข้อมูลอาจยังไม่ชัดเจนหรือต้องการบริบทเพิ่มเติม รบกวนช่วยระบุรายละเอียดเพิ่มเติมอีกนิดนะคะ หนูพร้อมช่วยค้นหาและตอบอย่างเต็มที่ค่ะ 🌸";
+                htmlContent += `<div class="uncertainty-note" style="margin-top: 12px; padding: 14px 18px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 12px; color: #fde68a; font-size: 0.92rem; display: flex; align-items: flex-start; gap: 12px;">
+                    <i class="fa-solid fa-circle-question" style="color: #f59e0b; margin-top: 3px; font-size: 1.15rem;"></i>
+                    <div>
+                        <strong style="color: #fbbf24; font-size: 0.95rem;">${uncertaintyTitle}</strong><br>
+                        <span style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.5; display: inline-block; margin-top: 4px;">${uncertaintyDesc}</span>
+                    </div>
                 </div>`;
             }
             contentDiv.innerHTML = htmlContent;
@@ -11751,6 +11759,8 @@ const KIRA_I18N = {
         server_error_connect: "ระบบขัดข้อง: ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้",
         thinking_title_display: "🧠 กระบวนการคิดเชิงลึก (Deep Reasoning)",
         thinking_summary_done: "คิระได้วิเคราะห์รายละเอียดและขั้นตอนการคิดไว้ในบล็อกด้านบนนี้เรียบร้อยแล้วค่ะ",
+        uncertainty_title: "ในประเด็นนี้คิระยังไม่แน่ใจในข้อมูลอย่างครบถ้วนค่ะ",
+        uncertainty_desc: "ข้อมูลอาจยังไม่ชัดเจนหรือต้องการบริบทเพิ่มเติม รบกวนช่วยระบุรายละเอียดเพิ่มเติมอีกนิดนะคะ หนูพร้อมช่วยค้นหาและตอบอย่างเต็มที่ค่ะ 🌸",
         toast_lang_switched: "เปลี่ยนภาษาเป็น ภาษาไทย เรียบร้อยค่ะ 🇹🇭"
     },
 
@@ -12145,6 +12155,8 @@ const KIRA_I18N = {
         server_error_connect: "System Error: Unable to connect to server",
         thinking_title_display: "🧠 Deep Reasoning Process",
         thinking_summary_done: "Kira has detailed the analytical steps and reasoning process in the block above.",
+        uncertainty_title: "I am not 100% certain regarding this matter",
+        uncertainty_desc: "The information may be ambiguous or require more context. Could you please provide additional details or background? I'm ready to help you explore it! 💖",
         toast_lang_switched: "Interface language switched to English 🇺🇸"
     },
 
@@ -12539,6 +12551,8 @@ const KIRA_I18N = {
         server_error_connect: "系统异常：无法连接至服务器",
         thinking_title_display: "🧠 深度思考与推理过程 (Deep Reasoning)",
         thinking_summary_done: "Kira 已在上方模块中完成了深度推理与步骤分析。",
+        uncertainty_title: "关于此问题，我暂无法100%确定",
+        uncertainty_desc: "当前信息可能尚不明确或需要更多上下文。劳烦您补充一些具体背景或细节，Kira将竭诚为您深入解答！🥰",
         toast_lang_switched: "系统语言已成功切换为 中文 🇨🇳"
     },
 
@@ -12933,6 +12947,8 @@ const KIRA_I18N = {
         server_error_connect: "시스템 오류: 서버에 연결할 수 없습니다",
         thinking_title_display: "🧠 심층 추론 과정 (Deep Reasoning)",
         thinking_summary_done: "Kira가 상단 블록에 심층 분석 및 단계별 추론을 완료했습니다.",
+        uncertainty_title: "이 질문에 대해서는 100% 확답을 드리기 어렵습니다",
+        uncertainty_desc: "정보가 다소 모호하거나 추가 맥락이 필요할 수 있습니다. 세부 배경이나 내용을 조금만 더 알려주시면 키라가 정성껏 도와드리겠습니다! 🥰",
         toast_lang_switched: "시스템 언어가 한국어로 변경되었습니다 🇰🇷"
     },
 
@@ -13327,6 +13343,8 @@ const KIRA_I18N = {
         server_error_connect: "システムエラー：サーバーに接続できません",
         thinking_title_display: "🧠 深層思考・推論プロセス (Deep Reasoning)",
         thinking_summary_done: "Kiraが上記のブロックで詳細な分析と思考プロセスを完了しました。",
+        uncertainty_title: "この件につきましては、現時点で確実な回答が困難です",
+        uncertainty_desc: "情報が限定的であるか、追加の前提条件が必要な場合がございます。具体的な背景や詳細を教えていただけましたら、心を込めてサポートいたします！🥰",
         toast_lang_switched: "言語を 日本語 に切り替えました 🇯🇵"
     }
 };

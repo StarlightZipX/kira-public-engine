@@ -4,34 +4,38 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 26 ตุลาคม 2026 (Kira v2.7.0 Enterprise - Browser Cache Purge & UI/Engine Full Synchronization Complete)
+### 🕒 อัปเดตล่าสุด: 26 ตุลาคม 2026 (Kira v2.7.1 Enterprise - Zero-Silence & Honest Uncertainty Protocol Complete)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **แก้ปัญหาเบราว์เซอร์ค้างเวอร์ชันเก่า และซิงโครไนซ์เวอร์ชันสู่ปัจจุบัน 100% (Subagent & Engine Synchronization):**
-  1. **สืบค้นต้นตอ (Root Cause Discovery):**
-     - ตรวจพบ Service Worker (`static/sw.js`) ค้างแคชเดิม `kira-ai-cache-v2.6.4` และใช้ Stale-While-Revalidate บนหน้าหลัก `/` ทำให้เบราว์เซอร์ดึง HTML/JS รุ่นเก่าขึ้นมาแสดง
-     - ตรวจพบค่าในตาราง `system_settings` ในฐานข้อมูลมีข้อความพรอมต์เก่าค้าง (`prompt_1.0` / `prompt_1.1`) ที่ระบุว่า "Kira 1.0 (Standard)"
-     - ตรวจพบ `localStorage.getItem('kira_model')` ในเบราว์เซอร์จำโมเดลเก่าไว้
-  2. **ปรับปรุงระบบขนานใหญ่ (Full System Upgrade):**
-     - **Service Worker v2.7.0 (`static/sw.js`):** ปรับกลยุทธ์หน้า HTML Navigation เป็น **Network-First** โหลดเทมเพลตสดจากเซิร์ฟเวอร์เสมอ พร้อมสั่ง `self.skipWaiting()` และล้างแคชเก่าทิ้งทั้งหมดทันที
-     - **Client State Synchronizer (`static/script.js`):** ติดตั้งระบบ Auto-Purge ที่หัวไฟล์ สแกนและล้าง `localStorage` เก่าที่ค้างเวอร์ชัน 2.1/2.0 พร้อมสั่ง `navigator.serviceWorker.update()`
-     - **Model Select Option Guard:** ตรวจสอบว่าโมเดลที่กู้คืนจาก `localStorage` มีอยู่ในตัวเลือกจริงหรือไม่ หากเป็นรุ่นเก่าจะรีเซ็ตกลับสู่ `2.6-reasoning` ทันที
-     - **Database Prompts Modernization:** เขียนสคริปต์อัปเดต `prompt_1.0` และ `prompt_1.1` ในตาราง `system_settings` เป็นเวอร์ชันปัจจุบัน (Kira 2.6 / 2.7)
-     - **Cache-Busting (`templates/index.html`):** อัปเกรด `?v=20261026_270` ให้กับ `style.css` และ `script.js`
-     - **Test Suite Synchronization (`test_100_agents.py`):** อัปเกรดโมเดล Vision ในชุดทดสอบ 100 ข้อสู่ `2.6-vision` (`qwen/qwen3.8-27b`) ผ่าน 100/100 100%
-  3. **การทดสอบยืนยันบนเบราว์เซอร์จริง (Mandatory Live Browser Verification):**
-     - เปิดเบราว์เซอร์จริง เคลียร์แคชและกู้คืนหน้าใหม่สดใส
-     - ตรวจสอบ Badge แสดง: `Cloud Engine 2.6`
-     - ตรวจสอบ Dropdown แสดง: `Kira 2.6 Reasoning`
-     - ตรวจสอบ Greeting แสดง: `ระบบประมวลผล Kira 2.6 พร้อมช่วยงาน...`
-     - ตรวจสอบ Placeholder แสดง: `พิมพ์ข้อความหรือคำถามถึง Kira 2.6...`
-     - คิระตอบคำแนะนำตัวระดับ Executive ชัดเจน สมบูรณ์แบบ ไม่มีคำว่า 1.0 หลงเหลืออีกต่อไป
-     - บันทึกภาพยืนยัน: `kira_v26_synchronized_verified.png`
-     - บันทึกวิดีโอ: `new_chat_v26_proof_1792989600072.webp`
+* **แก้ปัญหาเอไอเงียบหาย/ไม่ตอบเมื่อไม่แน่ใจ (Zero-Silence & Honest Uncertainty Protocol):**
+  1. **วิเคราะห์หาสาเหตุเชิงลึก (Deep Root Cause Analysis):**
+     - **System Prompt Cut-off:** เดิมมีกฎ `[Hard-Stop Translation Safety]` ที่ระบุคำว่า *"หยุดพิมพ์ข้อความทันที"* ส่งผลให้โมเดล AI ตัดจบข้อความจนส่งผลลัพธ์เป็นค่าว่าง (`""`)
+     - **Reasoning Model Thinking Trap:** โมเดลตระกูล Reasoning บางครั้งคิดในแท็ก `<think>...</think>` จนจบโดยไม่มีคำตอบ delta ออกมาภายนอก เมื่อหน้าเว็บพับส่วนคิด ผู้ใช้จึงมองเห็นเป็นความเงียบสนิท
+     - **LINE Webhook Fallback:** เมื่อได้รับข้อความว่างเปล่า ระบบดันส่งข้อความต้อนรับคนแปลกหน้า แทนที่จะเป็นคำตอบบอกความไม่แน่ใจอย่างตรงไปตรงมา
+  2. **ปรับปรุงระบบ 4 ชั้น (4-Tier Architecture Upgrade):**
+     - **Tier 1: Core System Prompts (`app.py`):**
+       - ถอดถอนกฎ Hard-Stop เดิม และบรรจุ `[กฎเหล็กการตอบสนองเมื่อไม่แน่ใจ: ห้ามเงียบหายเด็ดขาด (Zero-Silence & Honest Uncertainty Protocol)]` ลงใน `system_prompt`, `system_prompt_boss` และ `_get_full_system_prompt()`
+       - กำชับให้ AI ตอบอย่างจริงใจ สุภาพ บอกส่วนที่รู้ชัดเจน และระบุจุดที่ไม่แน่ใจ พร้อมถามคำถามเพิ่มเติมหรือเสนอแนะแนวทางตรวจเช็ก
+       - อัปเดตตาราง `system_settings` ใน SQLite ให้พรอมต์ทุกตัวมีกฎนี้สมบูรณ์
+     - **Tier 2: Backend Streaming Guard (`app.py`):**
+       - ติดตั้ง Zero-Silence Guard ในฟังก์ชัน `/api/chat` `generate()` หากโมเดลคืนข้อความว่างหรือมีแค่แท็กการคิด ระบบจะ Stream คำตอบชี้แจงความไม่แน่ใจอย่างสุภาพอัตโนมัติรองรับ 5 ภาษา (`th`, `en`, `zh`, `ko`, `ja`)
+       - เสริม Emergency Safety Net ในบล็อก `finally:` ป้องกันข้อความว่างหลุดรอด
+     - **Tier 3: LINE OA Fallback (`app.py`):**
+       - อัปเดต `/api/line/webhook` เมื่อผู้ใช้ส่งคำถามแล้วได้ผลลัพธ์ว่าง ระบบจะตอบกลับด้วยข้อความชี้แจงอย่างซื่อตรง ไม่ทักทายมั่วซั่ว
+     - **Tier 4: Frontend UI & i18n Card (`static/script.js` & `templates/index.html`):**
+       - เพิ่ม `uncertainty_title` และ `uncertainty_desc` ใน `KIRA_I18N` ครบ 5 ภาษา
+       - เพิ่มการตรวจจับใน `addMessage()` และ Streaming Renderer: หากข้อความไม่มี Markdown หลัก จะเรนเดอร์การ์ดกล่องแจ้งเตือนสีเหลืองทองอำพัน `uncertainty-note` พร้อมไอคอนและคำแนะนำที่ชัดเจน
+       - อัปเกรดแคช `CACHE_NAME = 'kira-ai-cache-v2.7.1'` ใน `static/sw.js` และทำ Cache-Busting `?v=20261026_271` ใน `templates/index.html`
+  3. **การทดสอบยืนยันระบบและการจำลองการใช้งานจริง:**
+     - **Automated Test Suite:** สร้าง `test_zero_silence_protocol.py` ทดสอบ Backend Guard, Prompt Directives และ i18n Fallback (ผ่าน 4/4 ใน 68.3s)
+     - **Regression Suite:** รัน `test_100_agents.py` ทั้ง 100 ข้อผ่านฉลุย 100%
+     - **Mandatory Live Browser Verification (Rule 8):** รัน Browser Subagent บน `http://127.0.0.1:8000/` ทดสอบคำถามเชิงลึกที่ไม่มีในบริบท คิระตอบรับอย่างสุภาพ ชี้แจงส่วนที่ไม่แน่ใจและให้ข้อมูลอ้างอิงชัดเจน ไม่มีการเงียบหายอีกต่อไป
+     - บันทึกภาพยืนยัน: `kira_main_page_reloaded_1792995188232.png`
+     - บันทึกวิดีโอ: `verify_zero_silence_ui_1792994675595.webp`
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `fix(ui): synchronize browser UI to v2.7.0, purge legacy SW caches and modernize db prompts`
+* **Git Commit ล่าสุด:** `feat(ai): implement Zero-Silence & Honest Uncertainty protocol across backend, prompt, and UI`
 * **สถานะบน Render:** ทำการ Git Push ขึ้น Render เรียบร้อยแล้ว (`main`)
 
 #### 3. 🎯 สเต็ปถัดไปสำหรับบอส (Next Action Steps for Boss):
-* ระบบเบราว์เซอร์ หน้าบ้าน หลังบ้าน และฐานข้อมูล ได้รับการซิงโครไนซ์สู่เวอร์ชันปัจจุบันอย่างสมบูรณ์แบบ 100% ทุกจุดแล้วค่ะ!
+* ระบบได้รับการปรับปรุงจนมั่นใจได้ 100% ว่าคิระและ AI ในระบบจะไม่มีวันเงียบหายหรือเมินผู้ถามอีกต่อไป หากไม่แน่ใจจะตอบอย่างนอบน้อม สุภาพ และจริงใจเสมอค่ะ!
