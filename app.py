@@ -1257,14 +1257,20 @@ def log_chat(username: str, role: str, content: str, session_id: str = None):
 
 # ========== โมเดลที่ปลอดภัยของ Groq & Multi-Provider ==========
 ALL_MODEL_CANDIDATES = [
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
     "qwen/qwen3.8-27b",
     "openai/gpt-oss-120b",
     "openai/gpt-oss-20b"
 ]
 
 # ========== Multi-Brain Profiles (Kira 2.6 - State-of-the-Art Upgrades) ==========
-# เลือกสมองที่เหมาะสมที่สุดตามประเภทคำถาม รองรับทั้ง Qwen 3.8, GPT-OSS 120B/20B, และ Groq
+# เลือกสมองที่เหมาะสมที่สุดตามประเภทคำถาม รองรับทั้ง Qwen 3.8, GPT-OSS 120B/20B, NVIDIA Nemotron 550B Free, และ Groq
 BRAIN_PROFILES = {
+    "ultra": {
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "keywords": ["ultra", "550b", "nemotron", "nvidia", "ฟรี", "ขุมพลัง", "มหากาพย์", "สุดยอด", "superbrain"],
+        "description": "โหมดประมวลผลขนาดมหึมา 550B (NVIDIA Nemotron 3 Ultra 550B Free Cloud Engine)"
+    },
     "vision": {
         "model": "qwen/qwen3.8-27b",
         "keywords": ["รูป", "ภาพ", "ตรวจภาพ", "ดูรูป", "ดูภาพ", "หน้าจอ", "แคป", "ui", "image", "photo", "screen", "screenshot", "inspect", "canvas"],
@@ -1316,7 +1322,7 @@ def _should_trigger_moa(user_input: str, model_version: str, flavor: str) -> tup
     หมายเหตุ: ไม่ใช่ Mixture-of-Agents (MoA) ที่แท้จริง แต่เป็นสถาปัตยกรรม 2-Phase Draft+Review
     Returns: (is_active: bool, routing_reason: str, hint: str)
     """
-    if model_version not in ["2.6-reasoning", "2.6-pro", "2.1-reasoning", "2.1-pro", "2.0-ultra", "2.0-pro"]:
+    if model_version not in ["2.6-ultra", "2.6-reasoning", "2.6-pro", "2.1-reasoning", "2.1-pro", "2.0-ultra", "2.0-pro"]:
         return False, "fast_model", "โมเดลความเร็วสูง"
 
     clean = user_input.strip().lower()
@@ -1342,7 +1348,7 @@ def _should_trigger_moa(user_input: str, model_version: str, flavor: str) -> tup
     
     has_deep_keyword = any(k in clean for k in deep_keywords)
     
-    if model_version in ["2.6-reasoning", "2.1-reasoning", "2.0-ultra"]:
+    if model_version in ["2.6-ultra", "2.6-reasoning", "2.1-reasoning", "2.0-ultra"]:
         return True, "ultra_deep_reasoning", "ภารกิจวิเคราะห์เชิงลึก (Multi-Model Consensus & Peer Review)"
         
     if model_version in ["2.6-pro", "2.1-pro", "2.0-pro"]:
@@ -1359,8 +1365,8 @@ def _route_brain(user_input: str = "", model_version: str = "2.6-reasoning", fla
     Returns: (model_name, brain_type, description)
     """
     # If the user passed model_version as first arg for convenience
-    if user_input in BRAIN_PROFILES or user_input in ("2.6-reasoning", "2.6-pro", "2.6-flash", "2.6-vision", "2.0-vision", "2.0-flash", "2.1-reasoning", "2.1-pro", "2.0-pro", "2.0-ultra"):
-        if model_version in ("2.6-reasoning", "2.1-reasoning") and not flavor:
+    if user_input in BRAIN_PROFILES or user_input in ("2.6-ultra", "2.6-reasoning", "2.6-pro", "2.6-flash", "2.6-vision", "2.0-vision", "2.0-flash", "2.1-reasoning", "2.1-pro", "2.0-pro", "2.0-ultra"):
+        if model_version in ("2.6-ultra", "2.6-reasoning", "2.1-reasoning") and not flavor:
             model_version = user_input
             user_input = ""
 
@@ -1382,7 +1388,10 @@ def _route_brain(user_input: str = "", model_version: str = "2.6-reasoning", fla
         return profile["model"], "creative", "✨ Generative Studio (Content & Idea Synthesis)"
     
     # 2. การจัดสรรตามโมเดล Kira 2.6 (Next-Gen Series)
-    if model_version in ("2.6-reasoning", "2.1-reasoning"):
+    if model_version in ("2.6-ultra", "2.0-ultra"):
+        profile = BRAIN_PROFILES["ultra"]
+        return profile["model"], "ultra", "👑 Kira 2.6 Ultra (NVIDIA 550B Super-Brain Free)"
+    elif model_version in ("2.6-reasoning", "2.1-reasoning"):
         profile = BRAIN_PROFILES["reasoning"]
         return profile["model"], "reasoning", "👑 Kira 2.6 Reasoning (Cognitive Deep Thinker)"
     elif model_version in ("2.6-pro", "2.1-pro"):
@@ -1397,9 +1406,6 @@ def _route_brain(user_input: str = "", model_version: str = "2.6-reasoning", fla
     elif model_version == "2.0-pro":
         profile = BRAIN_PROFILES["reasoning"]
         return profile["model"], "reasoning", "🧠 Kira 2.0 Pro (Cognitive Reasoning Engine)"
-    elif model_version == "2.0-ultra":
-        profile = BRAIN_PROFILES["logic"]
-        return profile["model"], "logic", "👑 Kira 2.0 Ultra (Enterprise Logic Engine)"
         
     # 4. Legacy 1.x models have been phased out (removed 1.0, 1.1, 1.2)
     # Any legacy model_version will fall through to Smart Router Fallback below
@@ -1516,7 +1522,7 @@ class UnifiedLLM:
                     self.model = f"google/{model_name}"
             else:
                 self.provider = "gemini"
-        elif any(k in model_name.lower() for k in ["qwen", "deepseek", "openrouter", "vl", "vision"]):
+        elif any(k in model_name.lower() for k in ["qwen", "deepseek", "openrouter", "vl", "vision", "nemotron", "nvidia", ":free"]):
             self.provider = "openrouter"
         elif any(k in model_name.lower() for k in ["ollama", "local/"]):
             self.provider = "ollama"
@@ -1809,7 +1815,7 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
         primary_provider = "groq"
     elif any(k in preferred_model.lower() for k in ["gemini"]):
         primary_provider = "gemini" if GEMINI_API_KEYS else "openrouter"
-    elif any(k in preferred_model.lower() for k in ["qwen", "deepseek", "openrouter", "vl"]):
+    elif any(k in preferred_model.lower() for k in ["qwen", "deepseek", "openrouter", "vl", "nemotron", "nvidia", ":free"]):
         primary_provider = "openrouter"
     elif any(k in preferred_model.lower() for k in ["ollama", "local/"]):
         primary_provider = "ollama"
@@ -1826,7 +1832,7 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
                 if vm not in models:
                     models.append(vm)
         else:
-            for rm in ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "qwen/qwen3.8-max-prime", "deepseek/deepseek-r1"]:
+            for rm in ["nvidia/nemotron-3-ultra-550b-a55b:free", "qwen/qwen3.8-27b", "openai/gpt-oss-120b", "deepseek/deepseek-r1"]:
                 if rm not in models:
                     models.append(rm)
         execution_stages.append(("openrouter", models, OPENROUTER_API_KEYS))
@@ -1853,7 +1859,7 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
         if is_vision:
             or_candidates = ["qwen/qwen3.8-27b", "qwen/qwen3.8-omni-flash", "qwen/qwen-2.5-vl-72b-instruct"]
         else:
-            or_candidates = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "qwen/qwen3.8-max-prime", "deepseek/deepseek-r1"]
+            or_candidates = ["nvidia/nemotron-3-ultra-550b-a55b:free", "qwen/qwen3.8-27b", "openai/gpt-oss-120b", "deepseek/deepseek-r1"]
         execution_stages.append(("openrouter", or_candidates, OPENROUTER_API_KEYS))
 
     if primary_provider != "gemini" and GEMINI_API_KEYS:
