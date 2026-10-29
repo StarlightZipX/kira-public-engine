@@ -2,11 +2,11 @@
 // 🚀 Kira AI Progressive Web App - Service Worker (v2.7.0-Synchronized)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.7.2';
+const CACHE_NAME = 'kira-ai-cache-v2.7.3';
 const STATIC_ASSETS = [
     '/',
-    '/static/style.css?v=20261027_272',
-    '/static/script.js?v=20261027_272',
+    '/static/style.css?v=20261029_273',
+    '/static/script.js?v=20261029_273',
     '/manifest.json',
     '/static/manifest.json',
     '/static/images/kira_logo.png?v=6',

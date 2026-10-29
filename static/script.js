@@ -443,19 +443,23 @@ async function checkNeuralCoreHealth(isInitial = false) {
 }
 
 // --- Check for OAuth Return Errors ---
-try {
-    const urlParams = new URLSearchParams(window.location.search);
-    const authErr = urlParams.get('auth_error');
-    if (authErr) {
-        if (loginError) {
-            loginError.style.color = '#f87171';
-            loginError.textContent = `❌ เข้าสู่ระบบไม่สำเร็จ: ${authErr}`;
+function checkPendingOAuthMessage() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const authErr = urlParams.get('auth_error');
+        if (authErr) {
+            const errBox = document.getElementById('login-error');
+            if (errBox) {
+                errBox.style.color = '#f87171';
+                errBox.textContent = `❌ เข้าสู่ระบบไม่สำเร็จ: ${authErr}`;
+            }
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
-        window.history.replaceState({}, document.title, window.location.pathname);
+    } catch (e) {
+        console.warn("Auth error check notice:", e);
     }
-} catch (e) {
-    console.warn("Auth error check notice:", e);
 }
+checkPendingOAuthMessage();
 
 // Note: Client initialization is handled safely in initKiraApp() at DOM ready
 
@@ -2021,6 +2025,7 @@ async function sendMessage() {
         const contentDiv = addMessage('', false);
         let fullText = '';
         let gavelPlayed = false;
+        let finalMarkdown = '';
 
         while (true) {
             const { done, value } = await reader.read();
@@ -2046,7 +2051,7 @@ async function sendMessage() {
             // --- Parse Thinking Tags (<think> and [THINKING]) ---
             let normalizedTxt = displayTxt.replace(/<think>/gi, "[THINKING]").replace(/<\/think>/gi, "[/THINKING][THINKING_DONE]");
             let htmlContent = "";
-            let finalMarkdown = normalizedTxt;
+            finalMarkdown = normalizedTxt;
             
             if (normalizedTxt.includes("[THINKING]")) {
                 let isDone = normalizedTxt.includes("[THINKING_DONE]") || normalizedTxt.includes("[/THINKING]");
