@@ -152,7 +152,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.6.0"
+KIRA_SYSTEM_VERSION = "2.7.3"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -161,41 +161,41 @@ KIRA_RELEASE_DATA = {
     "version": KIRA_SYSTEM_VERSION,
     "build_id": APP_BUILD_ID,
     "timestamp": APP_START_TIME,
-    "release_name": "Kira Next-Gen Neural & Modern Architecture Edition",
+    "release_name": "Kira Ultra & Zero-Silence Enterprise Edition",
     "badge_text": f"v{KIRA_SYSTEM_VERSION} Live Update",
     "title": f"✨ อัปเกรดระบบ Kira AI v{KIRA_SYSTEM_VERSION} เรียบร้อยแล้วค่ะ!",
-    "description": "คิระได้รับการอัปเกรดขุมพลังและสถาปัตยกรรมครั้งใหญ่ เพื่อความฉลาด ความเร็ว และความเสถียรสูงสุดในทุกการใช้งานค่ะ",
-    "quote": "ตอนนี้ระบบพร้อมให้คุณและบอสสัมผัสความเร็วแสงและความฉลาดแบบใหม่แล้วค่ะ ข้อมูลและประวัติแชตทั้งหมดยังคงปลอดภัย 100% ค่ะ 🌸",
+    "description": "คิระได้รับการอัปเกรดขุมพลังสมองกลยักษ์ 550B ฟรี พร้อมเกราะความซื่อสัตย์ Zero-Silence และสถาปัตยกรรมระดับ Enterprise ไร้ข้อผิดพลาดค่ะ",
+    "quote": "ตอนนี้ระบบพร้อมให้คุณและบอสสัมผัสความเร็วแสง ขุมพลัง 550B Free และความฉลาดแบบไร้ที่ติแล้วค่ะ ข้อมูลและประวัติแชตทั้งหมดยังคงปลอดภัย 100% ค่ะ 🌸",
     "highlights": [
         {
-            "icon": "fa-brain",
-            "color": "text-violet",
-            "tag": "สมองกลใหม่",
-            "text": "อัปเกรดสู่ Llama 3.3 70B & Llama 3.1 8B Instant พร้อม Dynamic Model Scanner สลับโมเดลอัจฉริยะ"
-        },
-        {
-            "icon": "fa-file-lines",
-            "color": "text-cyan",
-            "tag": "เอกสารแม่นยำ",
-            "text": "ยกระดับเอนจินประมวลผล PDF สู่ pypdf รุ่นล่าสุด อ่านและวิเคราะห์สไลด์วิชาการรวดเร็วไร้ที่ติ"
-        },
-        {
-            "icon": "fa-globe",
+            "icon": "fa-crown",
             "color": "text-emerald",
-            "tag": "ค้นหาเว็บสด",
-            "text": "เสริมเกราะค้นหาเว็บตรง Direct DDGS Engine สรุปข้อมูลสดจากอินเทอร์เน็ตทันท่วงทีไม่มีสะดุด"
+            "tag": "สมองกลยักษ์ 550B ฟรี",
+            "text": "ปลดล็อก Kira 2.6 Ultra (NVIDIA Nemotron 3 Ultra 550B Free Cloud Engine) แม่นยำ ฉลาดลึก ฟรี 100%"
         },
         {
             "icon": "fa-shield-halved",
             "color": "text-amber",
-            "tag": "ความปลอดภัย",
-            "text": "เพิ่มการป้องกัน Session และข้อมูลด้วย Web Cryptography API (crypto.randomUUID)"
+            "tag": "Zero-Silence",
+            "text": "ขจัดความเงียบหายด้วย Zero-Silence & Honest Uncertainty Protocol รายงานสถานะอย่างซื่อสัตย์ระดับมืออาชีพ"
         },
         {
-            "icon": "fa-language",
+            "icon": "fa-brain",
+            "color": "text-violet",
+            "tag": "Multi-Brain Swarm",
+            "text": "สถาปัตยกรรมสลับโมเดลอัตโนมัติ Ultra 550B, Deep Reasoning 27B, Logic 120B และ Instant Flash"
+        },
+        {
+            "icon": "fa-code",
+            "color": "text-cyan",
+            "tag": "Live Code Canvas",
+            "text": "พรีวิวหน้าเว็บ HTML/CSS/JS และผังความคิด Living Mind Map แบบเรียลไทม์ พร้อมแชร์ Snapshot สาธารณะ"
+        },
+        {
+            "icon": "fa-bolt",
             "color": "text-pink",
-            "tag": "5 ภาษา",
-            "text": "ระบบ Multi-Language & Voice Suite รองรับ ไทย, อังกฤษ, จีน, เกาหลี, ญี่ปุ่น เต็มรูปแบบ"
+            "tag": "PWA v2.7.3",
+            "text": "อัปเกรด Service Worker แคชสดใหม่ แก้ไขบั๊กคอนโซล และรองรับ 5 ภาษา พร้อมเสียงสังเคราะห์ธรรมชาติเต็มรูปแบบ"
         }
     ],
     "i18n": {
@@ -410,7 +410,7 @@ async def generate_study_material(payload: StudyRequest, request: Request):
     now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
 
     try:
-        active_model = globals().get("PREFERRED_FLASH", "llama-3.3-70b-versatile")
+        active_model = globals().get("PREFERRED_FLASH", "openai/gpt-oss-20b")
         llm = ChatGroq(
             temperature=0.3,
             model_name=active_model,
@@ -1376,6 +1376,11 @@ def _route_brain(user_input: str = "", model_version: str = "2.6-reasoning", fla
     if model_version in ("2.6-vision", "2.0-vision"):
         profile = BRAIN_PROFILES["vision"]
         return profile.get("vision", profile.get("chat", {})).get("model", profile["model"]), "vision", "👁️ Kira 2.6 Vision (Multimodal Engine)"
+
+    # 0.1 Ultra 550B Super-Brain Priority (Explicit Model Selection)
+    if model_version in ("2.6-ultra", "2.0-ultra"):
+        profile = BRAIN_PROFILES["ultra"]
+        return profile["model"], "ultra", "👑 Kira 2.6 Ultra (NVIDIA 550B Super-Brain Free)"
 
     # 1. ถ้าผู้ใช้เลือก flavor มาตรงๆ ให้ใช้ตามนั้น
     if flavor == "fast":
