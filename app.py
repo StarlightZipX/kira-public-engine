@@ -1322,7 +1322,7 @@ def _should_trigger_moa(user_input: str, model_version: str, flavor: str) -> tup
     หมายเหตุ: ไม่ใช่ Mixture-of-Agents (MoA) ที่แท้จริง แต่เป็นสถาปัตยกรรม 2-Phase Draft+Review
     Returns: (is_active: bool, routing_reason: str, hint: str)
     """
-    if model_version not in ["2.6-ultra", "2.6-reasoning", "2.6-pro", "2.1-reasoning", "2.1-pro", "2.0-ultra", "2.0-pro"]:
+    if model_version not in ["2.7-ultra", "2.7-reasoning", "2.7-pro", "2.6-ultra", "2.6-reasoning", "2.6-pro", "2.1-reasoning", "2.1-pro", "2.0-ultra", "2.0-pro"]:
         return False, "fast_model", "โมเดลความเร็วสูง"
 
     clean = user_input.strip().lower()
@@ -1348,10 +1348,10 @@ def _should_trigger_moa(user_input: str, model_version: str, flavor: str) -> tup
     
     has_deep_keyword = any(k in clean for k in deep_keywords)
     
-    if model_version in ["2.6-ultra", "2.6-reasoning", "2.1-reasoning", "2.0-ultra"]:
+    if model_version in ["2.7-ultra", "2.7-reasoning", "2.6-ultra", "2.6-reasoning", "2.1-reasoning", "2.0-ultra"]:
         return True, "ultra_deep_reasoning", "ภารกิจวิเคราะห์เชิงลึก (Multi-Model Consensus & Peer Review)"
         
-    if model_version in ["2.6-pro", "2.1-pro", "2.0-pro"]:
+    if model_version in ["2.7-pro", "2.6-pro", "2.1-pro", "2.0-pro"]:
         if flavor == "reasoning":
             return True, "user_forced_reasoning", "โหมดคิดวิเคราะห์ขั้นสูงตามคำขอ (Multi-Agent Review)"
         if has_deep_keyword or len(clean) > 50:
@@ -1365,24 +1365,40 @@ def _route_brain(user_input: str = "", model_version: str = "2.6-reasoning", fla
     Returns: (model_name, brain_type, description)
     """
     # If the user passed model_version as first arg for convenience
-    if user_input in BRAIN_PROFILES or user_input in ("2.6-ultra", "2.6-reasoning", "2.6-pro", "2.6-flash", "2.6-vision", "2.0-vision", "2.0-flash", "2.1-reasoning", "2.1-pro", "2.0-pro", "2.0-ultra"):
-        if model_version in ("2.6-ultra", "2.6-reasoning", "2.1-reasoning") and not flavor:
+    if user_input in BRAIN_PROFILES or user_input in ("2.7-ultra", "2.7-reasoning", "2.7-pro", "2.7-flash", "2.7-vision", "2.6-ultra", "2.6-reasoning", "2.6-pro", "2.6-flash", "2.6-vision", "2.0-vision", "2.0-flash", "2.1-reasoning", "2.1-pro", "2.0-pro", "2.0-ultra"):
+        if model_version in ("2.7-ultra", "2.7-reasoning", "2.6-ultra", "2.6-reasoning", "2.1-reasoning") and not flavor:
             model_version = user_input
             user_input = ""
 
     input_lower = user_input.lower() if user_input else ""
     
     # 0. Vision Multimodal Priority
-    if model_version in ("2.6-vision", "2.0-vision"):
+    if model_version in ("2.7-vision", "2.6-vision", "2.0-vision"):
         profile = BRAIN_PROFILES["vision"]
-        return profile.get("vision", profile.get("chat", {})).get("model", profile["model"]), "vision", "👁️ Kira 2.6 Vision (Multimodal Engine)"
+        return profile.get("vision", profile.get("chat", {})).get("model", profile["model"]), "vision", "👁️ Kira 2.7 Vision (Multimodal Engine)"
 
     # 0.1 Ultra 550B Super-Brain Priority (Explicit Model Selection)
-    if model_version in ("2.6-ultra", "2.0-ultra"):
+    if model_version in ("2.7-ultra", "2.6-ultra", "2.0-ultra"):
         profile = BRAIN_PROFILES["ultra"]
-        return profile["model"], "ultra", "👑 Kira 2.6 Ultra (NVIDIA 550B Super-Brain Free)"
+        return profile["model"], "ultra", "👑 Kira 2.7 Ultra (NVIDIA 550B Flagship Free)"
 
-    # 1. ถ้าผู้ใช้เลือก flavor มาตรงๆ ให้ใช้ตามนั้น
+    # 1. การจัดสรรตามโมเดล Kira 2.7 Flagship Series (Explicit Model Dropdown)
+    if model_version in ("2.7-ultra", "2.6-ultra", "2.0-ultra"):
+        profile = BRAIN_PROFILES["ultra"]
+        return profile["model"], "ultra", "👑 Kira 2.7 Ultra (NVIDIA 550B Flagship Free)"
+    elif model_version in ("2.7-reasoning", "2.6-reasoning", "2.1-reasoning"):
+        profile = BRAIN_PROFILES["reasoning"]
+        return profile["model"], "reasoning", "🧠 Kira 2.7 Reasoning (Deep Thinker)"
+    elif model_version in ("2.7-pro", "2.6-pro", "2.1-pro"):
+        profile = BRAIN_PROFILES["logic"]
+        return profile["model"], "logic", "💼 Kira 2.7 Pro (120B Logic Architect)"
+    elif model_version in ("2.7-flash", "2.6-flash", "2.0-flash"):
+        return PREFERRED_FLASH, "chat", "⚡ Kira 2.7 Flash (Instant Turbo)"
+    elif model_version == "2.0-pro":
+        profile = BRAIN_PROFILES["reasoning"]
+        return profile["model"], "reasoning", "🧠 Kira 2.0 Pro (Cognitive Reasoning Engine)"
+
+    # 2. ถ้าผู้ใช้เลือก flavor มาตรงๆ และไม่ได้ระบุโมเดลเฉพาะข้างต้น
     if flavor == "fast":
         return PREFERRED_FLASH, "chat", "⚡ Instant Turbo (High-Speed Engine)"
     elif flavor == "reasoning":
@@ -1391,26 +1407,6 @@ def _route_brain(user_input: str = "", model_version: str = "2.6-reasoning", fla
     elif flavor == "creative":
         profile = BRAIN_PROFILES["creative"]
         return profile["model"], "creative", "✨ Generative Studio (Content & Idea Synthesis)"
-    
-    # 2. การจัดสรรตามโมเดล Kira 2.6 (Next-Gen Series)
-    if model_version in ("2.6-ultra", "2.0-ultra"):
-        profile = BRAIN_PROFILES["ultra"]
-        return profile["model"], "ultra", "👑 Kira 2.6 Ultra (NVIDIA 550B Super-Brain Free)"
-    elif model_version in ("2.6-reasoning", "2.1-reasoning"):
-        profile = BRAIN_PROFILES["reasoning"]
-        return profile["model"], "reasoning", "👑 Kira 2.6 Reasoning (Cognitive Deep Thinker)"
-    elif model_version in ("2.6-pro", "2.1-pro"):
-        profile = BRAIN_PROFILES["logic"]
-        return profile["model"], "logic", "🧠 Kira 2.6 Pro (Super-Agent Architecture)"
-    elif model_version in ("2.6-flash", "2.0-flash"):
-        return PREFERRED_FLASH, "chat", "⚡ Kira 2.6 Flash (High-Speed Engine)"
-
-    # 3. การจัดสรรตามโมเดล Kira 2.0 (Current Generation)
-    elif model_version == "2.0-flash":
-        return PREFERRED_FLASH, "chat", "⚡ Kira 2.0 Flash (High-Speed Engine)"
-    elif model_version == "2.0-pro":
-        profile = BRAIN_PROFILES["reasoning"]
-        return profile["model"], "reasoning", "🧠 Kira 2.0 Pro (Cognitive Reasoning Engine)"
         
     # 4. Legacy 1.x models have been phased out (removed 1.0, 1.1, 1.2)
     # Any legacy model_version will fall through to Smart Router Fallback below

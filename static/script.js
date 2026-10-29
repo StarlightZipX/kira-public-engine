@@ -11,7 +11,7 @@
             
             const currentModel = localStorage.getItem('kira_model');
             if (!currentModel || currentModel.includes('2.1') || currentModel.includes('2.0') || currentModel.includes('1.')) {
-                localStorage.setItem('kira_model', '2.6-reasoning');
+                localStorage.setItem('kira_model', '2.7-reasoning');
             }
             
             if ('serviceWorker' in navigator) {
@@ -1984,7 +1984,7 @@ async function sendMessage() {
     if (imgInput) imgInput.value = '';
 
     try {
-        const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.6-reasoning";
+        const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.7-reasoning";
         const flavor = document.querySelector('input[name="sub-model-flavor"]:checked') ? document.querySelector('input[name="sub-model-flavor"]:checked').value : "fast";
         const persona = document.getElementById('persona-select') ? document.getElementById('persona-select').value : "default";
         const isBoardroomActive = (localStorage.getItem('kira_boardroom_active') === 'true') || (modelVersion === 'boardroom');
@@ -2265,8 +2265,8 @@ if (modelSelect) {
         if (hasOption) {
             modelSelect.value = savedModel;
         } else {
-            localStorage.setItem('kira_model', '2.6-reasoning');
-            modelSelect.value = '2.6-reasoning';
+            localStorage.setItem('kira_model', '2.7-reasoning');
+            modelSelect.value = '2.7-reasoning';
         }
     }
 
@@ -4585,7 +4585,7 @@ async function saveSettings() {
     const autoCanvas = document.getElementById('setting-auto-canvas')?.checked ?? true;
     
     const preferredName = document.getElementById('setting-preferred-name')?.value?.trim() || '';
-    const defaultModel = document.getElementById('setting-default-model')?.value || '2.6-reasoning';
+    const defaultModel = document.getElementById('setting-default-model')?.value || '2.7-reasoning';
     const persona = document.getElementById('setting-persona')?.value || 'default';
     const thinkingAccordion = document.getElementById('setting-thinking-accordion')?.value || 'auto_collapse';
     const customAbout = document.getElementById('setting-custom-about')?.value?.trim() || '';
@@ -5783,7 +5783,7 @@ function toggleBoardroomMode(forceState) {
         playGavelSound();
     } else {
         if (modelSelect && modelSelect.value === 'boardroom') {
-            modelSelect.value = localStorage.getItem('kira_default_model') || '2.6-reasoning';
+            modelSelect.value = (localStorage.getItem('kira_default_model') || '2.7-reasoning').replace('2.6-', '2.7-');
         }
         if (userInput) {
             userInput.placeholder = 'ถามอะไรก็ได้กับคิระ หรือพิมพ์โจทย์ของคุณ...';
@@ -9759,7 +9759,7 @@ function initLiveVoiceAssistant() {
             // Also append to background chat so history is preserved
             addMessage(queryText, true);
 
-            const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.6-reasoning";
+            const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.7-reasoning";
             const persona = document.getElementById('persona-select') ? document.getElementById('persona-select').value : "default";
 
             const res = await fetch('/api/chat', {
