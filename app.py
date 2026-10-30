@@ -8,6 +8,7 @@ import time
 import asyncio
 from datetime import datetime, date, timezone, timedelta
 from dotenv import load_dotenv
+import re
 
 load_dotenv()
 
@@ -152,7 +153,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.7.3"
+KIRA_SYSTEM_VERSION = "2.7.7"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -161,7 +162,7 @@ KIRA_RELEASE_DATA = {
     "version": KIRA_SYSTEM_VERSION,
     "build_id": APP_BUILD_ID,
     "timestamp": APP_START_TIME,
-    "release_name": "Kira Ultra & Zero-Silence Enterprise Edition",
+    "release_name": "Kira Vision AI & Enterprise Shield Edition",
     "badge_text": f"v{KIRA_SYSTEM_VERSION} Live Update",
     "title": f"✨ อัปเกรดระบบ Kira AI v{KIRA_SYSTEM_VERSION} เรียบร้อยแล้วค่ะ!",
     "description": "คิระได้รับการอัปเกรดขุมพลังสมองกลยักษ์ 550B ฟรี พร้อมเกราะความซื่อสัตย์ Zero-Silence และสถาปัตยกรรมระดับ Enterprise ไร้ข้อผิดพลาดค่ะ",
@@ -171,7 +172,7 @@ KIRA_RELEASE_DATA = {
             "icon": "fa-crown",
             "color": "text-emerald",
             "tag": "สมองกลยักษ์ 550B ฟรี",
-            "text": "ปลดล็อก Kira 2.6 Ultra (NVIDIA Nemotron 3 Ultra 550B Free Cloud Engine) แม่นยำ ฉลาดลึก ฟรี 100%"
+            "text": "ปลดล็อก Kira 2.7 Ultra (NVIDIA Nemotron 3 Ultra 550B Free Cloud Engine) แม่นยำ ฉลาดลึก ฟรี 100%"
         },
         {
             "icon": "fa-shield-halved",
@@ -194,7 +195,7 @@ KIRA_RELEASE_DATA = {
         {
             "icon": "fa-bolt",
             "color": "text-pink",
-            "tag": "PWA v2.7.3",
+            "tag": "PWA v2.7.7",
             "text": "อัปเกรด Service Worker แคชสดใหม่ แก้ไขบั๊กคอนโซล และรองรับ 5 ภาษา พร้อมเสียงสังเคราะห์ธรรมชาติเต็มรูปแบบ"
         }
     ],
@@ -1071,6 +1072,17 @@ def init_db():
                       reviewed_at TEXT)''')
         execute_query('''CREATE INDEX IF NOT EXISTS idx_sub_orders_username ON subscription_orders (username)''')
         execute_query('''CREATE INDEX IF NOT EXISTS idx_sub_orders_order_id ON subscription_orders (order_id)''')
+        for col_name, col_type in [
+            ("ai_verified", "INTEGER DEFAULT 0"),
+            ("ai_confidence", "REAL DEFAULT 0.0"),
+            ("ai_audit_details", "TEXT DEFAULT ''"),
+            ("trans_ref", "TEXT DEFAULT ''")
+        ]:
+            try:
+                execute_query(f"ALTER TABLE subscription_orders ADD COLUMN {col_name} {col_type}")
+            except Exception:
+                pass
+        execute_query('''CREATE INDEX IF NOT EXISTS idx_sub_orders_trans_ref ON subscription_orders (trans_ref)''')
 
         execute_query('''CREATE TABLE IF NOT EXISTS logs
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -7171,6 +7183,146 @@ async def create_subscription_order(req: SubscriptionOrderCreateRequest):
         "message": f"สร้างคำสั่งซื้อ {order_id} สำหรับแพ็กเกจ {plan_info['name']} เรียบร้อยค่ะ กรุณาสแกน QR และแนบสลิปเพื่อเริ่มใช้งานทันที"
     }
 
+def parse_slip_ai_json(raw_text: str) -> dict:
+    """Parse JSON from AI output even if wrapped in markdown code blocks"""
+    clean = raw_text.strip()
+    if "```json" in clean:
+        clean = clean.split("```json")[1].split("```")[0].strip()
+    elif "```" in clean:
+        clean = clean.split("```")[1].split("```")[0].strip()
+    
+    match = re.search(r'\{.*\}', clean, re.DOTALL)
+    if match:
+        clean = match.group(0)
+        
+    try:
+        return json.loads(clean)
+    except Exception as e:
+        return {"error": f"JSON parse error: {e}", "raw": raw_text}
+
+def verify_slip_data(data: dict, expected_amount: float) -> tuple:
+    """Verify extracted slip details against Boss real account directives: (is_valid, reason, confidence)"""
+    if not isinstance(data, dict) or data.get("error"):
+        return False, "ไม่สามารถวิเคราะห์ข้อมูลบนสลิปได้ชัดเจน", 0.0
+
+    if not data.get("is_bank_slip", False):
+        return False, "ภาพที่แนบไม่ใช่สลิปการโอนเงินของธนาคารที่ถูกต้อง", 0.0
+
+    receiver_name = str(data.get("receiver_name", "")).lower()
+    receiver_acc = str(data.get("receiver_account", "")).replace("-", "").replace(" ", "")
+    
+    # Boss Identity Checks (นาย ศิวัช รอสวัสดิ์ / KBANK 004-9-99252-5 / PromptPay 004999252517585)
+    boss_name_match = any(k in receiver_name for k in ["ศิวัช", "รอสวัสดิ์", "siwat", "rotsawat"])
+    boss_acc_match = any(k in receiver_acc for k in ["0049992525", "992525", "004999252517585"])
+    
+    if not (boss_name_match or boss_acc_match):
+        detected_rec = data.get("receiver_name") or data.get("receiver_account") or "ไม่ระบุ"
+        return False, f"ชื่อบัญชีปลายทางไม่ถูกต้อง (ตรวจพบ: {detected_rec}) ต้องโอนเข้าบัญชีคุณศิวัช รอสวัสดิ์ เท่านั้นค่ะ", 0.2
+
+    # Amount Check
+    try:
+        amt = float(data.get("amount", 0.0))
+    except (ValueError, TypeError):
+        amt = 0.0
+
+    if amt < (expected_amount - 1.0):
+        return False, f"ยอดเงินในสลิป (฿{amt:.2f}) ไม่ตรงกับราคาแพ็กเกจ (฿{expected_amount:.2f})", 0.4
+
+    confidence = float(data.get("confidence", 0.95))
+    return True, "สลิปถูกต้อง ยอดเงินและบัญชีปลายทางตรงกับบัญชีของบอส", confidence
+
+async def _verify_slip_with_ai(slip_base64: str, expected_amount: float, order_id: str) -> dict:
+    """Kira Vision AI Automated Slip Audit & Anti-Fraud Shield"""
+    if not slip_base64 or len(slip_base64) < 100:
+        return {
+            "status": "rejected",
+            "is_valid": False,
+            "reason": "ข้อมูลรูปภาพสลิปไม่สมบูรณ์หรือไม่ถูกต้อง",
+            "confidence": 0.0,
+            "details": {}
+        }
+
+    # Ensure data URI scheme
+    img_url = slip_base64 if slip_base64.startswith("data:image/") else f"data:image/jpeg;base64,{slip_base64}"
+
+    vision_prompt = (
+        "คุณคือผู้ตรวจสอบสลิปโอนเงินธนาคารของไทย (Thai Bank Slip Auditor AI) ระดับ Enterprise\n"
+        "กรุณาวิเคราะห์ภาพนี้อย่างละเอียด และตอบกลับเป็น JSON เท่านั้น (ไม่มี Markdown หรือคำอธิบายอื่น) โดยมีโครงสร้างดังนี้:\n"
+        "{\n"
+        '  "is_bank_slip": true หรือ false,\n'
+        '  "bank_name": "ชื่อธนาคารต้นทางหรือปลายทาง เช่น KBANK, SCB, KTB, BBL, TTB, GSB, TrueMoney หรือ PromptPay",\n'
+        '  "sender_name": "ชื่อผู้โอน",\n'
+        '  "receiver_name": "ชื่อผู้รับโอนเงิน",\n'
+        '  "receiver_account": "เลขที่บัญชีหรือพร้อมเพย์ผู้รับ",\n'
+        '  "amount": 199.0,\n'
+        '  "transaction_ref": "รหัสอ้างอิงการทำรายการ หรือ Transaction ID บนสลิป",\n'
+        '  "datetime": "วันและเวลาที่โอน",\n'
+        '  "confidence": 0.95,\n'
+        '  "notes": "หมายเหตุสั้นๆ"\n'
+        "}\n"
+        "ข้อกำหนดสำคัญ: หากภาพไม่ใช่สลิปการโอนเงิน (เช่น รูปคน รูปวิว มีม หรือภาพว่างเปล่า) ให้ใส่ is_bank_slip: false"
+    )
+
+    messages = [
+        HumanMessage(content=[
+            {"type": "text", "text": vision_prompt},
+            {"type": "image_url", "image_url": {"url": img_url}}
+        ])
+    ]
+
+    try:
+        preferred_model = "qwen/qwen-2.5-vl-72b-instruct" if OPENROUTER_API_KEYS else "meta-llama/llama-3.2-11b-vision-instruct"
+        s, chunks, err = await _try_all_keys_and_models(messages, preferred_model, ui_lang="th")
+        if s and chunks:
+            raw_reply = "".join(chunks)
+            parsed_data = parse_slip_ai_json(raw_reply)
+            
+            # Anti-Replay check
+            trans_ref = str(parsed_data.get("transaction_ref") or "").strip()
+            if trans_ref and len(trans_ref) >= 6:
+                dup = execute_query(
+                    "SELECT id, order_id, username, created_at FROM subscription_orders WHERE trans_ref=? AND status='approved' AND order_id!=?",
+                    (trans_ref, order_id),
+                    fetch='one'
+                )
+                if dup:
+                    return {
+                        "status": "rejected",
+                        "is_valid": False,
+                        "reason": f"สลิปนี้ (เลขที่อ้างอิง {trans_ref}) เคยถูกนำมาใช้และอนุมัติไปแล้วในคำสั่งซื้อ {dup[1]}",
+                        "fraud_type": "DUPLICATE_SLIP",
+                        "confidence": 0.99,
+                        "details": parsed_data
+                    }
+
+            is_valid, reason, conf = verify_slip_data(parsed_data, expected_amount)
+            return {
+                "status": "approved" if is_valid else "rejected",
+                "is_valid": is_valid,
+                "reason": reason,
+                "confidence": conf,
+                "trans_ref": trans_ref,
+                "details": parsed_data
+            }
+        else:
+            return {
+                "status": "pending_review",
+                "is_valid": False,
+                "reason": "ระบบเครือข่าย AI กำลังโหลดข้อมูลสูง บันทึกสลิปและส่งต่อให้แอดมินบอสตรวจสอบ",
+                "confidence": 0.5,
+                "trans_ref": "",
+                "details": {"error": err or "Vision timeout"}
+            }
+    except Exception as e:
+        return {
+            "status": "pending_review",
+            "is_valid": False,
+            "reason": f"เกิดข้อผิดพลาดในการวิเคราะห์ด้วย AI: {str(e)}",
+            "confidence": 0.0,
+            "trans_ref": "",
+            "details": {"error": str(e)}
+        }
+
 @app.post("/api/subscription/upload-slip")
 async def upload_subscription_slip(req: SubscriptionSlipUploadRequest):
     """อัปโหลดสลิปหลักฐานการโอนเงิน และเปิดใช้งานสิทธิ์ Pro/Founder อัตโนมัติทันที (Instant Auto-Activation)"""
@@ -7211,14 +7363,46 @@ async def upload_subscription_slip(req: SubscriptionSlipUploadRequest):
     new_expire_str = new_expire_dt.strftime("%Y-%m-%d %H:%M:%S")
     now_str = now.strftime("%Y-%m-%d %H:%M:%S")
 
-    # บันทึกสลิป และเปิดสิทธิ์การใช้งานทันที
-    user_row = execute_query("SELECT id FROM users WHERE username=?", (username,), fetch='one')
-    if user_row:
-        execute_query("UPDATE users SET plan=?, plan_expire_date=?, subscription_status='active' WHERE username=?", (target_plan, new_expire_str, username))
-    else:
-        execute_query("INSERT INTO users (username, plan, plan_expire_date, subscription_status, points) VALUES (?, ?, ?, 'active', 0)", (username, target_plan, new_expire_str))
+    expected_amount = float(order[3] or 0)
 
-    execute_query("UPDATE subscription_orders SET slip_image=?, status='approved', reviewed_at=? WHERE order_id=?", (slip_data, now_str, req.order_id))
+    # 🤖 AI Slip Audit & Verification Step
+    audit_res = await _verify_slip_with_ai(slip_data, expected_amount=expected_amount, order_id=req.order_id)
+    audit_status = audit_res.get("status", "pending_review")
+    is_valid = audit_res.get("is_valid", False)
+    trans_ref = audit_res.get("trans_ref", "")
+    conf = float(audit_res.get("confidence", 0.0))
+    details_str = json.dumps(audit_res.get("details", {}), ensure_ascii=False)
+
+    # 1. กรณีสลิปไม่ถูกต้องชัดเจน หรือเป็นสลิปซ้ำ (Fraud Rejection)
+    if audit_status == "rejected":
+        rejection_reason = audit_res.get("reason", "สลิปไม่ถูกต้องหรือไม่พบข้อมูลการโอนเงินเข้าบัญชีคุณศิวัช รอสวัสดิ์")
+        execute_query(
+            "UPDATE subscription_orders SET slip_image=?, status='rejected', rejection_reason=?, trans_ref=?, ai_verified=0, ai_confidence=?, ai_audit_details=?, reviewed_at=? WHERE order_id=?",
+            (slip_data, rejection_reason, trans_ref, conf, details_str, now_str, req.order_id)
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"การตรวจสอบสลิปไม่ผ่าน: {rejection_reason} กรุณาตรวจสอบและแนบสลิปจริงอีกครั้งนะคะ"
+        )
+
+    # 2. กรณี AI ตรวจสอบผ่านฉลุย (Approved)
+    if audit_status == "approved":
+        user_row = execute_query("SELECT id FROM users WHERE username=?", (username,), fetch='one')
+        if user_row:
+            execute_query("UPDATE users SET plan=?, plan_expire_date=?, subscription_status='active' WHERE username=?", (target_plan, new_expire_str, username))
+        else:
+            execute_query("INSERT INTO users (username, plan, plan_expire_date, subscription_status, points) VALUES (?, ?, ?, 'active', 0)", (username, target_plan, new_expire_str))
+
+        execute_query(
+            "UPDATE subscription_orders SET slip_image=?, status='approved', trans_ref=?, ai_verified=1, ai_confidence=?, ai_audit_details=?, reviewed_at=? WHERE order_id=?",
+            (slip_data, trans_ref, conf, details_str, now_str, req.order_id)
+        )
+    else:
+        # 3. กรณี AI มั่นใจปานกลางหรือ API ขัดข้อง -> ส่งต่อให้แอดมินบอสตรวจมือ
+        execute_query(
+            "UPDATE subscription_orders SET slip_image=?, status='pending_review', trans_ref=?, ai_verified=0, ai_confidence=?, ai_audit_details=?, reviewed_at=NULL WHERE order_id=?",
+            (slip_data, trans_ref, conf, details_str, req.order_id)
+        )
 
     # ข้อความต้อนรับและขอบคุณแยกตามแพ็กเกจ (Unique In-Chat Welcome Notifications)
     expire_display = new_expire_dt.strftime("%d/%m/%Y")
@@ -7245,7 +7429,12 @@ async def upload_subscription_slip(req: SubscriptionSlipUploadRequest):
         "expire_date": new_expire_str,
         "expire_display": expire_display,
         "welcome_message": welcome_msg,
-        "message": f"ขอบคุณสำหรับการสมัครแพ็กเกจนะคะ! ระบบได้เปิดสิทธิ์การใช้งาน {badge_name} ให้คุณเรียบร้อยแล้วค่ะ ใช้งานได้ถึงวันที่ {expire_display}"
+        "ai_verified": (audit_status == "approved"),
+        "message": (
+            f"🤖 AI ตรวจสอบสลิปผ่านฉลุย ยอดเงินเข้าบัญชีคุณศิวัช รอสวัสดิ์ ถูกต้อง พร้อมเปิดสิทธิ์ {badge_name} ให้คุณเรียบร้อยแล้วค่ะ!"
+            if audit_status == "approved" else
+            "📨 บันทึกสลิปเรียบร้อยแล้วค่ะ ระบบส่งต่อไปยังแอดมินบอสเพื่อตรวจสอบและอนุมัติให้ภายในไม่กี่นาทีนะคะ"
+        )
     }
 
 @app.get("/api/admin/subscription/orders")
@@ -7255,7 +7444,7 @@ async def list_admin_subscription_orders(admin_username: Optional[str] = "boss")
         raise HTTPException(status_code=403, detail="ต้องใช้สิทธิ์ผู้สร้าง (Boss) ในการเข้าถึง")
         
     rows = execute_query(
-        "SELECT id, order_id, username, plan_type, plan_title, amount, duration_days, slip_image, status, rejection_reason, created_at, reviewed_at FROM subscription_orders ORDER BY id DESC LIMIT 100",
+        "SELECT id, order_id, username, plan_type, plan_title, amount, duration_days, slip_image, status, rejection_reason, created_at, reviewed_at, ai_verified, ai_confidence, ai_audit_details, trans_ref FROM subscription_orders ORDER BY id DESC LIMIT 100",
         fetch='all'
     )
     orders = []
@@ -7267,6 +7456,7 @@ async def list_admin_subscription_orders(admin_username: Optional[str] = "boss")
                 "username": r[2],
                 "plan_type": r[3],
                 "plan_title": r[4],
+                "plan_name": r[4],
                 "amount": r[5],
                 "duration_days": r[6],
                 "has_slip": bool(r[7]),
@@ -7274,7 +7464,11 @@ async def list_admin_subscription_orders(admin_username: Optional[str] = "boss")
                 "status": r[8],
                 "rejection_reason": r[9],
                 "created_at": r[10],
-                "reviewed_at": r[11]
+                "reviewed_at": r[11],
+                "ai_verified": r[12] if len(r) > 12 and r[12] is not None else 0,
+                "ai_confidence": r[13] if len(r) > 13 and r[13] is not None else 0.0,
+                "ai_audit_details": r[14] if len(r) > 14 and r[14] is not None else "",
+                "trans_ref": r[15] if len(r) > 15 and r[15] is not None else ""
             })
             
     return {

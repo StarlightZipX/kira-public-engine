@@ -6955,7 +6955,7 @@ function initSubscriptionController() {
 
             const origHtml = btnSubmitSlip.innerHTML;
             btnSubmitSlip.disabled = true;
-            btnSubmitSlip.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปโหลดสลิป...';
+            btnSubmitSlip.innerHTML = '<i class="fa-solid fa-microchip fa-spin"></i> AI กำลังตรวจสอบสลิป...';
 
             try {
                 const note = slipNoteInput ? slipNoteInput.value.trim() : '';
@@ -6989,8 +6989,15 @@ function initSubscriptionController() {
                             addMessage(data.welcome_message, false);
                         }, 500);
                     }
+                } else if (res.ok && data.status === 'pending_review') {
+                    if (confirmedOrderId) confirmedOrderId.textContent = `#${orderId}`;
+                    const subSuccessPlanInfo = document.getElementById('sub-success-plan-info');
+                    if (subSuccessPlanInfo) {
+                        subSuccessPlanInfo.innerHTML = `<span style="color:#fbbf24; font-weight:600;"><i class="fa-solid fa-clock"></i> บันทึกสลิปเรียบร้อยแล้วค่ะ</span><br><span style="font-size:12px; color:#cbd5e1;">ระบบส่งสลิปให้แอดมินบอสตรวจสอบและอนุมัติให้ภายในไม่กี่นาทีนะคะ</span>`;
+                    }
+                    switchSubView('success');
                 } else {
-                    alert('ส่งสลิปไม่สำเร็จ: ' + (data.detail || data.message));
+                    alert('การตรวจสอบสลิป: ' + (data.detail || data.message || 'ไม่สามารถตรวจสอบสลิปได้'));
                 }
             } catch (err) {
                 alert('เกิดข้อผิดพลาด: ' + err.message);
@@ -7475,7 +7482,7 @@ function initKiraUpdateController() {
             fetch('/api/system/version?_t=' + Date.now(), { cache: 'no-store' })
                 .then(r => r.ok ? r.json() : null)
                 .then(d => {
-                    const v = d && d.version ? `v${d.version}` : 'v2.7.3';
+                    const v = d && d.version ? `v${d.version}` : 'v2.7.7';
                     const rel = d && d.release_name ? ` (${d.release_name})` : '';
                     if (typeof showConnectionToast === 'function') {
                         showConnectionToast(`✨ อัปเดต Kira AI ${v}${rel} สำเร็จแล้วค่ะ! พร้อมให้บริการคุณแล้วนะคะ 🌸`, 'ready');

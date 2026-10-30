@@ -624,24 +624,32 @@
                         }
 
                         let statusBadge = '';
-                        if(o.status === 'pending') {
+                        if(o.status === 'pending' || o.status === 'pending_review') {
                             statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">รอตรวจสอบ</span>`;
                         } else if(o.status === 'approved') {
-                            statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">อนุมัติแล้ว</span>`;
+                            if(o.ai_verified) {
+                                statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 inline-flex items-center gap-1">🤖 AI Verified</span>`;
+                            } else {
+                                statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">อนุมัติแล้ว</span>`;
+                            }
                         } else {
                             statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-300 border border-red-500/40">ปฏิเสธ</span>`;
                         }
 
                         let slipPreview = '<span class="text-xs text-slate-500">ไม่มีสลิป</span>';
                         if(o.slip_image) {
+                            let transRefNote = o.trans_ref ? `<div class="text-[10px] text-slate-400 font-mono mt-0.5" title="Transaction Ref: ${o.trans_ref}">Ref: ${o.trans_ref.substring(0, 10)}...</div>` : '';
                             slipPreview = `
-                                <img src="${o.slip_image}" alt="Slip" onclick="zoomSlipModal('${o.order_id}')" 
-                                     class="w-12 h-12 object-cover rounded-lg border border-slate-600 cursor-pointer hover:scale-110 transition-transform shadow">
+                                <div class="flex flex-col items-center">
+                                    <img src="${o.slip_image}" alt="Slip" onclick="zoomSlipModal('${o.order_id}')" 
+                                         class="w-12 h-12 object-cover rounded-lg border border-slate-600 cursor-pointer hover:scale-110 transition-transform shadow">
+                                    ${transRefNote}
+                                </div>
                             `;
                         }
 
                         let actions = '';
-                        if(o.status === 'pending') {
+                        if(o.status === 'pending' || o.status === 'pending_review') {
                             actions = `
                                 <div class="flex items-center justify-center gap-2">
                                     <button onclick="approveOrder('${o.order_id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1">
@@ -668,7 +676,7 @@
                                     <span class="text-blue-400">@${o.username}</span>
                                 </td>
                                 <td class="py-3 px-4">
-                                    <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">${o.plan_name || o.plan_id}</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">${o.plan_title || o.plan_name || o.plan_type || '-'}</span>
                                 </td>
                                 <td class="py-3 px-4 font-bold text-amber-400">
                                     ฿${o.amount}
