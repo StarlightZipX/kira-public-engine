@@ -1375,25 +1375,25 @@ def _route_brain(user_input: str = "", model_version: str = "2.6-reasoning", fla
     # 0. Vision Multimodal Priority
     if model_version in ("2.7-vision", "2.6-vision", "2.0-vision"):
         profile = BRAIN_PROFILES["vision"]
-        return profile.get("vision", profile.get("chat", {})).get("model", profile["model"]), "vision", "👁️ Kira 2.7 Vision (Multimodal Engine)"
+        return profile.get("vision", profile.get("chat", {})).get("model", profile["model"]), "vision", "👁️ Kira 2.7 Vision"
 
     # 0.1 Ultra 550B Super-Brain Priority (Explicit Model Selection)
     if model_version in ("2.7-ultra", "2.6-ultra", "2.0-ultra"):
         profile = BRAIN_PROFILES["ultra"]
-        return profile["model"], "ultra", "👑 Kira 2.7 Ultra (NVIDIA 550B Flagship Free)"
+        return profile["model"], "ultra", "👑 Kira 2.7 Ultra"
 
     # 1. การจัดสรรตามโมเดล Kira 2.7 Flagship Series (Explicit Model Dropdown)
     if model_version in ("2.7-ultra", "2.6-ultra", "2.0-ultra"):
         profile = BRAIN_PROFILES["ultra"]
-        return profile["model"], "ultra", "👑 Kira 2.7 Ultra (NVIDIA 550B Flagship Free)"
+        return profile["model"], "ultra", "👑 Kira 2.7 Ultra"
     elif model_version in ("2.7-reasoning", "2.6-reasoning", "2.1-reasoning"):
         profile = BRAIN_PROFILES["reasoning"]
-        return profile["model"], "reasoning", "🧠 Kira 2.7 Reasoning (Deep Thinker)"
+        return profile["model"], "reasoning", "🧠 Kira 2.7 Reasoning"
     elif model_version in ("2.7-pro", "2.6-pro", "2.1-pro"):
         profile = BRAIN_PROFILES["logic"]
-        return profile["model"], "logic", "💼 Kira 2.7 Pro (120B Logic Architect)"
+        return profile["model"], "logic", "💼 Kira 2.7 Pro"
     elif model_version in ("2.7-flash", "2.6-flash", "2.0-flash"):
-        return PREFERRED_FLASH, "chat", "⚡ Kira 2.7 Flash (Instant Turbo)"
+        return PREFERRED_FLASH, "chat", "⚡ Kira 2.7 Flash"
     elif model_version == "2.0-pro":
         profile = BRAIN_PROFILES["reasoning"]
         return profile["model"], "reasoning", "🧠 Kira 2.0 Pro (Cognitive Reasoning Engine)"

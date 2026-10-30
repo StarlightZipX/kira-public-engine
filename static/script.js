@@ -379,12 +379,12 @@ async function checkEngineStatus() {
             if (unifiedPill) unifiedPill.title = `เชื่อมต่อกับ Local GPU สำเร็จ (Ollama: ${data.models.join(', ')}) • Heartbeat Active`;
         } else {
             if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Engine 2.6</span>`;
-            if (unifiedText) unifiedText.textContent = 'Cloud Engine 2.6';
+            if (unifiedText) unifiedText.textContent = 'Cloud Engine 2.7';
             if (unifiedPill) unifiedPill.title = 'ระบบพร้อมใช้งาน 100% | Cloud Multi-Brain Engine พร้อมทำงาน';
         }
     } catch (e) {
         if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Engine 2.6</span>`;
-        if (unifiedText) unifiedText.textContent = 'Cloud Engine 2.6';
+        if (unifiedText) unifiedText.textContent = 'Cloud Engine 2.7';
     }
 }
 
@@ -1258,7 +1258,7 @@ function initProactiveHeartbeat() {
                 if (userInput) {
                     userInput.focus();
                     if (!userInput.value) {
-                        userInput.placeholder = "พิมพ์ข้อความหรือคำถามถึง Kira 2.6...";
+                        userInput.placeholder = "พิมพ์ข้อความหรือคำถามถึง Kira 2.7...";
                     }
                 }
             }
@@ -1539,8 +1539,8 @@ async function loadSession(sessionId) {
             data.history.forEach(msg => {
                 // Strip legacy badges when rendering old history so everything displays as unified Kira 2.6
                 let displayTxt = msg.content.replace(/^([✨🤖👁️🧠👑💼⚙️]?[ ]*\**\[Kira (?:1\.[0-9]|2\.[0-5]).*?\]\**(?:\n\n|\n)?)/i, "")
-                                            .replace(/\[Kira (?:1\.[0-9]|2\.[0-5])\s+Pro\]/gi, "[Kira 2.6 Pro]")
-                                            .replace(/\[Kira (?:1\.[0-9]|2\.[0-5])\s+Reasoning\]/gi, "[Kira 2.6 Reasoning]");
+                                            .replace(/\[Kira (?:1\.[0-9]|2\.[0-5])\s+Pro\]/gi, "[Kira 2.7 Pro]")
+                                            .replace(/\[Kira (?:1\.[0-9]|2\.[0-5])\s+Reasoning\]/gi, "[Kira 2.7 Reasoning]");
                 addMessage(displayTxt, msg.role === 'User');
             });
         }
@@ -1566,7 +1566,7 @@ function formatExecutiveDeliverable(text) {
     const thaiDate = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     
     let header = `# 📋 รายงานสรุปงานสำหรับผู้บริหาร (Executive Deliverable)\n`;
-    header += `**ระบบ:** Kira AI System 2.6 Pro | **ผู้จัดทำ:** ${currentUser || 'ท่านประธาน'} | **วันที่:** ${thaiDate}\n`;
+    header += `**ระบบ:** Kira AI System 2.7 Pro | **ผู้จัดทำ:** ${currentUser || 'ท่านประธาน'} | **วันที่:** ${thaiDate}\n`;
     header += `**สถานะ:** ผ่านการกลั่นกรองและตรวจสอบความถูกต้องสมบูรณ์ (Verified)\n\n---\n\n`;
     
     return header + clean + `\n\n---\n*จัดทำโดย Kira AI System — ระบบผู้ช่วยอัจฉริยะระดับผู้บริหาร*`;
@@ -3954,7 +3954,7 @@ function showNodeDetails(node) {
     if (node.group === 'user') {
         info = `โหนดศูนย์กลางผู้ใช้งาน: <strong>${node.label}</strong>`;
     } else if (node.group === 'ai') {
-        info = `โหนดปัญญาประดิษฐ์: <strong>Kira AI System 2.6</strong>`;
+        info = `โหนดปัญญาประดิษฐ์: <strong>Kira AI System 2.7</strong>`;
     } else if (node.full_fact) {
         info = `ข้อเท็จจริงที่จดจำ: "${node.full_fact}"`;
     } else {
@@ -4905,7 +4905,7 @@ async function exportChatJson() {
             return;
         }
         const exportData = {
-            app: "Kira AI System 2.6 Next-Gen",
+            app: "Kira AI System 2.7 Next-Gen",
             exported_at: new Date().toISOString(),
             user: currentUser,
             messages_count: data.history.length,
@@ -7475,7 +7475,7 @@ function initKiraUpdateController() {
             fetch('/api/system/version?_t=' + Date.now(), { cache: 'no-store' })
                 .then(r => r.ok ? r.json() : null)
                 .then(d => {
-                    const v = d && d.version ? `v${d.version}` : 'v2.6.0';
+                    const v = d && d.version ? `v${d.version}` : 'v2.7.3';
                     const rel = d && d.release_name ? ` (${d.release_name})` : '';
                     if (typeof showConnectionToast === 'function') {
                         showConnectionToast(`✨ อัปเดต Kira AI ${v}${rel} สำเร็จแล้วค่ะ! พร้อมให้บริการคุณแล้วนะคะ 🌸`, 'ready');
@@ -8043,7 +8043,7 @@ function exportDeliverableToPDF(title, rawContent, mode = 'executive') {
                 <img src="${window.location.origin}/static/images/kira_logo.png?v=6" alt="Kira AI" class="brand-logo" onerror="this.src='${window.location.origin}/static/images/kira_avatar.jpg?v=5'">
                 <div class="brand-text">
                     <h1>Kira AI Enterprise System</h1>
-                    <p>ระบบปัญญาประดิษฐ์อัจฉริยะภาษาไทย • สภาที่ปรึกษาผู้บริหารและผู้ช่วยส่วนบุคคล (v2.6)</p>
+                    <p>ระบบปัญญาประดิษฐ์อัจฉริยะภาษาไทย • สภาที่ปรึกษาผู้บริหารและผู้ช่วยส่วนบุคคล (v2.7)</p>
                 </div>
             </div>
             <div class="header-meta">
@@ -8083,7 +8083,7 @@ function exportDeliverableToPDF(title, rawContent, mode = 'executive') {
             </div>
             <div class="audit-seal-box">
                 <div class="seal-title">🏛️ Kira AI Enterprise Intelligence Verification</div>
-                <div>เอกสารนี้ได้รับการประมวลผลและจัดทำโดยระบบปัญญาประดิษฐ์ Kira AI v2.6</div>
+                <div>เอกสารนี้ได้รับการประมวลผลและจัดทำโดยระบบปัญญาประดิษฐ์ Kira AI v2.7</div>
                 <div style="margin-top: 4px;"><strong>Verification Digest:</strong></div>
                 <div class="seal-hash">SHA256:${Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2)}</div>
             </div>
@@ -8658,7 +8658,7 @@ function renderSlideItemHtml(slide, index, totalSlides) {
                 </div>
             </div>
             <div class="slide-bottom-bar">
-                <span class="slide-foot-brand">Kira AI 2.6 • Confidential Enterprise Presentation</span>
+                <span class="slide-foot-brand">Kira AI 2.7 • Confidential Enterprise Presentation</span>
                 <span class="slide-num-pill">${String(index + 1).padStart(2, '0')} / ${String(totalSlides).padStart(2, '0')}</span>
             </div>
         </div>`;
@@ -8675,7 +8675,7 @@ function renderSlideItemHtml(slide, index, totalSlides) {
         </div>
         ${slide.contentHtml}
         <div class="slide-bottom-bar">
-            <span class="slide-foot-brand">Kira AI 2.6 • Executive Decision Support</span>
+            <span class="slide-foot-brand">Kira AI 2.7 • Executive Decision Support</span>
             <span class="slide-num-pill">${String(index + 1).padStart(2, '0')} / ${String(totalSlides).padStart(2, '0')}</span>
         </div>
     </div>`;
@@ -11394,7 +11394,7 @@ const KIRA_I18N = {
         settings_title: "ตั้งค่าระบบ (Settings)",
         upgrade_pro_title: "อัปเกรดเป็น Kira Pro / Founder Pass",
         pwa_install_btn: "ติดตั้งแอป",
-        engine_cloud: "Cloud Engine 2.6",
+        engine_cloud: "Cloud Engine 2.7",
         header_boardroom: "สภา",
         header_task_matrix: "งาน",
 
@@ -11425,7 +11425,7 @@ const KIRA_I18N = {
         chip_study_hub: "ห้องติวสอบ ✨",
 
         // Input & Actions
-        input_placeholder: "พิมพ์ข้อความหรือคำถามถึง Kira 2.6... (Shift+Enter ขึ้นบรรทัดใหม่, Ctrl+V วางรูป)",
+        input_placeholder: "พิมพ์ข้อความหรือคำถามถึง Kira 2.7... (Shift+Enter ขึ้นบรรทัดใหม่, Ctrl+V วางรูป)",
         silver_voice_label: "แตะที่นี่เพื่อพูดคุยกับคิระ (ไม่ต้องพิมพ์คีย์บอร์ดนะคะ)",
         attach_image: "รูปภาพ",
         attach_doc: "ไฟล์เอกสาร",
@@ -11489,7 +11489,7 @@ const KIRA_I18N = {
 
         // Settings Modal
         settings_header_title: "การตั้งค่าระบบ",
-        settings_header_subtitle: "ปรับแต่งประสบการณ์ใช้งาน Kira AI 2.6 ตามสไตล์ของคุณ",
+        settings_header_subtitle: "ปรับแต่งประสบการณ์ใช้งาน Kira AI 2.7 ตามสไตล์ของคุณ",
         settings_tab_general: "ทั่วไป & การแสดงผล",
         settings_tab_account: "บัญชี & ความปลอดภัย",
         settings_tab_ai: "โมเดล & คำสั่งกำหนดเอง",
@@ -11655,7 +11655,7 @@ const KIRA_I18N = {
         share_title_label: "หัวข้อผลงานหรือบทสนทนา:",
         share_generating_link: "กำลังสร้างลิงก์แชร์...",
         toast_connecting: "กำลังเชื่อมต่อเซิร์ฟเวอร์คิระ...",
-        cloud_free_quota: "Cloud Engine 2.6 Active • ใช้งานฟรี 150 ข้อความ/วัน",
+        cloud_free_quota: "Cloud Engine 2.7 Active • ใช้งานฟรี 150 ข้อความ/วัน",
         auth_or_quick_register: "หรือสมัครสมาชิกด่วนด้วย",
         pwa_modal_title: "ติดตั้งแอป Kira AI",
         pwa_modal_desc: "เปิดใช้งานแบบเต็มจอ รวดเร็ว และเข้าถึงง่ายจากหน้าจอของคุณ",
@@ -11790,7 +11790,7 @@ const KIRA_I18N = {
         settings_title: "System Settings",
         upgrade_pro_title: "Upgrade to Kira Pro / Founder Pass",
         pwa_install_btn: "Install App",
-        engine_cloud: "Cloud Engine 2.6",
+        engine_cloud: "Cloud Engine 2.7",
         header_boardroom: "Boardroom",
         header_task_matrix: "Tasks",
 
@@ -11885,7 +11885,7 @@ const KIRA_I18N = {
 
         // Settings Modal
         settings_header_title: "System Settings",
-        settings_header_subtitle: "Customize your Kira AI 2.6 experience",
+        settings_header_subtitle: "Customize your Kira AI 2.7 experience",
         settings_tab_general: "General & Appearance",
         settings_tab_account: "Account & Security",
         settings_tab_ai: "Models & Customization",
@@ -12051,7 +12051,7 @@ const KIRA_I18N = {
         share_title_label: "Topic or Work Title:",
         share_generating_link: "Generating share link...",
         toast_connecting: "Connecting to Kira Cloud Server...",
-        cloud_free_quota: "Cloud Engine 2.6 Active • 150 free messages/day",
+        cloud_free_quota: "Cloud Engine 2.7 Active • 150 free messages/day",
         auth_or_quick_register: "Or quick register with",
         pwa_modal_title: "Install Kira AI Web App",
         pwa_modal_desc: "Launch full-screen, ultra-fast and accessible directly from your home screen.",
@@ -12186,7 +12186,7 @@ const KIRA_I18N = {
         settings_title: "系统设置",
         upgrade_pro_title: "升级为 Kira Pro / Founder Pass",
         pwa_install_btn: "安装应用",
-        engine_cloud: "Cloud Engine 2.6",
+        engine_cloud: "Cloud Engine 2.7",
         header_boardroom: "董事会",
         header_task_matrix: "任务",
 
@@ -12281,7 +12281,7 @@ const KIRA_I18N = {
 
         // Settings Modal
         settings_header_title: "系统设置",
-        settings_header_subtitle: "个性化定制您的 Kira AI 2.6 体验",
+        settings_header_subtitle: "个性化定制您的 Kira AI 2.7 体验",
         settings_tab_general: "常规与外观",
         settings_tab_account: "账户与安全",
         settings_tab_ai: "模型与自定义指令",
@@ -12447,7 +12447,7 @@ const KIRA_I18N = {
         share_title_label: "分享标题或议题：",
         share_generating_link: "正在生成分享链接...",
         toast_connecting: "正在连接 Kira 云端服务器...",
-        cloud_free_quota: "Cloud Engine 2.6 运行中 • 每日免费 150 条消息",
+        cloud_free_quota: "Cloud Engine 2.7 运行中 • 每日免费 150 条消息",
         auth_or_quick_register: "或通过第三方快速注册",
         pwa_modal_title: "安装 Kira AI 桌面应用",
         pwa_modal_desc: "全屏秒开体验，极致流畅，随时随地从桌面快速进入",
@@ -12582,7 +12582,7 @@ const KIRA_I18N = {
         settings_title: "시스템 설정",
         upgrade_pro_title: "Kira Pro / Founder Pass 업그레이드",
         pwa_install_btn: "앱 설치",
-        engine_cloud: "Cloud Engine 2.6",
+        engine_cloud: "Cloud Engine 2.7",
         header_boardroom: "이사회",
         header_task_matrix: "업무",
 
@@ -12677,7 +12677,7 @@ const KIRA_I18N = {
 
         // Settings Modal
         settings_header_title: "시스템 설정",
-        settings_header_subtitle: "맞춤형 Kira AI 2.6 환경 설정",
+        settings_header_subtitle: "맞춤형 Kira AI 2.7 환경 설정",
         settings_tab_general: "일반 및 디스플레이",
         settings_tab_account: "계정 및 보안",
         settings_tab_ai: "모델 및 맞춤 설정",
@@ -12843,7 +12843,7 @@ const KIRA_I18N = {
         share_title_label: "공유할 제목 또는 작업명:",
         share_generating_link: "공유 링크 생성 중...",
         toast_connecting: "Kira 클라우드 서버에 연결 중...",
-        cloud_free_quota: "Cloud Engine 2.6 활성화 • 일 150회 무료 메시지",
+        cloud_free_quota: "Cloud Engine 2.7 활성화 • 일 150회 무료 메시지",
         auth_or_quick_register: "또는 간편 회원가입",
         pwa_modal_title: "Kira AI 앱 설치",
         pwa_modal_desc: "홈 화면에서 바로 실행되는 빠르고 쾌적한 풀스크린 웹앱 환경",
@@ -12978,7 +12978,7 @@ const KIRA_I18N = {
         settings_title: "システム設定",
         upgrade_pro_title: "Kira Pro / Founder Pass にアップグレード",
         pwa_install_btn: "アプリをインストール",
-        engine_cloud: "Cloud Engine 2.6",
+        engine_cloud: "Cloud Engine 2.7",
         header_boardroom: "役員会",
         header_task_matrix: "タスク",
 
@@ -13073,7 +13073,7 @@ const KIRA_I18N = {
 
         // Settings Modal
         settings_header_title: "システム設定",
-        settings_header_subtitle: "Kira AI 2.6 をお好みに合わせてカスタマイズ",
+        settings_header_subtitle: "Kira AI 2.7 をお好みに合わせてカスタマイズ",
         settings_tab_general: "一般＆外観",
         settings_tab_account: "アカウント＆セキュリティ",
         settings_tab_ai: "モデル＆カスタム指示",
@@ -13239,7 +13239,7 @@ const KIRA_I18N = {
         share_title_label: "共有タイトルまたは課題名：",
         share_generating_link: "共有リンクを生成中...",
         toast_connecting: "Kiraクラウドサーバーに接続中...",
-        cloud_free_quota: "Cloud Engine 2.6 稼働中 • 1日150件まで無料",
+        cloud_free_quota: "Cloud Engine 2.7 稼働中 • 1日150件まで無料",
         auth_or_quick_register: "または以下のサービスで登録",
         pwa_modal_title: "Kira AI アプリをインストール",
         pwa_modal_desc: "ホーム画面から瞬時に起動。全画面で快適な操作環境を提供します。",
