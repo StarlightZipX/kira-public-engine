@@ -260,14 +260,8 @@ function checkAuth() {
         }
         const isExplicitlyLoggedOut = localStorage.getItem('kira_logged_out') === 'true';
 
-        // 👑 VIP Auto-Login for Owner on localhost (if user has not explicitly clicked Logout)
-        const isLocalHost = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost');
-        if (isLocalHost && !storedUser && !isExplicitlyLoggedOut) {
-            currentUser = "👑 Boss (Owner)";
-            localStorage.setItem('kira_username', currentUser);
-        } else {
-            currentUser = storedUser;
-        }
+        // Standard Equal Authentication Check (Rule 4: Everyone signs in via standard form)
+        currentUser = isExplicitlyLoggedOut ? null : storedUser;
 
         const isGuest = localStorage.getItem('kira_is_guest') === 'true' || (currentUser && currentUser.toLowerCase().startsWith('guest_'));
         const guestBanner = document.getElementById('guest-mode-banner');
@@ -464,21 +458,61 @@ checkPendingOAuthMessage();
 // Note: Client initialization is handled safely in initKiraApp() at DOM ready
 
 
+function getActiveAuthLang() {
+    try {
+        return localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
+    } catch (e) {
+        return 'th';
+    }
+}
+
+function getAuthI18nText(key, fallbackText = '') {
+    const lang = getActiveAuthLang();
+    if (typeof KIRA_I18N !== 'undefined' && KIRA_I18N[lang] && KIRA_I18N[lang][key]) {
+        return KIRA_I18N[lang][key];
+    }
+    if (typeof KIRA_I18N !== 'undefined' && KIRA_I18N['th'] && KIRA_I18N['th'][key]) {
+        return KIRA_I18N['th'][key];
+    }
+    return fallbackText || key;
+}
+
 // --- Auth UI Toggles & Tabs ---
 function switchAuthTab(tab) {
+    const headingEl = document.getElementById('auth-form-heading');
     if (tab === 'login') {
-        if (tabLogin) tabLogin.classList.add('active');
-        if (tabRegister) tabRegister.classList.remove('active');
+        if (tabLogin) {
+            tabLogin.classList.add('active');
+            tabLogin.setAttribute('aria-selected', 'true');
+        }
+        if (tabRegister) {
+            tabRegister.classList.remove('active');
+            tabRegister.setAttribute('aria-selected', 'false');
+        }
         if (loginView) loginView.style.display = 'flex';
         if (registerView) registerView.style.display = 'none';
         if (loginError) loginError.textContent = '';
+        if (headingEl) {
+            headingEl.setAttribute('data-i18n', 'auth_portal_welcome');
+            headingEl.textContent = getAuthI18nText('auth_portal_welcome', 'เข้าสู่ระบบบัญชีของคุณ');
+        }
         if (loginUsernameInput) loginUsernameInput.focus();
     } else {
-        if (tabRegister) tabRegister.classList.add('active');
-        if (tabLogin) tabLogin.classList.remove('active');
+        if (tabRegister) {
+            tabRegister.classList.add('active');
+            tabRegister.setAttribute('aria-selected', 'true');
+        }
+        if (tabLogin) {
+            tabLogin.classList.remove('active');
+            tabLogin.setAttribute('aria-selected', 'false');
+        }
         if (registerView) registerView.style.display = 'flex';
         if (loginView) loginView.style.display = 'none';
         if (regError) regError.textContent = '';
+        if (headingEl) {
+            headingEl.setAttribute('data-i18n', 'auth_portal_create_title');
+            headingEl.textContent = getAuthI18nText('auth_portal_create_title', 'สร้างบัญชีผู้ใช้งานใหม่');
+        }
         if (regUsernameInput) regUsernameInput.focus();
     }
 }
@@ -511,23 +545,64 @@ purposePills.forEach(pill => {
     });
 });
 
-// --- Password Strength Meter ---
+// --- NIST/OWASP 5-Language Password Strength Meter ---
 function calculatePasswordStrength(password) {
     if (!password) return { score: 0, text: '', color: '', width: '0%' };
-    let score = 0;
-    if (password.length >= 4) score += 1;
-    if (password.length >= 8) score += 1;
-    if (/[A-Z]/.test(password)) score += 1;
-    if (/[0-9]/.test(password)) score += 1;
-    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+    const hasLetter = /[A-Za-z฀-๿一-鿿가-힯぀-ヿ]/.test(password);
+    const hasDigit = /[0-9]/.test(password);
+    const hasUpperAndLower = /[a-z]/.test(password) && /[A-Z]/.test(password);
+    const hasSymbol = /[^A-Za-z0-9]/.test(password);
 
-    if (score <= 2) {
-        return { score: 1, text: 'ความปลอดภัย: ต่ำ (Weak)', color: '#ef4444', width: '33%' };
-    } else if (score <= 3) {
-        return { score: 2, text: 'ความปลอดภัย: ปานกลาง (Medium)', color: '#f59e0b', width: '66%' };
-    } else {
-        return { score: 3, text: 'ความปลอดภัย: แข็งแกร่ง (Strong) 🛡️', color: '#10b981', width: '100%' };
+    if (password.length < 8 || !hasLetter || !hasDigit) {
+        return {
+            score: 1,
+            text: getAuthI18nText('pw_strength_weak', 'ความปลอดภัย: ยังไม่ผ่านเกณฑ์ขั้นต่ำ (ต้อง 8+ ตัว ผสมตัวอักษรและตัวเลข)'),
+            color: '#ef4444',
+            width: '28%'
+        };
     }
+
+    let bonus = 0;
+    if (password.length >= 12) bonus += 1;
+    if (hasUpperAndLower) bonus += 1;
+    if (hasSymbol) bonus += 1;
+
+    if (bonus === 0) {
+        return {
+            score: 2,
+            text: getAuthI18nText('pw_strength_good', 'ความปลอดภัย: มาตรฐาน (Good)'),
+            color: '#f59e0b',
+            width: '62%'
+        };
+    } else if (bonus === 1) {
+        return {
+            score: 3,
+            text: getAuthI18nText('pw_strength_strong', 'ความปลอดภัย: แข็งแกร่ง (Strong)'),
+            color: '#10b981',
+            width: '84%'
+        };
+    }
+    return {
+        score: 4,
+        text: getAuthI18nText('pw_strength_excellent', 'ความปลอดภัย: แข็งแกร่งระดับสูงสุด (Enterprise Grade)'),
+        color: '#38bdf8',
+        width: '100%'
+    };
+}
+
+function refreshPasswordStrengthUI() {
+    if (!regPasswordInput || !strengthContainer || !strengthBar || !strengthText) return;
+    const val = regPasswordInput.value;
+    if (!val) {
+        strengthContainer.style.display = 'none';
+        return;
+    }
+    strengthContainer.style.display = 'flex';
+    const res = calculatePasswordStrength(val);
+    strengthBar.style.width = res.width;
+    strengthBar.style.backgroundColor = res.color;
+    strengthText.textContent = res.text;
+    strengthText.style.color = res.color;
 }
 
 if (regPasswordInput && strengthContainer && strengthBar && strengthText) {
@@ -567,19 +642,7 @@ if (regConfirmInput) {
     regConfirmInput.addEventListener('input', checkPasswordMatch);
 }
 
-// --- Interactive Mouse Spotlight Effect on Auth Card ---
-const authBoxElement = document.getElementById('auth-box');
-if (authBoxElement) {
-    authBoxElement.addEventListener('mousemove', (e) => {
-        const rect = authBoxElement.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        authBoxElement.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(56, 189, 248, 0.12) 0%, rgba(30, 41, 59, 0.85) 45%, rgba(15, 23, 42, 0.92) 100%)`;
-    });
-    authBoxElement.addEventListener('mouseleave', () => {
-        authBoxElement.style.background = 'linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.92) 100%)';
-    });
-}
+// Enterprise Split-Shell maintains crisp high-contrast glass surfaces without inline style overrides
 
 // --- Keyboard Enter Navigation ---
 [loginUsernameInput, loginPasswordInput].forEach(input => {
@@ -604,32 +667,35 @@ if (authBoxElement) {
     }
 });
 
-// --- Auth API Calls ---
+// --- Auth API Calls (Localized 5-Language + Zero-Trust Session Cookie & Token Revocation) ---
 if (btnLogin) {
     btnLogin.addEventListener('click', async () => {
         const username = loginUsernameInput.value.trim();
         const password = loginPasswordInput.value.trim();
-        
+        const rememberMeEl = document.getElementById('remember-me');
+        const rememberMe = rememberMeEl ? rememberMeEl.checked : true;
+        const uiLang = getActiveAuthLang();
+
         if (!username || !password) {
             loginError.style.color = '#f87171';
-            loginError.textContent = "กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วนค่ะ";
+            loginError.textContent = getAuthI18nText('auth_err_missing', 'กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วนค่ะ');
             return;
         }
 
-        const originalText = btnLogin.innerHTML;
         btnLogin.disabled = true;
-        btnLogin.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเข้าสู่ระบบ...';
+        btnLogin.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>${getAuthI18nText('auth_status_signing_in', 'กำลังเข้าสู่ระบบ...')}</span>`;
 
         const coldStartTimer = setTimeout(() => {
-            btnLogin.innerHTML = '<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> กำลังเชื่อมต่อเซิร์ฟเวอร์...';
-            showConnectionToast('เซิร์ฟเวอร์กำลังเตรียมพร้อมการทำงาน กรุณารอสักครู่...', 'waking');
+            btnLogin.innerHTML = `<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> <span>${getAuthI18nText('auth_status_connecting', 'กำลังเชื่อมต่อเซิร์ฟเวอร์...')}</span>`;
+            showConnectionToast(getAuthI18nText('auth_status_connecting', 'เซิร์ฟเวอร์กำลังเตรียมพร้อมการทำงาน กรุณารอสักครู่...'), 'waking');
         }, 2200);
 
         try {
             const response = await fetch(`/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                credentials: 'same-origin',
+                body: JSON.stringify({ username, password, remember_me: rememberMe, ui_lang: uiLang })
             });
             clearTimeout(coldStartTimer);
             const data = await response.json();
@@ -652,16 +718,16 @@ if (btnLogin) {
                 updateModelUI();
             } else {
                 loginError.style.color = '#f87171';
-                loginError.textContent = data.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้องค่ะ";
+                loginError.textContent = data.message || getAuthI18nText('auth_err_invalid', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้องค่ะ');
             }
         } catch (err) {
             clearTimeout(coldStartTimer);
             loginError.style.color = '#f87171';
-            loginError.textContent = "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง";
+            loginError.textContent = getAuthI18nText('auth_err_network', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง');
         } finally {
             clearTimeout(coldStartTimer);
             btnLogin.disabled = false;
-            btnLogin.innerHTML = originalText;
+            btnLogin.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> <span data-i18n="auth_btn_login">${getAuthI18nText('auth_btn_login', 'เข้าสู่ระบบ (Login)')}</span>`;
         }
     });
 }
@@ -673,55 +739,66 @@ if (btnRegister) {
         const password = regPasswordInput.value.trim();
         const confirm = regConfirmInput.value.trim();
         const termsChecked = regTermsInput ? regTermsInput.checked : true;
-        
+        const uiLang = getActiveAuthLang();
+
         if (!username || !password || !confirm) {
             regError.style.color = '#f87171';
-            regError.textContent = "กรุณากรอกข้อมูลให้ครบทุกช่องค่ะ";
+            regError.textContent = getAuthI18nText('reg_err_missing_all', 'กรุณากรอกข้อมูลให้ครบทุกช่องค่ะ');
             return;
         }
 
-        if (username.length < 3) {
+        if (username.length < 3 || username.length > 30) {
             regError.style.color = '#f87171';
-            regError.textContent = "ชื่อผู้ใช้ต้องมีความยาวอย่างน้อย 3 ตัวอักษรค่ะ";
+            regError.textContent = getAuthI18nText('reg_err_username_len', 'ชื่อผู้ใช้ต้องมีความยาว 3-30 ตัวอักษรค่ะ');
             return;
         }
 
-        if (password.length < 4) {
+        if (!/^[A-Za-z0-9_.\-฀-๿一-鿿가-힯぀-ヿ]+$/.test(username)) {
             regError.style.color = '#f87171';
-            regError.textContent = "รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษรค่ะ";
+            regError.textContent = getAuthI18nText('reg_err_username_chars', 'ชื่อผู้ใช้ใช้ได้เฉพาะตัวอักษร ตัวเลข และ _ . - (ห้ามเว้นวรรค) ค่ะ');
+            return;
+        }
+
+        const hasLetter = /[A-Za-z฀-๿一-鿿가-힯぀-ヿ]/.test(password);
+        const hasDigit = /[0-9]/.test(password);
+        if (password.length < 8 || !hasLetter || !hasDigit) {
+            regError.style.color = '#f87171';
+            regError.textContent = getAuthI18nText('reg_err_password_policy', 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร และมีทั้งตัวอักษรและตัวเลขผสมกันค่ะ');
             return;
         }
 
         if (password !== confirm) {
             regError.style.color = '#f87171';
-            regError.textContent = "รหัสผ่านยืนยันไม่ตรงกัน กรุณาตรวจสอบอีกครั้งค่ะ";
+            regError.textContent = getAuthI18nText('reg_err_confirm_mismatch', 'รหัสผ่านยืนยันไม่ตรงกัน กรุณาตรวจสอบอีกครั้งค่ะ');
             return;
         }
 
         if (!termsChecked) {
             regError.style.color = '#f87171';
-            regError.textContent = "กรุณากดยอมรับข้อตกลงและเงื่อนไขการใช้งานค่ะ";
+            regError.textContent = getAuthI18nText('reg_err_terms', 'กรุณากดยอมรับข้อตกลงและเงื่อนไขการใช้งานค่ะ');
             return;
         }
 
-        const originalText = btnRegister.innerHTML;
         btnRegister.disabled = true;
-        btnRegister.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้างบัญชี...';
+        btnRegister.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>${getAuthI18nText('reg_status_creating', 'กำลังสร้างบัญชี...')}</span>`;
 
         const coldStartTimer = setTimeout(() => {
-            btnRegister.innerHTML = '<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> กำลังเชื่อมต่อเซิร์ฟเวอร์...';
-            showConnectionToast('เซิร์ฟเวอร์กำลังเตรียมพร้อมการทำงาน กรุณารอสักครู่...', 'waking');
+            btnRegister.innerHTML = `<i class="fa-solid fa-bolt fa-fade" style="color: #f59e0b;"></i> <span>${getAuthI18nText('auth_status_connecting', 'กำลังเชื่อมต่อเซิร์ฟเวอร์...')}</span>`;
+            showConnectionToast(getAuthI18nText('auth_status_connecting', 'เซิร์ฟเวอร์กำลังเตรียมพร้อมการทำงาน กรุณารอสักครู่...'), 'waking');
         }, 2200);
 
         try {
             const response = await fetch(`/api/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    username, 
-                    password, 
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    username,
+                    password,
                     nickname: nickname || username,
-                    purpose: selectedPurpose || 'general' 
+                    purpose: selectedPurpose || 'general',
+                    remember_me: true,
+                    ui_lang: uiLang
                 })
             });
             clearTimeout(coldStartTimer);
@@ -729,10 +806,9 @@ if (btnRegister) {
 
             if (data.status === 'success') {
                 regError.style.color = '#34d399';
-                regError.textContent = "สมัครสมาชิกสำเร็จ! กำลังเข้าสู่ระบบให้ท่านทันที...";
+                regError.textContent = getAuthI18nText('reg_status_success', 'สมัครสมาชิกสำเร็จ! กำลังเข้าสู่ระบบให้ท่านทันที...');
                 hideConnectionToast(500);
 
-                // Auto-login seamless UX:
                 localStorage.setItem('kira_username', data.username);
                 if (data.token) {
                     localStorage.setItem('kira_auth_token', data.token);
@@ -742,29 +818,45 @@ if (btnRegister) {
                 localStorage.removeItem('kira_guest_msg_count');
                 localStorage.removeItem('kira_guest_id');
                 currentUser = data.username;
+                regPasswordInput.value = '';
+                regConfirmInput.value = '';
+                if (strengthContainer) strengthContainer.style.display = 'none';
+                if (matchStatusIcon) matchStatusIcon.innerHTML = '';
 
                 setTimeout(() => {
+                    regError.textContent = '';
                     checkAuth();
                     updateModelUI();
-                }, 800);
+                }, 650);
             } else {
                 regError.style.color = '#f87171';
-                regError.textContent = data.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก";
+                regError.textContent = data.message || getAuthI18nText('auth_err_invalid', 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
             }
         } catch (err) {
             clearTimeout(coldStartTimer);
             regError.style.color = '#f87171';
-            regError.textContent = "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง";
+            regError.textContent = getAuthI18nText('auth_err_network', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง');
         } finally {
             clearTimeout(coldStartTimer);
             btnRegister.disabled = false;
-            btnRegister.innerHTML = originalText;
+            btnRegister.innerHTML = `<i class="fa-solid fa-user-check"></i> <span data-i18n="reg_btn_submit">${getAuthI18nText('reg_btn_submit', 'ยืนยันการลงทะเบียน (Register)')}</span>`;
         }
     });
 }
 
 if (btnLogout) {
-    btnLogout.addEventListener('click', () => {
+    btnLogout.addEventListener('click', async () => {
+        const activeToken = localStorage.getItem('kira_auth_token') || localStorage.getItem('kira_token') || '';
+        try {
+            await fetch('/api/logout', {
+                method: 'POST',
+                headers: activeToken ? { 'Content-Type': 'application/json', 'X-Auth-Token': activeToken } : { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ token: activeToken })
+            });
+        } catch (e) {
+            // Proceed with local session purge even if offline
+        }
         localStorage.removeItem('kira_username');
         localStorage.removeItem('kira_auth_token');
         localStorage.removeItem('kira_user');
@@ -776,7 +868,7 @@ if (btnLogout) {
         localStorage.setItem('kira_logged_out', 'true');
         currentUser = null;
         chatBox.innerHTML = '';
-        chatHistorySidebar.innerHTML = '<p class="history-title">ยังไม่มีประวัติการแชท</p>';
+        chatHistorySidebar.innerHTML = `<p class="history-title">${getAuthI18nText('no_chat_history', 'ยังไม่มีประวัติการแชท')}</p>`;
         const guestBanner = document.getElementById('guest-mode-banner');
         if (guestBanner) guestBanner.style.display = 'none';
         checkAuth();
@@ -13187,12 +13279,45 @@ const KIRA_I18N = {
         purpose_business: "ธุรกิจ/งาน",
         purpose_education: "การเรียน",
         purpose_assistant: "ผู้ช่วยทั่วไป",
-        reg_password_placeholder: "ตั้งรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)",
+        reg_username_placeholder: "ชื่อผู้ใช้ (3-30 ตัวอักษร)",
+        reg_nickname_placeholder: "ชื่อเล่นที่ให้คิระเรียก",
+        reg_password_placeholder: "ตั้งรหัสผ่าน (8+ ตัว ผสมตัวอักษรและตัวเลข)",
         reg_confirm_placeholder: "ยืนยันรหัสผ่านอีกครั้ง",
         reg_terms_label: "ยอมรับข้อตกลงและเงื่อนไขการใช้งาน Kira AI",
-        reg_btn_submit: "ยืนยันการลงทะเบียน (Register)",
+        reg_btn_submit: "ยืนยันการลงทะเบียน",
+        auth_or_quick_register: "หรือสมัครสมาชิกด่วนด้วย",
         auth_has_account_prompt: "มีบัญชีผู้ใช้อยู่แล้ว?",
         auth_go_to_login: "เข้าสู่ระบบที่นี่",
+        auth_brand_subtitle: "แพลตฟอร์มผู้ช่วย AI ระดับองค์กร สถาปัตยกรรมหลายสมองกลความเร็วสูง",
+        auth_sec_pillar1_title: "PBKDF2-SHA256 Cryptographic Vault",
+        auth_sec_pillar1_desc: "เข้ารหัสรหัสผ่าน 600,000 รอบ พร้อม Salt สุ่มเฉพาะรายบุคคลตามมาตรฐาน OWASP",
+        auth_sec_pillar2_title: "Zero-Trust Session & Brute-Force Guard",
+        auth_sec_pillar2_desc: "โทเคนจำกัดเวลาแบบ HttpOnly เพิกถอนอัตโนมัติเมื่อเปลี่ยนรหัส พร้อมป้องกันการสุ่มรหัส",
+        auth_sec_pillar3_title: "Global Workspace & Privacy Isolation",
+        auth_sec_pillar3_desc: "แยกพื้นที่ความจำและคลังเอกสารส่วนตัว 100% รองรับการทำงานระดับสากล 5 ภาษา",
+        auth_guest_btn_title: "ทดลองคุยกับคิระทันที (ไม่ต้องสมัครสมาชิก)",
+        auth_guest_btn_desc: "ลองถาม-ตอบได้ฟรี 5 ข้อความ ไม่ต้องผูกบัญชี ไม่ต้องจำรหัสผ่าน",
+        auth_encrypted_badge: "PBKDF2-SHA256 • เข้ารหัสปลอดภัย",
+        auth_portal_welcome: "เข้าสู่ระบบบัญชีของคุณ",
+        auth_portal_create_title: "สร้างบัญชีผู้ใช้งานใหม่",
+        auth_toggle_pw_title: "แสดง/ซ่อนรหัสผ่าน",
+        pw_strength_weak: "ความปลอดภัย: ยังไม่ครบเกณฑ์ (ต้อง 8+ ตัว ผสมตัวอักษรและตัวเลข)",
+        pw_strength_good: "ความปลอดภัย: มาตรฐาน (Good)",
+        pw_strength_strong: "ความปลอดภัย: แข็งแกร่ง (Strong)",
+        pw_strength_excellent: "ความปลอดภัย: แข็งแกร่งสูงสุดระดับองค์กร",
+        auth_err_missing: "กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วนค่ะ",
+        auth_err_invalid: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้งค่ะ",
+        auth_err_network: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้งค่ะ",
+        auth_status_signing_in: "กำลังเข้าสู่ระบบ...",
+        auth_status_connecting: "กำลังเชื่อมต่อเซิร์ฟเวอร์...",
+        reg_err_missing_all: "กรุณากรอกข้อมูลให้ครบทุกช่องค่ะ",
+        reg_err_username_len: "ชื่อผู้ใช้ต้องมีความยาว 3-30 ตัวอักษรค่ะ",
+        reg_err_username_chars: "ชื่อผู้ใช้ใช้ได้เฉพาะตัวอักษร ตัวเลข และ _ . - (ห้ามเว้นวรรค) ค่ะ",
+        reg_err_password_policy: "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร และมีทั้งตัวอักษรและตัวเลขผสมกันค่ะ",
+        reg_err_confirm_mismatch: "รหัสผ่านยืนยันไม่ตรงกัน กรุณาตรวจสอบอีกครั้งค่ะ",
+        reg_err_terms: "กรุณากดยอมรับข้อตกลงและเงื่อนไขการใช้งานค่ะ",
+        reg_status_creating: "กำลังสร้างบัญชี...",
+        reg_status_success: "สมัครสมาชิกสำเร็จ! กำลังเข้าสู่ระบบให้ท่านทันที...",
 
         // Share Modal
         share_modal_title: "แชร์บทสนทนา & สร้างการ์ดไวรัล",
@@ -13629,12 +13754,46 @@ const KIRA_I18N = {
         purpose_business: "Business/Work",
         purpose_education: "Education",
         purpose_assistant: "General Assistant",
-        reg_password_placeholder: "Create password (at least 4 characters)",
-        reg_confirm_placeholder: "Confirm password again",
-        reg_terms_label: "I agree to Kira AI Terms & Conditions",
-        reg_btn_submit: "Create Account (Register)",
+        auth_btn_login: "Sign In",
+        reg_username_placeholder: "Username (3-30 chars)",
+        reg_nickname_placeholder: "Preferred display name",
+        reg_password_placeholder: "Password (8+ chars, letters & numbers)",
+        reg_confirm_placeholder: "Confirm your password",
+        reg_terms_label: "I agree to the Kira AI Terms of Service",
+        reg_btn_submit: "Create Account",
+        auth_or_quick_register: "Or continue with",
         auth_has_account_prompt: "Already have an account?",
         auth_go_to_login: "Sign in here",
+        auth_brand_subtitle: "Enterprise Multi-Brain Cloud AI Platform",
+        auth_sec_pillar1_title: "PBKDF2-SHA256 Cryptographic Vault",
+        auth_sec_pillar1_desc: "600,000-iteration OWASP key stretching with unique 128-bit per-user random salt",
+        auth_sec_pillar2_title: "Zero-Trust Session & Brute-Force Guard",
+        auth_sec_pillar2_desc: "Time-bound HttpOnly signed tokens with automatic revocation & lockout shield",
+        auth_sec_pillar3_title: "Global Workspace & Privacy Isolation",
+        auth_sec_pillar3_desc: "100% isolated personal RAG vault & memory across 5 international languages",
+        auth_guest_btn_title: "Try Kira Instantly (No Account Required)",
+        auth_guest_btn_desc: "5 free instant messages — zero sign-up friction, no password needed",
+        auth_encrypted_badge: "PBKDF2-SHA256 • TLS Protected",
+        auth_portal_welcome: "Sign in to your account",
+        auth_portal_create_title: "Create your Kira account",
+        auth_toggle_pw_title: "Show / Hide password",
+        pw_strength_weak: "Security: Needs 8+ characters with both letters & numbers",
+        pw_strength_good: "Security: Good (Meets NIST standard)",
+        pw_strength_strong: "Security: Strong",
+        pw_strength_excellent: "Security: Enterprise Grade",
+        auth_err_missing: "Please enter both your username and password.",
+        auth_err_invalid: "Invalid username or password. Please try again.",
+        auth_err_network: "Unable to reach the server. Please try again.",
+        auth_status_signing_in: "Signing in...",
+        auth_status_connecting: "Connecting to server...",
+        reg_err_missing_all: "Please complete all required fields.",
+        reg_err_username_len: "Username must be between 3 and 30 characters.",
+        reg_err_username_chars: "Username may only contain letters, numbers, and _ . - without spaces.",
+        reg_err_password_policy: "Password must be at least 8 characters and include both letters and numbers.",
+        reg_err_confirm_mismatch: "Passwords do not match. Please verify.",
+        reg_err_terms: "Please accept the Terms of Service to continue.",
+        reg_status_creating: "Creating account...",
+        reg_status_success: "Account created! Signing you in automatically...",
 
         // Share Modal
         share_modal_title: "Share Conversation & Viral Card",
@@ -14071,12 +14230,45 @@ const KIRA_I18N = {
         purpose_business: "商务与工作",
         purpose_education: "学业与考试",
         purpose_assistant: "全能助手",
-        reg_password_placeholder: "设置密码 (至少4位字符)",
-        reg_confirm_placeholder: "再次确认密码",
-        reg_terms_label: "我同意 Kira AI 服务条款与条件",
-        reg_btn_submit: "确认注册新账号",
+        reg_username_placeholder: "用户名 (3-30个字符)",
+        reg_nickname_placeholder: "希望 Kira 称呼的昵称",
+        reg_password_placeholder: "设置密码 (至少8位，需包含字母与数字)",
+        reg_confirm_placeholder: "再次输入确认密码",
+        reg_terms_label: "我已阅读并同意 Kira AI 服务条款",
+        reg_btn_submit: "创建新账号",
+        auth_or_quick_register: "或通过以下方式快速注册",
         auth_has_account_prompt: "已有账号？",
         auth_go_to_login: "点击此处登录",
+        auth_brand_subtitle: "企业级多脑协同云端人工智能平台",
+        auth_sec_pillar1_title: "PBKDF2-SHA256 加密金库",
+        auth_sec_pillar1_desc: "采用 OWASP 标准 600,000 次密钥拉伸与每用户独立 128 位随机盐加密",
+        auth_sec_pillar2_title: "零信任会话与防暴力破解护盾",
+        auth_sec_pillar2_desc: "HttpOnly 时效签名令牌，改密自动吊销旧会话并拦截异常爆破攻击",
+        auth_sec_pillar3_title: "全球化多语种与隐私隔离空间",
+        auth_sec_pillar3_desc: "100% 独立知识库与长期记忆隔离，原生支持中/英/泰/韩/日五国语言",
+        auth_guest_btn_title: "立即免注册体验 Kira",
+        auth_guest_btn_desc: "免费体验 5 条智能问答，无需绑定账号或记忆密码",
+        auth_encrypted_badge: "PBKDF2-SHA256 • 安全加密连接",
+        auth_portal_welcome: "登录您的 Kira 账户",
+        auth_portal_create_title: "注册 Kira 企业级账户",
+        auth_toggle_pw_title: "显示 / 隐藏密码",
+        pw_strength_weak: "安全度：未达标（至少 8 位且同时包含字母与数字）",
+        pw_strength_good: "安全度：标准（符合国际规范）",
+        pw_strength_strong: "安全度：强",
+        pw_strength_excellent: "安全度：企业级高强度",
+        auth_err_missing: "请输入完整的用户名和密码。",
+        auth_err_invalid: "用户名或密码不正确，请重新检查。",
+        auth_err_network: "无法连接服务器，请稍后重试。",
+        auth_status_signing_in: "正在安全登录...",
+        auth_status_connecting: "正在连接服务器...",
+        reg_err_missing_all: "请完整填写所有必填项。",
+        reg_err_username_len: "用户名长度须为 3 至 30 个字符。",
+        reg_err_username_chars: "用户名仅支持字母、数字及 _ . - 符号，不能包含空格。",
+        reg_err_password_policy: "密码至少需要 8 个字符，且必须同时包含字母和数字。",
+        reg_err_confirm_mismatch: "两次输入的密码不一致，请重新确认。",
+        reg_err_terms: "请先勾选同意服务条款。",
+        reg_status_creating: "正在创建账户...",
+        reg_status_success: "注册成功！正在为您自动登录...",
 
         // Share Modal
         share_modal_title: "分享对话与生成社交卡片",
@@ -14513,12 +14705,46 @@ const KIRA_I18N = {
         purpose_business: "비즈니스/업무",
         purpose_education: "학습 및 교육",
         purpose_assistant: "일반 비서",
-        reg_password_placeholder: "비밀번호 설정 (4자 이상)",
+        auth_btn_login: "로그인",
+        reg_username_placeholder: "아이디 (3~30자)",
+        reg_nickname_placeholder: "Kira가 불러줄 닉네임",
+        reg_password_placeholder: "비밀번호 (8자 이상, 문자+숫자 포함)",
         reg_confirm_placeholder: "비밀번호 재확인",
         reg_terms_label: "Kira AI 서비스 이용약관에 동의합니다",
-        reg_btn_submit: "회원가입 완료 (Register)",
+        reg_btn_submit: "회원가입 완료",
+        auth_or_quick_register: "또는 소셜 계정으로 간편 가입",
         auth_has_account_prompt: "이미 계정이 있으신가요?",
         auth_go_to_login: "여기서 로그인하세요",
+        auth_brand_subtitle: "엔터프라이즈 멀티 브레인 클라우드 AI 플랫폼",
+        auth_sec_pillar1_title: "PBKDF2-SHA256 암호화 볼트",
+        auth_sec_pillar1_desc: "OWASP 표준 600,000회 키 스트레칭 및 사용자별 고유 128비트 랜덤 솔트 적용",
+        auth_sec_pillar2_title: "제로 트러스트 세션 및 무차별 대입 방어",
+        auth_sec_pillar2_desc: "HttpOnly 시간 제한 서명 토큰, 비밀번호 변경 시 즉시 세션 폐기 및 잠금 보호",
+        auth_sec_pillar3_title: "글로벌 워크스페이스 및 개인정보 격리",
+        auth_sec_pillar3_desc: "개인 지식 볼트 및 메모리 100% 독립 격리, 한국어 포함 5개 국어 완벽 지원",
+        auth_guest_btn_title: "가입 없이 즉시 Kira 체험하기",
+        auth_guest_btn_desc: "계정 연결이나 비밀번호 없이 무료로 5회 대화 체험 가능",
+        auth_encrypted_badge: "PBKDF2-SHA256 • 보안 암호화",
+        auth_portal_welcome: "계정에 로그인하세요",
+        auth_portal_create_title: "새 Kira 계정 만들기",
+        auth_toggle_pw_title: "비밀번호 표시 / 숨기기",
+        pw_strength_weak: "보안 수준: 미충족 (8자 이상, 문자+숫자 필수)",
+        pw_strength_good: "보안 수준: 양호 (국제 기준 충족)",
+        pw_strength_strong: "보안 수준: 강력함",
+        pw_strength_excellent: "보안 수준: 엔터프라이즈 최고 등급",
+        auth_err_missing: "아이디와 비밀번호를 모두 입력해 주세요.",
+        auth_err_invalid: "아이디 또는 비밀번호가 올바르지 않습니다.",
+        auth_err_network: "서버에 연결할 수 없습니다. 다시 시도해 주세요.",
+        auth_status_signing_in: "로그인 중...",
+        auth_status_connecting: "서버에 연결 중...",
+        reg_err_missing_all: "모든 필수 항목을 입력해 주세요.",
+        reg_err_username_len: "아이디는 3~30자 사이여야 합니다.",
+        reg_err_username_chars: "아이디는 문자, 숫자 및 _ . - 기호만 사용할 수 있습니다 (공백 불가).",
+        reg_err_password_policy: "비밀번호는 8자 이상이어야 하며 문자와 숫자를 모두 포함해야 합니다.",
+        reg_err_confirm_mismatch: "비밀번호 확인이 일치하지 않습니다.",
+        reg_err_terms: "서비스 이용약관에 동의해 주세요.",
+        reg_status_creating: "계정 생성 중...",
+        reg_status_success: "회원가입 완료! 자동으로 로그인합니다...",
 
         // Share Modal
         share_modal_title: "대화 공유 및 바이럴 카드 생성",
@@ -14955,12 +15181,46 @@ const KIRA_I18N = {
         purpose_business: "ビジネス・業務",
         purpose_education: "学習・学術",
         purpose_assistant: "汎用アシスタント",
-        reg_password_placeholder: "パスワードを設定 (4文字以上)",
+        auth_btn_login: "ログイン",
+        reg_username_placeholder: "ユーザー名 (3〜30文字)",
+        reg_nickname_placeholder: "Kiraに呼ばせたいニックネーム",
+        reg_password_placeholder: "パスワード (8文字以上・文字と数字を含む)",
         reg_confirm_placeholder: "パスワードを再入力",
-        reg_terms_label: "Kira AI の利用規約に同意する",
-        reg_btn_submit: "登録を完了する (Register)",
+        reg_terms_label: "Kira AI の利用規約に同意します",
+        reg_btn_submit: "アカウントを作成",
+        auth_or_quick_register: "または外部アカウントで登録",
         auth_has_account_prompt: "すでにアカウントをお持ちの方：",
         auth_go_to_login: "こちらからログイン",
+        auth_brand_subtitle: "エンタープライズ・マルチブレイン クラウドAIプラットフォーム",
+        auth_sec_pillar1_title: "PBKDF2-SHA256 暗号化ボールト",
+        auth_sec_pillar1_desc: "OWASP基準60万回のキーストレッチングとユーザー固有128bitランダムソルト保護",
+        auth_sec_pillar2_title: "ゼロトラストセッション＆総当たり攻撃防御",
+        auth_sec_pillar2_desc: "HttpOnly有効期限付き署名トークン・パスワード変更時の即時失効・自動ロック保護",
+        auth_sec_pillar3_title: "グローバル対応＆完全プライバシー分離",
+        auth_sec_pillar3_desc: "個人ドキュメント知識庫と記憶を100%分離保護、日本語を含む5カ国語に対応",
+        auth_guest_btn_title: "登録不要で今すぐ Kira を試す",
+        auth_guest_btn_desc: "アカウント作成不要・無料で5メッセージまで即座にお試し可能",
+        auth_encrypted_badge: "PBKDF2-SHA256 • 暗号化通信保護",
+        auth_portal_welcome: "アカウントにサインイン",
+        auth_portal_create_title: "Kira 新規アカウント作成",
+        auth_toggle_pw_title: "パスワードを表示 / 非表示",
+        pw_strength_weak: "安全性：基準未達（8文字以上・文字と数字の両方が必要）",
+        pw_strength_good: "安全性：標準（国際基準クリア）",
+        pw_strength_strong: "安全性：強力",
+        pw_strength_excellent: "安全性：エンタープライズ最高水準",
+        auth_err_missing: "ユーザー名とパスワードを入力してください。",
+        auth_err_invalid: "ユーザー名またはパスワードが正しくありません。",
+        auth_err_network: "サーバーに接続できません。もう一度お試しください。",
+        auth_status_signing_in: "サインイン中...",
+        auth_status_connecting: "サーバーへ接続中...",
+        reg_err_missing_all: "すべての必須項目を入力してください。",
+        reg_err_username_len: "ユーザー名は3〜30文字で入力してください。",
+        reg_err_username_chars: "ユーザー名は文字、数字、および _ . - のみ使用可能です（空白不可）。",
+        reg_err_password_policy: "パスワードは8文字以上で、文字と数字の両方を含めてください。",
+        reg_err_confirm_mismatch: "確認用パスワードが一致しません。",
+        reg_err_terms: "利用規約に同意してください。",
+        reg_status_creating: "アカウント作成中...",
+        reg_status_success: "登録完了！自動的にサインインしています...",
 
         // Share Modal
         share_modal_title: "対話の共有＆ソーシャルカード作成",
@@ -15284,14 +15544,19 @@ function setKiraLanguage(lang, syncVoice = true, showNotification = false) {
         localStorage.setItem('kira_lang', lang);
     } catch (e) {}
 
-    // 2. Update Header Pill
+    // 2. Update Header Pill & Auth Portal Language Pill
     const codeEl = document.getElementById('current-lang-code');
     const flagEl = document.getElementById('current-lang-flag');
     if (codeEl) codeEl.textContent = dict.code;
     if (flagEl) flagEl.textContent = dict.flag;
 
-    // 3. Update Dropdown Menu active states
-    document.querySelectorAll('.lang-menu-item').forEach(item => {
+    const authCodeEl = document.getElementById('auth-lang-code');
+    const authFlagEl = document.getElementById('auth-lang-flag');
+    if (authCodeEl) authCodeEl.textContent = dict.code;
+    if (authFlagEl) authFlagEl.textContent = dict.flag;
+
+    // 3. Update Dropdown Menu active states (Main Header & Auth Portal)
+    document.querySelectorAll('.lang-menu-item, .auth-lang-item').forEach(item => {
         const itemLang = item.getAttribute('data-lang');
         if (itemLang === lang) {
             item.classList.add('active');
@@ -15391,11 +15656,30 @@ function setKiraLanguage(lang, syncVoice = true, showNotification = false) {
         }
     }
 
-    // 11. Close Dropdown Menu
+    // 10.5 Refresh live password strength meter & dynamic Auth Portal heading in active language
+    if (typeof refreshPasswordStrengthUI === 'function') {
+        refreshPasswordStrengthUI();
+    }
+    const authHeadingEl = document.getElementById('auth-form-heading');
+    if (authHeadingEl) {
+        const isRegActive = tabRegister && tabRegister.classList.contains('active');
+        const hKey = isRegActive ? 'auth_portal_create_title' : 'auth_portal_welcome';
+        authHeadingEl.setAttribute('data-i18n', hKey);
+        if (dict[hKey]) authHeadingEl.textContent = dict[hKey];
+    }
+
+    // 11. Close Dropdown Menus (Main Header & Auth Portal)
     const wrapper = document.getElementById('lang-switch-wrapper');
     const menu = document.getElementById('lang-dropdown-menu');
     if (wrapper) wrapper.classList.remove('open');
     if (menu) menu.style.display = 'none';
+
+    const authLangWrap = document.getElementById('auth-lang-wrapper');
+    const authLangMenu = document.getElementById('auth-lang-menu');
+    const authLangBtn = document.getElementById('auth-lang-btn');
+    if (authLangWrap) authLangWrap.classList.remove('open');
+    if (authLangMenu) authLangMenu.style.display = 'none';
+    if (authLangBtn) authLangBtn.setAttribute('aria-expanded', 'false');
 
     // 12. Notification
     if (showNotification) {
@@ -15442,6 +15726,44 @@ function initKiraI18n() {
             if (!wrapper.contains(e.target)) {
                 wrapper.classList.remove('open');
                 menu.style.display = 'none';
+            }
+        });
+    }
+
+    // Bind Auth Portal 5-Language Switcher (#auth-lang-wrapper)
+    const authLangWrap = document.getElementById('auth-lang-wrapper');
+    const authLangBtn = document.getElementById('auth-lang-btn');
+    const authLangMenu = document.getElementById('auth-lang-menu');
+    if (authLangWrap && authLangBtn && authLangMenu) {
+        authLangBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = authLangWrap.classList.contains('open');
+            if (isOpen) {
+                authLangWrap.classList.remove('open');
+                authLangMenu.style.display = 'none';
+                authLangBtn.setAttribute('aria-expanded', 'false');
+            } else {
+                authLangWrap.classList.add('open');
+                authLangMenu.style.display = 'flex';
+                authLangBtn.setAttribute('aria-expanded', 'true');
+            }
+        });
+
+        authLangMenu.querySelectorAll('.auth-lang-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const targetLang = item.getAttribute('data-lang');
+                if (targetLang) {
+                    setKiraLanguage(targetLang, true, false);
+                }
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!authLangWrap.contains(e.target)) {
+                authLangWrap.classList.remove('open');
+                authLangMenu.style.display = 'none';
+                authLangBtn.setAttribute('aria-expanded', 'false');
             }
         });
     }

@@ -4,33 +4,29 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 31 ตุลาคม 2026 (Kira v2.7.10 Enterprise - Phase 4 Semantic Vector RAG Knowledge Vault & Complete 4-Phase Roadmap)
+### 🕒 อัปเดตล่าสุด: 31 ตุลาคม 2026 (Kira v2.7.11 Enterprise - Zero-Trust Auth Cryptography & Global 5-Language Split-Screen Portal)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **พัฒนาและส่งมอบเฟสที่ 4 (เฟสสุดท้ายของ Roadmap): คลังความรู้เอกสารอัจฉริยะ (Semantic Vector RAG Knowledge Vault — `Kira v2.7.10 Enterprise`):**
-  1. **เอ็นจิ้นคลังความรู้เวกเตอร์ไฮบริดข้ามเซสชัน (`rag_vault.py` & `app.py`):**
-     - สร้างโมดูลใหม่ `rag_vault.py` สถาปัตยกรรม **Hybrid 256D Signed Random Projection Semantic Vector + Cross-Lingual Concept Bridge (5 ภาษา TH/EN/ZH/KO/JA) + Okapi BM25F** ใช้หน่วยความจำต่ำพิเศษ (<5 MB RAM ไม่ทำเซิร์ฟเวอร์ Render 512MB ล่ม) รองรับทั้ง SQLite และ PostgreSQL 100%
-     - รองรับการสกัดข้อความตามโครงสร้างหน้าและหัวข้อจาก **6 ตระกูลไฟล์ (`.pdf`, `.docx` รวมตารางใน Word, `.md`, `.csv`, `.txt`, `.json`)** และการวางโน้ตความรู้สดโดยตรง พร้อมระบบตรวจลายนิ้วมือ **SHA-256 Deduplication** ป้องกันเอกสารซ้ำ
-     - เพิ่ม REST API ครบชุด: `GET /api/rag/documents`, `POST /api/rag/upload` (Multi-file), `POST /api/rag/ingest_text`, `POST /api/rag/search`, `PATCH /api/rag/documents/{doc_id}/toggle`, `GET /api/rag/documents/{doc_id}/chunks`, `DELETE /api/rag/documents/{doc_id}`
-     - เชื่อมต่อระบบอ้างอิงข้ามเซสชันอัตโนมัติเข้ากับทั้ง **`POST /api/chat`** (แสดงสถานะ `[THINKING]📚 ค้นคว้าคลังความรู้เอกสาร RAG...`) และ **สภา 4 ผู้บริหารเสมือน (`Virtual Boardroom`)** พร้อมสั่งให้อ้างอิงชื่อไฟล์และหมายเลขหน้า/หัวข้ออย่างแม่นยำ
-  2. **สตูดิโอจัดการคลังความรู้ RAG ระดับ Enterprise (`templates/index.html`, `static/style.css`, `static/script.js`):**
-     - เพิ่มปุ่มด่วนบนแถบหัวเว็บ **`คลังความรู้` (`#btn-rag-vault`)** พร้อมป้ายนับจำนวนเอกสารที่เปิดใช้งาน (`#rag-vault-count-badge`), เมนูใน `เครื่องมือ`, เมนูแนบไฟล์ และแถบสถานะ **`#rag-active-context-bar`** เหนือช่องแชตเมื่อเปิดใช้อ้างอิงข้ามเซสชัน
-     - สร้างหน้าต่างสตูดิโอ **`#rag-vault-modal`** แบบ 2 คอลัมน์: ลากวางอัปโหลดหลายไฟล์พร้อมกัน, บันทึกโน้ตความรู้สด, สวิตช์เปิด/พักการอ้างอิงรายไฟล์, ตัวดูย่อหน้าเวกเตอร์ และช่อง **Live Semantic Search & Citation Playground** แสดง `% ความแม่นยำ` + ความเร็วระดับมิลลิวินาที รองรับครบ **5 ภาษา (`TH / EN / ZH / KO / JA`)**
-  3. **การทดสอบอย่างเข้มงวดและหลักฐานหน้างานจริง (Proof of Work):**
-     - `scratch/test_phase4_rag_vault.py`: ผ่านครบ **7/7 PASSED (100% OK)** รวมถึงการทดสอบถามคำถามจริงข้ามเซสชันผ่าน `POST /api/chat` แล้วคิระดึงตัวเลข/รหัสลับจากเอกสารในคลังมาตอบพร้อมอ้างอิงชื่อไฟล์และหน้าได้ถูกต้องแม่นยำ!
-     - `test_zero_silence_protocol.py` (`4/4 PASSED`), `test_mcp_hub_suite.py` (`6/6 PASSED`), `test_100_agents.py` (`100/100 PASSED, 0 Warnings, 0 Failed`)
-     - Live Browser Screenshots:
-       - `kira_phase4_rag_vault_studio_verified.png`: หน้าต่างสตูดิโอ Semantic Vector RAG Knowledge Vault ขณะอัปโหลดหลายไฟล์และค้นหาย่อหน้าอ้างอิงสดพร้อม `% ความแม่นยำ`
-       - `kira_phase4_rag_chat_citation_verified.png`: หน้าแชตหลักพร้อมแถบสถานะ RAG ข้ามเซสชัน และคำตอบจริงของคิระที่อ้างอิงข้อมูลเฉพาะเจาะจงจากเอกสารในคลังความรู้ (0 JS Errors)
+* **ยกระดับระบบเข้าสู่ระบบและลงทะเบียนสู่มาตรฐานความปลอดภัยองค์กรสากล (Enterprise Zero-Trust Auth & Global Split-Screen Portal — `Kira v2.7.11 Enterprise`):**
+  1. **ความปลอดภัยด้านรหัสวิทยาและเซสชันหลังบ้าน (`app.py`):**
+     - **PBKDF2-HMAC-SHA256 (600,000 รอบ มาตรฐาน OWASP + สุ่ม Salt 128-bit เฉพาะรายบุคคล):** อัปเกรด `hash_password()` และ `verify_password_hash()` แบบ Constant-Time (`hmac.compare_digest`) พร้อมระบบ **Auto-Migration** อัปเกรดรหัสผ่านบัญชีเก่าจาก SHA-256 เดิมขึ้นสู่ PBKDF2-HMAC-SHA256 ให้อัตโนมัติทันทีที่ล็อกอินสำเร็จ และป้องกัน Timing-Attack User Enumeration ด้วย Dummy PBKDF2 Verification
+     - **Signed Time-Bound & Password-Revocable Session Tokens (`kst2.<payload>.<hmac>`) + `HttpOnly; SameSite=Lax; Secure` Cookie + `POST /api/logout`:** โทเคนระบุวันหมดอายุและลายนิ้วมือรหัสผ่าน (`pfp`) เมื่อผู้ใช้เปลี่ยนรหัสผ่านหรือกดออกจากระบบ โทเคนเก่าทั้งหมดจะถูกตัดสิทธิ์ฝั่งเซิร์ฟเวอร์ทันที พร้อมบังคับตรวจโทเคนบน `DELETE /api/history/{username}/all`, `DELETE /api/user/graph/all` และตรวจ `verified_email` บน Google OAuth
+     - **Progressive Brute-Force Lockout & Rate Limit + เกณฑ์รหัสผ่าน NIST/OWASP:** ป้องกันการยิงสุ่มรหัสผ่านบน `/api/login` (ล็อกชั่วคราวเมื่อผิดครบ 5 ครั้ง/10 นาที) และกันบอทปั๊มบัญชีบน `/api/register` กำหนดรหัสผ่านสมัครใหม่ขั้นต่ำ **8 ตัวอักษร ผสมตัวอักษรและตัวเลข** + บล็อกรหัสผ่านยอดฮิตที่เดาง่าย พร้อมข้อความตอบกลับจากเซิร์ฟเวอร์ครบ **5 ภาษา (`TH / EN / ZH / KO / JA`)**
+     - **กฎเหล็กความเท่าเทียม 100% (Rule 4):** นำโค้ด Auto-Login ข้ามฟอร์มบน Localhost และรหัสสำรองอ่อนแอออกทั้งหมด เพื่อให้ทุกคนเข้าระบบผ่านฟอร์มมาตรฐานเดียวกันอย่างเท่าเทียม
+  2. **ดีไซน์สากล Split-Screen Enterprise 2 คอลัมน์ + ปุ่มสลับ 5 ภาษาบนหน้าล็อกอิน (`templates/index.html`, `static/style.css`, `static/script.js`):**
+     - ปรับโฉม `#auth-modal` เป็น **2-Column Split-Screen Enterprise Shell** (คอลัมน์ซ้ายแสดงแบรนด์ Kira AI 2.7, 3 เสาหลักสถาปัตยกรรมความปลอดภัย และปุ่มทดลองคุยฟรี Guest Trial / คอลัมน์ขวาเป็นฟอร์ม `<form>` มาตรฐานรองรับ Password Manager `autocomplete="username"`, `current-password`, `new-password`) แก้ปัญหาการ์ดหน้าสมัครสมาชิกล้นขอบจอ (`1,173px -> ~590px` พอดีหน้าจอ 100% ไม่ถูกตัดขอบ และย่อเป็น 1 คอลัมน์อัตโนมัติบนมือถือ)
+     - เพิ่มปุ่มสลับภาษา **5 ภาษา (`🇹🇭 TH / 🇺🇸 EN / 🇨🇳 中文 / 🇰🇷 한국어 / 🇯🇵 日本語`)** มุมขวาบนของหน้าล็อกอิน (`#auth-lang-wrapper`) พร้อมแปลข้อความ ป้ายความปลอดภัย มาตรวัดรหัสผ่าน และข้อความแจ้งเตือนครบ 100%
+  3. **ผลการทดสอบและหลักฐานหน้างานจริง (Proof of Work):**
+     - `test_auth_suite.py`: ผ่านครบ **14/14 PASSED (100%)**
+     - `test_approved_fixes.py`: ผ่านครบ **10/10 OK**
+     - `test_100_agents.py`: ผ่านครบ **100/100 PASSED, 0 Warnings, 0 Failed**
+     - Live Playwright Browser Screenshots: `kira_v2711_auth_login_th.png`, `kira_v2711_auth_login_en_global.png`, `kira_v2711_auth_5lang_menu.png`, `kira_v2711_auth_register_en_verified.png`, `kira_v2711_auth_register_th_verified.png` (0 JS Page Errors)
   4. **การอัปเกรดเวอร์ชันและแคช (Rule 9):**
-     - ซิงโครไนซ์ระบบหลักและฝูงเอเจนต์ทดสอบทั้งหมดสู่ **Kira v2.7.10 Enterprise** (`kira-ai-cache-v2.7.10` / `20261031_2710`)
+     - ซิงโครไนซ์ระบบหลัก Service Worker (`static/sw.js`) และฝูงเอเจนต์ทดสอบทั้งหมดสู่ **Kira v2.7.11 Enterprise** (`kira-ai-cache-v2.7.11` / `20261031_2711`)
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `feat(rag): implement Phase 4 Semantic Vector RAG Knowledge Vault (256D Hybrid Vector + BM25) & complete 4-phase roadmap (v2.7.10)`
+* **Git Commit ล่าสุด:** `feat(auth): upgrade Login & Register to Zero-Trust PBKDF2-SHA256 security & global 5-language Split-Screen Enterprise portal (v2.7.11)`
 * **สถานะบน Render:** ทำการ Git Push สู่ GitHub Repository `main` เรียบร้อยแล้ว เพื่อให้ Render Auto-Deploy ขึ้นเซิร์ฟเวอร์จริงทันที
 
-#### 3. 🏆 สรุปความสำเร็จ Roadmap 4 เฟส (ครบสมบูรณ์ 100%):
-* ✅ **เฟส 1:** ระบบตรวจสลิปโอนเงินอัจฉริยะด้วย Vision AI & Anti-Fraud Shield (`v2.7.7`)
-* ✅ **เฟส 2:** ระบบส่งออกรายงานมติสภาผู้บริหาร 4 ฝ่าย PDF A4 / Word `.docx` / Markdown / Vault (`v2.7.8`)
-* ✅ **เฟส 3:** ยกระดับโหมดคุยสดสองทิศทาง Full-Duplex Realtime Voice & Smart VAD / Whisper Cloud (`v2.7.9`)
-* ✅ **เฟส 4:** คลังความรู้เอกสารอัจฉริยะ Semantic Vector RAG Knowledge Vault ข้ามเซสชัน (`v2.7.10`) 🌸
+#### 3. 🏆 สรุปความสำเร็จล่าสุด:
+* ✅ Roadmap 4 เฟสหลัก (`v2.7.7` – `v2.7.10`: Vision Slip Audit, Boardroom Export Studio, Full-Duplex Voice, Semantic Vector RAG Vault) + ยกระดับระบบยืนยันตัวตน Zero-Trust & Global 5-Language Split-Screen Auth Portal (`v2.7.11`) เสร็จสมบูรณ์ 100% 🌸
