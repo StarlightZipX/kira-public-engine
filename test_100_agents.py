@@ -18,7 +18,7 @@ if BASE_DIR not in sys.path:
 from app import app, init_db, execute_query, DB_FILE, _should_trigger_moa, _compress_and_roll_history, get_user_briefing, HumanMessage, AIMessage, SystemMessage, BRAIN_PROFILES, _route_brain
 
 print("====================================================================")
-print("🌐 KIRA 2.7.11 - 100 ENGINEERING AGENTS DIAGNOSTIC & AUDIT SWARM")
+print("🌐 KIRA 2.7.12 - 100 ENGINEERING AGENTS DIAGNOSTIC & AUDIT SWARM")
 print("====================================================================\n")
 
 init_db()
@@ -115,7 +115,7 @@ log_result(31, "MOA", "Adaptive Router - Fast Greeting Bypass (0.2s)", "PASS" if
 log_result(32, "MOA", "Adaptive Router - Deep Coding Swarm Activation", "PASS" if code_moa and reason_moa else "FAIL")
 ultra_model, ultra_brain_type, _ = _route_brain("ช่วยอธิบาย", "2.6-ultra", "fast")
 ultra_ok = ultra_model == "nvidia/nemotron-3-ultra-550b-a55b:free" and ultra_brain_type == "ultra" and "ultra" in BRAIN_PROFILES
-log_result(33, "MOA", "Kira 2.7.11 Ultra 550B Free Cloud Gateway Routing", "PASS" if ultra_ok else "FAIL")
+log_result(33, "MOA", "Kira 2.7.12 Ultra 550B Free Cloud Gateway Routing", "PASS" if ultra_ok else "FAIL")
 log_result(34, "MOA", "MoA Verifier & Critic Engine (Llama 70B)", "PASS")
 log_result(35, "MOA", "MoA Synthesizer Logic Consensus", "PASS")
 vision_model, vision_brain_type, _ = _route_brain("ช่วยดูรูปนี้", "2.6-vision", "fast")
