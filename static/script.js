@@ -980,13 +980,25 @@ async function loadProactiveBriefing() {
     try {
         const token = localStorage.getItem('kira_auth_token') || '';
         const currentLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
-        const url = `/api/user/briefing/${encodeURIComponent(currentUser)}?lang=${encodeURIComponent(currentLang)}${token ? `&token=${encodeURIComponent(token)}` : ''}`;
+        const baseUrl = `/api/user/briefing/${encodeURIComponent(currentUser)}?lang=${encodeURIComponent(currentLang)}`;
+        const url = token ? `${baseUrl}&token=${encodeURIComponent(token)}` : baseUrl;
         const res = await fetch(url);
         if (res.ok) {
             const data = await res.json();
             if (data.status === 'success') {
                 latestBriefingData = data;
                 return data;
+            }
+        }
+        // Fallback retry without token if a pre-redeploy token became stale
+        if (token) {
+            const retryRes = await fetch(baseUrl);
+            if (retryRes.ok) {
+                const retryData = await retryRes.json();
+                if (retryData.status === 'success') {
+                    latestBriefingData = retryData;
+                    return retryData;
+                }
             }
         }
     } catch (err) {
@@ -1150,13 +1162,27 @@ async function renderWelcomeHub() {
     `;
 
     const briefing = await loadProactiveBriefing();
+    const isBossFallback = Boolean(currentUser && (currentUser.includes('Boss') || currentUser.toLowerCase().includes('admin')));
+    const fallbackSuggestions = currentLang === 'en' ? [
+        { title: "Strategy Advisor", desc: "Break down complex problems & build step-by-step action plans", prompt: "Please break down this problem into a step-by-step action plan with risk mitigation.", icon: "fa-solid fa-compass", tag: "ADVISOR", category: "advisor" },
+        { title: "First-Draft Machine", desc: "Draft professional business emails, articles, or structured reports", prompt: "Please draft a structured, professional first draft of this content.", icon: "fa-solid fa-pen-nib", tag: "FIRST DRAFT", category: "draft" },
+        { title: "Executive Review & Polish", desc: "Proofread, screen risks, and elevate tone to executive quality", prompt: "Please review and elevate this document into concise, authoritative executive-grade language.", icon: "fa-solid fa-magnifying-glass-chart", tag: "REVIEW", category: "review" },
+        { title: "Fast Concept Explainer", desc: "Explain complex topics clearly in 3 minutes with examples", prompt: "Please explain this concept clearly in 3 minutes with intuitive analogies.", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
+        { title: "Live Code & Diagram Studio", desc: "Build interactive web UI on Live Canvas or Mermaid flowcharts", prompt: "Please generate a modern Dark Minimal Dashboard on Live Canvas with interactive components.", icon: "fa-solid fa-code", tag: "CANVAS", category: "tech" }
+    ] : [
+        { title: isBossFallback ? "รายงานสถานะสถาปัตยกรรมระบบ" : "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: isBossFallback ? "ตรวจเช็กความพร้อม Multi-Brain Engine และเกราะป้องกัน Enterprise" : "ช่วยย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: isBossFallback ? "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.7.13 ตรวจสอบความพร้อมของ Multi-Brain Engine และเกราะป้องกันล่าสุดให้บอสหน่อยค่ะ" : "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: isBossFallback ? "ADMIN CORE" : "ADVISOR", category: "advisor" },
+        { title: "สร้างดราฟต์แรกของงานเขียน (First-Draft Machine)", desc: "ร่างอีเมลธุรกิจ บทความ โพสต์โซเชียล หรือโครงสร้างรายงานทันที", prompt: "ช่วยร่างโครงสร้างและเขียนดราฟต์แรกของเนื้อหาอย่างมืออาชีพ ปรับภาษาให้อ่านง่ายและน่าเชื่อถือให้หน่อยนะคะ", icon: "fa-solid fa-pen-nib", tag: "FIRST DRAFT", category: "draft" },
+        { title: "ตรวจทาน & เกลาเอกสารระดับผู้บริหาร", desc: "ตรวจความถูกต้อง กรองความเสี่ยง และเกลาสำนวนให้น่าเชื่อถือ", prompt: "ช่วยตรวจทานความถูกต้องและเกลาข้อความต่อไปนี้ให้สุภาพ กระชับ เป็นมืออาชีพ และไม่มีคำผิดให้หน่อยค่ะ", icon: "fa-solid fa-magnifying-glass-chart", tag: "REVIEW", category: "review" },
+        { title: "ย่อยเรื่องยากให้เข้าใจง่าย (Concept Explainer)", desc: "สรุปสาระสำคัญใน 3 นาที พร้อมยกตัวอย่างให้เห็นภาพชัดเจน", prompt: "ช่วยสรุปและอธิบายเรื่องนี้ให้เข้าใจง่ายใน 3 นาที แบบที่คนไม่มีพื้นฐานก็เข้าใจได้ทันทีให้หน่อยนะคะ", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
+        { title: "สังเคราะห์โค้ดพรีวิวบน Live Canvas & ผังงาน", desc: "สร้างหน้าเว็บ HTML/JS พรีวิวสดบน Canvas หรือวาด Mermaid Flowchart", prompt: "ช่วยเขียนโค้ดหน้าเว็บ Dashboard พรีวิวสดบน Canvas ธีม Dark Minimal พร้อม Interactive Elements ให้หน่อยค่ะ", icon: "fa-solid fa-code", tag: "CANVAS STUDIO", category: "tech" }
+    ];
     const data = briefing || {
-        greeting_title: wDict.prep_title(currentUser),
-        greeting_subtitle: wDict.prep_subtitle,
+        greeting_title: isBossFallback && currentLang === 'th' ? 'สวัสดีค่ะ ท่านประธาน' : wDict.prep_title(currentUser),
+        greeting_subtitle: isBossFallback && currentLang === 'th' ? 'ระบบสถาปัตยกรรม Kira 2.7.13 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ' : (currentLang === 'en' ? 'Kira AI 2.7.13 is online and ready to assist with strategy, coding, and productivity.' : 'ระบบประมวลผล Kira 2.7.13 พร้อมช่วยคิดวิเคราะห์ เขียนโค้ด และจัดการภารกิจของคุณแล้วค่ะ'),
         time_str: new Date().toLocaleTimeString(currentLang === 'ja' ? 'ja-JP' : (currentLang === 'en' ? 'en-US' : 'th-TH'), { hour: '2-digit', minute: '2-digit' }),
-        date_thai: 'Today',
-        is_boss: currentUser && (currentUser.includes('Boss') || currentUser.toLowerCase().includes('admin')),
-        proactive_suggestions: []
+        date_thai: new Date().toLocaleDateString(currentLang === 'ja' ? 'ja-JP' : (currentLang === 'en' ? 'en-US' : 'th-TH'), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
+        is_boss: isBossFallback,
+        proactive_suggestions: fallbackSuggestions
     };
 
     let continueHtml = '';
