@@ -2591,6 +2591,13 @@ if (attachToggleBtn && attachmentMenu) {
             attachmentMenu.style.display = 'none';
         });
     }
+    const menuRagVaultBtn = document.getElementById('menu-rag-vault-btn');
+    if (menuRagVaultBtn) {
+        menuRagVaultBtn.addEventListener('click', () => {
+            attachmentMenu.style.display = 'none';
+            if (window.KiraRAGVault) window.KiraRAGVault.open();
+        });
+    }
 
     imgInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -2638,6 +2645,7 @@ if (attachToggleBtn && attachmentMenu) {
                     hideTypingIndicator();
                     if (result.status === 'success') {
                         addMessage(result.message, false);
+                        if (window.KiraRAGVault) window.KiraRAGVault.refresh();
                     } else {
                         addMessage("❌ Error: " + result.message, false);
                     }
@@ -5580,7 +5588,7 @@ function buildClientBoardroomMarkdown(payload, options = {}) {
     lines.push('---');
     lines.push('');
     lines.push('### 🛡️ ตราประทับรับรองความถูกต้องดิจิทัล (Kira Digital Audit Seal)');
-    lines.push(`- **ระบบประมวลผล:** Kira AI Enterprise v2.7.9 (4-Executive Virtual Boardroom Engine)`);
+    lines.push(`- **ระบบประมวลผล:** Kira AI Enterprise v2.7.10 (4-Executive Virtual Boardroom Engine)`);
     lines.push(`- **Digital Signature (SHA-256):** \`${sealHash}\``);
     lines.push('');
 
@@ -5999,7 +6007,7 @@ function refreshBoardroomExportStudioPreview() {
             <div>
                 <div class="a4-kicker">KIRA AI ENTERPRISE SYSTEM • 4-EXECUTIVE COUNCIL</div>
                 <div class="a4-title">รายงานมติที่ประชุมสภาที่ปรึกษาผู้บริหาร 4 ฝ่าย</div>
-                <p class="a4-sub">Executive Boardroom Resolution &amp; 90-Day Strategic Action Blueprint (v2.7.9)</p>
+                <p class="a4-sub">Executive Boardroom Resolution &amp; 90-Day Strategic Action Blueprint (v2.7.10)</p>
             </div>
             <div class="a4-stamp">
                 <div><strong>Document ID:</strong> ${escapeHtml(docId)}</div>
@@ -8410,7 +8418,7 @@ function initKiraUpdateController() {
             fetch('/api/system/version?_t=' + Date.now(), { cache: 'no-store' })
                 .then(r => r.ok ? r.json() : null)
                 .then(d => {
-                    const v = d && d.version ? `v${d.version}` : 'v2.7.9';
+                    const v = d && d.version ? `v${d.version}` : 'v2.7.10';
                     const rel = d && d.release_name ? ` (${d.release_name})` : '';
                     if (typeof showConnectionToast === 'function') {
                         showConnectionToast(`✨ อัปเดต Kira AI ${v}${rel} สำเร็จแล้วค่ะ! พร้อมให้บริการคุณแล้วนะคะ 🌸`, 'ready');
@@ -10557,7 +10565,7 @@ async function refineMindMapWithAI() {
 window.initKiraMindMapController = initKiraMindMapController;
 
 // =========================================================================
-// 🎙️ PHASE 3: KIRA FULL-DUPLEX REALTIME VOICE, SMART VAD & PIPELINED TTS (v2.7.9)
+// 🎙️ PHASE 3: KIRA FULL-DUPLEX REALTIME VOICE, SMART VAD & PIPELINED TTS (v2.7.10)
 // =========================================================================
 let liveVoiceRecognition = null;
 let liveVoiceAudio = null;
@@ -13398,6 +13406,33 @@ const KIRA_I18N = {
         br_btn_export_pdf: "พิมพ์ / บันทึก PDF (A4)",
         lv_badge_duplex: "FULL-DUPLEX VAD",
         lv_vad_auto_barge: "พูดแทรกอัตโนมัติ (Smart VAD)",
+        rag_vault_btn: "คลังความรู้",
+        rag_vault_title: "เปิดคลังความรู้เอกสารอัจฉริยะ (Semantic Vector RAG Knowledge Vault)",
+        tools_rag_vault_title: "คลังความรู้เอกสาร (Semantic RAG)",
+        tools_rag_vault_desc: "ค้นหาความหมายเชิงลึก & อ้างอิง PDF/Word/MD ข้ามแชต",
+        attach_rag_vault: "คลังความรู้ RAG",
+        rag_bar_active_prefix: "คลังความรู้ RAG พร้อมอ้างอิงอัตโนมัติ",
+        rag_bar_manage: "จัดการคลัง",
+        rag_modal_title: "คลังความรู้เอกสารอัจฉริยะ (Semantic RAG Vault)",
+        rag_modal_subtitle: "อัปโหลด PDF, Word, Markdown, CSV, TXT เพื่อค้นหาความหมายเชิงลึกและให้คิระอ้างอิงระดับย่อหน้าข้ามเซสชันอัตโนมัติ",
+        rag_stat_docs: "เอกสารในคลัง",
+        rag_stat_active: "เปิดอ้างอิงข้ามแชต",
+        rag_stat_chunks: "ย่อหน้าเวกเตอร์ (Chunks)",
+        rag_stat_engine: "สถาปัตยกรรมค้นหา",
+        rag_drop_title: "คลิกเลือกไฟล์ หรือลากเอกสารมาวางที่นี่",
+        rag_drop_formats: "รองรับหลายไฟล์พร้อมกัน: .PDF, .DOCX, .MD, .CSV, .TXT, .JSON (สูงสุด 15MB/ไฟล์)",
+        rag_btn_upload: "อัปโหลดเอกสาร",
+        rag_btn_add_note: "วางเนื้อหา/โน้ตความรู้สด",
+        rag_note_title_ph: "ชื่อเอกสารความรู้ (เช่น ระเบียบบริษัท 2026 / สรุปวิชา AI)...",
+        rag_note_tags_ph: "แท็ก (เช่น policy, finance)",
+        rag_note_content_ph: "วางเนื้อหาเอกสาร กฎระเบียบ สัญญา หรือเลกเชอร์ที่ต้องการให้คิระจำและอ้างอิงข้ามแชต...",
+        rag_btn_cancel: "ยกเลิก",
+        rag_btn_save_note: "สร้างเวกเตอร์ & บันทึกลงคลัง",
+        rag_doc_list_title: "รายการเอกสารในคลังความรู้ของคุณ",
+        rag_search_panel_title: "ค้นหาความหมายเชิงลึก & ตรวจสอบย่อหน้าอ้างอิง",
+        rag_search_ph: "พิมพ์คำถามหรือประเด็นเพื่อค้นหาย่อหน้าที่เกี่ยวข้องที่สุด...",
+        rag_btn_search: "ค้นหา",
+        rag_search_empty_hint: "พิมพ์คำถามด้านบนเพื่อทดสอบค้นหาย่อหน้าอ้างอิงด้วย Semantic Vector 256D + BM25 หรือกด 'ดูย่อหน้า' จากเอกสารทางซ้ายได้เลยค่ะ",
         lv_sens_normal: "VAD: มาตรฐาน",
         lv_sens_high: "VAD: ไวพิเศษ",
         lv_sens_noise: "VAD: กันเสียงรบกวน",
@@ -13813,6 +13848,33 @@ const KIRA_I18N = {
         br_btn_export_pdf: "Print / Save PDF (A4)",
         lv_badge_duplex: "FULL-DUPLEX VAD",
         lv_vad_auto_barge: "Auto Barge-in (Smart VAD)",
+        rag_vault_btn: "Knowledge Vault",
+        rag_vault_title: "Open Semantic Vector RAG Knowledge Vault",
+        tools_rag_vault_title: "Semantic RAG Knowledge Vault",
+        tools_rag_vault_desc: "Deep semantic search & cross-session PDF/Word/MD citations",
+        attach_rag_vault: "RAG Knowledge Vault",
+        rag_bar_active_prefix: "Semantic RAG Vault Auto-Citation Active",
+        rag_bar_manage: "Manage Vault",
+        rag_modal_title: "Semantic Vector RAG Knowledge Vault",
+        rag_modal_subtitle: "Upload PDF, Word, Markdown, CSV, or TXT for deep semantic search and automatic paragraph-level citations across sessions.",
+        rag_stat_docs: "Total Documents",
+        rag_stat_active: "Active Cross-Session",
+        rag_stat_chunks: "Vector Chunks",
+        rag_stat_engine: "Retrieval Engine",
+        rag_drop_title: "Click to browse or drag & drop documents here",
+        rag_drop_formats: "Multi-file supported: .PDF, .DOCX, .MD, .CSV, .TXT, .JSON (Max 15MB/file)",
+        rag_btn_upload: "Upload Files",
+        rag_btn_add_note: "Paste Knowledge Note",
+        rag_note_title_ph: "Document title (e.g., Company Policy 2026 / AI Notes)...",
+        rag_note_tags_ph: "Tags (e.g., policy, finance)",
+        rag_note_content_ph: "Paste document text, SOPs, contracts, or lecture notes for cross-session RAG citations...",
+        rag_btn_cancel: "Cancel",
+        rag_btn_save_note: "Vectorize & Save to Vault",
+        rag_doc_list_title: "Indexed Documents in Your Vault",
+        rag_search_panel_title: "Deep Semantic Search & Citation Inspector",
+        rag_search_ph: "Enter a question or topic to retrieve top matching paragraphs...",
+        rag_btn_search: "Search",
+        rag_search_empty_hint: "Type a query above to test Hybrid 256D Vector + BM25 paragraph retrieval, or click 'Chunks' on any document.", 
         lv_sens_normal: "VAD: Balanced",
         lv_sens_high: "VAD: Ultra Sensitive",
         lv_sens_noise: "VAD: Noise Guard",
@@ -14228,6 +14290,33 @@ const KIRA_I18N = {
         br_btn_export_pdf: "打印 / 导出 PDF (A4)",
         lv_badge_duplex: "全双工智能语音",
         lv_vad_auto_barge: "智能语音打断 (Smart VAD)",
+        rag_vault_btn: "知识库",
+        rag_vault_title: "打开语义向量 RAG 智能文档知识库",
+        tools_rag_vault_title: "语义向量知识库 (Semantic RAG)",
+        tools_rag_vault_desc: "深度语义检索与跨会话 PDF/Word/MD 段落级引用",
+        attach_rag_vault: "RAG 知识库",
+        rag_bar_active_prefix: "RAG 智能知识库已启用跨会话自动引用",
+        rag_bar_manage: "管理知识库",
+        rag_modal_title: "智能文档语义知识库 (Semantic RAG Vault)",
+        rag_modal_subtitle: "上传 PDF、Word、Markdown、CSV、TXT，实现跨会话深度语义检索与段落级精准引用",
+        rag_stat_docs: "文档总数",
+        rag_stat_active: "跨会话启用中",
+        rag_stat_chunks: "向量段落数",
+        rag_stat_engine: "检索引擎",
+        rag_drop_title: "点击选择文件或将文档拖拽至此",
+        rag_drop_formats: "支持多文件上传: .PDF, .DOCX, .MD, .CSV, .TXT, .JSON (单文件最大 15MB)",
+        rag_btn_upload: "上传文档",
+        rag_btn_add_note: "直接粘贴知识笔记",
+        rag_note_title_ph: "知识文档标题 (例如：2026 企业制度 / 课程讲义)...",
+        rag_note_tags_ph: "标签 (如 policy, finance)",
+        rag_note_content_ph: "在此粘贴规章制度、合同条款或研究资料以供跨会话检索引用...",
+        rag_btn_cancel: "取消",
+        rag_btn_save_note: "生成向量并存入知识库",
+        rag_doc_list_title: "知识库已索引文档列表",
+        rag_search_panel_title: "深度语义检索与引用段落预览",
+        rag_search_ph: "输入问题或关键词以检索最相关的知识段落...",
+        rag_btn_search: "检索",
+        rag_search_empty_hint: "在上方输入问题即可测试 256D 语义向量 + BM25 混合段落检索，或点击左侧文档查看分块。", 
         lv_sens_normal: "灵敏度：标准",
         lv_sens_high: "灵敏度：极高",
         lv_sens_noise: "灵敏度：抗噪",
@@ -14643,6 +14732,33 @@ const KIRA_I18N = {
         br_btn_export_pdf: "인쇄 / PDF 저장 (A4)",
         lv_badge_duplex: "FULL-DUPLEX VAD",
         lv_vad_auto_barge: "자동 끼어들기 (Smart VAD)",
+        rag_vault_btn: "지식 금고",
+        rag_vault_title: "시맨틱 벡터 RAG 문서 지식 금고 열기",
+        tools_rag_vault_title: "시맨틱 RAG 지식 금고",
+        tools_rag_vault_desc: "심층 의미 검색 및 세션 간 PDF/Word/MD 단락 인용",
+        attach_rag_vault: "RAG 지식 금고",
+        rag_bar_active_prefix: "RAG 지식 금고 자동 인용 활성화됨",
+        rag_bar_manage: "금고 관리",
+        rag_modal_title: "시맨틱 벡터 RAG 문서 지식 금고",
+        rag_modal_subtitle: "PDF, Word, Markdown, CSV, TXT를 업로드하여 세션 간 심층 의미 검색 및 정확한 단락 인용을 활용하세요.",
+        rag_stat_docs: "전체 문서",
+        rag_stat_active: "세션 간 활성",
+        rag_stat_chunks: "벡터 단락 (Chunks)",
+        rag_stat_engine: "검색 아키텍처",
+        rag_drop_title: "클릭하여 파일을 선택하거나 여기에 드래그하세요",
+        rag_drop_formats: "다중 파일 지원: .PDF, .DOCX, .MD, .CSV, .TXT, .JSON (최대 15MB/파일)",
+        rag_btn_upload: "문서 업로드",
+        rag_btn_add_note: "지식 노트 직접 입력",
+        rag_note_title_ph: "문서 제목 (예: 2026 사내 규정 / AI 강의 요약)...",
+        rag_note_tags_ph: "태그 (예: policy, finance)",
+        rag_note_content_ph: "규정, 계약서 또는 학습 노트를 붙여넣어 모든 대화에서 인용하세요...",
+        rag_btn_cancel: "취소",
+        rag_btn_save_note: "벡터 생성 및 저장",
+        rag_doc_list_title: "지식 금고 인덱싱 문서 목록",
+        rag_search_panel_title: "심층 시맨틱 검색 및 인용 단락 검사기",
+        rag_search_ph: "질문이나 키워드를 입력하여 가장 관련성 높은 단락을 검색하세요...",
+        rag_btn_search: "검색",
+        rag_search_empty_hint: "위 검색창에 질문을 입력하여 256D 시맨틱 벡터 + BM25 하이브리드 검색을 테스트해 보세요.", 
         lv_sens_normal: "VAD: 표준",
         lv_sens_high: "VAD: 고감도",
         lv_sens_noise: "VAD: 소음 차단",
@@ -15058,6 +15174,33 @@ const KIRA_I18N = {
         br_btn_export_pdf: "印刷 / PDF保存 (A4)",
         lv_badge_duplex: "全二重スマート音声",
         lv_vad_auto_barge: "自動割り込み (Smart VAD)",
+        rag_vault_btn: "知識庫",
+        rag_vault_title: "セマンティックベクトル RAG 知識ボールトを開く",
+        tools_rag_vault_title: "セマンティック RAG 知識庫",
+        tools_rag_vault_desc: "深層意味検索＆セッション横断 PDF/Word/MD 段落引用",
+        attach_rag_vault: "RAG 知識庫",
+        rag_bar_active_prefix: "RAG 知識庫の自動引用が有効です",
+        rag_bar_manage: "知識庫を管理",
+        rag_modal_title: "セマンティックベクトル RAG ドキュメント知識庫",
+        rag_modal_subtitle: "PDF・Word・Markdown・CSV・TXTを登録し、深層意味検索とセッション横断の段落引用を自動化します",
+        rag_stat_docs: "登録ドキュメント",
+        rag_stat_active: "横断引用オン",
+        rag_stat_chunks: "ベクトル段落数",
+        rag_stat_engine: "検索エンジン",
+        rag_drop_title: "クリックしてファイル選択、またはここにドロップ",
+        rag_drop_formats: "複数ファイル対応: .PDF, .DOCX, .MD, .CSV, .TXT, .JSON (最大 15MB/件)",
+        rag_btn_upload: "ファイルを登録",
+        rag_btn_add_note: "テキスト知識を直接登録",
+        rag_note_title_ph: "ドキュメント名 (例: 2026年社内規定 / 研究ノート)...",
+        rag_note_tags_ph: "タグ (例: policy, finance)",
+        rag_note_content_ph: "規定・契約書・講義ノートなどの本文を貼り付けて知識庫へ保存します...",
+        rag_btn_cancel: "キャンセル",
+        rag_btn_save_note: "ベクトル化して保存",
+        rag_doc_list_title: "インデックス済みドキュメント一覧",
+        rag_search_panel_title: "深層セマンティック検索＆引用段落インスペクター",
+        rag_search_ph: "質問やトピックを入力して関連性の高い段落を検索...",
+        rag_btn_search: "検索",
+        rag_search_empty_hint: "上の検索欄に質問を入力して 256D ベクトル + BM25 検索を試すか、左の文書から段落を表示できます。", 
         lv_sens_normal: "VAD: 標準",
         lv_sens_high: "VAD: 高感度",
         lv_sens_noise: "VAD: ノイズ抑制",
@@ -15637,6 +15780,496 @@ window.initKiraI18n = initKiraI18n;
 window.initStudyHubController = initStudyHubController;
 
 // =========================================================================
+
+// =========================================================================
+// 📚 PHASE 4: SEMANTIC VECTOR RAG KNOWLEDGE VAULT CONTROLLER (Kira v2.7.10)
+// =========================================================================
+function initRAGKnowledgeVaultController() {
+    const modal = document.getElementById('rag-vault-modal');
+    if (!modal) return;
+
+    const btnHeaderOpen = document.getElementById('btn-rag-vault');
+    const btnClose = document.getElementById('btn-close-rag-modal');
+    const btnBarManage = document.getElementById('btn-open-rag-from-bar');
+    const headerBadge = document.getElementById('rag-vault-count-badge');
+    const activeBar = document.getElementById('rag-active-context-bar');
+    const activeBarText = document.getElementById('rag-active-context-text');
+
+    const statTotalDocs = document.getElementById('rag-stat-total-docs');
+    const statActiveDocs = document.getElementById('rag-stat-active-docs');
+    const statTotalChunks = document.getElementById('rag-stat-total-chunks');
+
+    const dropzone = document.getElementById('rag-dropzone');
+    const fileInput = document.getElementById('rag-file-input');
+    const btnBrowse = document.getElementById('btn-rag-browse-files');
+    const btnToggleNote = document.getElementById('btn-toggle-rag-note');
+    const noteEditor = document.getElementById('rag-note-editor');
+    const noteTitle = document.getElementById('rag-note-title');
+    const noteTags = document.getElementById('rag-note-tags');
+    const noteContent = document.getElementById('rag-note-content');
+    const btnCancelNote = document.getElementById('btn-cancel-rag-note');
+    const btnSaveNote = document.getElementById('btn-save-rag-note');
+    const uploadStatus = document.getElementById('rag-upload-status');
+
+    const btnRefresh = document.getElementById('btn-rag-refresh');
+    const docListEl = document.getElementById('rag-doc-list');
+    const searchInput = document.getElementById('rag-search-input');
+    const btnSearch = document.getElementById('btn-rag-search');
+    const searchResultsEl = document.getElementById('rag-search-results');
+    const latencyPill = document.getElementById('rag-search-latency-pill');
+
+    const ragState = {
+        open: false,
+        documents: [],
+        stats: { total_docs: 0, active_docs: 0, total_chunks: 0, total_chars: 0 },
+        lastSearchHits: []
+    };
+
+    function getActiveUsername() {
+        return (typeof currentUser !== 'undefined' && currentUser)
+            ? currentUser
+            : (localStorage.getItem('kira_username') || 'guest');
+    }
+
+    function escapeHtmlSafe(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function formatBytes(bytes) {
+        const b = Number(bytes || 0);
+        if (b < 1024) return `${b} B`;
+        if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+        return `${(b / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    function showStatusBanner(msg, isError = false) {
+        if (!uploadStatus) return;
+        uploadStatus.textContent = msg;
+        uploadStatus.classList.toggle('is-error', Boolean(isError));
+        uploadStatus.style.display = 'block';
+        setTimeout(() => {
+            if (uploadStatus.textContent === msg) {
+                uploadStatus.style.display = 'none';
+            }
+        }, 6500);
+    }
+
+    function updateGlobalBadges() {
+        const activeCount = Number(ragState.stats.active_docs || 0);
+        const totalChunks = Number(ragState.stats.total_chunks || 0);
+        if (headerBadge) {
+            if (activeCount > 0) {
+                headerBadge.textContent = String(activeCount);
+                headerBadge.style.display = 'inline-flex';
+            } else {
+                headerBadge.style.display = 'none';
+            }
+        }
+        if (activeBar && activeBarText) {
+            if (activeCount > 0) {
+                const lang = (localStorage.getItem('kira_ui_lang') || 'th').toLowerCase();
+                if (lang === 'en') {
+                    activeBarText.textContent = `Semantic RAG Knowledge Vault Active (${activeCount} docs • ${totalChunks} vector chunks)`;
+                } else if (lang === 'zh') {
+                    activeBarText.textContent = `RAG 智能知识库跨会话引用已启用 (${activeCount} 份文档 • ${totalChunks} 个向量段落)`;
+                } else if (lang === 'ko') {
+                    activeBarText.textContent = `RAG 지식 금고 자동 인용 활성 (${activeCount}개 문서 • ${totalChunks}개 벡터 단락)`;
+                } else if (lang === 'ja') {
+                    activeBarText.textContent = `RAG 知識庫 自動引用オン (${activeCount} 件の文書 • ${totalChunks} ベクトル段落)`;
+                } else {
+                    activeBarText.textContent = `คลังความรู้ RAG พร้อมอ้างอิงข้ามแชตอัตโนมัติ (${activeCount} เอกสาร • ${totalChunks} ย่อหน้าเวกเตอร์)`;
+                }
+                activeBar.style.display = 'flex';
+            } else {
+                activeBar.style.display = 'none';
+            }
+        }
+        if (statTotalDocs) statTotalDocs.textContent = String(ragState.stats.total_docs || 0);
+        if (statActiveDocs) statActiveDocs.textContent = String(activeCount);
+        if (statTotalChunks) statTotalChunks.textContent = String(totalChunks);
+    }
+
+    function renderDocumentList() {
+        if (!docListEl) return;
+        if (!ragState.documents.length) {
+            docListEl.innerHTML = `
+                <div class="rag-empty-state">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <p>ยังไม่มีเอกสารในคลังความรู้ค่ะ อัปโหลดไฟล์ PDF, Word, Markdown, CSV หรือวางโน้ตความรู้ด้านบนเพื่อให้คิระจำและอ้างอิงข้ามแชตได้เลยนะคะ</p>
+                </div>`;
+            return;
+        }
+
+        docListEl.innerHTML = ragState.documents.map((doc) => {
+            const ext = escapeHtmlSafe(doc.file_type || 'txt');
+            const fname = escapeHtmlSafe(doc.filename);
+            const preview = escapeHtmlSafe(doc.summary_preview || '');
+            const activeCls = doc.is_active ? 'is-active' : '';
+            const checkedAttr = doc.is_active ? 'checked' : '';
+            return `
+                <div class="rag-doc-card ${activeCls}" data-doc-id="${escapeHtmlSafe(doc.doc_id)}">
+                    <div class="rag-doc-top">
+                        <div class="rag-doc-title-wrap">
+                            <span class="rag-ext-badge ext-${ext}">${ext}</span>
+                            <span class="rag-doc-name" title="${fname}">${fname}</span>
+                        </div>
+                    </div>
+                    <div class="rag-doc-meta">
+                        <span><i class="fa-regular fa-file-lines"></i> ${doc.page_count} หน้า</span>
+                        <span><i class="fa-solid fa-cubes"></i> ${doc.chunk_count} ย่อหน้าเวกเตอร์</span>
+                        <span><i class="fa-solid fa-weight-hanging"></i> ${formatBytes(doc.file_size)}</span>
+                    </div>
+                    ${preview ? `<div class="rag-doc-preview">${preview}</div>` : ''}
+                    <div class="rag-doc-actions">
+                        <label class="rag-toggle-label">
+                            <input type="checkbox" class="rag-doc-active-toggle" data-doc-id="${escapeHtmlSafe(doc.doc_id)}" ${checkedAttr}>
+                            <span>${doc.is_active ? 'เปิดอ้างอิงทุกแชต' : 'พักการอ้างอิง'}</span>
+                        </label>
+                        <div class="rag-mini-btns">
+                            <button type="button" class="rag-mini-btn btn-rag-ask-doc" data-filename="${fname}">
+                                <i class="fa-solid fa-comment-dots"></i> ถามคิระ
+                            </button>
+                            <button type="button" class="rag-mini-btn btn-rag-inspect-doc" data-doc-id="${escapeHtmlSafe(doc.doc_id)}">
+                                <i class="fa-solid fa-list-ol"></i> ดูย่อหน้า
+                            </button>
+                            <button type="button" class="rag-mini-btn danger btn-rag-delete-doc" data-doc-id="${escapeHtmlSafe(doc.doc_id)}">
+                                <i class="fa-regular fa-trash-can"></i> ลบ
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        docListEl.querySelectorAll('.rag-doc-active-toggle').forEach((chk) => {
+            chk.addEventListener('change', (ev) => {
+                const docId = ev.target.getAttribute('data-doc-id');
+                toggleDocument(docId, ev.target.checked);
+            });
+        });
+        docListEl.querySelectorAll('.btn-rag-inspect-doc').forEach((btn) => {
+            btn.addEventListener('click', () => inspectDocumentChunks(btn.getAttribute('data-doc-id')));
+        });
+        docListEl.querySelectorAll('.btn-rag-delete-doc').forEach((btn) => {
+            btn.addEventListener('click', () => deleteDocument(btn.getAttribute('data-doc-id')));
+        });
+        docListEl.querySelectorAll('.btn-rag-ask-doc').forEach((btn) => {
+            btn.addEventListener('click', () => askAboutDocument(btn.getAttribute('data-filename')));
+        });
+    }
+
+    async function refreshDocuments() {
+        const uname = getActiveUsername();
+        if (!uname) return ragState;
+        try {
+            const resp = await fetch(`/api/rag/documents?username=${encodeURIComponent(uname)}`);
+            if (!resp.ok) return ragState;
+            const data = await resp.json();
+            if (data.status === 'success') {
+                ragState.documents = data.documents || [];
+                ragState.stats = data.stats || ragState.stats;
+                updateGlobalBadges();
+                if (ragState.open) {
+                    renderDocumentList();
+                }
+            }
+        } catch (err) {
+            console.warn('[RAG Vault] refresh notice:', err);
+        }
+        return ragState;
+    }
+
+    async function uploadFiles(fileList) {
+        if (!fileList || !fileList.length) return;
+        const uname = getActiveUsername();
+        const formData = new FormData();
+        formData.append('username', uname);
+        Array.from(fileList).forEach((f) => formData.append('files', f));
+
+        showStatusBanner(`⏳ กำลังแยกย่อหน้าและสร้างเวกเตอร์ 256 มิติ สำหรับ ${fileList.length} ไฟล์...`, false);
+        try {
+            const resp = await fetch('/api/rag/upload', { method: 'POST', body: formData });
+            const data = await resp.json();
+            if (!resp.ok || data.status !== 'success') {
+                throw new Error(data.detail || data.message || 'อัปโหลดไม่สำเร็จ');
+            }
+            showStatusBanner(`✅ ${data.message}`, false);
+            await refreshDocuments();
+            renderDocumentList();
+        } catch (err) {
+            showStatusBanner(`❌ ${err.message || err}`, true);
+        }
+    }
+
+    async function ingestDirectNote() {
+        const title = (noteTitle?.value || '').trim();
+        const content = (noteContent?.value || '').trim();
+        const tags = (noteTags?.value || '').trim();
+        if (!title || content.length < 10) {
+            showStatusBanner('⚠️ กรุณาระบุชื่อเอกสารและเนื้อหาอย่างน้อย 10 ตัวอักษรค่ะ', true);
+            return;
+        }
+        showStatusBanner('⏳ กำลังแปลงเนื้อหาเป็นเวกเตอร์ความหมาย 256 มิติ...', false);
+        try {
+            const resp = await fetch('/api/rag/ingest_text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: getActiveUsername(),
+                    title,
+                    content,
+                    tags
+                })
+            });
+            const data = await resp.json();
+            if (!resp.ok || data.status !== 'success') {
+                throw new Error(data.detail || data.message || 'บันทึกไม่สำเร็จ');
+            }
+            if (noteTitle) noteTitle.value = '';
+            if (noteTags) noteTags.value = '';
+            if (noteContent) noteContent.value = '';
+            if (noteEditor) noteEditor.style.display = 'none';
+            showStatusBanner(`✅ ${data.message}`, false);
+            await refreshDocuments();
+            renderDocumentList();
+        } catch (err) {
+            showStatusBanner(`❌ ${err.message || err}`, true);
+        }
+    }
+
+    async function runSemanticSearch(customQuery) {
+        const q = (typeof customQuery === 'string' ? customQuery : (searchInput?.value || '')).trim();
+        if (!q) return [];
+        if (searchInput && searchInput.value !== q) searchInput.value = q;
+
+        try {
+            const resp = await fetch('/api/rag/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: getActiveUsername(),
+                    query: q,
+                    top_k: 5,
+                    active_only: false
+                })
+            });
+            const data = await resp.json();
+            if (!resp.ok || data.status !== 'success') {
+                throw new Error(data.detail || 'ค้นหาไม่สำเร็จ');
+            }
+            const hits = data.results || [];
+            ragState.lastSearchHits = hits;
+
+            if (latencyPill) {
+                latencyPill.textContent = `⚡ ${data.latency_ms} ms • ${hits.length} ย่อหน้า`;
+                latencyPill.style.display = 'inline-flex';
+            }
+
+            if (!hits.length) {
+                searchResultsEl.innerHTML = `
+                    <div class="rag-empty-state">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <p>ไม่พบย่อหน้าที่ตรงกับคำค้นหานี้ค่ะ ลองเปลี่ยนคำสำคัญหรืออัปโหลดเอกสารเพิ่มเติมนะคะ</p>
+                    </div>`;
+                return [];
+            }
+
+            searchResultsEl.innerHTML = hits.map((h, idx) => `
+                <div class="rag-hit-card">
+                    <div class="rag-hit-header">
+                        <span class="rag-hit-source"><i class="fa-solid fa-file-circle-check"></i> #${idx + 1} ${escapeHtmlSafe(h.filename)} • หน้า ${h.page_number}</span>
+                        <span class="rag-hit-score">ความแม่นยำ ${h.score_pct}%</span>
+                    </div>
+                    <div class="rag-hit-section">หัวข้อ: ${escapeHtmlSafe(h.section_title)}</div>
+                    <div class="rag-hit-content">${escapeHtmlSafe(h.content)}</div>
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button type="button" class="rag-mini-btn btn-rag-ask-hit" data-idx="${idx}">
+                            <i class="fa-solid fa-paper-plane"></i> ถามคิระต่อจากย่อหน้านี้
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            searchResultsEl.querySelectorAll('.btn-rag-ask-hit').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const hit = ragState.lastSearchHits[Number(btn.getAttribute('data-idx'))];
+                    if (hit) askAboutChunk(hit, q);
+                });
+            });
+            return hits;
+        } catch (err) {
+            showStatusBanner(`❌ ${err.message || err}`, true);
+            return [];
+        }
+    }
+
+    async function inspectDocumentChunks(docId) {
+        if (!docId || !searchResultsEl) return;
+        try {
+            const resp = await fetch(`/api/rag/documents/${encodeURIComponent(docId)}/chunks?username=${encodeURIComponent(getActiveUsername())}`);
+            const data = await resp.json();
+            if (!resp.ok || data.status !== 'success') return;
+            const chunks = data.chunks || [];
+            if (latencyPill) {
+                latencyPill.textContent = `📄 ${data.filename} (${chunks.length} ย่อหน้า)`;
+                latencyPill.style.display = 'inline-flex';
+            }
+            searchResultsEl.innerHTML = chunks.map((c) => `
+                <div class="rag-hit-card">
+                    <div class="rag-hit-header">
+                        <span class="rag-hit-source"><i class="fa-solid fa-cube"></i> ย่อหน้าที่ ${c.chunk_index + 1} • หน้า ${c.page_number}</span>
+                        <span class="rag-hit-score">${escapeHtmlSafe(data.filename)}</span>
+                    </div>
+                    <div class="rag-hit-section">หัวข้อ: ${escapeHtmlSafe(c.section_title || '-')}</div>
+                    <div class="rag-hit-content">${escapeHtmlSafe(c.content)}</div>
+                </div>
+            `).join('');
+        } catch (err) {
+            console.warn('[RAG Vault] inspect error:', err);
+        }
+    }
+
+    async function toggleDocument(docId, isActive) {
+        try {
+            await fetch(`/api/rag/documents/${encodeURIComponent(docId)}/toggle`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: getActiveUsername(), is_active: Boolean(isActive) })
+            });
+            await refreshDocuments();
+            renderDocumentList();
+        } catch (err) {
+            console.warn('[RAG Vault] toggle error:', err);
+        }
+    }
+
+    async function deleteDocument(docId) {
+        if (!docId) return;
+        try {
+            const resp = await fetch(`/api/rag/documents/${encodeURIComponent(docId)}?username=${encodeURIComponent(getActiveUsername())}`, {
+                method: 'DELETE'
+            });
+            const data = await resp.json();
+            if (resp.ok && data.status === 'success') {
+                showStatusBanner(`🗑️ ${data.message}`, false);
+                await refreshDocuments();
+                renderDocumentList();
+            }
+        } catch (err) {
+            showStatusBanner(`❌ ลบเอกสารไม่สำเร็จ: ${err.message || err}`, true);
+        }
+    }
+
+    function askAboutDocument(filename) {
+        closeModal();
+        const input = document.getElementById('user-input');
+        if (input) {
+            input.value = `ช่วยสรุปประเด็นสำคัญและข้อเท็จจริงหลักจากเอกสาร "${filename}" ในคลังความรู้พร้อมระบุหน้าอ้างอิงให้หน่อยค่ะ`;
+            input.focus();
+        }
+    }
+
+    function askAboutChunk(hit, originalQuery) {
+        closeModal();
+        const input = document.getElementById('user-input');
+        if (input) {
+            input.value = originalQuery
+                ? `${originalQuery} (อ้างอิงจากเอกสาร "${hit.filename}" หน้า ${hit.page_number})`
+                : `ช่วยวิเคราะห์ข้อมูลจากเอกสาร "${hit.filename}" หน้า ${hit.page_number} หัวข้อ "${hit.section_title}" ให้ละเอียดหน่อยค่ะ`;
+            input.focus();
+        }
+    }
+
+    async function openModal() {
+        ragState.open = true;
+        modal.style.display = 'flex';
+        await refreshDocuments();
+        renderDocumentList();
+    }
+
+    function closeModal() {
+        ragState.open = false;
+        modal.style.display = 'none';
+    }
+
+    // Event bindings
+    if (btnHeaderOpen) btnHeaderOpen.addEventListener('click', openModal);
+    if (btnBarManage) btnBarManage.addEventListener('click', openModal);
+    if (btnClose) btnClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    if (btnBrowse && fileInput) {
+        btnBrowse.addEventListener('click', () => fileInput.click());
+    }
+    if (dropzone && fileInput) {
+        dropzone.querySelector('.rag-dropzone-content')?.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('drag-over');
+        });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            if (e.dataTransfer?.files?.length) {
+                uploadFiles(e.dataTransfer.files);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files?.length) {
+                uploadFiles(e.target.files);
+                fileInput.value = '';
+            }
+        });
+    }
+
+    if (btnToggleNote && noteEditor) {
+        btnToggleNote.addEventListener('click', () => {
+            noteEditor.style.display = noteEditor.style.display === 'none' ? 'flex' : 'none';
+        });
+    }
+    if (btnCancelNote && noteEditor) {
+        btnCancelNote.addEventListener('click', () => {
+            noteEditor.style.display = 'none';
+        });
+    }
+    if (btnSaveNote) btnSaveNote.addEventListener('click', ingestDirectNote);
+    if (btnRefresh) btnRefresh.addEventListener('click', async () => {
+        await refreshDocuments();
+        renderDocumentList();
+    });
+    if (btnSearch) btnSearch.addEventListener('click', () => runSemanticSearch());
+    if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                runSemanticSearch();
+            }
+        });
+    }
+
+    // Initial background sync of active RAG document badges
+    setTimeout(refreshDocuments, 650);
+
+    window.KiraRAGVault = {
+        open: openModal,
+        close: closeModal,
+        refresh: refreshDocuments,
+        uploadFiles,
+        ingestNote: ingestDirectNote,
+        search: runSemanticSearch,
+        inspectChunks: inspectDocumentChunks,
+        toggleDoc: toggleDocument,
+        deleteDoc: deleteDocument,
+        getState: () => ({ ...ragState })
+    };
+}
+
 // 🚀 Master Application Lifecycle Initialization
 // =========================================================================
 function initKiraApp() {
@@ -15668,6 +16301,7 @@ function initKiraApp() {
     try { initPWAController(); } catch (e) { console.error("PWA controller init error:", e); }
     try { initMCPHubController(); } catch (e) { console.error("MCP Hub controller init error:", e); }
     try { initOfflineVaultController(); } catch (e) { console.error("Offline Vault controller init error:", e); }
+    try { initRAGKnowledgeVaultController(); } catch (e) { console.error("RAG Knowledge Vault controller init error:", e); }
 
     // 4. Background Care & Assistance
     try { initProactiveHeartbeat(); } catch (e) { console.warn("Heartbeat init error:", e); }

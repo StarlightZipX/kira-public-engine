@@ -4,35 +4,33 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 31 ตุลาคม 2026 (Kira v2.7.9 Enterprise - Phase 3 Full-Duplex Realtime Voice & Smart VAD)
+### 🕒 อัปเดตล่าสุด: 31 ตุลาคม 2026 (Kira v2.7.10 Enterprise - Phase 4 Semantic Vector RAG Knowledge Vault & Complete 4-Phase Roadmap)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **ยกระดับโหมดสนทนาด้วยเสียงสดสองทิศทางเต็มรูปแบบ (Phase 3: Full-Duplex Realtime Voice, Smart WebAudio VAD Barge-in, Sentence-Pipelined TTS & Cloud Whisper Turbo STT):**
-  1. **เอ็นจิ้นแปลงเสียงพูดคลาวด์ความเร็วสูง (`app.py` — `POST /api/stt`):**
-     - เพิ่ม Endpoint `POST /api/stt` เชื่อมต่อโมเดล **`whisper-large-v3-turbo`** (พร้อมระบบสำรอง `whisper-large-v3` และสลับคีย์อัตโนมัติ) รองรับ 5 ภาษา (`th`, `en`, `zh`, `ko`, `ja`) พร้อมระบบกรองคำหลอนช่วงเงียบ (Silence Hallucination Filter) และเกราะป้องกันขนาดไฟล์/Rate Limit
-     - เพิ่มโหมดสนทนาเสียงสด `voice_mode: True` ใน `POST /api/chat` เพื่อให้คิระตอบด้วยภาษาพูดที่เป็นธรรมชาติ อบอุ่น กระชับ ฟังง่ายเหมือนคุยโทรศัพท์จริงโดยไม่ทิ้งโค้ดภายในลงในตาราง `logs`
-     - อัปเกรด `POST /api/tts` ให้กรองแท็ก `<think>...</think>` และ `[BOARDROOM_*]` ออก 100% ไม่หลุดอ่านกระบวนการคิดภายใน
-  2. **สถาปัตยกรรม Full-Duplex Smart VAD & Sentence-Level Pipelined TTS (`static/script.js`, `templates/index.html`, `static/style.css`):**
-     - **WebAudio Acoustic VAD & Hands-Free Barge-in:** วิเคราะห์คลื่นความถี่เสียงพูดจริงแบบเรียลไทม์ 60 FPS ผ่าน `AudioContext` + `AnalyserNode` พร้อมเปิด `echoCancellation`, `noiseSuppression`, `autoGainControl` แสดงกราฟแท่งสเปกตรัม 9 แท่งและแถบวัดพลังงานเสียงสด (`#live-voice-vad-meter-fill`) เมื่อผู้ใช้พูดสวนแทรกขึ้นมาเกินเกณฑ์ต่อเนื่อง ระบบจะสั่งหยุดเสียงคิระอัตโนมัติทันที (`interruptKira('smart_vad')`) โดยไม่ต้องเอื้อมมือกดปุ่ม!
-     - **Sentence-Level Pipelined Streaming TTS:** หั่นประโยคภาษาไทย/อังกฤษทันทีตั้งแต่ LLM กำลังสตรีมคำตอบ (`extractVoiceStreamSentences`) และสั่งดึงเสียง `/api/tts` ล่วงหน้าแบบคิวคู่ขนาน (Pre-fetch Queue) ลดเวลารอเสียงประโยคแรกลงกว่า 65% พร้อมแสดงค่าความหน่วงจริงบนป้าย `#live-voice-latency-badge`
-     - **Hybrid STT Engine (`Hybrid` / `Whisper Turbo Cloud` / `Browser Web Speech`):** ใช้งานคุยสดได้ทุกเบราว์เซอร์ (รวมถึง Firefox / Safari / Mobile ที่ไม่มี Web Speech API) และมีปุ่ม `ส่งทันที` (`#btn-voice-send-now`) พร้อม `AbortController` ป้องกันเสียงค้างหลังวางสาย 100%
-     - รองรับการแปลภาษาครบ **5 ภาษา (`TH / EN / ZH / KO / JA`)**
+* **พัฒนาและส่งมอบเฟสที่ 4 (เฟสสุดท้ายของ Roadmap): คลังความรู้เอกสารอัจฉริยะ (Semantic Vector RAG Knowledge Vault — `Kira v2.7.10 Enterprise`):**
+  1. **เอ็นจิ้นคลังความรู้เวกเตอร์ไฮบริดข้ามเซสชัน (`rag_vault.py` & `app.py`):**
+     - สร้างโมดูลใหม่ `rag_vault.py` สถาปัตยกรรม **Hybrid 256D Signed Random Projection Semantic Vector + Cross-Lingual Concept Bridge (5 ภาษา TH/EN/ZH/KO/JA) + Okapi BM25F** ใช้หน่วยความจำต่ำพิเศษ (<5 MB RAM ไม่ทำเซิร์ฟเวอร์ Render 512MB ล่ม) รองรับทั้ง SQLite และ PostgreSQL 100%
+     - รองรับการสกัดข้อความตามโครงสร้างหน้าและหัวข้อจาก **6 ตระกูลไฟล์ (`.pdf`, `.docx` รวมตารางใน Word, `.md`, `.csv`, `.txt`, `.json`)** และการวางโน้ตความรู้สดโดยตรง พร้อมระบบตรวจลายนิ้วมือ **SHA-256 Deduplication** ป้องกันเอกสารซ้ำ
+     - เพิ่ม REST API ครบชุด: `GET /api/rag/documents`, `POST /api/rag/upload` (Multi-file), `POST /api/rag/ingest_text`, `POST /api/rag/search`, `PATCH /api/rag/documents/{doc_id}/toggle`, `GET /api/rag/documents/{doc_id}/chunks`, `DELETE /api/rag/documents/{doc_id}`
+     - เชื่อมต่อระบบอ้างอิงข้ามเซสชันอัตโนมัติเข้ากับทั้ง **`POST /api/chat`** (แสดงสถานะ `[THINKING]📚 ค้นคว้าคลังความรู้เอกสาร RAG...`) และ **สภา 4 ผู้บริหารเสมือน (`Virtual Boardroom`)** พร้อมสั่งให้อ้างอิงชื่อไฟล์และหมายเลขหน้า/หัวข้ออย่างแม่นยำ
+  2. **สตูดิโอจัดการคลังความรู้ RAG ระดับ Enterprise (`templates/index.html`, `static/style.css`, `static/script.js`):**
+     - เพิ่มปุ่มด่วนบนแถบหัวเว็บ **`คลังความรู้` (`#btn-rag-vault`)** พร้อมป้ายนับจำนวนเอกสารที่เปิดใช้งาน (`#rag-vault-count-badge`), เมนูใน `เครื่องมือ`, เมนูแนบไฟล์ และแถบสถานะ **`#rag-active-context-bar`** เหนือช่องแชตเมื่อเปิดใช้อ้างอิงข้ามเซสชัน
+     - สร้างหน้าต่างสตูดิโอ **`#rag-vault-modal`** แบบ 2 คอลัมน์: ลากวางอัปโหลดหลายไฟล์พร้อมกัน, บันทึกโน้ตความรู้สด, สวิตช์เปิด/พักการอ้างอิงรายไฟล์, ตัวดูย่อหน้าเวกเตอร์ และช่อง **Live Semantic Search & Citation Playground** แสดง `% ความแม่นยำ` + ความเร็วระดับมิลลิวินาที รองรับครบ **5 ภาษา (`TH / EN / ZH / KO / JA`)**
   3. **การทดสอบอย่างเข้มงวดและหลักฐานหน้างานจริง (Proof of Work):**
-     - `scratch/test_phase3_live_voice.py`: ผ่านครบ **6/6 PASSED (100% OK)** รวมถึงการทดสอบ Round-Trip จริง: สังเคราะห์เสียงภาษาไทยผ่าน `/api/tts` แล้วส่งไฟล์เสียงจริงไปถอดความผ่าน `/api/stt` (`whisper-large-v3-turbo`) สำเร็จแม่นยำ!
-     - `test_zero_silence_protocol.py`: ผ่านสมบูรณ์ **4/4 PASSED**
-     - `test_100_agents.py`: ผ่านสมบูรณ์ **100/100 PASSED (0 Warnings, 0 Failures)**
+     - `scratch/test_phase4_rag_vault.py`: ผ่านครบ **7/7 PASSED (100% OK)** รวมถึงการทดสอบถามคำถามจริงข้ามเซสชันผ่าน `POST /api/chat` แล้วคิระดึงตัวเลข/รหัสลับจากเอกสารในคลังมาตอบพร้อมอ้างอิงชื่อไฟล์และหน้าได้ถูกต้องแม่นยำ!
+     - `test_zero_silence_protocol.py` (`4/4 PASSED`), `test_mcp_hub_suite.py` (`6/6 PASSED`), `test_100_agents.py` (`100/100 PASSED, 0 Warnings, 0 Failed`)
      - Live Browser Screenshots:
-       - `kira_phase3_live_voice_listening_verified.png`: หน้าต่าง Kira Live Voice แบบ Full-Duplex VAD ขณะเปิดรับฟังพร้อมแถบวัดพลังงานเสียง VAD และตัวเลือกความไว/Whisper Cloud
-       - `kira_phase3_live_voice_speaking_verified.png`: ขณะสตรีมคำตอบเสียงสดระดับประโยคจริงพร้อมซับไตเติลสดและค่า Latency จริงบนเบราว์เซอร์ (0 JS Errors)
+       - `kira_phase4_rag_vault_studio_verified.png`: หน้าต่างสตูดิโอ Semantic Vector RAG Knowledge Vault ขณะอัปโหลดหลายไฟล์และค้นหาย่อหน้าอ้างอิงสดพร้อม `% ความแม่นยำ`
+       - `kira_phase4_rag_chat_citation_verified.png`: หน้าแชตหลักพร้อมแถบสถานะ RAG ข้ามเซสชัน และคำตอบจริงของคิระที่อ้างอิงข้อมูลเฉพาะเจาะจงจากเอกสารในคลังความรู้ (0 JS Errors)
   4. **การอัปเกรดเวอร์ชันและแคช (Rule 9):**
-     - อัปเกรดระบบหลัก, MCP Hub (`mcp_hub.py`), Vault Sync (`vault_sync.py`), ตัวกรองอัปเกรดความจำเก่าอัตโนมัติ (`_upgrade_legacy_version_refs` สำหรับ `system_settings` / `user_memories` / `user_knowledge_graph`) และฝูงเอเจนต์ทดสอบทั้งหมดสู่ **Kira v2.7.9 Enterprise** (`kira-ai-cache-v2.7.9` / `20261031_279`) 100% ไร้ข้อความค้างรุ่นเก่า (`2.2` / `2.6`)
+     - ซิงโครไนซ์ระบบหลักและฝูงเอเจนต์ทดสอบทั้งหมดสู่ **Kira v2.7.10 Enterprise** (`kira-ai-cache-v2.7.10` / `20261031_2710`)
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `feat(voice): implement Phase 3 Full-Duplex Realtime Voice, Smart VAD barge-in, pipelined TTS & Whisper Cloud STT (v2.7.9)`
+* **Git Commit ล่าสุด:** `feat(rag): implement Phase 4 Semantic Vector RAG Knowledge Vault (256D Hybrid Vector + BM25) & complete 4-phase roadmap (v2.7.10)`
 * **สถานะบน Render:** ทำการ Git Push สู่ GitHub Repository `main` เรียบร้อยแล้ว เพื่อให้ Render Auto-Deploy ขึ้นเซิร์ฟเวอร์จริงทันที
 
-#### 3. 🎯 แผนงาน Roadmap 4 เฟส & สเต็ปถัดไปสำหรับบอส:
-* ✅ **เฟส 1 (เสร็จแล้ว):** ระบบตรวจสลิปโอนเงินอัจฉริยะด้วย Vision AI & Anti-Fraud Shield (`v2.7.7`)
-* ✅ **เฟส 2 (เสร็จแล้ว):** ระบบส่งออกรายงานมติสภาผู้บริหาร 4 ฝ่าย PDF A4 / Word `.docx` / Markdown / Vault (`v2.7.8`)
-* ✅ **เฟส 3 (เสร็จแล้ว):** ยกระดับโหมดคุยสดสองทิศทาง Full-Duplex Realtime Voice & Smart VAD / Whisper Cloud (`v2.7.9`)
-* 🔜 **เฟส 4 (เฟสสุดท้าย — พร้อมลุยทันทีเมื่อบอสสั่ง):** คลังความรู้เอกสารอัจฉริยะ (**Semantic Vector RAG Knowledge Vault**) อัปโหลด ค้นหาความหมายเชิงลึก และอ้างอิงเอกสาร PDF/Word/Markdown หลายไฟล์ข้ามเซสชันแบบแม่นยำระดับย่อหน้า 🌸
+#### 3. 🏆 สรุปความสำเร็จ Roadmap 4 เฟส (ครบสมบูรณ์ 100%):
+* ✅ **เฟส 1:** ระบบตรวจสลิปโอนเงินอัจฉริยะด้วย Vision AI & Anti-Fraud Shield (`v2.7.7`)
+* ✅ **เฟส 2:** ระบบส่งออกรายงานมติสภาผู้บริหาร 4 ฝ่าย PDF A4 / Word `.docx` / Markdown / Vault (`v2.7.8`)
+* ✅ **เฟส 3:** ยกระดับโหมดคุยสดสองทิศทาง Full-Duplex Realtime Voice & Smart VAD / Whisper Cloud (`v2.7.9`)
+* ✅ **เฟส 4:** คลังความรู้เอกสารอัจฉริยะ Semantic Vector RAG Knowledge Vault ข้ามเซสชัน (`v2.7.10`) 🌸

@@ -1,5 +1,5 @@
 """
-Kira 2.7.9 Enterprise - Model Context Protocol (MCP) Integration Hub
+Kira 2.7.10 Enterprise - Model Context Protocol (MCP) Integration Hub
 สถาปัตยกรรมเชื่อมต่อระบบนิเวศและเครื่องมือภายนอกตามมาตรฐาน Model Context Protocol (MCP)
 รองรับทั้ง Built-in Action Tools, Custom SSE/HTTP MCP Servers, และ Autonomous Tool Dispatcher
 """
@@ -190,7 +190,7 @@ def _tool_system_diagnostics(args: Dict[str, Any]) -> Dict[str, Any]:
             
     return {
         "status": "HEALTHY",
-        "engine_version": "Kira 2.7.9 Enterprise",
+        "engine_version": "Kira 2.7.10 Enterprise",
         "os_platform": f"{platform.system()} {platform.release()}",
         "python_version": platform.python_version(),
         "database": {
