@@ -1,5 +1,5 @@
 """
-Kira 2.2 - Enterprise Model Context Protocol (MCP) Integration Hub
+Kira 2.7.9 Enterprise - Model Context Protocol (MCP) Integration Hub
 สถาปัตยกรรมเชื่อมต่อระบบนิเวศและเครื่องมือภายนอกตามมาตรฐาน Model Context Protocol (MCP)
 รองรับทั้ง Built-in Action Tools, Custom SSE/HTTP MCP Servers, และ Autonomous Tool Dispatcher
 """
@@ -171,7 +171,9 @@ def _tool_system_diagnostics(args: Dict[str, Any]) -> Dict[str, Any]:
     import platform
     import sqlite3
     
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chat_history.db")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_filename = "chat_logs.db" if os.path.exists(os.path.join(base_dir, "chat_logs.db")) else "chat_history.db"
+    db_path = os.path.join(base_dir, db_filename)
     db_size_kb = 0
     db_tables = []
     
@@ -188,12 +190,12 @@ def _tool_system_diagnostics(args: Dict[str, Any]) -> Dict[str, Any]:
             
     return {
         "status": "HEALTHY",
-        "engine_version": "Kira 2.2 Enterprise",
+        "engine_version": "Kira 2.7.9 Enterprise",
         "os_platform": f"{platform.system()} {platform.release()}",
         "python_version": platform.python_version(),
         "database": {
             "type": "SQLite3 (Encrypted Salt Guard)",
-            "file": "chat_history.db",
+            "file": db_filename,
             "size_kb": db_size_kb,
             "tables_count": len(db_tables),
             "tables": db_tables[:8]

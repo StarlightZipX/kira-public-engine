@@ -37,7 +37,7 @@ def test_line_health_endpoint():
     data = resp.json()
     assert data.get("status") == "online"
     assert "LINE Official Account" in data.get("service")
-    assert data.get("version") == "2.6.5"
+    assert str(data.get("version", "")).startswith("2.7")
     print(f"  ✅ Status: {data.get('status')} | Service: {data.get('service')} | Version: {data.get('version')}")
 
 def test_signature_verification_logic():

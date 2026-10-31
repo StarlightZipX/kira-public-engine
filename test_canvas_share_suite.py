@@ -128,13 +128,13 @@ def run_tests():
     r_ver = client.get("/api/system/version")
     assert r_ver.status_code == 200
     ver_data = r_ver.json()
-    assert ver_data.get("version") in ["2.5.0", "2.6.0"], f"Unexpected version: {ver_data}"
+    assert str(ver_data.get("version", "")).startswith("2.7"), f"Unexpected version: {ver_data}"
     assert any(k in ver_data.get("release_name", "") for k in ["Canvas & Viral Share", "Next-Gen Neural", "Modern Architecture"])
     print(f"  ✅ System API Version verified: {ver_data.get('version')} ({ver_data.get('release_name')})")
 
     with open("static/sw.js", "r", encoding="utf-8") as f:
         sw_content = f.read()
-    assert ("kira-ai-cache-v2.5" in sw_content or "kira-ai-cache-v2.6" in sw_content), "Service Worker CACHE_NAME not updated to v2.5+"
+    assert ("kira-ai-cache-v2.7" in sw_content), "Service Worker CACHE_NAME not updated to v2.5+"
     assert "url.pathname.startsWith('/share/')" in sw_content, "Service Worker does not bypass /share/ URLs"
     print("  ✅ Service Worker cache bumped and /share/ dynamic bypass active")
 

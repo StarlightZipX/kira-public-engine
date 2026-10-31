@@ -15970,3 +15970,202 @@ body.light-mode .study-chip.hub-trigger {
         justify-content: flex-end;
     }
 }
+
+
+/* ====================================================================
+   🎙️ PHASE 3: FULL-DUPLEX REALTIME VOICE & SMART VAD STUDIO (v2.7.9)
+   ==================================================================== */
+
+.live-voice-card {
+    max-width: 630px !important;
+    gap: 16px !important;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.live-voice-card.listening {
+    border-color: rgba(56, 189, 248, 0.45);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72), 0 0 42px rgba(6, 182, 212, 0.2);
+}
+
+.live-voice-card.thinking {
+    border-color: rgba(168, 85, 247, 0.5);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72), 0 0 42px rgba(168, 85, 247, 0.24);
+}
+
+.live-voice-card.thinking .orb-core {
+    background: linear-gradient(135deg, #a855f7, #f59e0b);
+    box-shadow: 0 0 36px rgba(168, 85, 247, 0.85);
+    animation: orbPulseSpeaking 0.85s infinite alternate ease-in-out;
+}
+
+.live-voice-card.barge-in-flash {
+    border-color: #fbbf24 !important;
+    box-shadow: 0 0 55px rgba(251, 191, 36, 0.55) !important;
+}
+
+.live-voice-branding {
+    flex-wrap: wrap;
+}
+
+.live-voice-latency-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.16);
+    border: 1px solid rgba(52, 211, 153, 0.4);
+    color: #6ee7b7;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.live-voice-duplex-bar {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.lv-vad-toggle-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(6, 182, 212, 0.14);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    color: #bae6fd;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.lv-vad-toggle-chip:hover {
+    border-color: rgba(56, 189, 248, 0.7);
+    color: #ffffff;
+}
+
+.lv-vad-toggle-chip input[type="checkbox"] {
+    accent-color: #06b6d4;
+    cursor: pointer;
+}
+
+.lv-select-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.lv-mini-select {
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    color: #e2e8f0;
+    border-radius: 9px;
+    padding: 5px 9px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+}
+
+.lv-mini-select:focus {
+    border-color: #38bdf8;
+}
+
+/* Real-Time Acoustic VAD Energy Meter */
+.lv-energy-meter-wrap {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    max-width: 390px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(2, 6, 23, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.lv-meter-icon {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #38bdf8;
+    white-space: nowrap;
+}
+
+.lv-energy-meter-track {
+    position: relative;
+    flex: 1;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(51, 65, 85, 0.65);
+    overflow: hidden;
+}
+
+.lv-energy-meter-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #06b6d4, #10b981, #f59e0b);
+    transition: width 0.08s linear;
+}
+
+.lv-energy-threshold-tick {
+    position: absolute;
+    top: -1px;
+    bottom: -1px;
+    width: 2px;
+    background: #fbbf24;
+    box-shadow: 0 0 6px #fbbf24;
+}
+
+.lv-queue-pill {
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    white-space: nowrap;
+}
+
+.live-voice-bars.realtime-vad-active .vbar {
+    animation: none !important;
+}
+
+.voice-ctrl-send-now {
+    background: rgba(14, 165, 233, 0.16);
+    border-color: rgba(56, 189, 248, 0.42);
+    color: #7dd3fc;
+}
+
+.voice-ctrl-send-now:hover {
+    background: rgba(14, 165, 233, 0.3);
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+
+@media (max-width: 640px) {
+    .live-voice-duplex-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .lv-select-group {
+        justify-content: space-between;
+    }
+    .live-voice-controls {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .voice-ctrl-btn {
+        min-width: 70px;
+        padding: 9px 13px;
+    }
+}

@@ -5580,7 +5580,7 @@ function buildClientBoardroomMarkdown(payload, options = {}) {
     lines.push('---');
     lines.push('');
     lines.push('### 🛡️ ตราประทับรับรองความถูกต้องดิจิทัล (Kira Digital Audit Seal)');
-    lines.push(`- **ระบบประมวลผล:** Kira AI Enterprise v2.7.8 (4-Executive Virtual Boardroom Engine)`);
+    lines.push(`- **ระบบประมวลผล:** Kira AI Enterprise v2.7.9 (4-Executive Virtual Boardroom Engine)`);
     lines.push(`- **Digital Signature (SHA-256):** \`${sealHash}\``);
     lines.push('');
 
@@ -5999,7 +5999,7 @@ function refreshBoardroomExportStudioPreview() {
             <div>
                 <div class="a4-kicker">KIRA AI ENTERPRISE SYSTEM • 4-EXECUTIVE COUNCIL</div>
                 <div class="a4-title">รายงานมติที่ประชุมสภาที่ปรึกษาผู้บริหาร 4 ฝ่าย</div>
-                <p class="a4-sub">Executive Boardroom Resolution &amp; 90-Day Strategic Action Blueprint (v2.7.8)</p>
+                <p class="a4-sub">Executive Boardroom Resolution &amp; 90-Day Strategic Action Blueprint (v2.7.9)</p>
             </div>
             <div class="a4-stamp">
                 <div><strong>Document ID:</strong> ${escapeHtml(docId)}</div>
@@ -8410,7 +8410,7 @@ function initKiraUpdateController() {
             fetch('/api/system/version?_t=' + Date.now(), { cache: 'no-store' })
                 .then(r => r.ok ? r.json() : null)
                 .then(d => {
-                    const v = d && d.version ? `v${d.version}` : 'v2.7.8';
+                    const v = d && d.version ? `v${d.version}` : 'v2.7.9';
                     const rel = d && d.release_name ? ` (${d.release_name})` : '';
                     if (typeof showConnectionToast === 'function') {
                         showConnectionToast(`✨ อัปเดต Kira AI ${v}${rel} สำเร็จแล้วค่ะ! พร้อมให้บริการคุณแล้วนะคะ 🌸`, 'ready');
@@ -10557,13 +10557,82 @@ async function refineMindMapWithAI() {
 window.initKiraMindMapController = initKiraMindMapController;
 
 // =========================================================================
-// 🎙️ Kira Real-Time Two-Way Live Voice Assistant (Continuous Loop)
+// 🎙️ PHASE 3: KIRA FULL-DUPLEX REALTIME VOICE, SMART VAD & PIPELINED TTS (v2.7.9)
 // =========================================================================
 let liveVoiceRecognition = null;
 let liveVoiceAudio = null;
 let isLiveVoiceActive = false;
 let isLiveVoiceMuted = false;
 let isKiraSpeakingNow = false;
+let isKiraThinkingNow = false;
+
+const LIVE_VOICE_VAD_PRESETS = {
+    high:        { bargeRms: 0.045, sustainMs: 190, speechOnsetRms: 0.028, silenceEndMs: 780, tickPct: 20 },
+    normal:      { bargeRms: 0.072, sustainMs: 260, speechOnsetRms: 0.040, silenceEndMs: 860, tickPct: 32 },
+    noise_guard: { bargeRms: 0.115, sustainMs: 360, speechOnsetRms: 0.062, silenceEndMs: 980, tickPct: 48 }
+};
+
+function sanitizeVoiceStreamText(raw) {
+    if (!raw) return '';
+    let s = raw;
+    // Strip closed and unclosed trailing thinking blocks so internal reasoning is never spoken aloud
+    s = s.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    s = s.replace(/<think>[\s\S]*$/gi, '');
+    s = s.replace(/\[THINKING\][\s\S]*?\[\/THINKING\]/gi, '');
+    s = s.replace(/\[THINKING\][\s\S]*$/gi, '');
+    s = s.replace(/\[THINKING_DONE\]/g, '');
+    s = s.replace(/\[\/?BOARDROOM_[A-Z_]+(?::[^\]]*)?\]/g, '');
+    s = s.replace(/```[\s\S]*?```/g, ' มีบล็อกโค้ดแสดงบนหน้าจอค่ะ ');
+    s = s.replace(/```[\s\S]*$/g, '');
+    s = s.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
+    s = s.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+    s = s.replace(/[*#_`~>|]/g, '');
+    s = s.replace(/\s{2,}/g, ' ');
+    return s;
+}
+
+function extractVoiceStreamSentences(bufferText, forceFlush = false) {
+    const sentences = [];
+    let working = (bufferText || '').trimStart();
+    if (!working) return { sentences, remainder: '' };
+
+    const boundaryRegex = /([.!?\n]+|(?:ค่ะ|นะคะ|คะ|นะครับ|ครับ|จ้ะ|จ้า)(?=\s|$|[.!?]))/;
+
+    while (working.length > 0) {
+        if (working.length < 24 && !forceFlush) break;
+
+        let cutIdx = -1;
+        const sub = working.slice(20);
+        const m = boundaryRegex.exec(sub);
+        if (m) {
+            cutIdx = 20 + m.index + m[0].length;
+        } else if (working.length >= 135) {
+            const spaceIdx = working.lastIndexOf(' ', 135);
+            cutIdx = spaceIdx >= 65 ? spaceIdx + 1 : 135;
+        } else if (forceFlush) {
+            cutIdx = working.length;
+        }
+
+        if (cutIdx === -1) break;
+
+        const piece = working.slice(0, cutIdx).trim();
+        if (piece.length >= 2) {
+            sentences.push(piece);
+        }
+        working = working.slice(cutIdx).trimStart();
+    }
+
+    return { sentences, remainder: working };
+}
+
+function blobToBase64Async(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result || ''));
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
 
 function initLiveVoiceAssistant() {
     const btnLiveVoice = document.getElementById('btn-live-voice');
@@ -10571,63 +10640,490 @@ function initLiveVoiceAssistant() {
     const btnClose = document.getElementById('btn-close-live-voice');
     const btnEnd = document.getElementById('btn-voice-end');
     const btnMute = document.getElementById('btn-voice-mute');
+    const btnSendNow = document.getElementById('btn-voice-send-now');
     const btnInterrupt = document.getElementById('btn-voice-interrupt');
     const orb = document.getElementById('live-voice-orb');
+    const barsWrap = document.getElementById('live-voice-bars');
+    const vbars = barsWrap ? Array.from(barsWrap.querySelectorAll('.vbar')) : [];
     const card = modal ? modal.querySelector('.live-voice-card') : null;
     const statusText = document.getElementById('live-voice-status-text');
     const userText = document.getElementById('live-voice-user-text');
     const aiText = document.getElementById('live-voice-ai-text');
+    const latencyBadge = document.getElementById('live-voice-latency-badge');
+    const queuePill = document.getElementById('live-voice-queue-pill');
+    const vadToggle = document.getElementById('live-voice-vad-toggle');
+    const sensSelect = document.getElementById('live-voice-sensitivity');
+    const sttModeSelect = document.getElementById('live-voice-stt-mode');
+    const vadMeterFill = document.getElementById('live-voice-vad-meter-fill');
+    const vadThresholdTick = document.getElementById('live-voice-vad-threshold-tick');
 
     if (!btnLiveVoice || !modal) return;
 
-    // Check Speech Recognition support
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    function openLiveVoice() {
-        if (!currentUser) {
-            alert("กรุณาเข้าสู่ระบบก่อนใช้งานโหมดเสียงสดนะคะ");
-            return;
+    // Restore persisted preferences
+    if (vadToggle) {
+        vadToggle.checked = localStorage.getItem('kira_lv_vad_auto') !== 'false';
+    }
+    if (sensSelect && localStorage.getItem('kira_lv_vad_sens')) {
+        sensSelect.value = localStorage.getItem('kira_lv_vad_sens');
+    }
+    if (sttModeSelect) {
+        const savedMode = localStorage.getItem('kira_lv_stt_mode');
+        if (savedMode) sttModeSelect.value = savedMode;
+        else if (!SpeechRec) sttModeSelect.value = 'whisper';
+    }
+
+    // Internal Full-Duplex Runtime State
+    let liveVoiceTurnId = 0;
+    let liveVoiceTurnAbort = null;
+    let ttsPlaybackQueue = [];
+    let isDrainingTTSQueue = false;
+    let llmStreamFinishedForTurn = false;
+    let activeObjectUrls = [];
+
+    // WebAudio Acoustic VAD & Whisper Recorder State
+    let micStream = null;
+    let audioCtx = null;
+    let analyserNode = null;
+    let vadRafId = null;
+    let ambientNoiseFloor = 0.012;
+    let bargeSustainedSince = 0;
+    let bargeCooldownUntil = 0;
+    let currentRmsLevel = 0;
+
+    // Speech Buffering & Whisper MediaRecorder State
+    let pendingWebSpeechText = '';
+    let webSpeechInterimSilenceTimer = null;
+    let whisperRecorder = null;
+    let whisperChunks = [];
+    let whisperPreRollChunk = null;
+    let whisperIsSpeaking = false;
+    let whisperSilenceSince = 0;
+    let isTranscribingWhisper = false;
+
+    function getActiveVadPreset() {
+        const key = (sensSelect && sensSelect.value) || 'normal';
+        return LIVE_VOICE_VAD_PRESETS[key] || LIVE_VOICE_VAD_PRESETS.normal;
+    }
+
+    function updateThresholdTickUI() {
+        const preset = getActiveVadPreset();
+        if (vadThresholdTick) {
+            vadThresholdTick.style.left = `${preset.tickPct}%`;
         }
-        if (!SpeechRec) {
-            alert("เบราว์เซอร์นี้ไม่รองรับ Web Speech API ค่ะ แนะนำให้ใช้งานบน Google Chrome หรือ Microsoft Edge นะคะ");
+    }
+    updateThresholdTickUI();
+
+    function getEffectiveSttMode() {
+        const chosen = (sttModeSelect && sttModeSelect.value) || 'hybrid';
+        if (chosen === 'browser' && !SpeechRec) return 'whisper';
+        if (chosen === 'hybrid' && !SpeechRec) return 'whisper';
+        return chosen;
+    }
+
+    function setCardVisualState(stateName) {
+        if (!card) return;
+        card.classList.remove('listening', 'speaking', 'thinking');
+        if (stateName) card.classList.add(stateName);
+    }
+
+    function setLatencyLabel(htmlStr) {
+        if (latencyBadge) latencyBadge.innerHTML = htmlStr;
+    }
+
+    function setQueueLabel(txt) {
+        if (queuePill) queuePill.textContent = txt;
+    }
+
+    function cleanupQueuedAudioOnly() {
+        ttsPlaybackQueue = [];
+        isDrainingTTSQueue = false;
+        if (liveVoiceAudio) {
+            try {
+                liveVoiceAudio.onended = null;
+                liveVoiceAudio.onerror = null;
+                liveVoiceAudio.pause();
+                liveVoiceAudio.src = '';
+            } catch (e) {}
+            liveVoiceAudio = null;
+        }
+        if ('speechSynthesis' in window) {
+            try { window.speechSynthesis.cancel(); } catch (e) {}
+        }
+        while (activeObjectUrls.length > 0) {
+            const u = activeObjectUrls.pop();
+            try { URL.revokeObjectURL(u); } catch (e) {}
+        }
+    }
+
+    function abortActiveVoiceTurn() {
+        liveVoiceTurnId += 1;
+        llmStreamFinishedForTurn = true;
+        isKiraSpeakingNow = false;
+        isKiraThinkingNow = false;
+        if (liveVoiceTurnAbort) {
+            try { liveVoiceTurnAbort.abort(); } catch (e) {}
+            liveVoiceTurnAbort = null;
+        }
+        cleanupQueuedAudioOnly();
+        setQueueLabel('Full-Duplex');
+    }
+
+    async function startAcousticVAD() {
+        if (analyserNode && micStream) return true;
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return false;
+
+        try {
+            micStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+            });
+            const AudioContextCls = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextCls) return false;
+
+            audioCtx = new AudioContextCls();
+            if (audioCtx.state === 'suspended') {
+                try { await audioCtx.resume(); } catch (e) {}
+            }
+            const source = audioCtx.createMediaStreamSource(micStream);
+            analyserNode = audioCtx.createAnalyser();
+            analyserNode.fftSize = 256;
+            analyserNode.smoothingTimeConstant = 0.72;
+            source.connect(analyserNode);
+
+            if (barsWrap) barsWrap.classList.add('realtime-vad-active');
+            runAcousticVADLoop();
+            return true;
+        } catch (micErr) {
+            console.warn('[Kira Live Voice] Acoustic VAD microphone notice:', micErr);
+            return false;
+        }
+    }
+
+    function stopAcousticVAD() {
+        if (vadRafId) {
+            cancelAnimationFrame(vadRafId);
+            vadRafId = null;
+        }
+        stopWhisperRecorder(true);
+        if (barsWrap) barsWrap.classList.remove('realtime-vad-active');
+        vbars.forEach(b => { b.style.height = ''; });
+        if (vadMeterFill) vadMeterFill.style.width = '4%';
+        if (analyserNode) {
+            try { analyserNode.disconnect(); } catch (e) {}
+            analyserNode = null;
+        }
+        if (audioCtx) {
+            try { audioCtx.close(); } catch (e) {}
+            audioCtx = null;
+        }
+        if (micStream) {
+            try { micStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+            micStream = null;
+        }
+        currentRmsLevel = 0;
+    }
+
+    function runAcousticVADLoop() {
+        if (!isLiveVoiceActive || !analyserNode) return;
+
+        const freqData = new Uint8Array(analyserNode.frequencyBinCount);
+        const timeData = new Uint8Array(analyserNode.fftSize);
+        analyserNode.getByteFrequencyData(freqData);
+        analyserNode.getByteTimeDomainData(timeData);
+
+        // Compute RMS energy from time-domain waveform
+        let sumSq = 0;
+        for (let i = 0; i < timeData.length; i++) {
+            const centered = (timeData[i] - 128) / 128.0;
+            sumSq += centered * centered;
+        }
+        const rms = Math.sqrt(sumSq / timeData.length);
+
+        // Also compute human voice band energy (approx bins 4..42 out of 128)
+        let voiceBinsSum = 0;
+        const binStart = 3;
+        const binEnd = Math.min(44, freqData.length);
+        for (let b = binStart; b < binEnd; b++) {
+            voiceBinsSum += freqData[b] / 255.0;
+        }
+        const voiceBandAvg = voiceBinsSum / Math.max(1, binEnd - binStart);
+        const compositeEnergy = isLiveVoiceMuted ? 0 : Math.min(1.0, (rms * 0.65) + (voiceBandAvg * 0.45));
+        currentRmsLevel = compositeEnergy;
+
+        // Update VAD energy meter UI
+        if (vadMeterFill) {
+            const pct = Math.max(4, Math.min(100, Math.round(compositeEnergy * 220)));
+            vadMeterFill.style.width = `${pct}%`;
+        }
+
+        // Update 9 real-time spectrum bars
+        if (vbars.length > 0) {
+            for (let i = 0; i < vbars.length; i++) {
+                let h = 6;
+                if (!isLiveVoiceMuted && compositeEnergy > 0.012) {
+                    const binIdx = Math.min(freqData.length - 1, 3 + i * 4);
+                    const val = freqData[binIdx] / 255.0;
+                    h = Math.round(6 + val * 24);
+                } else if (isKiraSpeakingNow) {
+                    const t = performance.now() * 0.008 + i * 0.7;
+                    h = Math.round(8 + Math.abs(Math.sin(t)) * 18);
+                }
+                vbars[i].style.height = `${h}px`;
+            }
+        }
+
+        const now = performance.now();
+        const preset = getActiveVadPreset();
+
+        // Adapt ambient noise floor during quiet moments
+        if (!isLiveVoiceMuted && compositeEnergy < preset.speechOnsetRms) {
+            ambientNoiseFloor = (ambientNoiseFloor * 0.96) + (compositeEnergy * 0.04);
+        }
+
+        // 1. HANDS-FREE SMART VAD BARGE-IN DETECTION
+        const autoBargeOn = !vadToggle || vadToggle.checked;
+        const dynamicBargeThreshold = Math.max(preset.bargeRms, ambientNoiseFloor * 2.65);
+
+        if (autoBargeOn && !isLiveVoiceMuted && isKiraSpeakingNow && now > bargeCooldownUntil) {
+            if (compositeEnergy >= dynamicBargeThreshold) {
+                if (bargeSustainedSince === 0) {
+                    bargeSustainedSince = now;
+                } else if ((now - bargeSustainedSince) >= preset.sustainMs) {
+                    bargeSustainedSince = 0;
+                    interruptKira('smart_vad');
+                }
+            } else {
+                bargeSustainedSince = 0;
+            }
+        } else {
+            bargeSustainedSince = 0;
+        }
+
+        // 2. CLOUD WHISPER VAD RECORDING SEGMENTATION (when in Whisper STT mode)
+        if (!isLiveVoiceMuted && !isKiraSpeakingNow && !isKiraThinkingNow && !isTranscribingWhisper && getEffectiveSttMode() === 'whisper') {
+            if (whisperRecorder && whisperRecorder.state === 'recording') {
+                if (compositeEnergy >= preset.speechOnsetRms) {
+                    if (!whisperIsSpeaking) {
+                        whisperIsSpeaking = true;
+                        if (statusText) statusText.textContent = "🎙️ กำลังรับฟังเสียงพูดของคุณ... (หยุดพูดสั้นๆ เพื่อส่งอัตโนมัติ)";
+                    }
+                    whisperSilenceSince = 0;
+                } else if (whisperIsSpeaking) {
+                    if (whisperSilenceSince === 0) {
+                        whisperSilenceSince = now;
+                    } else if ((now - whisperSilenceSince) >= preset.silenceEndMs) {
+                        whisperSilenceSince = 0;
+                        finalizeWhisperSegmentAndTranscribe();
+                    }
+                }
+            }
+        }
+
+        vadRafId = requestAnimationFrame(runAcousticVADLoop);
+    }
+
+    function startWhisperRecorderLoop() {
+        if (!isLiveVoiceActive || isLiveVoiceMuted || isKiraSpeakingNow || isKiraThinkingNow) return;
+        if (!micStream || typeof MediaRecorder === 'undefined') return;
+        if (whisperRecorder && whisperRecorder.state === 'recording') return;
+
+        whisperChunks = [];
+        whisperPreRollChunk = null;
+        whisperIsSpeaking = false;
+        whisperSilenceSince = 0;
+
+        let mimeType = 'audio/webm';
+        if (MediaRecorder.isTypeSupported) {
+            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+            else if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
+            else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+        }
+
+        try {
+            whisperRecorder = new MediaRecorder(micStream, { mimeType });
+            whisperRecorder.ondataavailable = (ev) => {
+                if (!ev.data || ev.data.size === 0) return;
+                if (whisperIsSpeaking) {
+                    if (whisperPreRollChunk && whisperChunks.length === 0) {
+                        whisperChunks.push(whisperPreRollChunk);
+                        whisperPreRollChunk = null;
+                    }
+                    whisperChunks.push(ev.data);
+                } else {
+                    // Keep rolling pre-roll chunk so word onset is crisp
+                    whisperPreRollChunk = ev.data;
+                }
+            };
+            whisperRecorder.start(220);
+            setCardVisualState('listening');
+            if (statusText) statusText.textContent = "☁️ พร้อมรับฟังผ่าน Whisper Turbo Cloud... พูดได้เลยค่ะ";
+        } catch (recErr) {
+            console.warn('[Kira Live Voice] MediaRecorder init notice:', recErr);
+        }
+    }
+
+    function stopWhisperRecorder(discard = false) {
+        if (discard) {
+            whisperChunks = [];
+            whisperPreRollChunk = null;
+            whisperIsSpeaking = false;
+        }
+        if (whisperRecorder) {
+            try {
+                if (whisperRecorder.state !== 'inactive') whisperRecorder.stop();
+            } catch (e) {}
+            whisperRecorder = null;
+        }
+    }
+
+    async function finalizeWhisperSegmentAndTranscribe() {
+        if (!whisperRecorder || isTranscribingWhisper) return;
+        isTranscribingWhisper = true;
+
+        const activeRec = whisperRecorder;
+        const mime = activeRec.mimeType || 'audio/webm';
+        whisperRecorder = null;
+
+        await new Promise((resolve) => {
+            activeRec.onstop = resolve;
+            try {
+                if (activeRec.state !== 'inactive') activeRec.stop();
+                else resolve();
+            } catch (e) { resolve(); }
+        });
+
+        const collected = whisperChunks.slice();
+        whisperChunks = [];
+        whisperPreRollChunk = null;
+        whisperIsSpeaking = false;
+
+        if (!isLiveVoiceActive || collected.length === 0) {
+            isTranscribingWhisper = false;
+            if (isLiveVoiceActive && !isLiveVoiceMuted && !isKiraSpeakingNow) startLiveListening();
             return;
         }
 
+        const audioBlob = new Blob(collected, { type: mime });
+        if (audioBlob.size < 450) {
+            isTranscribingWhisper = false;
+            if (isLiveVoiceActive && !isLiveVoiceMuted && !isKiraSpeakingNow) startLiveListening();
+            return;
+        }
+
+        setCardVisualState('thinking');
+        if (statusText) statusText.textContent = "☁️ กำลังถอดความเสียงด้วย Whisper Turbo Cloud...";
+
+        try {
+            const b64 = await blobToBase64Async(audioBlob);
+            const sttLang = localStorage.getItem('kira_stt_lang') || document.getElementById('setting-stt-lang')?.value || 'th-TH';
+            const resp = await fetch('/api/stt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    audio_base64: b64,
+                    mime_type: mime,
+                    language: sttLang
+                })
+            });
+            const data = await resp.json();
+            isTranscribingWhisper = false;
+
+            if (resp.ok && data.status === 'success' && data.text && data.text.trim()) {
+                const spoken = data.text.trim();
+                if (userText) userText.textContent = spoken;
+                if (data.latency_ms) {
+                    setLatencyLabel(`<i class="fa-solid fa-cloud-bolt"></i> STT ${data.latency_ms} ms`);
+                }
+                await handleUserSpokenQuery(spoken);
+            } else {
+                if (isLiveVoiceActive && !isLiveVoiceMuted && !isKiraSpeakingNow) {
+                    startLiveListening();
+                }
+            }
+        } catch (sttErr) {
+            console.warn('[Kira Live Voice] Whisper Cloud STT error:', sttErr);
+            isTranscribingWhisper = false;
+            if (isLiveVoiceActive && !isLiveVoiceMuted && !isKiraSpeakingNow) {
+                startLiveListening();
+            }
+        }
+    }
+
+    async function openLiveVoice() {
         modal.style.display = 'flex';
         isLiveVoiceActive = true;
         isLiveVoiceMuted = false;
         isKiraSpeakingNow = false;
-        if (card) {
-            card.classList.remove('speaking', 'thinking');
-            card.classList.add('listening');
-        }
-        if (statusText) statusText.textContent = "🎙️ พร้อมรับฟังคุณแล้วค่ะ พูดคุยได้เลยนะคะ...";
+        isKiraThinkingNow = false;
+
+        if (btnMute) btnMute.classList.remove('muted');
+        const muteLabel = document.getElementById('voice-mute-label');
+        if (muteLabel) muteLabel.textContent = 'ไมค์';
+
+        setCardVisualState('listening');
+        if (statusText) statusText.textContent = "🎙️ พร้อมรับฟังแบบ Full-Duplex แล้วค่ะ พูดคุยหรือพูดแทรกได้ทุกเมื่อนะคะ...";
         if (userText) userText.textContent = "";
+        setLatencyLabel('<i class="fa-solid fa-bolt"></i> Full-Duplex พร้อม');
+        setQueueLabel('Full-Duplex');
 
         playKiraSound('send');
+        await startAcousticVAD();
         startLiveListening();
     }
 
     function closeLiveVoice() {
         isLiveVoiceActive = false;
+        if (webSpeechInterimSilenceTimer) {
+            clearTimeout(webSpeechInterimSilenceTimer);
+            webSpeechInterimSilenceTimer = null;
+        }
+        pendingWebSpeechText = '';
         if (liveVoiceRecognition) {
-            try { liveVoiceRecognition.stop(); } catch (e) {}
+            try {
+                liveVoiceRecognition.onend = null;
+                liveVoiceRecognition.onerror = null;
+                liveVoiceRecognition.stop();
+            } catch (e) {}
+            liveVoiceRecognition = null;
         }
-        if (liveVoiceAudio) {
-            try { liveVoiceAudio.pause(); } catch (e) {}
-            liveVoiceAudio = null;
-        }
-        isKiraSpeakingNow = false;
+        abortActiveVoiceTurn();
+        stopAcousticVAD();
         modal.style.display = 'none';
-        if (card) card.classList.remove('listening', 'speaking', 'thinking');
+        setCardVisualState(null);
     }
 
     function startLiveListening() {
-        if (!isLiveVoiceActive || isLiveVoiceMuted || isKiraSpeakingNow) return;
+        if (!isLiveVoiceActive || isLiveVoiceMuted || isKiraSpeakingNow || isKiraThinkingNow) return;
 
-        if (liveVoiceRecognition) {
-            try { liveVoiceRecognition.stop(); } catch (e) {}
+        const mode = getEffectiveSttMode();
+        if (mode === 'whisper') {
+            if (liveVoiceRecognition) {
+                try { liveVoiceRecognition.onend = null; liveVoiceRecognition.stop(); } catch (e) {}
+                liveVoiceRecognition = null;
+            }
+            if (!micStream) {
+                startAcousticVAD().then((ok) => {
+                    if (ok && isLiveVoiceActive) startWhisperRecorderLoop();
+                    else if (statusText) statusText.textContent = "⚠️ กรุณาอนุญาตการใช้ไมโครโฟนบนเบราว์เซอร์เพื่อเริ่มคุยสดนะคะ";
+                });
+            } else {
+                startWhisperRecorderLoop();
+            }
+            return;
         }
+
+        stopWhisperRecorder(true);
+        if (liveVoiceRecognition) {
+            try { liveVoiceRecognition.onend = null; liveVoiceRecognition.stop(); } catch (e) {}
+            liveVoiceRecognition = null;
+        }
+
+        if (!SpeechRec) return;
 
         try {
             liveVoiceRecognition = new SpeechRec();
@@ -10636,13 +11132,12 @@ function initLiveVoiceAssistant() {
             liveVoiceRecognition.interimResults = true;
 
             let finalTranscript = '';
+            pendingWebSpeechText = '';
 
             liveVoiceRecognition.onstart = () => {
-                if (card) {
-                    card.classList.remove('speaking', 'thinking');
-                    card.classList.add('listening');
-                }
-                if (statusText) statusText.textContent = "🎙️ กำลังฟังเสียงของคุณ... พูดได้เลยค่ะ";
+                if (!isLiveVoiceActive || isKiraSpeakingNow || isKiraThinkingNow) return;
+                setCardVisualState('listening');
+                if (statusText) statusText.textContent = "🎙️ กำลังฟังเสียงของคุณ... พูดได้เลยค่ะ (Full-Duplex Active)";
             };
 
             liveVoiceRecognition.onresult = (e) => {
@@ -10654,196 +11149,335 @@ function initLiveVoiceAssistant() {
                         interim += e.results[i][0].transcript;
                     }
                 }
+                const combined = (finalTranscript + ' ' + interim).trim();
+                pendingWebSpeechText = combined;
                 if (userText) {
-                    userText.textContent = finalTranscript || interim || "...";
+                    userText.textContent = combined || "...";
+                }
+
+                // Smart end-of-utterance debounce so long pauses auto-commit cleanly
+                if (webSpeechInterimSilenceTimer) clearTimeout(webSpeechInterimSilenceTimer);
+                if (combined.length >= 2) {
+                    webSpeechInterimSilenceTimer = setTimeout(() => {
+                        if (isLiveVoiceActive && !isKiraSpeakingNow && !isKiraThinkingNow && liveVoiceRecognition && pendingWebSpeechText) {
+                            try { liveVoiceRecognition.stop(); } catch (err) {}
+                        }
+                    }, 1350);
                 }
             };
 
             liveVoiceRecognition.onerror = (err) => {
-                console.warn("Live voice recognition error:", err);
-                if (isLiveVoiceActive && !isKiraSpeakingNow && !isLiveVoiceMuted) {
-                    setTimeout(() => startLiveListening(), 1000);
+                const code = err && err.error ? String(err.error) : '';
+                if (code === 'service-not-allowed' || code === 'language-not-supported') {
+                    // Seamless automatic fallback to Whisper Cloud STT in Hybrid mode!
+                    if (sttModeSelect && sttModeSelect.value === 'hybrid') {
+                        sttModeSelect.value = 'whisper';
+                        if (isLiveVoiceActive && !isLiveVoiceMuted) startLiveListening();
+                        return;
+                    }
+                }
+                if (isLiveVoiceActive && !isKiraSpeakingNow && !isKiraThinkingNow && !isLiveVoiceMuted) {
+                    setTimeout(() => startLiveListening(), code === 'no-speech' ? 300 : 900);
                 }
             };
 
             liveVoiceRecognition.onend = () => {
-                if (finalTranscript && finalTranscript.trim().length > 0) {
-                    handleUserSpokenQuery(finalTranscript.trim());
-                } else if (isLiveVoiceActive && !isKiraSpeakingNow && !isLiveVoiceMuted) {
-                    // Re-arm microphone if no speech was detected
-                    setTimeout(() => startLiveListening(), 400);
+                if (webSpeechInterimSilenceTimer) {
+                    clearTimeout(webSpeechInterimSilenceTimer);
+                    webSpeechInterimSilenceTimer = null;
+                }
+                const committed = (finalTranscript || pendingWebSpeechText || '').trim();
+                pendingWebSpeechText = '';
+                if (committed.length > 0 && isLiveVoiceActive && !isKiraThinkingNow) {
+                    handleUserSpokenQuery(committed);
+                } else if (isLiveVoiceActive && !isKiraSpeakingNow && !isKiraThinkingNow && !isLiveVoiceMuted) {
+                    setTimeout(() => startLiveListening(), 280);
                 }
             };
 
             liveVoiceRecognition.start();
         } catch (err) {
-            console.error("Failed to start speech recognition:", err);
+            console.warn("SpeechRecognition start notice:", err);
+        }
+    }
+
+    function enqueueVoiceSentence(sentenceText, turnId, turnStartMs, signal) {
+        if (!sentenceText || !isLiveVoiceActive || turnId !== liveVoiceTurnId) return;
+
+        const activeVoice = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
+        const activeRate = parseFloat(localStorage.getItem('kira_speech_rate') || '1.05');
+
+        // Start fetching neural TTS immediately in background (pipelined pre-fetch!)
+        const audioFetchPromise = fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: sentenceText, voice: activeVoice, rate: activeRate }),
+            signal: signal
+        }).then(async (res) => {
+            if (!res.ok) throw new Error(`TTS HTTP ${res.status}`);
+            return await res.blob();
+        }).catch((err) => {
+            if (err && err.name === 'AbortError') return null;
+            return { fallbackText: sentenceText, voice: activeVoice, rate: activeRate };
+        });
+
+        ttsPlaybackQueue.push({
+            text: sentenceText,
+            promise: audioFetchPromise,
+            turnStartMs: turnStartMs
+        });
+
+        setQueueLabel(`Stream Q:${ttsPlaybackQueue.length}`);
+        if (!isDrainingTTSQueue) {
+            drainVoicePlaybackQueue(turnId);
+        }
+    }
+
+    async function drainVoicePlaybackQueue(turnId) {
+        if (isDrainingTTSQueue) return;
+        isDrainingTTSQueue = true;
+        let playedCount = 0;
+
+        try {
+            while (isLiveVoiceActive && turnId === liveVoiceTurnId) {
+                if (ttsPlaybackQueue.length === 0) {
+                    if (llmStreamFinishedForTurn) break;
+                    await new Promise(r => setTimeout(r, 45));
+                    continue;
+                }
+
+                const item = ttsPlaybackQueue.shift();
+                setQueueLabel(ttsPlaybackQueue.length > 0 ? `Stream Q:${ttsPlaybackQueue.length}` : 'Speaking');
+                const resolvedAudio = await item.promise;
+                if (!isLiveVoiceActive || turnId !== liveVoiceTurnId || !resolvedAudio) continue;
+
+                isKiraThinkingNow = false;
+                isKiraSpeakingNow = true;
+                setCardVisualState('speaking');
+                if (playedCount === 0) {
+                    bargeCooldownUntil = performance.now() + 360;
+                    const firstAudioMs = Math.round(performance.now() - item.turnStartMs);
+                    setLatencyLabel(`<i class="fa-solid fa-bolt"></i> ${firstAudioMs} ms`);
+                }
+                playedCount += 1;
+
+                const autoVadOn = !vadToggle || vadToggle.checked;
+                if (statusText) {
+                    statusText.textContent = autoVadOn
+                        ? "🔊 คิระกำลังพูด... (พูดสวนแทรกขึ้นมาได้ทันที ระบบ Smart VAD เปิดอยู่ค่ะ)"
+                        : "🔊 คิระกำลังพูด... (แตะ 'พูดแทรก' ได้ทุกเมื่อค่ะ)";
+                }
+
+                if (resolvedAudio instanceof Blob) {
+                    const audioUrl = URL.createObjectURL(resolvedAudio);
+                    activeObjectUrls.push(audioUrl);
+                    await new Promise((resolve) => {
+                        if (!isLiveVoiceActive || turnId !== liveVoiceTurnId) return resolve();
+                        liveVoiceAudio = new Audio(audioUrl);
+                        liveVoiceAudio.onended = () => resolve();
+                        liveVoiceAudio.onerror = () => resolve();
+                        liveVoiceAudio.play().catch(() => resolve());
+                    });
+                } else if (resolvedAudio.fallbackText && typeof speakWithBrowserFallback === 'function') {
+                    await new Promise((resolve) => {
+                        const ok = speakWithBrowserFallback(
+                            resolvedAudio.fallbackText,
+                            resolvedAudio.voice,
+                            resolvedAudio.rate,
+                            () => resolve(),
+                            () => resolve()
+                        );
+                        if (!ok) resolve();
+                    });
+                }
+            }
+        } finally {
+            isDrainingTTSQueue = false;
+            if (isLiveVoiceActive && turnId === liveVoiceTurnId && ttsPlaybackQueue.length === 0 && llmStreamFinishedForTurn) {
+                cleanupQueuedAudioOnly();
+                isKiraSpeakingNow = false;
+                isKiraThinkingNow = false;
+                setQueueLabel('Full-Duplex');
+                if (!isLiveVoiceMuted) {
+                    setCardVisualState('listening');
+                    if (statusText) statusText.textContent = "🎙️ พร้อมรับฟังคุณต่อแล้วค่ะ พูดได้เลยนะคะ...";
+                    startLiveListening();
+                }
+            }
         }
     }
 
     async function handleUserSpokenQuery(queryText) {
-        if (!isLiveVoiceActive) return;
+        if (!isLiveVoiceActive || !queryText || !queryText.trim()) return;
 
-        if (card) {
-            card.classList.remove('listening', 'speaking');
-            card.classList.add('thinking');
+        // Abort any prior lingering turn cleanly
+        abortActiveVoiceTurn();
+
+        const myTurnId = liveVoiceTurnId;
+        liveVoiceTurnAbort = new AbortController();
+        const signal = liveVoiceTurnAbort.signal;
+        llmStreamFinishedForTurn = false;
+        isKiraThinkingNow = true;
+        const turnStartMs = performance.now();
+
+        if (liveVoiceRecognition) {
+            try { liveVoiceRecognition.onend = null; liveVoiceRecognition.stop(); } catch (e) {}
+            liveVoiceRecognition = null;
         }
-        if (statusText) statusText.textContent = "🧠 คิระกำลังประมวลผลคำตอบเชิงลึก...";
+        stopWhisperRecorder(true);
+
+        setCardVisualState('thinking');
+        if (statusText) statusText.textContent = "🧠 คิระกำลังคิดและสตรีมเสียงตอบกลับแบบเรียลไทม์...";
+        if (aiText) aiText.textContent = "...";
 
         try {
-            // Also append to background chat so history is preserved
-            addMessage(queryText, true);
+            const cleanQuery = queryText.trim();
+            addMessage(cleanQuery, true);
 
-            const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.7-reasoning";
+            const effectiveUser = (typeof currentUser !== 'undefined' && currentUser)
+                ? currentUser
+                : (localStorage.getItem('kira_username') || 'guest');
+            const authToken = localStorage.getItem('kira_auth_token') || '';
+            const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.7-flash";
             const persona = document.getElementById('persona-select') ? document.getElementById('persona-select').value : "default";
 
             const res = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Auth-Token': authToken
+                },
                 body: JSON.stringify({
-                    message: queryText,
-                    username: currentUser,
-                    model_version: modelVersion,
+                    message: cleanQuery,
+                    username: effectiveUser,
+                    auth_token: authToken,
+                    model_version: modelVersion === 'boardroom' ? '2.7-flash' : modelVersion,
                     session_id: currentSessionId,
                     persona: persona,
                     user_mode: currentUserMode || 'general',
-                    ui_lang: localStorage.getItem('kira_lang') || 'th'
-                })
+                    ui_lang: localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th',
+                    voice_mode: true
+                }),
+                signal: signal
             });
 
-            if (!res.ok) throw new Error("API Error");
+            if (!res.ok) throw new Error(`Chat HTTP ${res.status}`);
 
             const reader = res.body.getReader();
             const decoder = new TextDecoder("utf-8");
-            let fullText = '';
+            let fullRawText = '';
+            let spokenCharCursor = 0;
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                fullText += decoder.decode(value, { stream: true });
+                if (!isLiveVoiceActive || myTurnId !== liveVoiceTurnId) break;
+
+                fullRawText += decoder.decode(value, { stream: true });
+                const sanitizedSoFar = sanitizeVoiceStreamText(fullRawText);
+
+                if (aiText && sanitizedSoFar.trim()) {
+                    aiText.textContent = sanitizedSoFar.trim();
+                }
+
+                // Slice newly stabilized characters into pipelined sentences!
+                const unspokenSlice = sanitizedSoFar.slice(spokenCharCursor);
+                const { sentences, remainder } = extractVoiceStreamSentences(unspokenSlice, false);
+                if (sentences.length > 0) {
+                    spokenCharCursor = sanitizedSoFar.length - remainder.length;
+                    sentences.forEach(sent => enqueueVoiceSentence(sent, myTurnId, turnStartMs, signal));
+                }
             }
 
-            // Extract clean speech text
-            let cleanResponse = fullText.replace(/<think>[\s\S]*?<\/think>/gi, "")
-                                        .replace(/\[THINKING\][\s\S]*?\[\/THINKING\]/gi, "")
-                                        .replace(/\[THINKING_DONE\]/g, "")
-                                        .replace(/```[\s\S]*?```/g, "")
-                                        .replace(/[*#_`~>]/g, "")
-                                        .trim();
+            if (!isLiveVoiceActive || myTurnId !== liveVoiceTurnId) return;
 
-            if (!cleanResponse) cleanResponse = "คิระได้วิเคราะห์ข้อมูลเรียบร้อยแล้วค่ะ";
+            const finalSanitized = sanitizeVoiceStreamText(fullRawText).trim();
+            const finalTail = sanitizeVoiceStreamText(fullRawText).slice(spokenCharCursor).trim();
+            if (finalTail) {
+                const { sentences } = extractVoiceStreamSentences(finalTail, true);
+                sentences.forEach(sent => enqueueVoiceSentence(sent, myTurnId, turnStartMs, signal));
+            } else if (!finalSanitized) {
+                enqueueVoiceSentence("คิระรับทราบและวิเคราะห์ข้อมูลเรียบร้อยแล้วค่ะ", myTurnId, turnStartMs, signal);
+            }
 
-            // Also post message in main chat window
-            const aiMsgContent = addMessage(fullText, false);
-            applyCodeActions(aiMsgContent);
-            renderKiraCharts(aiMsgContent);
+            llmStreamFinishedForTurn = true;
 
-            // Display in Live Voice subtitle
-            if (aiText) aiText.textContent = cleanResponse;
+            if (aiText && finalSanitized) {
+                aiText.textContent = finalSanitized;
+            }
 
-            // Speak response via Edge-TTS
-            await speakKiraResponse(cleanResponse);
+            // Append full response to main chat history
+            if (fullRawText.trim()) {
+                const aiMsgContent = addMessage(fullRawText, false);
+                applyCodeActions(aiMsgContent);
+                renderKiraCharts(aiMsgContent);
+            }
+
+            // Ensure queue drainer finalizes turn even if 0 sentences were queued
+            if (!isDrainingTTSQueue) {
+                drainVoicePlaybackQueue(myTurnId);
+            }
 
         } catch (err) {
+            if (err && err.name === 'AbortError') return;
             console.error("Live voice query failed:", err);
-            if (statusText) statusText.textContent = "⚠️ ไม่สามารถประมวลผลได้ กรุณาลองใหม่อีกครั้งค่ะ";
-            if (card) {
-                card.classList.remove('thinking');
-                card.classList.add('listening');
-            }
-            setTimeout(() => startLiveListening(), 1500);
+            isKiraThinkingNow = false;
+            isKiraSpeakingNow = false;
+            llmStreamFinishedForTurn = true;
+            if (statusText) statusText.textContent = "⚠️ สัญญาณขัดข้องชั่วคราว พร้อมรับฟังใหม่อีกครั้งค่ะ";
+            setCardVisualState('listening');
+            setTimeout(() => {
+                if (isLiveVoiceActive && !isLiveVoiceMuted) startLiveListening();
+            }, 1200);
         }
     }
 
-    async function speakKiraResponse(textToSpeak) {
-        if (!isLiveVoiceActive) return;
-
-        isKiraSpeakingNow = true;
-        if (card) {
-            card.classList.remove('listening', 'thinking');
-            card.classList.add('speaking');
+    function interruptKira(reason = 'manual') {
+        abortActiveVoiceTurn();
+        if (card && reason === 'smart_vad') {
+            card.classList.add('barge-in-flash');
+            setTimeout(() => card.classList.remove('barge-in-flash'), 520);
         }
-        if (statusText) statusText.textContent = "🔊 คิระกำลังพูด... (แตะ 'พูดแทรก' ได้ทุกเมื่อ)";
+        setCardVisualState('listening');
+        if (statusText) {
+            statusText.textContent = reason === 'smart_vad'
+                ? "⚡ ตรวจพบเสียงพูดแทรกอัตโนมัติ (Smart VAD) — กำลังฟังคุณค่ะ..."
+                : "🎙️ หยุดพูดและสลับมารับฟังคุณทันทีแล้วค่ะ พูดได้เลยนะคะ...";
+        }
+        if (!isLiveVoiceMuted) {
+            startLiveListening();
+        }
+    }
 
-        try {
-            const activeVoice = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
-            const activeRate = parseFloat(localStorage.getItem('kira_speech_rate') || '1.05');
-
-            const ttsRes = await fetch('/api/tts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: textToSpeak, voice: activeVoice, rate: activeRate })
-            });
-
-            if (!ttsRes.ok) throw new Error("TTS Failed");
-
-            const blob = await ttsRes.blob();
-            const audioUrl = URL.createObjectURL(blob);
-
-            if (liveVoiceAudio) {
-                liveVoiceAudio.pause();
+    function forceSendCurrentUtterance() {
+        if (!isLiveVoiceActive || isLiveVoiceMuted) return;
+        if (isKiraSpeakingNow) {
+            interruptKira('manual');
+            return;
+        }
+        if (getEffectiveSttMode() === 'whisper') {
+            if (whisperRecorder && whisperRecorder.state === 'recording') {
+                whisperIsSpeaking = true;
+                finalizeWhisperSegmentAndTranscribe();
             }
-
-            liveVoiceAudio = new Audio(audioUrl);
-            liveVoiceAudio.onended = () => {
-                isKiraSpeakingNow = false;
-                if (isLiveVoiceActive && !isLiveVoiceMuted) {
-                    if (card) {
-                        card.classList.remove('speaking');
-                        card.classList.add('listening');
-                    }
-                    if (statusText) statusText.textContent = "🎙️ พร้อมรับฟังคุณแล้วค่ะ พูดต่อได้เลยนะคะ...";
-                    startLiveListening();
-                }
-            };
-
-            liveVoiceAudio.onerror = () => {
-                isKiraSpeakingNow = false;
-                if (isLiveVoiceActive) startLiveListening();
-            };
-
-            await liveVoiceAudio.play();
-        } catch (ttsErr) {
-            console.warn("TTS error in live voice, attempting browser fallback:", ttsErr);
-            const ok = speakWithBrowserFallback(textToSpeak, activeVoice, activeRate, () => {
-                isKiraSpeakingNow = false;
-                if (isLiveVoiceActive && !isLiveVoiceMuted) {
-                    if (card) {
-                        card.classList.remove('speaking');
-                        card.classList.add('listening');
-                    }
-                    if (statusText) statusText.textContent = "🎙️ พร้อมรับฟังคุณแล้วค่ะ พูดต่อได้เลยนะคะ...";
-                    startLiveListening();
-                }
-            }, () => {
-                isKiraSpeakingNow = false;
-                if (isLiveVoiceActive) startLiveListening();
-            });
-            if (!ok) {
-                isKiraSpeakingNow = false;
-                if (isLiveVoiceActive) startLiveListening();
+            return;
+        }
+        if (pendingWebSpeechText && pendingWebSpeechText.trim()) {
+            const toSend = pendingWebSpeechText.trim();
+            pendingWebSpeechText = '';
+            if (liveVoiceRecognition) {
+                try { liveVoiceRecognition.onend = null; liveVoiceRecognition.stop(); } catch (e) {}
+                liveVoiceRecognition = null;
+            }
+            handleUserSpokenQuery(toSend);
+        } else if (userText && userText.textContent && userText.textContent.trim() && userText.textContent.trim() !== '...') {
+            if (!isKiraThinkingNow) {
+                handleUserSpokenQuery(userText.textContent.trim());
             }
         }
     }
 
-    function interruptKira() {
-        if (liveVoiceAudio) {
-            liveVoiceAudio.pause();
-            liveVoiceAudio = null;
-        }
-        if ('speechSynthesis' in window) {
-            try { window.speechSynthesis.cancel(); } catch (e) {}
-        }
-        isKiraSpeakingNow = false;
-        if (card) {
-            card.classList.remove('speaking', 'thinking');
-            card.classList.add('listening');
-        }
-        if (statusText) statusText.textContent = "🎙️ ขัดจังหวะแล้วค่ะ กำลังฟังเสียงของคุณ...";
-        startLiveListening();
-    }
-
-    // Attach event listeners
+    // Wire UI Event Listeners
     btnLiveVoice.addEventListener('click', openLiveVoice);
     if (btnClose) btnClose.addEventListener('click', closeLiveVoice);
     if (btnEnd) btnEnd.addEventListener('click', closeLiveVoice);
@@ -10856,8 +11490,10 @@ function initLiveVoiceAssistant() {
             if (label) label.textContent = isLiveVoiceMuted ? 'เปิดไมค์' : 'ปิดไมค์';
             if (isLiveVoiceMuted) {
                 if (liveVoiceRecognition) {
-                    try { liveVoiceRecognition.stop(); } catch (e) {}
+                    try { liveVoiceRecognition.onend = null; liveVoiceRecognition.stop(); } catch (e) {}
+                    liveVoiceRecognition = null;
                 }
+                stopWhisperRecorder(true);
                 if (statusText) statusText.textContent = "🔇 ไมโครโฟนถูกปิดชั่วคราว (แตะเปิดไมค์เพื่อคุยต่อ)";
             } else {
                 startLiveListening();
@@ -10865,15 +11501,62 @@ function initLiveVoiceAssistant() {
         });
     }
 
+    if (btnSendNow) {
+        btnSendNow.addEventListener('click', forceSendCurrentUtterance);
+    }
+
     if (btnInterrupt) {
-        btnInterrupt.addEventListener('click', interruptKira);
+        btnInterrupt.addEventListener('click', () => interruptKira('manual'));
     }
 
     if (orb) {
         orb.addEventListener('click', () => {
-            if (isKiraSpeakingNow) interruptKira();
+            if (isKiraSpeakingNow) interruptKira('manual');
+            else forceSendCurrentUtterance();
         });
     }
+
+    if (vadToggle) {
+        vadToggle.addEventListener('change', () => {
+            localStorage.setItem('kira_lv_vad_auto', vadToggle.checked ? 'true' : 'false');
+        });
+    }
+
+    if (sensSelect) {
+        sensSelect.addEventListener('change', () => {
+            localStorage.setItem('kira_lv_vad_sens', sensSelect.value);
+            updateThresholdTickUI();
+        });
+    }
+
+    if (sttModeSelect) {
+        sttModeSelect.addEventListener('change', () => {
+            localStorage.setItem('kira_lv_stt_mode', sttModeSelect.value);
+            if (isLiveVoiceActive && !isLiveVoiceMuted && !isKiraSpeakingNow && !isKiraThinkingNow) {
+                startLiveListening();
+            }
+        });
+    }
+
+    // Expose programmatic controller for testing & diagnostics
+    window.KiraLiveVoice = {
+        open: openLiveVoice,
+        close: closeLiveVoice,
+        interrupt: interruptKira,
+        sendQuery: handleUserSpokenQuery,
+        splitSentences: extractVoiceStreamSentences,
+        sanitizeSpeech: sanitizeVoiceStreamText,
+        getState: () => ({
+            active: isLiveVoiceActive,
+            muted: isLiveVoiceMuted,
+            speaking: isKiraSpeakingNow,
+            thinking: isKiraThinkingNow,
+            sttMode: getEffectiveSttMode(),
+            vadAutoBarge: !vadToggle || vadToggle.checked,
+            sensitivity: (sensSelect && sensSelect.value) || 'normal',
+            rmsLevel: currentRmsLevel
+        })
+    };
 }
 
 // ====================================================================
@@ -12712,7 +13395,15 @@ const KIRA_I18N = {
         br_lbl_classification: "ชั้นความลับเอกสาร:",
         br_lbl_sections: "องค์ประกอบในรายงาน:",
         br_btn_copy: "คัดลอก",
-        br_btn_export_pdf: "พิมพ์ / บันทึก PDF (A4)"
+        br_btn_export_pdf: "พิมพ์ / บันทึก PDF (A4)",
+        lv_badge_duplex: "FULL-DUPLEX VAD",
+        lv_vad_auto_barge: "พูดแทรกอัตโนมัติ (Smart VAD)",
+        lv_sens_normal: "VAD: มาตรฐาน",
+        lv_sens_high: "VAD: ไวพิเศษ",
+        lv_sens_noise: "VAD: กันเสียงรบกวน",
+        lv_btn_send_now: "ส่งทันที",
+        lv_btn_interrupt: "พูดแทรก",
+        lv_btn_end: "วางสาย"
     },
 
     en: {
@@ -13119,7 +13810,15 @@ const KIRA_I18N = {
         br_lbl_classification: "Document Classification:",
         br_lbl_sections: "Included Sections:",
         br_btn_copy: "Copy",
-        br_btn_export_pdf: "Print / Save PDF (A4)"
+        br_btn_export_pdf: "Print / Save PDF (A4)",
+        lv_badge_duplex: "FULL-DUPLEX VAD",
+        lv_vad_auto_barge: "Auto Barge-in (Smart VAD)",
+        lv_sens_normal: "VAD: Balanced",
+        lv_sens_high: "VAD: Ultra Sensitive",
+        lv_sens_noise: "VAD: Noise Guard",
+        lv_btn_send_now: "Send Now",
+        lv_btn_interrupt: "Interrupt",
+        lv_btn_end: "End Call"
     },
 
     zh: {
@@ -13526,7 +14225,15 @@ const KIRA_I18N = {
         br_lbl_classification: "文档密级：",
         br_lbl_sections: "报告包含模块：",
         br_btn_copy: "复制",
-        br_btn_export_pdf: "打印 / 导出 PDF (A4)"
+        br_btn_export_pdf: "打印 / 导出 PDF (A4)",
+        lv_badge_duplex: "全双工智能语音",
+        lv_vad_auto_barge: "智能语音打断 (Smart VAD)",
+        lv_sens_normal: "灵敏度：标准",
+        lv_sens_high: "灵敏度：极高",
+        lv_sens_noise: "灵敏度：抗噪",
+        lv_btn_send_now: "立即发送",
+        lv_btn_interrupt: "打断发言",
+        lv_btn_end: "挂断"
     },
 
     ko: {
@@ -13933,7 +14640,15 @@ const KIRA_I18N = {
         br_lbl_classification: "문서 보안 등급:",
         br_lbl_sections: "포함할 섹션:",
         br_btn_copy: "복사",
-        br_btn_export_pdf: "인쇄 / PDF 저장 (A4)"
+        br_btn_export_pdf: "인쇄 / PDF 저장 (A4)",
+        lv_badge_duplex: "FULL-DUPLEX VAD",
+        lv_vad_auto_barge: "자동 끼어들기 (Smart VAD)",
+        lv_sens_normal: "VAD: 표준",
+        lv_sens_high: "VAD: 고감도",
+        lv_sens_noise: "VAD: 소음 차단",
+        lv_btn_send_now: "즉시 전송",
+        lv_btn_interrupt: "말 끊기",
+        lv_btn_end: "통화 종료"
     },
 
     ja: {
@@ -14340,7 +15055,15 @@ const KIRA_I18N = {
         br_lbl_classification: "機密区分:",
         br_lbl_sections: "出力セクション:",
         br_btn_copy: "コピー",
-        br_btn_export_pdf: "印刷 / PDF保存 (A4)"
+        br_btn_export_pdf: "印刷 / PDF保存 (A4)",
+        lv_badge_duplex: "全二重スマート音声",
+        lv_vad_auto_barge: "自動割り込み (Smart VAD)",
+        lv_sens_normal: "VAD: 標準",
+        lv_sens_high: "VAD: 高感度",
+        lv_sens_noise: "VAD: ノイズ抑制",
+        lv_btn_send_now: "今すぐ送信",
+        lv_btn_interrupt: "割り込む",
+        lv_btn_end: "通話終了"
     }
 };
 

@@ -13,7 +13,7 @@ except Exception:
 load_dotenv()
 
 print("====================================================================")
-print("🤖 KIRA AI 2.6 - SYSTEM DIAGNOSTICS & HARDWARE/CLOUD SCAN")
+print("🤖 KIRA AI 2.7.9 - SYSTEM DIAGNOSTICS & HARDWARE/CLOUD SCAN")
 print("====================================================================\n")
 
 # 1. Environment & API Keys Scan

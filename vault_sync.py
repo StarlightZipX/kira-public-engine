@@ -1,5 +1,5 @@
 """
-Kira 2.2 - Executive Offline Vault & Mobile PWA Sync Engine
+Kira 2.7.9 Enterprise - Executive Offline Vault & Mobile PWA Sync Engine
 ระบบคลังข้อมูลนิรภัยออฟไลน์สำหรับผู้บริหาร และระบบซิงก์ข้อมูลสองทิศทาง (Bidirectional Sync)
 รองรับการจัดเก็บเอกสารยุทธศาสตร์, บันทึกข้อความสั่งการ, Slide Decks, และ Task Matrix แบบ Local-First
 """

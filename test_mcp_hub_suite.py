@@ -1,5 +1,5 @@
 """
-Test Suite for Model Context Protocol (MCP) Hub & Tool Studio (Kira 2.2 Phase 2)
+Test Suite for Model Context Protocol (MCP) Hub & Tool Studio (Kira 2.7.9 Enterprise)
 """
 
 import sys
@@ -162,7 +162,7 @@ def test_6_api_server_registration_and_audits():
     print("  ✅ Custom Server successfully deleted", flush=True)
 
 if __name__ == "__main__":
-    print("🔌 Starting Kira 2.2 Phase 2 MCP Hub Test Suite...", flush=True)
+    print("🔌 Starting Kira 2.7.9 Enterprise MCP Hub Test Suite...", flush=True)
     test_1_builtin_tools_direct_execution()
     test_2_autonomous_mcp_dispatcher()
     test_3_api_list_mcp_servers()
