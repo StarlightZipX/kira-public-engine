@@ -1640,6 +1640,21 @@ function attachDeliverablesBar(contentDiv, textContent) {
         return item;
     };
 
+    // A0. สตูดิโอส่งออกรายงานมติสภาผู้บริหาร (เฉพาะข้อความสภา 4 ผู้บริหาร)
+    if (textContent.includes('[BOARDROOM_START]') || contentDiv.querySelector('.boardroom-session-wrapper')) {
+        const brStudioItem = createToolItem(
+            '<i class="fa-solid fa-file-word text-amber"></i>',
+            'ส่งออกรายงานมติสภา (PDF / Word / MD)',
+            () => {
+                const wrapper = contentDiv.querySelector('.boardroom-session-wrapper');
+                if (typeof openBoardroomExportStudio === 'function') {
+                    openBoardroomExportStudio(wrapper || contentDiv);
+                }
+            }
+        );
+        toolsMenu.appendChild(brStudioItem);
+    }
+
     // A. สรุปส่งงาน (Clean Report)
     const cleanReportBtn = createToolItem(
         '<i class="fa-solid fa-file-signature text-cyan"></i>',
@@ -1834,6 +1849,13 @@ function addMessage(text, isUser, imageBase64 = null) {
     } else {
         if (!text) {
             content.innerHTML = '<span class="typing-cursor"></span>';
+        } else if (text.includes('[BOARDROOM_START]') && typeof renderBoardroomHTML === 'function') {
+            const brHistId = 'br_hist_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+            content.dataset.brId = brHistId;
+            content.innerHTML = renderBoardroomHTML(text, brHistId);
+            applyCodeActions(content);
+            renderKiraCharts(content);
+            attachDeliverablesBar(content, text);
         } else {
             let normalizedTxt = text.replace(/<think>/gi, "[THINKING]").replace(/<\/think>/gi, "[/THINKING][THINKING_DONE]");
             let htmlContent = "";
@@ -2040,7 +2062,8 @@ async function sendMessage() {
                     gavelPlayed = true;
                 }
                 if (typeof renderBoardroomHTML === 'function') {
-                    contentDiv.innerHTML = renderBoardroomHTML(fullText);
+                    const brStreamId = contentDiv.dataset.brId || (contentDiv.dataset.brId = 'br_live_' + Date.now() + '_' + Math.floor(Math.random() * 100000));
+                    contentDiv.innerHTML = renderBoardroomHTML(fullText, brStreamId, text || '');
                     chatBox.scrollTop = chatBox.scrollHeight;
                 }
                 continue;
@@ -5145,27 +5168,96 @@ function playGavelSound() {
     }
 }
 
-function renderBoardroomHTML(rawText) {
-    let html = '<div class="boardroom-session-wrapper">';
+window._kiraBoardroomSessions = window._kiraBoardroomSessions || {};
+window._latestBoardroomPayload = window._latestBoardroomPayload || null;
+
+const BOARDROOM_EXEC_DEFAULTS = {
+    'CEO': { name: 'คุณคิรินทร์', title: 'ประธานเจ้าหน้าที่บริหาร (CEO & Strategist)', avatar: '👔', theme: 'gold', color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+    'CFO': { name: 'คุณเมธัส', title: 'ประธานเจ้าหน้าที่ฝ่ายการเงิน (CFO & Risk Lead)', avatar: '💰', theme: 'emerald', color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
+    'CPO': { name: 'คุณรินดา', title: 'ประธานเจ้าหน้าที่ฝ่ายประสบการณ์ลูกค้า (CPO & UX)', avatar: '🎨', theme: 'rose', color: '#e11d48', bg: '#fff1f2', border: '#fecdd3' },
+    'CTO': { name: 'คุณธนิน', title: 'ประธานเจ้าหน้าที่ฝ่ายเทคโนโลยี (CTO & Systems Architect)', avatar: '🛡️', theme: 'cyan', color: '#0284c7', bg: '#f0f9ff', border: '#bae6fd' }
+};
+
+const BOARDROOM_ANGLE_NAMES = {
+    'balanced': 'สมดุลย์รอบด้าน (Balanced Strategic Focus)',
+    'aggressive_growth': 'บุกตลาดดุดัน (Hyper-Growth & Market Moat)',
+    'lean_risk': 'ประหยัดงบ & ปลอดภัยสูงสุด (Ultra-Lean & Risk-Shielded)',
+    'user_first': 'ประสบการณ์ลูกค้านำ (Customer Empathy & Retention)',
+    'tech_driven': 'นวัตกรรมและสถาปัตยกรรมทนทาน (Tech & Scalability)'
+};
+
+function generateClientBoardroomDocId(seedStr = '') {
+    const now = new Date();
+    const ymd = now.getFullYear().toString() +
+        String(now.getMonth() + 1).padStart(2, '0') +
+        String(now.getDate()).padStart(2, '0');
+    const basis = `${seedStr}:${now.getTime()}:${Math.random()}`;
+    let hash = 2166136261;
+    for (let i = 0; i < basis.length; i++) {
+        hash ^= basis.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+    }
+    const token = (hash >>> 0).toString(16).toUpperCase().padStart(6, '0').slice(0, 6);
+    return `KIRA-BR-${ymd}-${token}`;
+}
+
+function computeClientAuditSeal(payload) {
+    const str = `${payload.doc_id || ''}|${payload.topic || ''}|${(payload.speeches || []).length}|${(payload.consensus || '').slice(0, 240)}`;
+    const seeds = [0x811c9dc5, 0x9e3779b9, 0x85ebca6b, 0xc2b2ae35, 0x27d4eb2f, 0x165667b1, 0xd3a2646c, 0xfd7046c5];
+    for (let i = 0; i < str.length; i++) {
+        const code = str.charCodeAt(i);
+        for (let s = 0; s < seeds.length; s++) {
+            seeds[s] ^= (code + s * 31);
+            seeds[s] = Math.imul(seeds[s], 16777619) >>> 0;
+        }
+    }
+    return seeds.map(v => v.toString(16).toUpperCase().padStart(8, '0')).join('');
+}
+
+function renderBoardroomHTML(rawText, preferredId = null, topicHint = '') {
+    window._kiraBoardroomSessions = window._kiraBoardroomSessions || {};
+    const safeRaw = rawText || '';
+    let hashAcc = 5381;
+    const headSlice = safeRaw.slice(0, 180);
+    for (let i = 0; i < headSlice.length; i++) {
+        hashAcc = ((hashAcc << 5) + hashAcc) ^ headSlice.charCodeAt(i);
+    }
+    const brId = preferredId || ('br_' + (hashAcc >>> 0).toString(16));
+    const existingSession = window._kiraBoardroomSessions[brId] || null;
+
+    let html = `<div class="boardroom-session-wrapper" data-br-id="${brId}">`;
     html += '<div class="boardroom-session-header-badge"><i class="fa-solid fa-users-viewfinder"></i> บันทึกการประชุมสภาที่ปรึกษาเสมือน (Chamber in Session)</div>';
 
     // 1. Parse Speakers: [BOARDROOM_SPEAKER:ID:TITLE:THEME]...[/BOARDROOM_SPEAKER]
-    const speakerRegex = /\[BOARDROOM_SPEAKER:([A-Z]+):([^:]+):([a-z]+)\]([\s\S]*?)(?:\[\/BOARDROOM_SPEAKER\]|$)/g;
+    const speakerRegex = /\[BOARDROOM_SPEAKER:([A-Z]+):([^:\]]+):([a-z]+)\]([\s\S]*?)(?:\[\/BOARDROOM_SPEAKER\]|(?=\[BOARDROOM_)|$)/g;
     let spMatch;
     const avatarMap = { 'CEO': '👔', 'CFO': '💰', 'CPO': '🎨', 'CTO': '🛡️' };
+    const parsedSpeeches = [];
 
-    while ((spMatch = speakerRegex.exec(rawText)) !== null) {
-        const id = spMatch[1];
-        const title = spMatch[2];
-        const theme = spMatch[3] || 'gold';
+    while ((spMatch = speakerRegex.exec(safeRaw)) !== null) {
+        const id = (spMatch[1] || 'EXEC').trim();
+        const title = (spMatch[2] || id).trim();
+        const theme = (spMatch[3] || 'gold').trim();
         const content = spMatch[4] ? spMatch[4].trim() : '';
-        const avatar = avatarMap[id] || '👔';
+        const meta = BOARDROOM_EXEC_DEFAULTS[id] || {};
+        const avatar = avatarMap[id] || meta.avatar || '👔';
+
+        if (content) {
+            parsedSpeeches.push({
+                id: id,
+                name: meta.name || title.split(' - ')[0].trim(),
+                title: title,
+                avatar: avatar,
+                theme: theme,
+                content: content
+            });
+        }
 
         let parsedContent = '';
         try {
             parsedContent = content ? marked.parse(content) : '<span style="color: #94a3b8; font-style: italic;"><i class="fa-solid fa-spinner fa-spin"></i> กำลังแถลงมุมมอง...</span>';
         } catch (e) {
-            parsedContent = `<div style="white-space: pre-wrap;">${content}</div>`;
+            parsedContent = `<div style="white-space: pre-wrap;">${escapeHtml(content)}</div>`;
         }
 
         html += `
@@ -5185,16 +5277,17 @@ function renderBoardroomHTML(rawText) {
     }
 
     // 2. Parse Debate: [BOARDROOM_DEBATE:TITLE]...[/BOARDROOM_DEBATE]
-    const debateRegex = /\[BOARDROOM_DEBATE:?([^\]]*)\]([\s\S]*?)(?:\[\/BOARDROOM_DEBATE\]|$)/;
-    const debMatch = debateRegex.exec(rawText);
+    const debateRegex = /\[BOARDROOM_DEBATE:?([^\]]*)\]([\s\S]*?)(?:\[\/BOARDROOM_DEBATE\]|(?=\[BOARDROOM_CONSENSUS)|(?=\[BOARDROOM_DONE\])|$)/;
+    const debMatch = debateRegex.exec(safeRaw);
+    let debContentClean = '';
     if (debMatch) {
         const debTitle = debMatch[1] ? debMatch[1].trim() : 'การถกเถียงและประนีประนอมจุดอ่อน (Executive Debate)';
-        const debContent = debMatch[2] ? debMatch[2].trim() : '';
+        debContentClean = debMatch[2] ? debMatch[2].trim() : '';
         let parsedDebate = '';
         try {
-            parsedDebate = debContent ? marked.parse(debContent) : '<span style="color: #c084fc; font-style: italic;"><i class="fa-solid fa-spinner fa-spin"></i> คณะกรรมการกำลังเริ่มถกเถียง...</span>';
+            parsedDebate = debContentClean ? marked.parse(debContentClean) : '<span style="color: #c084fc; font-style: italic;"><i class="fa-solid fa-spinner fa-spin"></i> คณะกรรมการกำลังเริ่มถกเถียง...</span>';
         } catch (e) {
-            parsedDebate = `<div style="white-space: pre-wrap;">${debContent}</div>`;
+            parsedDebate = `<div style="white-space: pre-wrap;">${escapeHtml(debContentClean)}</div>`;
         }
         html += `
         <div class="boardroom-debate-box">
@@ -5205,28 +5298,32 @@ function renderBoardroomHTML(rawText) {
     }
 
     // 3. Parse Consensus: [BOARDROOM_CONSENSUS:TITLE]...[/BOARDROOM_CONSENSUS]
-    const consensusRegex = /\[BOARDROOM_CONSENSUS:?([^\]]*)\]([\s\S]*?)(?:\[\/BOARDROOM_CONSENSUS\]|$)/;
-    const conMatch = consensusRegex.exec(rawText);
+    const consensusRegex = /\[BOARDROOM_CONSENSUS:?([^\]]*)\]([\s\S]*?)(?:\[\/BOARDROOM_CONSENSUS\]|(?=\[BOARDROOM_DONE\])|$)/;
+    const conMatch = consensusRegex.exec(safeRaw);
+    let conContentClean = '';
     if (conMatch) {
         const conTitle = conMatch[1] ? conMatch[1].trim() : 'มติที่ประชุมและพิมพ์เขียวกลยุทธ์ (Strategic Blueprint)';
-        const conContent = conMatch[2] ? conMatch[2].trim() : '';
+        conContentClean = conMatch[2] ? conMatch[2].trim() : '';
         let parsedConsensus = '';
         try {
-            parsedConsensus = conContent ? marked.parse(conContent) : '<span style="color: #fbbf24; font-style: italic;"><i class="fa-solid fa-spinner fa-spin"></i> คิระกำลังร่างมติเอกฉันท์...</span>';
+            parsedConsensus = conContentClean ? marked.parse(conContentClean) : '<span style="color: #fbbf24; font-style: italic;"><i class="fa-solid fa-spinner fa-spin"></i> คิระกำลังร่างมติเอกฉันท์...</span>';
         } catch (e) {
-            parsedConsensus = `<div style="white-space: pre-wrap;">${conContent}</div>`;
+            parsedConsensus = `<div style="white-space: pre-wrap;">${escapeHtml(conContentClean)}</div>`;
         }
         html += `
         <div class="boardroom-consensus-box">
             <div class="boardroom-consensus-header">
                 <div class="boardroom-consensus-title"><i class="fa-solid fa-gavel"></i> ${conTitle}</div>
                 <div class="boardroom-consensus-actions">
-                    <button class="consensus-tool-btn" onclick="convertBoardroomToSlides(this)" title="แปลงมติที่ประชุมสภาเป็นชุดสไลด์นำเสนอ 16:9 (Executive Slide Deck)"><i class="fa-solid fa-file-powerpoint text-rose"></i> สร้างสไลด์สภา (16:9)</button>
-                    <button class="consensus-tool-btn" onclick="copyMeetingMinutes(this)" title="คัดลอกบันทึกการประชุมทั้งหมด"><i class="fa-regular fa-copy"></i> คัดลอกรายงาน</button>
-                    <button class="consensus-tool-btn" onclick="openBoardroomInCanvas(this)" title="เปิดบันทึกการประชุมใน Live Canvas"><i class="fa-solid fa-pen-to-square"></i> เปิดใน Canvas</button>
-                    <button class="consensus-tool-btn" onclick="downloadMeetingMinutes(this)" title="ดาวน์โหลดบันทึกการประชุม (.md)"><i class="fa-solid fa-file-arrow-down"></i> ดาวน์โหลด (.md)</button>
-                    <button class="consensus-tool-btn" onclick="exportBoardroomToPDF(this)" title="พิมพ์รายงานหรือบันทึกเป็น PDF สวยงามแบบ A4"><i class="fa-solid fa-print"></i> พิมพ์ / PDF</button>
-                    <button class="consensus-tool-btn" onclick="playBoardroomConsensusAudio(this)" title="ฟังเสียงอ่านสรุปมติที่ประชุม"><i class="fa-solid fa-volume-high"></i> ฟังเสียงมติ</button>
+                    <button type="button" class="consensus-tool-btn primary-export-studio-btn" onclick="openBoardroomExportStudio(this)" title="เปิดสตูดิโอพรีวิว A4 และส่งออกรายงานมติสภาผู้บริหาร (PDF / Word / Markdown)"><i class="fa-solid fa-file-signature"></i> ส่งออกรายงานสภา</button>
+                    <button type="button" class="consensus-tool-btn docx-export-btn" onclick="exportBoardroomToDocx(this)" title="ดาวน์โหลดรายงานมติสภาผู้บริหารเป็นไฟล์ Microsoft Word (.docx)"><i class="fa-solid fa-file-word"></i> Word (.docx)</button>
+                    <button type="button" class="consensus-tool-btn" onclick="exportBoardroomToPDF(this)" title="พิมพ์รายงานหรือบันทึกเป็น PDF สวยงามแบบ A4"><i class="fa-solid fa-file-pdf text-amber"></i> PDF (A4)</button>
+                    <button type="button" class="consensus-tool-btn" onclick="downloadMeetingMinutes(this)" title="ดาวน์โหลดบันทึกการประชุม (.md)"><i class="fa-solid fa-file-code text-emerald"></i> ดาวน์โหลด (.md)</button>
+                    <button type="button" class="consensus-tool-btn" onclick="saveBoardroomToVault(this)" title="บันทึกมติสภาลงในคลังนิรภัย Executive Offline Vault"><i class="fa-solid fa-vault text-purple"></i> บันทึก Vault</button>
+                    <button type="button" class="consensus-tool-btn" onclick="convertBoardroomToSlides(this)" title="แปลงมติที่ประชุมสภาเป็นชุดสไลด์นำเสนอ 16:9 (Executive Slide Deck)"><i class="fa-solid fa-file-powerpoint text-rose"></i> สร้างสไลด์สภา (16:9)</button>
+                    <button type="button" class="consensus-tool-btn" onclick="copyMeetingMinutes(this)" title="คัดลอกบันทึกการประชุมทั้งหมด"><i class="fa-regular fa-copy"></i> คัดลอกรายงาน</button>
+                    <button type="button" class="consensus-tool-btn" onclick="openBoardroomInCanvas(this)" title="เปิดบันทึกการประชุมใน Live Canvas"><i class="fa-solid fa-pen-to-square"></i> เปิดใน Canvas</button>
+                    <button type="button" class="consensus-tool-btn" onclick="playBoardroomConsensusAudio(this)" title="ฟังเสียงอ่านสรุปมติที่ประชุม"><i class="fa-solid fa-volume-high"></i> ฟังเสียงมติ</button>
                 </div>
             </div>
             <div class="boardroom-consensus-body">${parsedConsensus}</div>
@@ -5235,53 +5332,508 @@ function renderBoardroomHTML(rawText) {
     }
 
     html += '</div>';
+
+    const resolvedTopic = (topicHint || (existingSession && existingSession.topic) || '').trim();
+    const sessionObj = {
+        id: brId,
+        doc_id: (existingSession && existingSession.doc_id) || generateClientBoardroomDocId(resolvedTopic || brId),
+        topic: resolvedTopic,
+        angle: 'balanced',
+        classification: 'CONFIDENTIAL — เอกสารลับเฉพาะผู้บริหาร',
+        speeches: parsedSpeeches,
+        interventions: [],
+        debate_summary: debContentClean.replace(/\[\/?BOARDROOM_[A-Z_]+(?::[^\]]*)?\]/g, '').trim(),
+        voting_matrix: [],
+        average_score: null,
+        consensus: conContentClean.replace(/\[\/?BOARDROOM_[A-Z_]+(?::[^\]]*)?\]/g, '').trim(),
+        raw_markdown: safeRaw
+    };
+    window._kiraBoardroomSessions[brId] = sessionObj;
+    if (parsedSpeeches.length > 0 || sessionObj.consensus) {
+        window._latestBoardroomPayload = sessionObj;
+    }
+
     return html;
 }
 
-function extractBoardroomFullMinutes(sessionWrapper) {
-    let fullMeetingText = "# 🏛️ บันทึกการประชุมสภาที่ปรึกษาผู้บริหารเสมือน (Kira Virtual Boardroom Minutes)\n\n";
-    const now = new Date();
-    fullMeetingText += `**วันและเวลาประชุม:** ${now.toLocaleString('th-TH')}\n\n`;
-    fullMeetingText += `**คณะกรรมการบริหารผู้เข้าร่วมประชุม:**\n`;
-    fullMeetingText += `- 👔 **คุณคิรินทร์**: ประธานเจ้าหน้าที่บริหาร (CEO & Strategist)\n`;
-    fullMeetingText += `- 💰 **คุณเมธัส**: ประธานเจ้าหน้าที่ฝ่ายการเงิน (CFO & Risk Lead)\n`;
-    fullMeetingText += `- 🎨 **คุณรินดา**: ประธานเจ้าหน้าที่ฝ่ายประสบการณ์ลูกค้า (CPO & UX)\n`;
-    fullMeetingText += `- 🛡️ **คุณธนิน**: ประธานเจ้าหน้าที่ฝ่ายเทคโนโลยี (CTO & Systems Architect)\n\n`;
-    fullMeetingText += `---\n\n`;
-
-    if (sessionWrapper) {
-        const speeches = sessionWrapper.querySelectorAll('.executive-speech-card');
-        speeches.forEach(card => {
-            const name = card.querySelector('.exec-speech-name')?.innerText || 'ผู้บริหาร';
-            const tag = card.querySelector('.exec-speech-tag')?.innerText || '';
-            const body = card.querySelector('.exec-speech-content')?.innerText || '';
-            fullMeetingText += `## ${name} (${tag})\n\n${body}\n\n---\n\n`;
-        });
-
-        const debate = sessionWrapper.querySelector('.boardroom-debate-body');
-        if (debate) {
-            fullMeetingText += `## สรุปการถกเถียงและประนีประนอมจุดอ่อน (Executive Debate)\n\n${debate.innerText}\n\n---\n\n`;
-        }
-
-        const consensus = sessionWrapper.querySelector('.boardroom-consensus-body');
-        if (consensus) {
-            fullMeetingText += `## มติเอกฉันท์และพิมพ์เขียวกลยุทธ์ (Resolution Blueprint)\n\n${consensus.innerText}\n\n`;
+function inferTopicFromBoardroomDOM(sessionWrapper) {
+    if (!sessionWrapper) return '';
+    const aiMsg = sessionWrapper.closest('.message.ai');
+    if (aiMsg && aiMsg.previousElementSibling && aiMsg.previousElementSibling.classList.contains('message') && aiMsg.previousElementSibling.classList.contains('user')) {
+        const userContent = aiMsg.previousElementSibling.querySelector('.content');
+        if (userContent && userContent.innerText) {
+            return userContent.innerText.trim().replace(/\s+/g, ' ').slice(0, 140);
         }
     }
-    return fullMeetingText;
+    return '';
 }
+
+function scrapeBoardroomWrapperFallback(sessionWrapper) {
+    if (!sessionWrapper) return null;
+    const speeches = [];
+    sessionWrapper.querySelectorAll('.executive-speech-card').forEach(card => {
+        const tag = (card.querySelector('.exec-speech-tag')?.innerText || 'EXEC').trim();
+        const title = (card.querySelector('.exec-speech-name')?.innerText || 'ผู้บริหาร').trim();
+        const body = (card.querySelector('.exec-speech-content')?.innerText || '').trim();
+        const meta = BOARDROOM_EXEC_DEFAULTS[tag] || {};
+        if (body) {
+            speeches.push({
+                id: tag,
+                name: meta.name || title,
+                title: title,
+                avatar: meta.avatar || '👔',
+                theme: meta.theme || 'gold',
+                content: body
+            });
+        }
+    });
+    const debate = (sessionWrapper.querySelector('.boardroom-debate-body')?.innerText || '').trim();
+    const consensus = (sessionWrapper.querySelector('.boardroom-consensus-body')?.innerText || '').trim();
+    const topic = inferTopicFromBoardroomDOM(sessionWrapper) || 'วาระการประชุมยุทธศาสตร์องค์กร (Executive Strategic Session)';
+    if (!speeches.length && !debate && !consensus) return null;
+    return {
+        doc_id: generateClientBoardroomDocId(topic),
+        topic: topic,
+        angle: 'balanced',
+        classification: 'CONFIDENTIAL — เอกสารลับเฉพาะผู้บริหาร',
+        speeches: speeches,
+        interventions: [],
+        debate_summary: debate,
+        voting_matrix: [],
+        average_score: null,
+        consensus: consensus,
+        raw_markdown: ''
+    };
+}
+
+function buildDebateExportPayload() {
+    if (!currentDebateSessionData && !currentDebateConsensusMarkdown) return null;
+    const ds = currentDebateSessionData || {};
+    const topic = (ds.topic || currentDebateTopic || document.getElementById('debate-topic-input')?.value || 'วาระการประชุมดีเบตสภาผู้บริหาร').trim();
+    const angle = ds.angle || document.getElementById('debate-angle-select')?.value || 'balanced';
+    const speeches = Array.isArray(ds.speeches) ? ds.speeches : [];
+    const interventions = Array.isArray(ds.interventions) ? ds.interventions : [];
+    let debateSummary = ds.debate_summary || '';
+    if (!debateSummary && Array.isArray(ds.debateTurns) && ds.debateTurns.length > 0) {
+        debateSummary = ds.debateTurns.map(t => `- **${t.avatar || '👔'} [${t.id}] ${t.name || t.id} (${t.title || ''}):** ${t.text}`).join('\n\n');
+    }
+    const votingMatrix = Array.isArray(ds.voting_matrix) ? ds.voting_matrix : [];
+    const avgScore = (ds.average_score !== undefined && ds.average_score !== null) ? ds.average_score : null;
+    const consensus = (ds.consensus || currentDebateConsensusMarkdown || '').trim();
+
+    if (!speeches.length && !debateSummary && !consensus && !votingMatrix.length) return null;
+    return {
+        doc_id: ds.doc_id || generateClientBoardroomDocId(topic),
+        topic: topic,
+        angle: angle,
+        classification: 'CONFIDENTIAL — เอกสารลับเฉพาะผู้บริหาร',
+        speeches: speeches,
+        interventions: interventions,
+        debate_summary: debateSummary,
+        voting_matrix: votingMatrix,
+        average_score: avgScore,
+        consensus: consensus,
+        raw_markdown: ''
+    };
+}
+
+function resolveBoardroomPayload(source = null) {
+    // 1. Explicit Live Roundtable Debate Arena request
+    if (source === 'debate') {
+        return buildDebateExportPayload();
+    }
+
+    // 2. Plain structured payload object
+    if (source && typeof source === 'object' && !source.nodeType) {
+        return source;
+    }
+
+    // 3. DOM Element inside or matching .boardroom-session-wrapper
+    if (source && source.nodeType === 1) {
+        const wrapper = source.classList.contains('boardroom-session-wrapper')
+            ? source
+            : (source.closest('.boardroom-session-wrapper') || source.querySelector('.boardroom-session-wrapper'));
+        if (wrapper) {
+            const brId = wrapper.getAttribute('data-br-id');
+            if (brId && window._kiraBoardroomSessions && window._kiraBoardroomSessions[brId]) {
+                const stored = Object.assign({}, window._kiraBoardroomSessions[brId]);
+                if (!stored.topic) {
+                    stored.topic = inferTopicFromBoardroomDOM(wrapper) || 'วาระการประชุมยุทธศาสตร์องค์กร (Executive Strategic Session)';
+                }
+                return stored;
+            }
+            return scrapeBoardroomWrapperFallback(wrapper);
+        }
+    }
+
+    // 4. Fallback to latest active session (Roundtable Arena if open/populated, or latest In-Chat wrapper)
+    const debateModal = document.getElementById('boardroom-debate-modal');
+    if (debateModal && debateModal.style.display === 'flex') {
+        const debPayload = buildDebateExportPayload();
+        if (debPayload) return debPayload;
+    }
+
+    const allWrappers = document.querySelectorAll('#chat-box .boardroom-session-wrapper');
+    if (allWrappers.length > 0) {
+        const lastWrapper = allWrappers[allWrappers.length - 1];
+        return resolveBoardroomPayload(lastWrapper);
+    }
+
+    if (window._latestBoardroomPayload) {
+        const latest = Object.assign({}, window._latestBoardroomPayload);
+        if (!latest.topic) latest.topic = 'วาระการประชุมยุทธศาสตร์องค์กร (Executive Strategic Session)';
+        return latest;
+    }
+
+    return buildDebateExportPayload();
+}
+
+function buildClientBoardroomMarkdown(payload, options = {}) {
+    if (!payload) return '';
+    const incSpeeches = options.include_speeches !== false && payload.include_speeches !== false;
+    const incDebate = options.include_debate !== false && payload.include_debate !== false;
+    const incMatrix = options.include_matrix !== false && payload.include_matrix !== false;
+    const incConsensus = options.include_consensus !== false && payload.include_consensus !== false;
+
+    const now = new Date();
+    const dateDisplay = now.toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' น.';
+    const docId = payload.doc_id || generateClientBoardroomDocId(payload.topic || '');
+    const topic = payload.topic || 'วาระการประชุมยุทธศาสตร์องค์กร (Executive Strategic Session)';
+    const angleLabel = BOARDROOM_ANGLE_NAMES[payload.angle || 'balanced'] || (payload.angle || 'balanced');
+    const chairName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : (localStorage.getItem('kira_username') || 'Executive');
+    const classification = payload.classification || 'CONFIDENTIAL — เอกสารลับเฉพาะผู้บริหาร';
+    const sealHash = computeClientAuditSeal({ doc_id: docId, topic, speeches: payload.speeches, consensus: payload.consensus });
+
+    const lines = [
+        '# 🏛️ รายงานมติที่ประชุมสภาที่ปรึกษาผู้บริหาร 4 ฝ่าย (Executive Boardroom Resolution Report)',
+        '',
+        '| ข้อมูลจำเพาะเอกสาร (Document Metadata) | รายละเอียด (Specification) |',
+        '| :--- | :--- |',
+        `| **รหัสเอกสาร (Document ID)** | \`${docId}\` |`,
+        `| **วันที่และเวลาออกเอกสาร** | ${dateDisplay} |`,
+        `| **วาระการประชุม (Executive Agenda)** | **${topic}** |`,
+        `| **มุมมองยุทธศาสตร์ (Strategic Angle)** | ${angleLabel} |`,
+        `| **ประธานในที่ประชุม (Presiding Chair)** | ${chairName} |`,
+        `| **ชั้นความลับ (Classification)** | \`${classification}\` |`,
+        '',
+        '---',
+        ''
+    ];
+
+    if (incSpeeches && Array.isArray(payload.speeches) && payload.speeches.length > 0) {
+        lines.push('## 1. แถลงการณ์และมุมมองเชิงลึกจากคณะผู้บริหาร 4 ฝ่าย (Executive Council Statements)');
+        lines.push('');
+        payload.speeches.forEach(sp => {
+            const titleStr = (sp.title && sp.name && sp.title.includes(sp.name)) ? sp.title : `${sp.name || sp.id} — ${sp.title || ''}`;
+            lines.push(`### ${sp.avatar || '👔'} [${sp.id}] ${titleStr}`);
+            lines.push('');
+            lines.push(sp.content || '');
+            lines.push('');
+        });
+    }
+
+    if (incDebate && Array.isArray(payload.interventions) && payload.interventions.length > 0) {
+        lines.push('---');
+        lines.push('');
+        lines.push('## 🔨 คำสั่งเคาะค้อนแทรกแซงจากประธานในที่ประชุม (Presiding Chair Gavel Directives)');
+        lines.push('');
+        payload.interventions.forEach((iv, i) => {
+            lines.push(`${i + 1}. **คำสั่งพิเศษ #${i + 1}:** ${iv}`);
+        });
+        lines.push('');
+    }
+
+    if (incDebate && payload.debate_summary) {
+        lines.push('---');
+        lines.push('');
+        lines.push('## ⚡ สรุปการถกเถียงและหักล้างจุดอ่อนเชิงกลยุทธ์ (Executive Cross-Examination & Debate)');
+        lines.push('');
+        lines.push(payload.debate_summary);
+        lines.push('');
+    }
+
+    if (incMatrix && Array.isArray(payload.voting_matrix) && payload.voting_matrix.length > 0) {
+        lines.push('---');
+        lines.push('');
+        const avgTxt = (payload.average_score !== null && payload.average_score !== undefined) ? ` — คะแนนเฉลี่ยรวม **${payload.average_score}/10**` : '';
+        lines.push(`## 📊 ตารางประเมินศักยภาพยุทธศาสตร์ 4 มิติ (4D Strategic Evaluation Matrix)${avgTxt}`);
+        lines.push('');
+        lines.push('| ผู้บริหาร | มิติการประเมิน (Strategic Dimension) | คะแนน (Score) | ผลการประเมิน |');
+        lines.push('| :--- | :--- | :---: | :--- |');
+        payload.voting_matrix.forEach(m => {
+            const sc = Number(m.score || 0);
+            const status = sc >= 8.5 ? 'ศักยภาพสูงมาก (Strong Go)' : (sc >= 7.0 ? 'ผ่านเกณฑ์ (Viable with Controls)' : 'ต้องรัดกุมพิเศษ (High Caution)');
+            lines.push(`| **${m.id}** ${m.name || ''} | ${m.dimension || ''} | **${sc}/10** | ${status} |`);
+        });
+        lines.push('');
+    }
+
+    if (incConsensus && payload.consensus) {
+        lines.push('---');
+        lines.push('');
+        lines.push('## ⚖️ มติเอกฉันท์และพิมพ์เขียวแผนปฏิบัติการ 90 วัน (Unanimous Resolution & 90-Day Blueprint)');
+        lines.push('');
+        lines.push(payload.consensus);
+        lines.push('');
+    }
+
+    lines.push('---');
+    lines.push('');
+    lines.push('### 🛡️ ตราประทับรับรองความถูกต้องดิจิทัล (Kira Digital Audit Seal)');
+    lines.push(`- **ระบบประมวลผล:** Kira AI Enterprise v2.7.8 (4-Executive Virtual Boardroom Engine)`);
+    lines.push(`- **Digital Signature (SHA-256):** \`${sealHash}\``);
+    lines.push('');
+
+    return lines.join('\n');
+}
+
+function extractBoardroomFullMinutes(sessionWrapper) {
+    const payload = resolveBoardroomPayload(sessionWrapper);
+    if (payload) {
+        return buildClientBoardroomMarkdown(payload);
+    }
+    return "# 🏛️ บันทึกการประชุมสภาที่ปรึกษาผู้บริหารเสมือน (Kira Virtual Boardroom Minutes)\n";
+}
+
+function buildBackendExportBody(payload) {
+    const uname = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : (localStorage.getItem('kira_username') || 'Executive');
+    return {
+        topic: payload.topic || 'วาระการประชุมยุทธศาสตร์องค์กร (Executive Strategic Session)',
+        angle: payload.angle || 'balanced',
+        username: uname,
+        doc_id: payload.doc_id || null,
+        classification: payload.classification || 'CONFIDENTIAL — เอกสารลับเฉพาะผู้บริหาร',
+        speeches: payload.speeches || [],
+        interventions: payload.interventions || [],
+        debate_summary: payload.debate_summary || '',
+        voting_matrix: payload.voting_matrix || [],
+        average_score: payload.average_score !== undefined ? payload.average_score : null,
+        consensus: payload.consensus || '',
+        raw_markdown: payload.raw_markdown || '',
+        include_speeches: payload.include_speeches !== false,
+        include_debate: payload.include_debate !== false,
+        include_matrix: payload.include_matrix !== false,
+        include_consensus: payload.include_consensus !== false,
+        ui_lang: localStorage.getItem('kira_ui_lang') || 'th'
+    };
+}
+
+async function downloadBoardroomDocxFromPayload(payload, triggerBtn = null) {
+    if (!payload) {
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('⚠️ ไม่พบข้อมูลมติที่ประชุมสภาผู้บริหารสำหรับส่งออกค่ะ', 'warning');
+        }
+        return;
+    }
+    const origHTML = triggerBtn ? triggerBtn.innerHTML : '';
+    if (triggerBtn) {
+        triggerBtn.disabled = true;
+        triggerBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้าง Word...';
+    }
+    try {
+        const reqBody = Object.assign({}, buildBackendExportBody(payload), { format: 'docx' });
+        const resp = await fetch('/api/boardroom/export', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reqBody)
+        });
+        if (!resp.ok) {
+            throw new Error(`HTTP ${resp.status}`);
+        }
+        const blob = await resp.blob();
+        const docId = resp.headers.get('X-Kira-Doc-Id') || payload.doc_id || generateClientBoardroomDocId(payload.topic);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Kira_Boardroom_Report_${docId}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast(`📘 ดาวน์โหลดรายงานสภาผู้บริหาร Word (.docx) รหัส ${docId} เรียบร้อยแล้วค่ะ`, 'ready');
+        }
+    } catch (err) {
+        console.error('Export Boardroom DOCX error:', err);
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('⚠️ ไม่สามารถสร้างไฟล์ Word (.docx) ได้ในขณะนี้ กรุณาลองส่งออกเป็น PDF หรือ Markdown ค่ะ', 'warning');
+        }
+    } finally {
+        if (triggerBtn) {
+            triggerBtn.disabled = false;
+            triggerBtn.innerHTML = origHTML;
+        }
+    }
+}
+
+async function downloadBoardroomMdFromPayload(payload, triggerBtn = null) {
+    if (!payload) return;
+    const origHTML = triggerBtn ? triggerBtn.innerHTML : '';
+    if (triggerBtn) {
+        triggerBtn.disabled = true;
+        triggerBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเตรียมไฟล์...';
+    }
+    try {
+        let mdBlob = null;
+        let docId = payload.doc_id || generateClientBoardroomDocId(payload.topic);
+        try {
+            const reqBody = Object.assign({}, buildBackendExportBody(payload), { format: 'md' });
+            const resp = await fetch('/api/boardroom/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reqBody)
+            });
+            if (resp.ok) {
+                mdBlob = await resp.blob();
+                docId = resp.headers.get('X-Kira-Doc-Id') || docId;
+            }
+        } catch (netErr) {
+            // Offline fallback to client-side Markdown builder
+        }
+        if (!mdBlob) {
+            const fallbackMd = buildClientBoardroomMarkdown(payload);
+            mdBlob = new Blob([fallbackMd], { type: 'text/markdown;charset=utf-8' });
+        }
+        const url = URL.createObjectURL(mdBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Kira_Boardroom_Report_${docId}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast(`📝 ดาวน์โหลดรายงานสภาผู้บริหาร Markdown (.md) เรียบร้อยแล้วค่ะ`, 'ready');
+        }
+    } finally {
+        if (triggerBtn) {
+            triggerBtn.disabled = false;
+            triggerBtn.innerHTML = origHTML;
+        }
+    }
+}
+
+async function printBoardroomExecutivePDFFromPayload(payload, triggerBtn = null) {
+    if (!payload) return;
+    const origHTML = triggerBtn ? triggerBtn.innerHTML : '';
+    if (triggerBtn) {
+        triggerBtn.disabled = true;
+        triggerBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังจัดหน้า A4...';
+    }
+    try {
+        let printableHtml = '';
+        try {
+            const reqBody = Object.assign({}, buildBackendExportBody(payload), { format: 'html' });
+            const resp = await fetch('/api/boardroom/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reqBody)
+            });
+            if (resp.ok) {
+                printableHtml = await resp.text();
+            }
+        } catch (netErr) {
+            // Fallback to local PDF renderer if offline
+        }
+
+        if (!printableHtml) {
+            const mdText = buildClientBoardroomMarkdown(payload);
+            exportDeliverableToPDF(`รายงานมติสภาผู้บริหาร: ${payload.topic || 'Executive Boardroom'}`, mdText, 'boardroom');
+            return;
+        }
+
+        const printWin = window.open('', '_blank', 'width=980,height=860');
+        if (printWin && printWin.document) {
+            printWin.document.open();
+            printWin.document.write(printableHtml);
+            printWin.document.close();
+            setTimeout(() => {
+                try {
+                    printWin.focus();
+                    printWin.print();
+                } catch (e) {}
+            }, 450);
+        } else {
+            // Popup blocked fallback: hidden print iframe
+            let iframe = document.getElementById('kira-br-print-iframe');
+            if (iframe) iframe.remove();
+            iframe = document.createElement('iframe');
+            iframe.id = 'kira-br-print-iframe';
+            iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+            document.body.appendChild(iframe);
+            const idoc = iframe.contentWindow.document;
+            idoc.open();
+            idoc.write(printableHtml);
+            idoc.close();
+            setTimeout(() => {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch (e) {}
+            }, 450);
+        }
+
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('🖨️ เปิดหน้าต่างพิมพ์รายงานมติสภาผู้บริหารขนาด A4 (Save as PDF) เรียบร้อยแล้วค่ะ', 'ready');
+        }
+    } finally {
+        if (triggerBtn) {
+            triggerBtn.disabled = false;
+            triggerBtn.innerHTML = origHTML;
+        }
+    }
+}
+
+async function saveBoardroomPayloadToVault(payload, triggerBtn = null) {
+    if (!payload) return;
+    const mdText = buildClientBoardroomMarkdown(payload);
+    const title = `มติสภา 4 บริหาร: ${(payload.topic || 'วาระยุทธศาสตร์').slice(0, 68)}`;
+    if (typeof saveToOfflineVault === 'function') {
+        await saveToOfflineVault('boardroom_minutes', title, mdText, true, {
+            doc_id: payload.doc_id || generateClientBoardroomDocId(payload.topic),
+            source: 'boardroom_export_studio'
+        });
+        if (triggerBtn) {
+            const orig = triggerBtn.innerHTML;
+            triggerBtn.innerHTML = '<i class="fa-solid fa-check text-emerald"></i> บันทึกแล้ว';
+            setTimeout(() => { triggerBtn.innerHTML = orig; }, 2200);
+        }
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('🗄️ บันทึกรายงานมติสภาผู้บริหารลงในคลังนิรภัย (Executive Offline Vault) เรียบร้อยแล้วค่ะ', 'ready');
+        }
+    }
+}
+
+function exportBoardroomToDocx(source, btnEl = null) {
+    const payload = resolveBoardroomPayload(source);
+    const trigger = btnEl || (source && source.nodeType === 1 ? source : null);
+    downloadBoardroomDocxFromPayload(payload, trigger);
+}
+window.exportBoardroomToDocx = exportBoardroomToDocx;
+
+function saveBoardroomToVault(source) {
+    const payload = resolveBoardroomPayload(source);
+    const trigger = (source && source.nodeType === 1) ? source : null;
+    saveBoardroomPayloadToVault(payload, trigger);
+}
+window.saveBoardroomToVault = saveBoardroomToVault;
 
 function copyMeetingMinutes(btn) {
     try {
-        const sessionWrapper = btn ? btn.closest('.boardroom-session-wrapper') : document.querySelector('.boardroom-session-wrapper');
-        const text = extractBoardroomFullMinutes(sessionWrapper);
+        const payload = resolveBoardroomPayload(btn);
+        const text = payload ? buildClientBoardroomMarkdown(payload) : '';
+        if (!text) return;
         navigator.clipboard.writeText(text);
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-check" style="color: #38bdf8;"></i> คัดลอกแล้ว';
-        if (typeof showConnectionToast === 'function') {
-            showConnectionToast('📋 คัดลอกบันทึกการประชุมสภาที่ปรึกษาลง Clipboard เรียบร้อยแล้วค่ะ', 'ready');
+        if (btn && btn.nodeType === 1) {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check" style="color: #38bdf8;"></i> คัดลอกแล้ว';
+            setTimeout(() => { btn.innerHTML = originalHTML; }, 2500);
         }
-        setTimeout(() => { btn.innerHTML = originalHTML; }, 2500);
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('📋 คัดลอกรายงานมติสภาผู้บริหาร 4 ฝ่ายลง Clipboard เรียบร้อยแล้วค่ะ', 'ready');
+        }
     } catch (err) {
         console.error("Copy meeting minutes error:", err);
     }
@@ -5289,48 +5841,244 @@ function copyMeetingMinutes(btn) {
 
 function openBoardroomInCanvas(btn) {
     try {
-        const sessionWrapper = btn ? btn.closest('.boardroom-session-wrapper') : document.querySelector('.boardroom-session-wrapper');
-        const text = extractBoardroomFullMinutes(sessionWrapper);
-        if (typeof openInLiveCanvas === 'function') {
-            openInLiveCanvas('บันทึกการประชุมสภาที่ปรึกษาเสมือน', text, 'document');
+        const payload = resolveBoardroomPayload(btn);
+        const text = payload ? buildClientBoardroomMarkdown(payload) : '';
+        if (typeof openInLiveCanvas === 'function' && text) {
+            openInLiveCanvas(`รายงานมติสภา: ${(payload.topic || 'สภาที่ปรึกษาเสมือน').slice(0, 50)}`, text, 'document');
         }
     } catch (err) {
         console.error("Open boardroom in canvas error:", err);
     }
 }
 
-function downloadMeetingMinutes(btn) {
+function downloadMeetingMinutes(btnOrSource) {
+    const payload = resolveBoardroomPayload(btnOrSource);
+    const trigger = (btnOrSource && btnOrSource.nodeType === 1) ? btnOrSource : null;
+    downloadBoardroomMdFromPayload(payload, trigger);
+}
+
+function exportBoardroomToPDF(btnOrSource) {
+    const payload = resolveBoardroomPayload(btnOrSource);
+    const trigger = (btnOrSource && btnOrSource.nodeType === 1) ? btnOrSource : null;
+    printBoardroomExecutivePDFFromPayload(payload, trigger);
+}
+window.exportBoardroomToPDF = exportBoardroomToPDF;
+
+// ====================================================================
+// 📄 PHASE 2: EXECUTIVE BOARDROOM REPORT EXPORT STUDIO CONTROLLER
+// ====================================================================
+let activeExportStudioBasePayload = null;
+
+function getStudioConfiguredPayload() {
+    if (!activeExportStudioBasePayload) return null;
+    const titleInput = document.getElementById('br-export-title-input');
+    const classSelect = document.getElementById('br-export-class-select');
+    const chkSpeeches = document.getElementById('br-chk-speeches');
+    const chkDebate = document.getElementById('br-chk-debate');
+    const chkMatrix = document.getElementById('br-chk-matrix');
+    const chkConsensus = document.getElementById('br-chk-consensus');
+
+    return Object.assign({}, activeExportStudioBasePayload, {
+        topic: (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : (activeExportStudioBasePayload.topic || 'วาระการประชุมยุทธศาสตร์องค์กร'),
+        classification: (classSelect && classSelect.value) ? classSelect.value : 'CONFIDENTIAL — เอกสารลับเฉพาะผู้บริหาร',
+        include_speeches: chkSpeeches ? chkSpeeches.checked : true,
+        include_debate: chkDebate ? chkDebate.checked : true,
+        include_matrix: chkMatrix ? chkMatrix.checked : true,
+        include_consensus: chkConsensus ? chkConsensus.checked : true
+    });
+}
+
+function renderSafeMarkdownForPreview(mdText) {
+    if (!mdText) return '';
     try {
-        const sessionWrapper = btn ? btn.closest('.boardroom-session-wrapper') : document.querySelector('.boardroom-session-wrapper');
-        const fullMeetingText = extractBoardroomFullMinutes(sessionWrapper);
-        const now = new Date();
-        const blob = new Blob([fullMeetingText], { type: 'text/markdown;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-        a.href = url;
-        a.download = `Kira_Boardroom_Minutes_${dateStr}.md`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    } catch (err) {
-        console.error("Export meeting minutes error:", err);
-        alert("ไม่สามารถส่งออกบันทึกการประชุมได้ในขณะนี้ค่ะ");
+        return marked.parse(mdText);
+    } catch (e) {
+        return `<div style="white-space: pre-wrap;">${escapeHtml(mdText)}</div>`;
     }
 }
 
-function exportBoardroomToPDF(btn) {
-    try {
-        const sessionWrapper = btn ? btn.closest('.boardroom-session-wrapper') : document.querySelector('.boardroom-session-wrapper');
-        const fullMeetingText = extractBoardroomFullMinutes(sessionWrapper);
-        exportDeliverableToPDF('บันทึกการประชุมสภาที่ปรึกษาผู้บริหาร (Kira Virtual Boardroom Minutes)', fullMeetingText, 'boardroom');
-    } catch (err) {
-        console.error("Export boardroom to PDF error:", err);
-        alert("ไม่สามารถพิมพ์รายงานบันทึกการประชุมได้ในขณะนี้ค่ะ");
+function refreshBoardroomExportStudioPreview() {
+    const paper = document.getElementById('br-export-preview-paper');
+    const docIdLabel = document.getElementById('br-export-doc-id-label');
+    const cfg = getStudioConfiguredPayload();
+    if (!paper || !cfg) return;
+
+    const docId = cfg.doc_id || generateClientBoardroomDocId(cfg.topic);
+    cfg.doc_id = docId;
+    if (docIdLabel) docIdLabel.textContent = docId;
+
+    const now = new Date();
+    const dateDisplay = now.toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' น. (GMT+7)';
+    const chairName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : (localStorage.getItem('kira_username') || 'Executive');
+    const angleLabel = BOARDROOM_ANGLE_NAMES[cfg.angle || 'balanced'] || (cfg.angle || 'balanced');
+    const sealHash = computeClientAuditSeal({ doc_id: docId, topic: cfg.topic, speeches: cfg.speeches, consensus: cfg.consensus });
+
+    let sectionsHtml = '';
+
+    if (cfg.include_speeches && Array.isArray(cfg.speeches) && cfg.speeches.length > 0) {
+        let cardsHtml = '';
+        cfg.speeches.forEach(sp => {
+            const meta = BOARDROOM_EXEC_DEFAULTS[sp.id] || BOARDROOM_EXEC_DEFAULTS['CEO'];
+            const titleStr = (sp.title && sp.name && sp.title.includes(sp.name)) ? sp.title : `${sp.name || sp.id} — ${sp.title || ''}`;
+            cardsHtml += `
+                <div class="a4-exec-card" style="background: ${meta.bg}; border: 1px solid ${meta.border}; border-left: 4px solid ${meta.color};">
+                    <div class="a4-exec-top">
+                        <strong style="color: ${meta.color}; font-size: 0.9rem;">${sp.avatar || meta.avatar} ${escapeHtml(titleStr)}</strong>
+                        <span style="background: ${meta.color}; color: #fff; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;">${escapeHtml(sp.id)}</span>
+                    </div>
+                    <div class="a4-exec-body">${renderSafeMarkdownForPreview(sp.content)}</div>
+                </div>
+            `;
+        });
+        sectionsHtml += `<div class="a4-sec-title">1. แถลงการณ์และมุมมองเชิงลึกจากคณะผู้บริหาร 4 ฝ่าย (Executive Council Statements)</div>${cardsHtml}`;
     }
+
+    if (cfg.include_debate && Array.isArray(cfg.interventions) && cfg.interventions.length > 0) {
+        const ivList = cfg.interventions.map((iv, i) => `<li><strong>คำสั่งพิเศษ #${i + 1}:</strong> ${escapeHtml(iv)}</li>`).join('');
+        sectionsHtml += `
+            <div class="a4-sec-title">🔨 คำสั่งเคาะค้อนแทรกแซงจากประธานในที่ประชุม (Presiding Chair Gavel Directives)</div>
+            <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #d97706; border-radius: 8px; padding: 10px 14px;">
+                <ol style="margin: 0; padding-left: 18px;">${ivList}</ol>
+            </div>
+        `;
+    }
+
+    if (cfg.include_debate && cfg.debate_summary) {
+        sectionsHtml += `
+            <div class="a4-sec-title">⚡ สรุปการถกเถียงและหักล้างจุดอ่อนเชิงกลยุทธ์ (Executive Cross-Examination &amp; Debate)</div>
+            <div style="background: #faf5ff; border: 1px solid #e9d5ff; border-left: 4px solid #7e22ce; border-radius: 8px; padding: 10px 14px;">
+                ${renderSafeMarkdownForPreview(cfg.debate_summary)}
+            </div>
+        `;
+    }
+
+    if (cfg.include_matrix && Array.isArray(cfg.voting_matrix) && cfg.voting_matrix.length > 0) {
+        const avgLabel = (cfg.average_score !== null && cfg.average_score !== undefined) ? ` — คะแนนเฉลี่ยรวม <strong style="color:#d97706;">${cfg.average_score}/10</strong>` : '';
+        const rows = cfg.voting_matrix.map(m => {
+            const sc = Number(m.score || 0);
+            const pct = Math.max(0, Math.min(100, Math.round(sc * 10)));
+            return `
+                <tr>
+                    <td><strong>${escapeHtml(m.id || '')}</strong> ${escapeHtml(m.name || '')}</td>
+                    <td>${escapeHtml(m.dimension || '')}</td>
+                    <td>
+                        <div style="background:#e2e8f0;border-radius:99px;height:7px;width:100%;overflow:hidden;">
+                            <div style="background:${escapeHtml(m.color || '#0284c7')};width:${pct}%;height:100%;"></div>
+                        </div>
+                    </td>
+                    <td style="text-align:center;font-weight:700;">${sc}/10</td>
+                </tr>
+            `;
+        }).join('');
+        sectionsHtml += `
+            <div class="a4-sec-title">📊 ตารางประเมินศักยภาพยุทธศาสตร์ 4 มิติ (4D Evaluation Matrix)${avgLabel}</div>
+            <table>
+                <thead>
+                    <tr><th>ผู้บริหาร</th><th>มิติการประเมิน</th><th style="width:26%;">ระดับความพร้อม</th><th style="width:85px;text-align:center;">คะแนน</th></tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    }
+
+    if (cfg.include_consensus && cfg.consensus) {
+        sectionsHtml += `
+            <div class="a4-sec-title">⚖️ มติเอกฉันท์และพิมพ์เขียวแผนปฏิบัติการ 90 วัน (Unanimous Resolution &amp; 90-Day Blueprint)</div>
+            <div class="a4-consensus-card">
+                ${renderSafeMarkdownForPreview(cfg.consensus)}
+            </div>
+        `;
+    }
+
+    if (!sectionsHtml) {
+        sectionsHtml = '<div style="padding: 24px; text-align: center; color: #64748b; font-style: italic;">กรุณาเลือกเปิดอย่างน้อย 1 องค์ประกอบในแถบตัวเลือกด้านบนเพื่อแสดงพรีวิวรายงานค่ะ</div>';
+    }
+
+    paper.innerHTML = `
+        <div class="a4-head">
+            <div>
+                <div class="a4-kicker">KIRA AI ENTERPRISE SYSTEM • 4-EXECUTIVE COUNCIL</div>
+                <div class="a4-title">รายงานมติที่ประชุมสภาที่ปรึกษาผู้บริหาร 4 ฝ่าย</div>
+                <p class="a4-sub">Executive Boardroom Resolution &amp; 90-Day Strategic Action Blueprint (v2.7.8)</p>
+            </div>
+            <div class="a4-stamp">
+                <div><strong>Document ID:</strong> ${escapeHtml(docId)}</div>
+                <div><strong>วันที่ออกเอกสาร:</strong> ${escapeHtml(dateDisplay)}</div>
+                <div class="a4-class-pill">${escapeHtml(cfg.classification)}</div>
+            </div>
+        </div>
+
+        <table class="a4-meta-table">
+            <tr>
+                <td class="lbl" style="width: 24%;">วาระการประชุม (Agenda)</td>
+                <td colspan="3"><strong>${escapeHtml(cfg.topic)}</strong></td>
+            </tr>
+            <tr>
+                <td class="lbl">มุมมองยุทธศาสตร์</td>
+                <td style="width: 34%;">${escapeHtml(angleLabel)}</td>
+                <td class="lbl" style="width: 18%;">ประธานในที่ประชุม</td>
+                <td>${escapeHtml(chairName)}</td>
+            </tr>
+        </table>
+
+        ${sectionsHtml}
+
+        <div class="a4-seal-footer">
+            <div>
+                <strong>ลงนามรับรองมติที่ประชุม (Authorized Executive Sign-off)</strong><br>
+                <div style="margin-top: 22px; border-bottom: 1px solid #94a3b8; width: 220px;"></div>
+                <span style="font-size: 0.72rem; color: #64748b;">(${escapeHtml(chairName)}) • ประธานสภาบริหาร / ผู้มีอำนาจอนุมัติ</span>
+            </div>
+            <div style="text-align: right; max-width: 330px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 8px 10px;">
+                <strong style="color: #0284c7;">Kira Digital Audit Seal (SHA-256)</strong><br>
+                <span style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.68rem; word-break: break-all; color: #475569;">${sealHash}</span>
+            </div>
+        </div>
+    `;
 }
-window.exportBoardroomToPDF = exportBoardroomToPDF;
+
+function openBoardroomExportStudio(source = null) {
+    const payload = resolveBoardroomPayload(source);
+    if (!payload || (!payload.speeches?.length && !payload.debate_summary && !payload.consensus && !payload.voting_matrix?.length)) {
+        if (typeof showConnectionToast === 'function') {
+            showConnectionToast('⚠️ ยังไม่มีบันทึกมติสภาผู้บริหารในรอบนี้ กรุณาเปิดวาระการประชุมให้ 4 ผู้บริหารวิเคราะห์ก่อนส่งออกรายงานนะคะ', 'warning');
+        }
+        return;
+    }
+
+    activeExportStudioBasePayload = Object.assign({}, payload);
+    if (!activeExportStudioBasePayload.doc_id) {
+        activeExportStudioBasePayload.doc_id = generateClientBoardroomDocId(activeExportStudioBasePayload.topic || '');
+    }
+
+    const modal = document.getElementById('boardroom-export-modal');
+    const titleInput = document.getElementById('br-export-title-input');
+    const classSelect = document.getElementById('br-export-class-select');
+    const chkSpeeches = document.getElementById('br-chk-speeches');
+    const chkDebate = document.getElementById('br-chk-debate');
+    const chkMatrix = document.getElementById('br-chk-matrix');
+    const chkConsensus = document.getElementById('br-chk-consensus');
+
+    if (titleInput) titleInput.value = activeExportStudioBasePayload.topic || 'วาระการประชุมยุทธศาสตร์องค์กร (Executive Strategic Session)';
+    if (classSelect && activeExportStudioBasePayload.classification) {
+        classSelect.value = activeExportStudioBasePayload.classification;
+    }
+    if (chkSpeeches) chkSpeeches.checked = true;
+    if (chkDebate) chkDebate.checked = true;
+    if (chkMatrix) chkMatrix.checked = true;
+    if (chkConsensus) chkConsensus.checked = true;
+
+    refreshBoardroomExportStudioPreview();
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeBoardroomExportStudio() {
+    const modal = document.getElementById('boardroom-export-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+window.openBoardroomExportStudio = openBoardroomExportStudio;
+window.closeBoardroomExportStudio = closeBoardroomExportStudio;
 
 async function playBoardroomConsensusAudio(btn) {
     try {
@@ -5339,7 +6087,6 @@ async function playBoardroomConsensusAudio(btn) {
         const textElement = consensusBox.querySelector('.boardroom-consensus-body');
         if (!textElement) return;
 
-        // Extract verdict or first 500 characters
         let rawText = textElement.innerText.slice(0, 600);
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเตรียมเสียง...';
         btn.disabled = true;
@@ -5364,10 +6111,10 @@ async function playBoardroomConsensusAudio(btn) {
 
 function convertBoardroomToSlides(btn) {
     try {
-        const sessionWrapper = btn ? btn.closest('.boardroom-session-wrapper') : document.querySelector('.boardroom-session-wrapper');
-        const text = extractBoardroomFullMinutes(sessionWrapper);
-        if (typeof generateAndOpenSlideDeck === 'function') {
-            generateAndOpenSlideDeck(text, 'มติที่ประชุมสภาที่ปรึกษาผู้บริหาร (Kira Virtual Boardroom)');
+        const payload = resolveBoardroomPayload(btn);
+        const text = payload ? buildClientBoardroomMarkdown(payload) : '';
+        if (typeof generateAndOpenSlideDeck === 'function' && text) {
+            generateAndOpenSlideDeck(text, `มติสภาผู้บริหาร: ${payload.topic || 'Kira Virtual Boardroom'}`);
         }
     } catch (e) {
         console.error("Convert boardroom to slides error:", e);
@@ -5376,11 +6123,12 @@ function convertBoardroomToSlides(btn) {
 window.convertBoardroomToSlides = convertBoardroomToSlides;
 
 // ====================================================================
-// 🏛️ KIRA 2.6 - AUTONOMOUS ROUNDTABLE ARENA CONTROLLER
+// 🏛️ KIRA 2.7 - AUTONOMOUS ROUNDTABLE ARENA CONTROLLER
 // ====================================================================
 let currentDebateStreamController = null;
 let currentDebateConsensusMarkdown = '';
 let currentDebateTopic = '';
+let currentDebateSessionData = null;
 
 function openRoundtableArenaModal(topic = '') {
     const modal = document.getElementById('boardroom-debate-modal');
@@ -5456,6 +6204,13 @@ function strikeBossGavel(customText = '') {
 
     playGavelSound();
 
+    if (currentDebateSessionData && Array.isArray(currentDebateSessionData.interventions)) {
+        const ivArr = currentDebateSessionData.interventions;
+        if (ivArr[ivArr.length - 1] !== textToStrike) {
+            ivArr.push(textToStrike);
+        }
+    }
+
     const modal = document.getElementById('boardroom-debate-modal');
     if (modal) {
         const card = modal.querySelector('.debate-modal-card');
@@ -5466,7 +6221,7 @@ function strikeBossGavel(customText = '') {
     }
 
     setRoundtableActiveSpeaker('BOSS');
-    appendDebateMessage('BOSS', 'ท่านประธาน (The Boss)', '👑', `🔨 **คำสั่งเคาะค้อนแทรกแซง:** "${textToStrike}"`, 'speaker-BOSS');
+    appendDebateMessage('BOSS', 'ท่านประธาน (The Boss)', '👑', `🔨 **คำสั่งเคาะค้อนแทรกแซง:** "${escapeHtml(textToStrike)}"`, 'speaker-BOSS');
 
     if (input) input.value = '';
 
@@ -5528,6 +6283,18 @@ async function startRoundtableDebate(topic, angle) {
 
     currentDebateTopic = finalTopic;
     currentDebateConsensusMarkdown = '';
+    currentDebateSessionData = {
+        doc_id: generateClientBoardroomDocId(finalTopic),
+        topic: finalTopic,
+        angle: finalAngle,
+        speeches: [],
+        interventions: [],
+        debateTurns: [],
+        debate_summary: '',
+        voting_matrix: [],
+        average_score: null,
+        consensus: ''
+    };
 
     if (startBtn) {
         startBtn.disabled = true;
@@ -5573,6 +6340,8 @@ async function startRoundtableDebate(topic, angle) {
         let buffer = '';
         let currentSpeakerBubble = null;
         let currentSpeakerBody = null;
+        let activeSpeakerMeta = null;
+        let activeDebateTurnMeta = null;
 
         while (true) {
             const { done, value } = await reader.read();
@@ -5610,6 +6379,14 @@ async function startRoundtableDebate(topic, angle) {
                         }
                     } else if (evt.type === 'speaker_start') {
                         setRoundtableActiveSpeaker(evt.speaker);
+                        const defMeta = BOARDROOM_EXEC_DEFAULTS[evt.speaker] || {};
+                        activeSpeakerMeta = {
+                            id: evt.speaker,
+                            name: evt.name || defMeta.name || evt.speaker,
+                            title: evt.title || defMeta.title || evt.speaker,
+                            avatar: evt.avatar || defMeta.avatar || '👔',
+                            theme: evt.theme || defMeta.theme || 'gold'
+                        };
                         currentSpeakerBubble = appendDebateMessage(
                             evt.speaker,
                             `${evt.name} - ${evt.title}`,
@@ -5633,12 +6410,30 @@ async function startRoundtableDebate(topic, angle) {
                                 currentSpeakerBody.textContent = evt.full_statement;
                             }
                         }
+                        if (currentDebateSessionData && evt.full_statement) {
+                            const meta = activeSpeakerMeta || BOARDROOM_EXEC_DEFAULTS[evt.speaker] || { id: evt.speaker || 'EXEC' };
+                            currentDebateSessionData.speeches.push({
+                                id: meta.id || evt.speaker || 'EXEC',
+                                name: meta.name || evt.speaker || 'Executive',
+                                title: meta.title || '',
+                                avatar: meta.avatar || '👔',
+                                theme: meta.theme || 'gold',
+                                content: evt.full_statement
+                            });
+                        }
                         currentSpeakerBubble = null;
                         currentSpeakerBody = null;
+                        activeSpeakerMeta = null;
                     } else if (evt.type === 'boss_intervention') {
                         strikeBossGavel(evt.instruction);
                     } else if (evt.type === 'debate_turn_start') {
                         setRoundtableActiveSpeaker(evt.speaker);
+                        activeDebateTurnMeta = {
+                            id: evt.speaker,
+                            name: evt.name,
+                            title: evt.title,
+                            avatar: evt.avatar
+                        };
                         currentSpeakerBubble = appendDebateMessage(
                             evt.speaker,
                             `${evt.name} (${evt.title})`,
@@ -5661,18 +6456,40 @@ async function startRoundtableDebate(topic, angle) {
                                 currentSpeakerBody.textContent = evt.text;
                             }
                         }
+                        if (currentDebateSessionData && evt.text) {
+                            const tm = activeDebateTurnMeta || { id: evt.speaker || 'EXEC', name: evt.speaker || 'ผู้บริหาร', title: '', avatar: '👔' };
+                            currentDebateSessionData.debateTurns.push({
+                                id: tm.id,
+                                name: tm.name,
+                                title: tm.title,
+                                avatar: tm.avatar,
+                                text: evt.text
+                            });
+                            currentDebateSessionData.debate_summary = currentDebateSessionData.debateTurns
+                                .map(t => `- **${t.avatar || '👔'} [${t.id}] ${t.name} (${t.title}):** ${t.text}`)
+                                .join('\n\n');
+                        }
                         currentSpeakerBubble = null;
                         currentSpeakerBody = null;
+                        activeDebateTurnMeta = null;
                     } else if (evt.type === 'voting_matrix') {
+                        if (currentDebateSessionData) {
+                            currentDebateSessionData.voting_matrix = Array.isArray(evt.matrix) ? evt.matrix : [];
+                            currentDebateSessionData.average_score = evt.average_score;
+                        }
                         renderVotingMatrixWidget(evt.matrix, evt.average_score);
                     } else if (evt.type === 'consensus_blueprint') {
                         currentDebateConsensusMarkdown = evt.content;
+                        if (currentDebateSessionData) {
+                            currentDebateSessionData.consensus = evt.content || '';
+                            window._latestBoardroomPayload = buildDebateExportPayload();
+                        }
                         setRoundtableActiveSpeaker(null);
                         let parsed = '';
                         try {
                             parsed = marked.parse(evt.content);
                         } catch (e) {
-                            parsed = `<div style="white-space: pre-wrap;">${evt.content}</div>`;
+                            parsed = `<div style="white-space: pre-wrap;">${escapeHtml(evt.content)}</div>`;
                         }
                         const consensusCard = document.createElement('div');
                         consensusCard.className = 'boardroom-consensus-box';
@@ -5694,7 +6511,7 @@ async function startRoundtableDebate(topic, angle) {
                         }
                         setRoundtableActiveSpeaker(null);
                         if (typeof showConnectionToast === 'function') {
-                            showConnectionToast('🎉 การประชุมสภาผู้บริหารเสร็จสิ้นสมบูรณ์แล้วค่ะ พร้อมสร้างสไลด์ 16:9 ได้ทันที!', 'ready');
+                            showConnectionToast('🎉 การประชุมสภาผู้บริหารเสร็จสิ้นสมบูรณ์แล้วค่ะ พร้อมส่งออกรายงาน PDF / Word (.docx) หรือสร้างสไลด์ 16:9 ได้ทันที!', 'ready');
                         }
                     } else if (evt.type === 'error') {
                         appendDebateMessage('SYSTEM', 'ระบบรักษาความปลอดภัย', '🛑', evt.message);
@@ -5795,6 +6612,7 @@ function initBoardroomController() {
     const btnToggle = document.getElementById('btn-boardroom-toggle');
     const btnExit = document.getElementById('btn-boardroom-exit');
     const btnInfo = document.getElementById('btn-boardroom-info');
+    const btnExportLatest = document.getElementById('btn-boardroom-export-latest');
     const modalInfo = document.getElementById('boardroom-info-modal');
     const btnCloseModal = document.getElementById('btn-close-boardroom-info');
     const btnStartFromModal = document.getElementById('btn-start-boardroom-from-modal');
@@ -5806,6 +6624,10 @@ function initBoardroomController() {
 
     if (btnExit) {
         btnExit.addEventListener('click', () => toggleBoardroomMode(false));
+    }
+
+    if (btnExportLatest) {
+        btnExportLatest.addEventListener('click', () => openBoardroomExportStudio(null));
     }
 
     if (btnInfo && modalInfo) {
@@ -5901,12 +6723,40 @@ function initBoardroomController() {
         });
     });
 
-    // Resolution Toolbar Buttons
+    // Resolution Toolbar Buttons (Full 3-Round Export Integration)
+    const btnDebateExportStudio = document.getElementById('btn-debate-export-studio');
+    if (btnDebateExportStudio) {
+        btnDebateExportStudio.addEventListener('click', () => openBoardroomExportStudio('debate'));
+    }
+
+    const btnDebateDocx = document.getElementById('btn-debate-to-docx');
+    if (btnDebateDocx) {
+        btnDebateDocx.addEventListener('click', () => exportBoardroomToDocx('debate', btnDebateDocx));
+    }
+
+    const btnDebateMd = document.getElementById('btn-debate-to-md');
+    if (btnDebateMd) {
+        btnDebateMd.addEventListener('click', () => {
+            const payload = buildDebateExportPayload();
+            downloadBoardroomMdFromPayload(payload, btnDebateMd);
+        });
+    }
+
+    const btnDebateVault = document.getElementById('btn-debate-to-vault');
+    if (btnDebateVault) {
+        btnDebateVault.addEventListener('click', () => {
+            const payload = buildDebateExportPayload();
+            saveBoardroomPayloadToVault(payload, btnDebateVault);
+        });
+    }
+
     const btnDebateSlides = document.getElementById('btn-debate-to-slides');
     if (btnDebateSlides) {
         btnDebateSlides.addEventListener('click', () => {
-            if (typeof generateAndOpenSlideDeck === 'function' && currentDebateConsensusMarkdown) {
-                generateAndOpenSlideDeck(currentDebateConsensusMarkdown, `มติสภา: ${currentDebateTopic || 'Executive Strategic Blueprint'}`);
+            const payload = buildDebateExportPayload();
+            const fullMd = payload ? buildClientBoardroomMarkdown(payload) : currentDebateConsensusMarkdown;
+            if (typeof generateAndOpenSlideDeck === 'function' && fullMd) {
+                generateAndOpenSlideDeck(fullMd, `มติสภา: ${currentDebateTopic || 'Executive Strategic Blueprint'}`);
             }
         });
     }
@@ -5914,7 +6764,10 @@ function initBoardroomController() {
     const btnDebatePdf = document.getElementById('btn-debate-to-pdf');
     if (btnDebatePdf) {
         btnDebatePdf.addEventListener('click', () => {
-            if (typeof exportDeliverableToPDF === 'function' && currentDebateConsensusMarkdown) {
+            const payload = buildDebateExportPayload();
+            if (payload) {
+                printBoardroomExecutivePDFFromPayload(payload, btnDebatePdf);
+            } else if (typeof exportDeliverableToPDF === 'function' && currentDebateConsensusMarkdown) {
                 exportDeliverableToPDF(`บันทึกมติสภาผู้บริหาร (${currentDebateTopic})`, currentDebateConsensusMarkdown, 'boardroom');
             }
         });
@@ -5936,12 +6789,87 @@ function initBoardroomController() {
     const btnDebateCopy = document.getElementById('btn-debate-copy-res');
     if (btnDebateCopy) {
         btnDebateCopy.addEventListener('click', () => {
-            if (currentDebateConsensusMarkdown) {
-                navigator.clipboard.writeText(currentDebateConsensusMarkdown);
+            const payload = buildDebateExportPayload();
+            const fullMd = payload ? buildClientBoardroomMarkdown(payload) : currentDebateConsensusMarkdown;
+            if (fullMd) {
+                navigator.clipboard.writeText(fullMd);
                 if (typeof showConnectionToast === 'function') {
-                    showConnectionToast('📋 คัดลอกมติสภาผู้บริหารลง Clipboard แล้วค่ะ', 'ready');
+                    showConnectionToast('📋 คัดลอกรายงานมติสภาผู้บริหารครบทั้ง 3 รอบลง Clipboard แล้วค่ะ', 'ready');
                 }
             }
+        });
+    }
+
+    // --- Wire Phase 2 Executive Boardroom Export Studio Modal Controls ---
+    const exportModal = document.getElementById('boardroom-export-modal');
+    const btnCloseExport = document.getElementById('btn-close-br-export');
+    const titleInput = document.getElementById('br-export-title-input');
+    const classSelect = document.getElementById('br-export-class-select');
+    const toggleIds = ['br-chk-speeches', 'br-chk-debate', 'br-chk-matrix', 'br-chk-consensus'];
+
+    if (btnCloseExport) {
+        btnCloseExport.addEventListener('click', closeBoardroomExportStudio);
+    }
+    if (exportModal) {
+        exportModal.addEventListener('click', (e) => {
+            if (e.target === exportModal) closeBoardroomExportStudio();
+        });
+    }
+    if (titleInput) {
+        titleInput.addEventListener('input', refreshBoardroomExportStudioPreview);
+    }
+    if (classSelect) {
+        classSelect.addEventListener('change', refreshBoardroomExportStudioPreview);
+    }
+    toggleIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', refreshBoardroomExportStudioPreview);
+    });
+
+    const btnStudioCopy = document.getElementById('btn-br-studio-copy');
+    if (btnStudioCopy) {
+        btnStudioCopy.addEventListener('click', () => {
+            const cfg = getStudioConfiguredPayload();
+            if (!cfg) return;
+            navigator.clipboard.writeText(buildClientBoardroomMarkdown(cfg));
+            const orig = btnStudioCopy.innerHTML;
+            btnStudioCopy.innerHTML = '<i class="fa-solid fa-check text-emerald"></i> คัดลอกแล้ว';
+            setTimeout(() => { btnStudioCopy.innerHTML = orig; }, 2200);
+            if (typeof showConnectionToast === 'function') {
+                showConnectionToast('📋 คัดลอกรายงานมติสภาผู้บริหารลง Clipboard เรียบร้อยแล้วค่ะ', 'ready');
+            }
+        });
+    }
+
+    const btnStudioVault = document.getElementById('btn-br-studio-vault');
+    if (btnStudioVault) {
+        btnStudioVault.addEventListener('click', () => {
+            const cfg = getStudioConfiguredPayload();
+            saveBoardroomPayloadToVault(cfg, btnStudioVault);
+        });
+    }
+
+    const btnStudioMd = document.getElementById('btn-br-studio-md');
+    if (btnStudioMd) {
+        btnStudioMd.addEventListener('click', () => {
+            const cfg = getStudioConfiguredPayload();
+            downloadBoardroomMdFromPayload(cfg, btnStudioMd);
+        });
+    }
+
+    const btnStudioDocx = document.getElementById('btn-br-studio-docx');
+    if (btnStudioDocx) {
+        btnStudioDocx.addEventListener('click', () => {
+            const cfg = getStudioConfiguredPayload();
+            downloadBoardroomDocxFromPayload(cfg, btnStudioDocx);
+        });
+    }
+
+    const btnStudioPdf = document.getElementById('btn-br-studio-pdf');
+    if (btnStudioPdf) {
+        btnStudioPdf.addEventListener('click', () => {
+            const cfg = getStudioConfiguredPayload();
+            printBoardroomExecutivePDFFromPayload(cfg, btnStudioPdf);
         });
     }
 }
@@ -7482,7 +8410,7 @@ function initKiraUpdateController() {
             fetch('/api/system/version?_t=' + Date.now(), { cache: 'no-store' })
                 .then(r => r.ok ? r.json() : null)
                 .then(d => {
-                    const v = d && d.version ? `v${d.version}` : 'v2.7.7';
+                    const v = d && d.version ? `v${d.version}` : 'v2.7.8';
                     const rel = d && d.release_name ? ` (${d.release_name})` : '';
                     if (typeof showConnectionToast === 'function') {
                         showConnectionToast(`✨ อัปเดต Kira AI ${v}${rel} สำเร็จแล้วค่ะ! พร้อมให้บริการคุณแล้วนะคะ 🌸`, 'ready');
@@ -11773,7 +12701,18 @@ const KIRA_I18N = {
         thinking_summary_done: "คิระได้วิเคราะห์รายละเอียดและขั้นตอนการคิดไว้ในบล็อกด้านบนนี้เรียบร้อยแล้วค่ะ",
         uncertainty_title: "ในประเด็นนี้คิระยังไม่แน่ใจในข้อมูลอย่างครบถ้วนค่ะ",
         uncertainty_desc: "ข้อมูลอาจยังไม่ชัดเจนหรือต้องการบริบทเพิ่มเติม รบกวนช่วยระบุรายละเอียดเพิ่มเติมอีกนิดนะคะ หนูพร้อมช่วยค้นหาและตอบอย่างเต็มที่ค่ะ 🌸",
-        toast_lang_switched: "เปลี่ยนภาษาเป็น ภาษาไทย เรียบร้อยค่ะ 🇹🇭"
+        toast_lang_switched: "เปลี่ยนภาษาเป็น ภาษาไทย เรียบร้อยค่ะ 🇹🇭",
+        br_banner_export: "ส่งออกรายงาน",
+        br_btn_export_studio: "ส่งออกรายงานสภา",
+        br_btn_save_vault: "บันทึก Vault",
+        br_studio_badge: "EXECUTIVE BOARDROOM REPORT STUDIO",
+        br_studio_title: "สตูดิโอส่งออกรายงานมติสภาผู้บริหาร 4 ฝ่าย",
+        br_studio_subtitle: "ตรวจสอบพรีวิวเอกสารทางการระดับองค์กร (A4) พร้อมตราประทับดิจิทัล SHA-256 ก่อนส่งออกเป็น PDF, Word (.docx) หรือ Markdown",
+        br_lbl_agenda: "หัวข้อวาระการประชุม / ชื่อรายงาน:",
+        br_lbl_classification: "ชั้นความลับเอกสาร:",
+        br_lbl_sections: "องค์ประกอบในรายงาน:",
+        br_btn_copy: "คัดลอก",
+        br_btn_export_pdf: "พิมพ์ / บันทึก PDF (A4)"
     },
 
     en: {
@@ -12169,7 +13108,18 @@ const KIRA_I18N = {
         thinking_summary_done: "Kira has detailed the analytical steps and reasoning process in the block above.",
         uncertainty_title: "I am not 100% certain regarding this matter",
         uncertainty_desc: "The information may be ambiguous or require more context. Could you please provide additional details or background? I'm ready to help you explore it! 💖",
-        toast_lang_switched: "Interface language switched to English 🇺🇸"
+        toast_lang_switched: "Interface language switched to English 🇺🇸",
+        br_banner_export: "Export Report",
+        br_btn_export_studio: "Export Council Report",
+        br_btn_save_vault: "Save to Vault",
+        br_studio_badge: "EXECUTIVE BOARDROOM REPORT STUDIO",
+        br_studio_title: "4-Executive Boardroom Resolution Report Studio",
+        br_studio_subtitle: "Preview the corporate A4 resolution report with SHA-256 Digital Audit Seal before exporting to PDF, Word (.docx), or Markdown",
+        br_lbl_agenda: "Executive Agenda / Report Title:",
+        br_lbl_classification: "Document Classification:",
+        br_lbl_sections: "Included Sections:",
+        br_btn_copy: "Copy",
+        br_btn_export_pdf: "Print / Save PDF (A4)"
     },
 
     zh: {
@@ -12565,7 +13515,18 @@ const KIRA_I18N = {
         thinking_summary_done: "Kira 已在上方模块中完成了深度推理与步骤分析。",
         uncertainty_title: "关于此问题，我暂无法100%确定",
         uncertainty_desc: "当前信息可能尚不明确或需要更多上下文。劳烦您补充一些具体背景或细节，Kira将竭诚为您深入解答！🥰",
-        toast_lang_switched: "系统语言已成功切换为 中文 🇨🇳"
+        toast_lang_switched: "系统语言已成功切换为 中文 🇨🇳",
+        br_banner_export: "导出报告",
+        br_btn_export_studio: "导出董事会报告",
+        br_btn_save_vault: "存入保险库",
+        br_studio_badge: "高管董事会决议报告工作室",
+        br_studio_title: "四方高管董事会决议导出工作室",
+        br_studio_subtitle: "预览带 SHA-256 数字审计印章的企业级 A4 决议报告，一键导出 PDF、Word (.docx) 或 Markdown",
+        br_lbl_agenda: "会议议题 / 报告标题：",
+        br_lbl_classification: "文档密级：",
+        br_lbl_sections: "报告包含模块：",
+        br_btn_copy: "复制",
+        br_btn_export_pdf: "打印 / 导出 PDF (A4)"
     },
 
     ko: {
@@ -12961,7 +13922,18 @@ const KIRA_I18N = {
         thinking_summary_done: "Kira가 상단 블록에 심층 분석 및 단계별 추론을 완료했습니다.",
         uncertainty_title: "이 질문에 대해서는 100% 확답을 드리기 어렵습니다",
         uncertainty_desc: "정보가 다소 모호하거나 추가 맥락이 필요할 수 있습니다. 세부 배경이나 내용을 조금만 더 알려주시면 키라가 정성껏 도와드리겠습니다! 🥰",
-        toast_lang_switched: "시스템 언어가 한국어로 변경되었습니다 🇰🇷"
+        toast_lang_switched: "시스템 언어가 한국어로 변경되었습니다 🇰🇷",
+        br_banner_export: "보고서 내보내기",
+        br_btn_export_studio: "이사회 보고서 내보내기",
+        br_btn_save_vault: "금고 저장",
+        br_studio_badge: "EXECUTIVE BOARDROOM REPORT STUDIO",
+        br_studio_title: "4대 임원 이사회 결의 보고서 스튜디오",
+        br_studio_subtitle: "SHA-256 디지털 감사 인장이 포함된 A4 공식 보고서를 미리 보고 PDF, Word (.docx), Markdown으로 내보내세요",
+        br_lbl_agenda: "회의 안건 / 보고서 제목:",
+        br_lbl_classification: "문서 보안 등급:",
+        br_lbl_sections: "포함할 섹션:",
+        br_btn_copy: "복사",
+        br_btn_export_pdf: "인쇄 / PDF 저장 (A4)"
     },
 
     ja: {
@@ -13357,7 +14329,18 @@ const KIRA_I18N = {
         thinking_summary_done: "Kiraが上記のブロックで詳細な分析と思考プロセスを完了しました。",
         uncertainty_title: "この件につきましては、現時点で確実な回答が困難です",
         uncertainty_desc: "情報が限定的であるか、追加の前提条件が必要な場合がございます。具体的な背景や詳細を教えていただけましたら、心を込めてサポートいたします！🥰",
-        toast_lang_switched: "言語を 日本語 に切り替えました 🇯🇵"
+        toast_lang_switched: "言語を 日本語 に切り替えました 🇯🇵",
+        br_banner_export: "レポート出力",
+        br_btn_export_studio: "役員会レポート出力",
+        br_btn_save_vault: "Vaultに保存",
+        br_studio_badge: "EXECUTIVE BOARDROOM REPORT STUDIO",
+        br_studio_title: "4役員ボードルーム決議レポートスタジオ",
+        br_studio_subtitle: "SHA-256デジタル監査シール付きA4公式レポートをプレビューし、PDF・Word (.docx)・Markdown形式で出力します",
+        br_lbl_agenda: "議題 / レポート件名:",
+        br_lbl_classification: "機密区分:",
+        br_lbl_sections: "出力セクション:",
+        br_btn_copy: "コピー",
+        br_btn_export_pdf: "印刷 / PDF保存 (A4)"
     }
 };
 

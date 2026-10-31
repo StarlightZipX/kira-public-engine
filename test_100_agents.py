@@ -18,7 +18,7 @@ if BASE_DIR not in sys.path:
 from app import app, init_db, execute_query, DB_FILE, _should_trigger_moa, _compress_and_roll_history, get_user_briefing, HumanMessage, AIMessage, SystemMessage, BRAIN_PROFILES, _route_brain
 
 print("====================================================================")
-print("🌐 KIRA 2.7.3 - 100 ENGINEERING AGENTS DIAGNOSTIC & AUDIT SWARM")
+print("🌐 KIRA 2.7.8 - 100 ENGINEERING AGENTS DIAGNOSTIC & AUDIT SWARM")
 print("====================================================================\n")
 
 init_db()

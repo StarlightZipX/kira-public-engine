@@ -14,7 +14,7 @@ load_dotenv()
 
 import uvicorn
 from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File, BackgroundTasks
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, RedirectResponse, FileResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, RedirectResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Optional, Union, Any, Dict, List
@@ -153,7 +153,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.7.7"
+KIRA_SYSTEM_VERSION = "2.7.8"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -162,7 +162,7 @@ KIRA_RELEASE_DATA = {
     "version": KIRA_SYSTEM_VERSION,
     "build_id": APP_BUILD_ID,
     "timestamp": APP_START_TIME,
-    "release_name": "Kira Vision AI & Enterprise Shield Edition",
+    "release_name": "Kira Executive Boardroom Export & Vision Shield Edition",
     "badge_text": f"v{KIRA_SYSTEM_VERSION} Live Update",
     "title": f"✨ อัปเกรดระบบ Kira AI v{KIRA_SYSTEM_VERSION} เรียบร้อยแล้วค่ะ!",
     "description": "คิระได้รับการอัปเกรดขุมพลังสมองกลยักษ์ 550B ฟรี พร้อมเกราะความซื่อสัตย์ Zero-Silence และสถาปัตยกรรมระดับ Enterprise ไร้ข้อผิดพลาดค่ะ",
@@ -195,8 +195,8 @@ KIRA_RELEASE_DATA = {
         {
             "icon": "fa-bolt",
             "color": "text-pink",
-            "tag": "PWA v2.7.7",
-            "text": "อัปเกรด Service Worker แคชสดใหม่ แก้ไขบั๊กคอนโซล และรองรับ 5 ภาษา พร้อมเสียงสังเคราะห์ธรรมชาติเต็มรูปแบบ"
+            "tag": "Boardroom Export v2.7.8",
+            "text": "ส่งออกรายงานมติสภา 4 ผู้บริหารเป็น PDF (A4), Word (.docx), และ Markdown พร้อมตราประทับดิจิทัล SHA-256"
         }
     ],
     "i18n": {
@@ -1979,8 +1979,8 @@ else:
 
 
 print(f"🤖 ========================================")
-print(f"🤖 Kira 2.6 Flash  = {PREFERRED_FLASH}")
-print(f"🤖 Kira 2.6 Pro    = {PREFERRED_PRO}")
+print(f"🤖 Kira 2.7 Flash  = {PREFERRED_FLASH}")
+print(f"🤖 Kira 2.7 Pro    = {PREFERRED_PRO}")
 print(f"🤖 API Keys = {len(API_KEYS)} ดอก")
 print(f"🤖 ========================================")
 
@@ -6054,6 +6054,1021 @@ async def _generate_virtual_boardroom_stream(user_input: str, uname: str, sessio
                 execute_query("UPDATE users SET points = points + 2 WHERE username=?", (uname,))
             except Exception as _b_log_err:
                 print("Error saving boardroom log in finally:", _b_log_err)
+
+# ====================================================================
+# 📄 PHASE 2: EXECUTIVE BOARDROOM REPORT EXPORT ENGINE (DOCX / MD / A4 HTML)
+# ====================================================================
+
+class BoardroomExportRequest(BaseModel):
+    topic: Optional[str] = "วาระการประชุมยุทธศาสตร์องค์กร (Executive Strategic Session)"
+    format: Optional[str] = "docx"  # "docx" | "md" | "html" | "json"
+    angle: Optional[str] = "balanced"
+    username: Optional[str] = "Executive"
+    doc_id: Optional[str] = None
+    classification: Optional[str] = "CONFIDENTIAL — เอกสารลับเฉพาะผู้บริหาร"
+    speeches: Optional[List[Dict[str, Any]]] = None
+    interventions: Optional[List[str]] = None
+    debate_summary: Optional[str] = ""
+    voting_matrix: Optional[List[Dict[str, Any]]] = None
+    average_score: Optional[float] = None
+    consensus: Optional[str] = ""
+    raw_markdown: Optional[str] = ""
+    include_speeches: Optional[bool] = True
+    include_debate: Optional[bool] = True
+    include_matrix: Optional[bool] = True
+    include_consensus: Optional[bool] = True
+    ui_lang: Optional[str] = "th"
+
+
+BOARDROOM_ANGLE_LABELS = {
+    "balanced": "สมดุลย์รอบด้าน (Balanced Strategic Focus)",
+    "aggressive_growth": "บุกตลาดดุดัน (Hyper-Growth & Market Moat)",
+    "lean_risk": "ประหยัดงบ & ปลอดภัยสูงสุด (Ultra-Lean & Risk-Shielded)",
+    "user_first": "ประสบการณ์ลูกค้านำ (Customer Empathy & Retention)",
+    "tech_driven": "นวัตกรรมและสถาปัตยกรรมทนทาน (Tech & Scalability)",
+}
+
+
+def parse_boardroom_raw_stream(raw_text: str) -> Dict[str, Any]:
+    """แปลงข้อความสตรีม [BOARDROOM_*] หรือ Markdown ดิบให้เป็นโครงสร้างข้อมูลผู้บริหาร 4 ฝ่าย"""
+    result = {
+        "speeches": [],
+        "debate_summary": "",
+        "consensus": "",
+    }
+    if not raw_text or not raw_text.strip():
+        return result
+
+    text = raw_text.strip()
+    avatar_map = {"CEO": "👔", "CFO": "💰", "CPO": "🎨", "CTO": "🛡️"}
+
+    sp_pattern = re.compile(
+        r"\[BOARDROOM_SPEAKER:([A-Z]+):([^:\]]+):([a-z]+)\]([\s\S]*?)(?:\[/BOARDROOM_SPEAKER\]|(?=\[BOARDROOM_)|$)"
+    )
+    for m in sp_pattern.finditer(text):
+        sp_id = m.group(1).strip()
+        sp_name_title = m.group(2).strip()
+        sp_theme = m.group(3).strip()
+        sp_body = m.group(4).strip()
+        exec_meta = next((e for e in BOARDROOM_EXECUTIVES if e["id"] == sp_id), None)
+        result["speeches"].append({
+            "id": sp_id,
+            "name": exec_meta["name"] if exec_meta else sp_name_title.split(" - ")[0].strip(),
+            "title": exec_meta["title"] if exec_meta else sp_name_title,
+            "avatar": avatar_map.get(sp_id, "👔"),
+            "theme": sp_theme,
+            "content": sp_body,
+        })
+
+    deb_match = re.search(
+        r"\[BOARDROOM_DEBATE:?([^\]]*)\]([\s\S]*?)(?:\[/BOARDROOM_DEBATE\]|(?=\[BOARDROOM_CONSENSUS)|(?=\[BOARDROOM_DONE\])|$)",
+        text,
+    )
+    if deb_match:
+        result["debate_summary"] = deb_match.group(2).strip()
+
+    con_match = re.search(
+        r"\[BOARDROOM_CONSENSUS:?([^\]]*)\]([\s\S]*?)(?:\[/BOARDROOM_CONSENSUS\]|(?=\[BOARDROOM_DONE\])|$)",
+        text,
+    )
+    if con_match:
+        result["consensus"] = con_match.group(2).strip()
+
+    # Fallback: plain markdown without [BOARDROOM_*] tags
+    if not result["speeches"] and not result["debate_summary"] and not result["consensus"]:
+        cleaned = re.sub(r"\[/?BOARDROOM_[A-Z_]+(?::[^\]]*)?\]", "", text).strip()
+        result["consensus"] = cleaned
+
+    return result
+
+
+def _strip_boardroom_tags(text: str) -> str:
+    if not text:
+        return ""
+    cleaned = re.sub(r"\[/?BOARDROOM_[A-Z_]+(?::[^\]]*)?\]", "", str(text))
+    return cleaned.strip()
+
+
+def _normalize_boardroom_export_payload(req: BoardroomExportRequest) -> Dict[str, Any]:
+    parsed = parse_boardroom_raw_stream(req.raw_markdown or "")
+
+    speeches = req.speeches if req.speeches else parsed["speeches"]
+    normalized_speeches = []
+    avatar_map = {"CEO": "👔", "CFO": "💰", "CPO": "🎨", "CTO": "🛡️"}
+    for sp in (speeches or []):
+        sp_id = str(sp.get("id") or "EXEC").upper().strip()
+        exec_meta = next((e for e in BOARDROOM_EXECUTIVES if e["id"] == sp_id), None)
+        content_clean = _strip_boardroom_tags(sp.get("content") or "")
+        if not content_clean:
+            continue
+        normalized_speeches.append({
+            "id": sp_id,
+            "name": str(sp.get("name") or (exec_meta["name"] if exec_meta else sp_id)).strip(),
+            "title": str(sp.get("title") or (exec_meta["title"] if exec_meta else sp_id)).strip(),
+            "avatar": str(sp.get("avatar") or avatar_map.get(sp_id, "👔")),
+            "theme": str(sp.get("theme") or (exec_meta["theme"] if exec_meta else "gold")),
+            "content": content_clean,
+        })
+
+    debate_summary = _strip_boardroom_tags(req.debate_summary or parsed["debate_summary"] or "")
+    consensus = _strip_boardroom_tags(req.consensus or parsed["consensus"] or "")
+    interventions = [str(iv).strip() for iv in (req.interventions or []) if str(iv).strip()]
+
+    voting_matrix = []
+    for vm in (req.voting_matrix or []):
+        if isinstance(vm, dict) and (vm.get("id") or vm.get("dimension")):
+            try:
+                score_val = round(float(vm.get("score", 0)), 1)
+            except Exception:
+                score_val = 0.0
+            voting_matrix.append({
+                "id": str(vm.get("id") or "EXEC").upper(),
+                "name": str(vm.get("name") or ""),
+                "dimension": str(vm.get("dimension") or ""),
+                "score": score_val,
+                "color": str(vm.get("color") or "#0284c7"),
+            })
+
+    avg_score = req.average_score
+    if avg_score is None and voting_matrix:
+        avg_score = round(sum(m["score"] for m in voting_matrix) / len(voting_matrix), 1)
+
+    now_th = datetime.now(timezone(timedelta(hours=7)))
+    date_code = now_th.strftime("%Y%m%d")
+    timestamp_display = now_th.strftime("%d/%m/%Y %H:%M น. (GMT+7)")
+
+    topic = (req.topic or "").strip() or "วาระการประชุมยุทธศาสตร์องค์กร (Executive Strategic Session)"
+    doc_id = (req.doc_id or "").strip()
+    if not doc_id:
+        short_token = hashlib.sha256(f"{topic}:{now_th.isoformat()}".encode("utf-8")).hexdigest()[:6].upper()
+        doc_id = f"KIRA-BR-{date_code}-{short_token}"
+
+    angle_raw = (req.angle or "balanced").strip()
+    angle_label = BOARDROOM_ANGLE_LABELS.get(angle_raw, angle_raw)
+    uname = (req.username or "Executive").strip() or "Executive"
+    classification = (req.classification or "CONFIDENTIAL — เอกสารลับเฉพาะผู้บริหาร").strip()
+
+    hash_basis = json.dumps({
+        "doc_id": doc_id,
+        "topic": topic,
+        "speeches": len(normalized_speeches),
+        "consensus_len": len(consensus),
+        "consensus_head": consensus[:250],
+    }, ensure_ascii=False, sort_keys=True)
+    audit_hash = hashlib.sha256(hash_basis.encode("utf-8")).hexdigest().upper()
+
+    return {
+        "doc_id": doc_id,
+        "date_code": date_code,
+        "timestamp_display": timestamp_display,
+        "topic": topic,
+        "angle_key": angle_raw,
+        "angle_label": angle_label,
+        "username": uname,
+        "is_boss": is_boss(uname),
+        "classification": classification,
+        "speeches": normalized_speeches if req.include_speeches is not False else [],
+        "interventions": interventions if req.include_debate is not False else [],
+        "debate_summary": debate_summary if req.include_debate is not False else "",
+        "voting_matrix": voting_matrix if req.include_matrix is not False else [],
+        "average_score": avg_score if req.include_matrix is not False else None,
+        "consensus": consensus if req.include_consensus is not False else "",
+        "audit_hash": audit_hash,
+        "ui_lang": req.ui_lang or "th",
+    }
+
+
+def _build_boardroom_markdown(norm: Dict[str, Any]) -> str:
+    """สร้างเอกสาร Markdown (.md) รายงานมติสภาผู้บริหาร 4 ฝ่ายระดับ Enterprise"""
+    lines = [
+        "# 🏛️ รายงานมติที่ประชุมสภาที่ปรึกษาผู้บริหาร 4 ฝ่าย (Executive Boardroom Resolution Report)",
+        "",
+        "| ข้อมูลจำเพาะเอกสาร (Document Metadata) | รายละเอียด (Specification) |",
+        "| :--- | :--- |",
+        f"| **รหัสเอกสาร (Document ID)** | `{norm['doc_id']}` |",
+        f"| **วันที่และเวลาออกเอกสาร** | {norm['timestamp_display']} |",
+        f"| **วาระการประชุม (Executive Agenda)** | **{norm['topic']}** |",
+        f"| **มุมมองยุทธศาสตร์ (Strategic Angle)** | {norm['angle_label']} |",
+        f"| **ประธานในที่ประชุม (Presiding Chair)** | {norm['username']} |",
+        f"| **ชั้นความลับ (Classification)** | `{norm['classification']}` |",
+        "",
+        "---",
+        "",
+    ]
+
+    if norm["speeches"]:
+        lines.append("## 1. แถลงการณ์และมุมมองเชิงลึกจากคณะผู้บริหาร 4 ฝ่าย (Executive Council Statements)")
+        lines.append("")
+        for sp in norm["speeches"]:
+            title_display = sp["title"] if sp["name"] in sp["title"] else f"{sp['name']} — {sp['title']}"
+            lines.append(f"### {sp['avatar']} [{sp['id']}] {title_display}")
+            lines.append("")
+            lines.append(sp["content"])
+            lines.append("")
+
+    if norm["interventions"]:
+        lines.append("---")
+        lines.append("")
+        lines.append("## 🔨 คำสั่งเคาะค้อนแทรกแซงจากประธานในที่ประชุม (Presiding Chair Gavel Directives)")
+        lines.append("")
+        for idx, iv in enumerate(norm["interventions"], 1):
+            lines.append(f"{idx}. **คำสั่งพิเศษ #{idx}:** {iv}")
+        lines.append("")
+
+    if norm["debate_summary"]:
+        lines.append("---")
+        lines.append("")
+        lines.append("## ⚡ บันทึกการถกเถียงและหักล้างจุดอ่อนเชิงกลยุทธ์ (Executive Cross-Examination & Debate)")
+        lines.append("")
+        lines.append(norm["debate_summary"])
+        lines.append("")
+
+    if norm["voting_matrix"]:
+        lines.append("---")
+        lines.append("")
+        avg_str = f" — คะแนนเฉลี่ยรวม: **{norm['average_score']}/10**" if norm["average_score"] is not None else ""
+        lines.append(f"## 📊 ตารางประเมินผลยุทธศาสตร์ 4 มิติ (4D Strategic Evaluation Matrix){avg_str}")
+        lines.append("")
+        lines.append("| ฝ่ายบริหาร (Executive) | มิติการประเมิน (Strategic Dimension) | คะแนนประเมิน (Score) |")
+        lines.append("| :--- | :--- | :---: |")
+        for m in norm["voting_matrix"]:
+            exec_col = f"**{m['id']}** {m['name']}".strip()
+            lines.append(f"| {exec_col} | {m['dimension']} | **{m['score']}/10** |")
+        lines.append("")
+
+    if norm["consensus"]:
+        lines.append("---")
+        lines.append("")
+        lines.append("## ⚖️ มติเอกฉันท์และพิมพ์เขียวปฏิบัติการ (Final Executive Resolution & Strategic Blueprint)")
+        lines.append("")
+        lines.append(norm["consensus"])
+        lines.append("")
+
+    lines.extend([
+        "---",
+        "",
+        "### 🛡️ ตราประทับรับรองความถูกต้องดิจิทัล (Kira Enterprise Digital Audit Seal)",
+        f"- **System Engine:** Kira AI v{KIRA_SYSTEM_VERSION} Enterprise — Virtual Boardroom Council",
+        f"- **Document Reference:** `{norm['doc_id']}`",
+        f"- **SHA-256 Verification Hash:** `{norm['audit_hash']}`",
+        "",
+    ])
+    return "\n".join(lines)
+
+
+def _docx_set_cell_bg(cell, hex_color: str):
+    """กำหนดสีพื้นหลังให้เซลล์ตารางใน Word (.docx)"""
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls
+    clean_hex = hex_color.lstrip("#")
+    shading_elm = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{clean_hex}"/>')
+    cell._tc.get_or_add_tcPr().append(shading_elm)
+
+
+def _docx_add_formatted_runs(paragraph, text: str, size_pt: float = 10.5, rgb_tuple=None, force_bold: bool = False):
+    """แปลงข้อความที่มี **bold** และ `code` เป็น Word Run อย่างสะอาด ไร้เครื่องหมายดอกจันตกค้าง"""
+    from docx.shared import Pt, RGBColor
+    if not text:
+        return
+    tokens = re.split(r"(\*\*[^*]+\*\*|`[^`]+`)", text)
+    for tok in tokens:
+        if not tok:
+            continue
+        is_bold = force_bold
+        is_code = False
+        content = tok
+        if tok.startswith("**") and tok.endswith("**") and len(tok) > 4:
+            content = tok[2:-2]
+            is_bold = True
+        elif tok.startswith("`") and tok.endswith("`") and len(tok) > 2:
+            content = tok[1:-1]
+            is_code = True
+
+        run = paragraph.add_run(content)
+        run.bold = is_bold
+        run.font.name = "Consolas" if is_code else "Tahoma"
+        run.font.size = Pt(size_pt - 0.5 if is_code else size_pt)
+        if rgb_tuple:
+            run.font.color.rgb = RGBColor(*rgb_tuple)
+        elif is_code:
+            run.font.color.rgb = RGBColor(3, 105, 161)
+        else:
+            run.font.color.rgb = RGBColor(30, 41, 59)
+
+
+def _docx_render_markdown_table(doc, table_lines: List[str]):
+    """แปลงตาราง Markdown เป็นตารางจริงใน Microsoft Word (.docx)"""
+    from docx.shared import Pt
+    parsed_rows = []
+    for idx, tl in enumerate(table_lines):
+        stripped = tl.strip().strip("|")
+        # ข้ามแถวคั่นตาราง | :--- | :---: |
+        if re.match(r"^[\s|:\-]+$", stripped):
+            continue
+        cells = [c.strip() for c in stripped.split("|")]
+        if cells:
+            parsed_rows.append(cells)
+
+    if not parsed_rows:
+        return
+
+    max_cols = max(len(r) for r in parsed_rows)
+    if max_cols == 0:
+        return
+
+    tbl = doc.add_table(rows=len(parsed_rows), cols=max_cols)
+    tbl.style = "Table Grid"
+    for r_idx, row_data in enumerate(parsed_rows):
+        is_header = (r_idx == 0)
+        for c_idx in range(max_cols):
+            val = row_data[c_idx] if c_idx < len(row_data) else ""
+            cell = tbl.cell(r_idx, c_idx)
+            if is_header:
+                _docx_set_cell_bg(cell, "E0F2FE")
+            elif r_idx % 2 == 1:
+                _docx_set_cell_bg(cell, "F8FAFC")
+            p = cell.paragraphs[0]
+            p.paragraph_format.space_before = Pt(3)
+            p.paragraph_format.space_after = Pt(3)
+            _docx_add_formatted_runs(
+                p,
+                val,
+                size_pt=9.5,
+                rgb_tuple=(15, 23, 42) if is_header else (30, 41, 59),
+                force_bold=is_header,
+            )
+
+    spacer = doc.add_paragraph()
+    spacer.paragraph_format.space_before = Pt(2)
+    spacer.paragraph_format.space_after = Pt(4)
+
+
+def _docx_append_markdown_block(doc, md_text: str):
+    """แปลงเนื้อหา Markdown (หัวข้อ, รายการย่อย, ตาราง, ย่อหน้า) ลงในเอกสาร Word (.docx)"""
+    from docx.shared import Pt, Inches
+    if not md_text:
+        return
+
+    lines = md_text.splitlines()
+    table_buffer = []
+
+    def _flush_table():
+        nonlocal table_buffer
+        if table_buffer:
+            _docx_render_markdown_table(doc, table_buffer)
+            table_buffer = []
+
+    for raw_line in lines:
+        line = raw_line.rstrip()
+        stripped = line.strip()
+
+        # ตรวจจับแถวตาราง Markdown
+        if stripped.startswith("|") and stripped.endswith("|") and stripped.count("|") >= 2:
+            table_buffer.append(stripped)
+            continue
+        else:
+            _flush_table()
+
+        if not stripped or stripped in ("---", "***", "___"):
+            continue
+
+        # Headings
+        h_match = re.match(r"^(#{1,4})\s+(.*)$", stripped)
+        if h_match:
+            level = len(h_match.group(1))
+            h_text = h_match.group(2).strip()
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(10 if level <= 2 else 7)
+            p.paragraph_format.space_after = Pt(4)
+            h_size = {1: 13.5, 2: 12.0, 3: 11.0, 4: 10.5}.get(level, 10.5)
+            h_color = (15, 23, 42) if level <= 2 else (3, 105, 161)
+            _docx_add_formatted_runs(p, h_text, size_pt=h_size, rgb_tuple=h_color, force_bold=True)
+            continue
+
+        # Bullet lists
+        b_match = re.match(r"^[-*•]\s+(.*)$", stripped)
+        if b_match:
+            p = doc.add_paragraph()
+            p.paragraph_format.left_indent = Inches(0.25)
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(3)
+            _docx_add_formatted_runs(p, "• " + b_match.group(1).strip(), size_pt=10.0)
+            continue
+
+        # Numbered lists
+        n_match = re.match(r"^(\d+[\.\)])\s+(.*)$", stripped)
+        if n_match:
+            p = doc.add_paragraph()
+            p.paragraph_format.left_indent = Inches(0.25)
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(3)
+            _docx_add_formatted_runs(p, f"{n_match.group(1)} {n_match.group(2).strip()}", size_pt=10.0)
+            continue
+
+        # Blockquotes
+        if stripped.startswith(">"):
+            q_text = stripped.lstrip(">").strip()
+            p = doc.add_paragraph()
+            p.paragraph_format.left_indent = Inches(0.3)
+            p.paragraph_format.space_before = Pt(4)
+            p.paragraph_format.space_after = Pt(4)
+            _docx_add_formatted_runs(p, q_text, size_pt=10.0, rgb_tuple=(71, 85, 105))
+            continue
+
+        # Standard paragraph
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after = Pt(5)
+        _docx_add_formatted_runs(p, stripped, size_pt=10.5)
+
+    _flush_table()
+
+
+def _build_boardroom_docx_bytes(norm: Dict[str, Any]) -> bytes:
+    """สร้างไฟล์ Microsoft Word (.docx) รายงานมติสภาผู้บริหาร 4 ฝ่ายมาตรฐานองค์กร A4"""
+    from docx.shared import Pt, RGBColor, Mm
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    doc = docx.Document()
+
+    # ตั้งค่าหน้ากระดาษ A4 และขอบมาตรฐานผู้บริหาร
+    for section in doc.sections:
+        section.page_width = Mm(210)
+        section.page_height = Mm(297)
+        section.top_margin = Mm(18)
+        section.bottom_margin = Mm(18)
+        section.left_margin = Mm(18)
+        section.right_margin = Mm(18)
+
+    normal_style = doc.styles["Normal"]
+    normal_style.font.name = "Tahoma"
+    normal_style.font.size = Pt(10.5)
+
+    # 1. Corporate Letterhead Header
+    brand_p = doc.add_paragraph()
+    brand_p.paragraph_format.space_before = Pt(0)
+    brand_p.paragraph_format.space_after = Pt(2)
+    r_brand = brand_p.add_run(f"KIRA AI ENTERPRISE v{KIRA_SYSTEM_VERSION}  •  VIRTUAL BOARDROOM COUNCIL")
+    r_brand.bold = True
+    r_brand.font.name = "Tahoma"
+    r_brand.font.size = Pt(9.0)
+    r_brand.font.color.rgb = RGBColor(2, 132, 199)
+
+    title_p = doc.add_paragraph()
+    title_p.paragraph_format.space_before = Pt(0)
+    title_p.paragraph_format.space_after = Pt(4)
+    r_title = title_p.add_run("รายงานมติที่ประชุมสภาที่ปรึกษาผู้บริหาร 4 ฝ่าย")
+    r_title.bold = True
+    r_title.font.name = "Tahoma"
+    r_title.font.size = Pt(16.5)
+    r_title.font.color.rgb = RGBColor(15, 23, 42)
+
+    sub_p = doc.add_paragraph()
+    sub_p.paragraph_format.space_before = Pt(0)
+    sub_p.paragraph_format.space_after = Pt(10)
+    r_sub = sub_p.add_run(f"Executive Boardroom Resolution & 90-Day Strategic Blueprint  |  {norm['classification']}")
+    r_sub.font.name = "Tahoma"
+    r_sub.font.size = Pt(9.5)
+    r_sub.font.color.rgb = RGBColor(100, 116, 139)
+
+    # 2. Metadata Specification Table
+    meta_rows = [
+        ("รหัสเอกสาร (Document ID)", norm["doc_id"]),
+        ("วันที่ออกรายงาน (Issued Date)", norm["timestamp_display"]),
+        ("วาระการประชุม (Executive Agenda)", norm["topic"]),
+        ("มุมมองยุทธศาสตร์ (Strategic Angle)", norm["angle_label"]),
+        ("ประธานในที่ประชุม (Presiding Chair)", norm["username"]),
+        ("ชั้นความลับ (Classification)", norm["classification"]),
+    ]
+    meta_tbl = doc.add_table(rows=len(meta_rows), cols=2)
+    meta_tbl.style = "Table Grid"
+    for idx, (k_label, v_val) in enumerate(meta_rows):
+        c0 = meta_tbl.cell(idx, 0)
+        c1 = meta_tbl.cell(idx, 1)
+        _docx_set_cell_bg(c0, "F1F5F9")
+        _docx_set_cell_bg(c1, "FFFFFF")
+        p0 = c0.paragraphs[0]
+        p0.paragraph_format.space_before = Pt(3)
+        p0.paragraph_format.space_after = Pt(3)
+        _docx_add_formatted_runs(p0, k_label, size_pt=9.5, rgb_tuple=(51, 65, 85), force_bold=True)
+
+        p1 = c1.paragraphs[0]
+        p1.paragraph_format.space_before = Pt(3)
+        p1.paragraph_format.space_after = Pt(3)
+        _docx_add_formatted_runs(p1, v_val, size_pt=9.5, rgb_tuple=(15, 23, 42), force_bold=(idx == 2))
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(4)
+
+    # 3. 4 Executive Statements
+    theme_rgb_map = {
+        "CEO": (180, 83, 9),    # Amber Gold
+        "CFO": (4, 120, 87),    # Emerald
+        "CPO": (190, 24, 93),   # Rose
+        "CTO": (3, 105, 161),   # Cyan Blue
+    }
+    if norm["speeches"]:
+        sec1 = doc.add_paragraph()
+        sec1.paragraph_format.space_before = Pt(8)
+        sec1.paragraph_format.space_after = Pt(6)
+        _docx_add_formatted_runs(
+            sec1,
+            "1. แถลงการณ์และมุมมองเชิงลึกจากสภาผู้บริหาร 4 ฝ่าย (Executive Council Statements)",
+            size_pt=13.0,
+            rgb_tuple=(15, 23, 42),
+            force_bold=True,
+        )
+
+        for sp in norm["speeches"]:
+            sp_rgb = theme_rgb_map.get(sp["id"], (15, 23, 42))
+            title_display = sp["title"] if sp["name"] in sp["title"] else f"{sp['name']} — {sp['title']}"
+            sp_head = doc.add_paragraph()
+            sp_head.paragraph_format.space_before = Pt(8)
+            sp_head.paragraph_format.space_after = Pt(3)
+            _docx_add_formatted_runs(
+                sp_head,
+                f"[{sp['id']}] {title_display}",
+                size_pt=11.5,
+                rgb_tuple=sp_rgb,
+                force_bold=True,
+            )
+            _docx_append_markdown_block(doc, sp["content"])
+
+    # 4. Presiding Chair Gavel Directives
+    if norm["interventions"]:
+        sec_iv = doc.add_paragraph()
+        sec_iv.paragraph_format.space_before = Pt(10)
+        sec_iv.paragraph_format.space_after = Pt(4)
+        _docx_add_formatted_runs(
+            sec_iv,
+            "คำสั่งเคาะค้อนแทรกแซงจากประธานในที่ประชุม (Presiding Chair Gavel Directives)",
+            size_pt=12.5,
+            rgb_tuple=(180, 83, 9),
+            force_bold=True,
+        )
+        for idx, iv in enumerate(norm["interventions"], 1):
+            p_iv = doc.add_paragraph()
+            p_iv.paragraph_format.space_before = Pt(2)
+            p_iv.paragraph_format.space_after = Pt(3)
+            _docx_add_formatted_runs(p_iv, f"{idx}. คำสั่งพิเศษ #{idx}: {iv}", size_pt=10.0, rgb_tuple=(146, 64, 14), force_bold=True)
+
+    # 5. Executive Debate & Cross-Examination
+    if norm["debate_summary"]:
+        sec_deb = doc.add_paragraph()
+        sec_deb.paragraph_format.space_before = Pt(10)
+        sec_deb.paragraph_format.space_after = Pt(4)
+        _docx_add_formatted_runs(
+            sec_deb,
+            "บันทึกการถกเถียงและหักล้างจุดอ่อนเชิงกลยุทธ์ (Executive Cross-Examination & Debate)",
+            size_pt=12.5,
+            rgb_tuple=(109, 40, 217),
+            force_bold=True,
+        )
+        _docx_append_markdown_block(doc, norm["debate_summary"])
+
+    # 6. 4D Strategic Evaluation Matrix
+    if norm["voting_matrix"]:
+        sec_mat = doc.add_paragraph()
+        sec_mat.paragraph_format.space_before = Pt(10)
+        sec_mat.paragraph_format.space_after = Pt(4)
+        avg_label = f" (คะแนนเฉลี่ยรวม: {norm['average_score']}/10)" if norm["average_score"] is not None else ""
+        _docx_add_formatted_runs(
+            sec_mat,
+            f"ตารางประเมินผลยุทธศาสตร์ 4 มิติ (4D Evaluation Matrix){avg_label}",
+            size_pt=12.5,
+            rgb_tuple=(3, 105, 161),
+            force_bold=True,
+        )
+        mat_rows = [["ฝ่ายบริหาร (Executive)", "มิติการประเมิน (Dimension)", "คะแนน (Score)"]]
+        for m in norm["voting_matrix"]:
+            mat_rows.append([
+                f"{m['id']} {m['name']}".strip(),
+                m["dimension"],
+                f"{m['score']}/10",
+            ])
+        mat_tbl = doc.add_table(rows=len(mat_rows), cols=3)
+        mat_tbl.style = "Table Grid"
+        for r_i, r_vals in enumerate(mat_rows):
+            is_h = (r_i == 0)
+            for c_i, c_val in enumerate(r_vals):
+                cell = mat_tbl.cell(r_i, c_i)
+                if is_h:
+                    _docx_set_cell_bg(cell, "E0F2FE")
+                p_c = cell.paragraphs[0]
+                p_c.paragraph_format.space_before = Pt(3)
+                p_c.paragraph_format.space_after = Pt(3)
+                if c_i == 2:
+                    p_c.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                _docx_add_formatted_runs(p_c, c_val, size_pt=9.5, force_bold=(is_h or c_i == 2))
+        doc.add_paragraph().paragraph_format.space_after = Pt(4)
+
+    # 7. Final Consensus & 90-Day Strategic Blueprint
+    if norm["consensus"]:
+        sec_con = doc.add_paragraph()
+        sec_con.paragraph_format.space_before = Pt(12)
+        sec_con.paragraph_format.space_after = Pt(6)
+        _docx_add_formatted_runs(
+            sec_con,
+            "มติเอกฉันท์และพิมพ์เขียวปฏิบัติการ (Final Executive Resolution & Strategic Blueprint)",
+            size_pt=13.0,
+            rgb_tuple=(4, 120, 87),
+            force_bold=True,
+        )
+        _docx_append_markdown_block(doc, norm["consensus"])
+
+    # 8. Sign-Off & Digital Audit Verification Seal
+    doc.add_paragraph().paragraph_format.space_before = Pt(12)
+    sign_tbl = doc.add_table(rows=1, cols=2)
+    sign_tbl.style = "Table Grid"
+    sc0 = sign_tbl.cell(0, 0)
+    sc1 = sign_tbl.cell(0, 1)
+    _docx_set_cell_bg(sc0, "FFFFFF")
+    _docx_set_cell_bg(sc1, "F8FAFC")
+
+    ps0 = sc0.paragraphs[0]
+    ps0.paragraph_format.space_before = Pt(6)
+    ps0.paragraph_format.space_after = Pt(6)
+    _docx_add_formatted_runs(
+        ps0,
+        f"ลงนามรับรองมติที่ประชุม (Approved By):\n\n\n________________________________________\n({norm['username']})\nประธานในที่ประชุม / ผู้มีอำนาจอนุมัติ\nวันที่: ____ / ____ / ________",
+        size_pt=9.0,
+        rgb_tuple=(51, 65, 85),
+    )
+
+    ps1 = sc1.paragraphs[0]
+    ps1.paragraph_format.space_before = Pt(6)
+    ps1.paragraph_format.space_after = Pt(6)
+    _docx_add_formatted_runs(
+        ps1,
+        f"KIRA DIGITAL AUDIT SEAL\nSystem: Kira AI v{KIRA_SYSTEM_VERSION} Enterprise\nDoc ID: {norm['doc_id']}\nTimestamp: {norm['timestamp_display']}\nSHA-256 Seal:\n{norm['audit_hash']}",
+        size_pt=8.5,
+        rgb_tuple=(71, 85, 105),
+    )
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+    return buf.read()
+
+
+def _md_to_safe_html(md_text: str) -> str:
+    """แปลง Markdown เป็น HTML ที่ปลอดภัยจาก XSS 100% พร้อมรองรับตาราง หัวข้อ และรายการย่อย"""
+    import html as _html
+    if not md_text:
+        return ""
+
+    def _inline_fmt(escaped_str: str) -> str:
+        s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", escaped_str)
+        s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+        return s
+
+    lines = md_text.splitlines()
+    out = []
+    tbl_buf = []
+    in_ul = False
+    in_ol = False
+
+    def _close_lists():
+        nonlocal in_ul, in_ol
+        if in_ul:
+            out.append("</ul>")
+            in_ul = False
+        if in_ol:
+            out.append("</ol>")
+            in_ol = False
+
+    def _flush_tbl():
+        nonlocal tbl_buf
+        if not tbl_buf:
+            return
+        rows = []
+        for tl in tbl_buf:
+            st = tl.strip().strip("|")
+            if re.match(r"^[\s|:\-]+$", st):
+                continue
+            rows.append([_inline_fmt(_html.escape(c.strip())) for c in st.split("|")])
+        tbl_buf = []
+        if not rows:
+            return
+        out.append("<table><thead><tr>" + "".join(f"<th>{c}</th>" for c in rows[0]) + "</tr></thead>")
+        if len(rows) > 1:
+            out.append("<tbody>")
+            for r in rows[1:]:
+                out.append("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>")
+            out.append("</tbody>")
+        out.append("</table>")
+
+    for raw in lines:
+        st = raw.strip()
+        if st.startswith("|") and st.endswith("|") and st.count("|") >= 2:
+            _close_lists()
+            tbl_buf.append(st)
+            continue
+        else:
+            _flush_tbl()
+
+        if not st:
+            _close_lists()
+            continue
+
+        if st in ("---", "***", "___"):
+            _close_lists()
+            out.append("<hr>")
+            continue
+
+        hm = re.match(r"^(#{1,4})\s+(.*)$", st)
+        if hm:
+            _close_lists()
+            lvl = len(hm.group(1))
+            out.append(f"<h{lvl}>{_inline_fmt(_html.escape(hm.group(2).strip()))}</h{lvl}>")
+            continue
+
+        bm = re.match(r"^[-*•]\s+(.*)$", st)
+        if bm:
+            if in_ol:
+                out.append("</ol>")
+                in_ol = False
+            if not in_ul:
+                out.append("<ul>")
+                in_ul = True
+            out.append(f"<li>{_inline_fmt(_html.escape(bm.group(1).strip()))}</li>")
+            continue
+
+        nm = re.match(r"^\d+[\.\)]\s+(.*)$", st)
+        if nm:
+            if in_ul:
+                out.append("</ul>")
+                in_ul = False
+            if not in_ol:
+                out.append("<ol>")
+                in_ol = True
+            out.append(f"<li>{_inline_fmt(_html.escape(nm.group(1).strip()))}</li>")
+            continue
+
+        if st.startswith(">"):
+            _close_lists()
+            out.append(f"<blockquote>{_inline_fmt(_html.escape(st.lstrip('>').strip()))}</blockquote>")
+            continue
+
+        _close_lists()
+        out.append(f"<p>{_inline_fmt(_html.escape(st))}</p>")
+
+    _flush_tbl()
+    _close_lists()
+    return "\n".join(out)
+
+
+def _build_boardroom_printable_html(norm: Dict[str, Any]) -> str:
+    """สร้างเอกสาร HTML สำหรับพิมพ์รายงานผู้บริหาร A4 / บันทึกเป็น PDF ความคมชัดสูง"""
+    import html as _html
+
+    esc_doc_id = _html.escape(norm["doc_id"])
+    esc_ts = _html.escape(norm["timestamp_display"])
+    esc_topic = _html.escape(norm["topic"])
+    esc_angle = _html.escape(norm["angle_label"])
+    esc_user = _html.escape(norm["username"])
+    esc_class = _html.escape(norm["classification"])
+    esc_hash = _html.escape(norm["audit_hash"])
+
+    theme_colors = {
+        "CEO": ("#b45309", "#fffbeb", "#fde68a"),
+        "CFO": ("#047857", "#ecfdf5", "#a7f3d0"),
+        "CPO": ("#be185d", "#fdf2f8", "#fbcfe8"),
+        "CTO": ("#0369a1", "#f0f9ff", "#bae6fd"),
+    }
+
+    speeches_html = ""
+    if norm["speeches"]:
+        cards = []
+        for sp in norm["speeches"]:
+            fg, bg, bd = theme_colors.get(sp["id"], ("#0f172a", "#f8fafc", "#cbd5e1"))
+            t_disp = sp["title"] if sp["name"] in sp["title"] else f"{sp['name']} — {sp['title']}"
+            cards.append(f"""
+            <div class="exec-card" style="border-left: 4px solid {fg}; background: {bg}; border-top: 1px solid {bd}; border-right: 1px solid {bd}; border-bottom: 1px solid {bd};">
+                <div class="exec-card-head">
+                    <span class="exec-title" style="color: {fg};">{_html.escape(sp['avatar'])} {_html.escape(t_disp)}</span>
+                    <span class="exec-tag" style="background: {fg}; color: #fff;">{_html.escape(sp['id'])}</span>
+                </div>
+                <div class="exec-card-body">{_md_to_safe_html(sp['content'])}</div>
+            </div>
+            """)
+        speeches_html = f"""
+        <section class="report-section">
+            <h2 class="sec-heading">1. แถลงการณ์และมุมมองเชิงลึกจากสภาผู้บริหาร 4 ฝ่าย (Executive Council Statements)</h2>
+            {''.join(cards)}
+        </section>
+        """
+
+    iv_html = ""
+    if norm["interventions"]:
+        items = "".join(f"<li><strong>คำสั่งพิเศษ #{i}:</strong> {_html.escape(iv)}</li>" for i, iv in enumerate(norm["interventions"], 1))
+        iv_html = f"""
+        <section class="report-section gavel-box">
+            <h2 class="sec-heading" style="color:#b45309; border-bottom-color:#fde68a;">🔨 คำสั่งเคาะค้อนแทรกแซงจากประธานในที่ประชุม (Presiding Chair Gavel Directives)</h2>
+            <ol>{items}</ol>
+        </section>
+        """
+
+    debate_html = ""
+    if norm["debate_summary"]:
+        debate_html = f"""
+        <section class="report-section">
+            <h2 class="sec-heading" style="color:#6d28d9;">⚡ บันทึกการถกเถียงและหักล้างจุดอ่อนเชิงกลยุทธ์ (Executive Cross-Examination & Debate)</h2>
+            <div class="debate-content">{_md_to_safe_html(norm['debate_summary'])}</div>
+        </section>
+        """
+
+    matrix_html = ""
+    if norm["voting_matrix"]:
+        m_rows = []
+        for m in norm["voting_matrix"]:
+            pct = max(0, min(100, int(round((m["score"] / 10.0) * 100))))
+            col = _html.escape(m["color"])
+            m_rows.append(f"""
+            <tr>
+                <td><strong>{_html.escape(m['id'])}</strong> {_html.escape(m['name'])}</td>
+                <td>{_html.escape(m['dimension'])}</td>
+                <td>
+                    <div class="bar-track"><div class="bar-fill" style="width:{pct}%; background:{col};"></div></div>
+                </td>
+                <td style="text-align:center; font-weight:700;">{m['score']}/10</td>
+            </tr>
+            """)
+        avg_badge = f" — คะแนนเฉลี่ยรวม: <strong>{norm['average_score']}/10</strong>" if norm["average_score"] is not None else ""
+        matrix_html = f"""
+        <section class="report-section">
+            <h2 class="sec-heading">📊 ตารางประเมินผลยุทธศาสตร์ 4 มิติ (4D Strategic Evaluation Matrix){avg_badge}</h2>
+            <table>
+                <thead><tr><th>ฝ่ายบริหาร</th><th>มิติการประเมิน</th><th>ระดับความเชื่อมั่น</th><th style="text-align:center;">คะแนน</th></tr></thead>
+                <tbody>{''.join(m_rows)}</tbody>
+            </table>
+        </section>
+        """
+
+    consensus_html = ""
+    if norm["consensus"]:
+        consensus_html = f"""
+        <section class="report-section consensus-highlight">
+            <h2 class="sec-heading" style="color:#047857; border-bottom-color:#a7f3d0;">⚖️ มติเอกฉันท์และพิมพ์เขียวปฏิบัติการ (Final Executive Resolution & Strategic Blueprint)</h2>
+            <div class="consensus-content">{_md_to_safe_html(norm['consensus'])}</div>
+        </section>
+        """
+
+    return f"""<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Executive Boardroom Report - {esc_doc_id}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        @page {{ size: A4; margin: 15mm 14mm; }}
+        * {{ box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }}
+        body {{ font-family: 'Noto Sans Thai', 'Inter', sans-serif; font-size: 10pt; line-height: 1.6; color: #0f172a; background: #fff; margin: 0; padding: 0; }}
+        .print-bar {{ background: #0f172a; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }}
+        .print-bar button {{ background: #0284c7; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-left: 8px; }}
+        .print-bar button.sec {{ background: rgba(255,255,255,0.16); }}
+        .a4-sheet {{ max-width: 210mm; margin: 0 auto; padding: 18px 22px; }}
+        .letterhead {{ display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2.5px solid #0284c7; padding-bottom: 12px; margin-bottom: 14px; }}
+        .brand-kicker {{ font-size: 8pt; font-weight: 700; color: #0284c7; letter-spacing: 0.6px; text-transform: uppercase; }}
+        .brand-h1 {{ font-size: 15pt; font-weight: 700; margin: 2px 0; color: #0f172a; }}
+        .brand-sub {{ font-size: 8.5pt; color: #64748b; margin: 0; }}
+        .doc-stamp {{ text-align: right; font-size: 8.5pt; color: #334155; line-height: 1.45; }}
+        .class-pill {{ display: inline-block; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 700; font-size: 7.5pt; padding: 2px 8px; border-radius: 999px; margin-top: 4px; }}
+        .agenda-grid {{ width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 9pt; }}
+        .agenda-grid td {{ border: 1px solid #cbd5e1; padding: 6px 10px; }}
+        .agenda-grid td.lbl {{ width: 28%; background: #f1f5f9; font-weight: 700; color: #334155; }}
+        .sec-heading {{ font-size: 12pt; font-weight: 700; color: #0f172a; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin: 16px 0 10px 0; page-break-after: avoid; }}
+        .exec-card {{ border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; page-break-inside: avoid; }}
+        .exec-card-head {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }}
+        .exec-title {{ font-weight: 700; font-size: 10.5pt; }}
+        .exec-tag {{ font-size: 7.5pt; font-weight: 700; padding: 2px 8px; border-radius: 4px; }}
+        .gavel-box {{ background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; margin: 12px 0; }}
+        .consensus-highlight {{ background: #f8fafc; border: 1.5px solid #a7f3d0; border-radius: 10px; padding: 12px 16px; margin-top: 14px; }}
+        table {{ width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 9pt; page-break-inside: avoid; }}
+        th, td {{ border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }}
+        th {{ background: #e0f2fe; font-weight: 700; color: #0f172a; }}
+        .bar-track {{ width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }}
+        .bar-fill {{ height: 100%; border-radius: 4px; }}
+        code {{ font-family: 'JetBrains Mono', monospace; font-size: 8.5pt; background: #f1f5f9; padding: 1px 4px; border-radius: 4px; }}
+        .signoff-grid {{ display: flex; justify-content: space-between; gap: 16px; margin-top: 22px; padding-top: 14px; border-top: 1.5px solid #cbd5e1; page-break-inside: avoid; }}
+        .sign-box {{ width: 48%; font-size: 8.5pt; color: #334155; }}
+        .sign-line {{ border-bottom: 1px solid #64748b; height: 34px; margin-bottom: 6px; width: 85%; }}
+        .seal-box {{ width: 48%; background: #f8fafc; border: 1px dashed #94a3b8; border-radius: 8px; padding: 10px 12px; font-size: 8pt; color: #475569; }}
+        .seal-hash {{ font-family: 'JetBrains Mono', monospace; font-size: 7.5pt; word-break: break-all; color: #0f172a; margin-top: 3px; }}
+        @media print {{ .print-bar {{ display: none !important; }} .a4-sheet {{ padding: 0 !important; max-width: 100% !important; }} }}
+    </style>
+</head>
+<body>
+    <div class="print-bar">
+        <div><strong>🏛️ Kira Executive Boardroom Report (A4)</strong> — {esc_doc_id}</div>
+        <div>
+            <button onclick="window.print()">สั่งพิมพ์ / Save as PDF</button>
+            <button class="sec" onclick="window.close()">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+    <div class="a4-sheet">
+        <div class="letterhead">
+            <div>
+                <div class="brand-kicker">Kira AI Enterprise v{KIRA_SYSTEM_VERSION} • Virtual Boardroom Council</div>
+                <h1 class="brand-h1">รายงานมติที่ประชุมสภาที่ปรึกษาผู้บริหาร 4 ฝ่าย</h1>
+                <p class="brand-sub">Executive Boardroom Resolution &amp; 90-Day Strategic Action Blueprint</p>
+            </div>
+            <div class="doc-stamp">
+                <div><strong>รหัสเอกสาร:</strong> {esc_doc_id}</div>
+                <div><strong>วันที่ออกเอกสาร:</strong> {esc_ts}</div>
+                <span class="class-pill">{esc_class}</span>
+            </div>
+        </div>
+
+        <table class="agenda-grid">
+            <tr><td class="lbl">วาระการประชุม (Agenda)</td><td><strong>{esc_topic}</strong></td></tr>
+            <tr><td class="lbl">มุมมองยุทธศาสตร์ (Angle)</td><td>{esc_angle}</td></tr>
+            <tr><td class="lbl">ประธานในที่ประชุม (Chair)</td><td>{esc_user}</td></tr>
+        </table>
+
+        {speeches_html}
+        {iv_html}
+        {debate_html}
+        {matrix_html}
+        {consensus_html}
+
+        <div class="signoff-grid">
+            <div class="sign-box">
+                <strong>ลงนามรับรองมติที่ประชุม (Approved By)</strong>
+                <div class="sign-line"></div>
+                <div>({esc_user})</div>
+                <div>ประธานในที่ประชุม / ผู้มีอำนาจอนุมัติ</div>
+                <div>วันที่: ...... / ...... / ..........</div>
+            </div>
+            <div class="seal-box">
+                <div style="font-weight:700; color:#0284c7; margin-bottom:3px;">🛡️ KIRA DIGITAL AUDIT SEAL</div>
+                <div><strong>Engine:</strong> Kira AI v{KIRA_SYSTEM_VERSION} Enterprise</div>
+                <div><strong>Doc Ref:</strong> {esc_doc_id}</div>
+                <div><strong>SHA-256 Verification Hash:</strong></div>
+                <div class="seal-hash">{esc_hash}</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>"""
+
+
+@app.post("/api/boardroom/export")
+async def export_boardroom_report_endpoint(req: BoardroomExportRequest):
+    """API ส่งออกรายงานมติสภาผู้บริหาร 4 ฝ่ายเป็น Word (.docx), Markdown (.md), หรือ Printable A4 HTML"""
+    fmt = (req.format or "docx").strip().lower()
+    norm = _normalize_boardroom_export_payload(req)
+
+    if not norm["speeches"] and not norm["debate_summary"] and not norm["consensus"] and not norm["voting_matrix"]:
+        raise HTTPException(status_code=400, detail="ไม่พบเนื้อหามติที่ประชุมสำหรับการส่งออกรายงานค่ะ")
+
+    safe_doc_id = re.sub(r"[^A-Za-z0-9_\-]", "", norm["doc_id"]) or f"KIRA-BR-{norm['date_code']}"
+
+    if fmt in ("docx", "word"):
+        docx_bytes = _build_boardroom_docx_bytes(norm)
+        filename = f"Kira_Boardroom_Report_{safe_doc_id}.docx"
+        return Response(
+            content=docx_bytes,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-Kira-Doc-Id": safe_doc_id,
+                "X-Kira-Audit-Hash": norm["audit_hash"],
+            },
+        )
+    elif fmt in ("md", "markdown"):
+        md_content = _build_boardroom_markdown(norm)
+        filename = f"Kira_Boardroom_Report_{safe_doc_id}.md"
+        return Response(
+            content=md_content.encode("utf-8"),
+            media_type="text/markdown; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-Kira-Doc-Id": safe_doc_id,
+                "X-Kira-Audit-Hash": norm["audit_hash"],
+            },
+        )
+    elif fmt in ("html", "pdf_html"):
+        html_content = _build_boardroom_printable_html(norm)
+        return Response(
+            content=html_content.encode("utf-8"),
+            media_type="text/html; charset=utf-8",
+            headers={
+                "X-Kira-Doc-Id": safe_doc_id,
+                "X-Kira-Audit-Hash": norm["audit_hash"],
+            },
+        )
+    elif fmt == "json":
+        return {
+            "status": "success",
+            "doc_id": norm["doc_id"],
+            "audit_hash": norm["audit_hash"],
+            "timestamp": norm["timestamp_display"],
+            "markdown": _build_boardroom_markdown(norm),
+            "html": _build_boardroom_printable_html(norm),
+        }
+    else:
+        raise HTTPException(status_code=400, detail=f"ไม่รองรับรูปแบบไฟล์ '{fmt}' (รองรับ docx, md, html, json) ค่ะ")
+
 
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest, request: Request):

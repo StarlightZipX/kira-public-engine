@@ -12,7 +12,7 @@ TEST_USER = f"audit_user_{int(time.time())}"
 TEST_PASS = "KiraAudit_2026_SecurePass!"
 
 print("====================================================================")
-print(f"🌐 KIRA AI LIVE PRODUCTION AUDIT SWARM (v2.7.3 ENTERPRISE)")
+print(f"🌐 KIRA AI LIVE PRODUCTION AUDIT SWARM (v2.7.8 ENTERPRISE)")
 print(f"🎯 Target URL: {BASE_URL}")
 print(f"👤 Testing as Regular User: {TEST_USER} (No Admin / No Boss)")
 print("====================================================================\n")
