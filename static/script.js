@@ -1,6 +1,6 @@
 
 // =========================================================================
-// 🌐 Phase 1: Real-Time Autonomous Web Search & Citation Controller (v2.8.1)
+// 🌐 Phase 1: Real-Time Autonomous Web Search & Citation Controller (v2.8.2)
 // =========================================================================
 let isWebSearchActive = false;
 
@@ -3286,7 +3286,7 @@ if (btnCanvasMaximize) {
 // Close Canvas
 if (btnCloseArtifact) {
     
-    // 🎨 Live Interactive Artifacts Toolbar Buttons (v2.8.1)
+    // 🎨 Live Interactive Artifacts Toolbar Buttons (v2.8.2)
     const btnOpenNewTab = document.getElementById('btn-open-new-tab');
     if (btnOpenNewTab) {
         btnOpenNewTab.addEventListener('click', () => {
@@ -3545,7 +3545,7 @@ print("✨ ประมวลผลบนเบราว์เซอร์ด้
 
     <main class="max-w-2xl mx-auto text-center my-auto py-12">
         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-semibold mb-6">
-            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span> Kira v2.8.1 Live Interactive Suite
+            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span> Kira v2.8.2 Live Interactive Suite
         </div>
         <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
             สัมผัสประสบการณ์ AI Assistant ที่ไร้ขีดจำกัด
@@ -3720,7 +3720,7 @@ window.addEventListener('message', (event) => {
 });
 
 // Build Safe HTML Wrapper with Console Interception
-// Build Safe HTML Wrapper with Console Interception & Multi-Engine Sandbox (v2.8.1)
+// Build Safe HTML Wrapper with Console Interception & Multi-Engine Sandbox (v2.8.2)
 function buildCanvasHtmlWrapper(code, title = 'Live Preview', type = '') {
     const codeTrim = (code || '').trim();
     const titleLower = (title || '').toLowerCase();
@@ -3963,7 +3963,7 @@ function renderArtifactVersion(versionId) {
 
 // Open Artifacts in Canvas & Activate Split Workspace
 
-// 🌐 Open Artifact in New Standalone Tab (v2.8.1)
+// 🌐 Open Artifact in New Standalone Tab (v2.8.2)
 function openArtifactInNewTab(code, title = 'Kira Artifact', type = '') {
     if (!code) return;
     const fullHtml = buildCanvasHtmlWrapper(code, title, type);
@@ -4073,7 +4073,7 @@ if (canvasAiPromptInput) {
 }
 
 // Attach Code Actions (Copy & Live Canvas Preview) to chat blocks
-// Attach Next-Gen Claude-Style Interactive Artifact Cards & Controls (v2.8.1)
+// Attach Next-Gen Claude-Style Interactive Artifact Cards & Controls (v2.8.2)
 function applyCodeActions(container) {
     if (!container) return;
     
@@ -17322,6 +17322,7 @@ function initKiraApp() {
     try { initMCPHubController(); } catch (e) { console.error("MCP Hub controller init error:", e); }
     try { initOfflineVaultController(); } catch (e) { console.error("Offline Vault controller init error:", e); }
     try { initRAGKnowledgeVaultController(); } catch (e) { console.error("RAG Knowledge Vault controller init error:", e); }
+try { initCognitiveMemoryHub(); } catch (e) { console.error("Cognitive Memory Hub controller init error:", e); }
 
     // 4. Background Care & Assistance
     try { initProactiveHeartbeat(); } catch (e) { console.warn("Heartbeat init error:", e); }
@@ -17349,3 +17350,367 @@ if (document.readyState === 'loading') {
 
 
 
+
+
+// ====================================================================
+// 🧠 Kira Cognitive Memory Hub & Brain Studio Controller (v2.8.2 Enterprise)
+// ====================================================================
+
+let currentMemoryCategory = 'all';
+let memorySearchQuery = '';
+let memorySearchDebounceTimer = null;
+
+function initCognitiveMemoryHub() {
+    const memoryHubModal = document.getElementById('memory-hub-modal');
+    const closeBtn = document.getElementById('close-memory-hub-modal');
+    const btnToolsHub = document.getElementById('btn-tools-memory-hub');
+    const btnSettingsHub = document.getElementById('btn-open-memory-hub-from-settings');
+    const btnSwitchGraph = document.getElementById('btn-mem-switch-graph');
+    const searchInput = document.getElementById('mem-search-input');
+    const clearSearchBtn = document.getElementById('btn-mem-clear-search');
+    const catPills = document.querySelectorAll('.mem-cat-pill');
+    const btnAddNew = document.getElementById('btn-mem-add-new');
+    const drawer = document.getElementById('mem-editor-drawer');
+    const drawerClose = document.getElementById('btn-mem-drawer-close');
+    const btnSave = document.getElementById('btn-mem-save');
+    const btnCancel = document.getElementById('btn-mem-cancel');
+    const btnExport = document.getElementById('btn-mem-export');
+    const btnWipeAll = document.getElementById('btn-mem-wipe-all');
+
+    if (!memoryHubModal) return;
+
+    window.openMemoryHub = function() {
+        memoryHubModal.style.display = 'flex';
+        loadMemoryHubData(currentMemoryCategory, memorySearchQuery);
+    };
+
+    window.closeMemoryHub = function() {
+        memoryHubModal.style.display = 'none';
+        if (drawer) drawer.style.display = 'none';
+    };
+
+    if (btnToolsHub) {
+        btnToolsHub.addEventListener('click', () => {
+            const wrapper = document.getElementById('tools-dropdown-wrapper');
+            if (wrapper) wrapper.classList.remove('open');
+            const tm = document.getElementById('tools-dropdown-menu') || document.getElementById('tools-menu');
+            if (tm) tm.style.display = 'none';
+            window.openMemoryHub();
+        });
+    }
+
+    if (btnSettingsHub) {
+        btnSettingsHub.addEventListener('click', () => {
+            const sm = document.getElementById('settings-modal');
+            if (sm) sm.style.display = 'none';
+            window.openMemoryHub();
+        });
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', () => window.closeMemoryHub());
+
+    if (btnSwitchGraph) {
+        btnSwitchGraph.addEventListener('click', () => {
+            window.closeMemoryHub();
+            if (typeof openKnowledgeGraph === 'function') openKnowledgeGraph();
+        });
+    }
+
+    // Category pills filter
+    catPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            catPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            currentMemoryCategory = pill.getAttribute('data-cat') || 'all';
+            loadMemoryHubData(currentMemoryCategory, memorySearchQuery);
+        });
+    });
+
+    // Search filter with debounce
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            memorySearchQuery = e.target.value.trim();
+            if (clearSearchBtn) clearSearchBtn.style.display = memorySearchQuery ? 'block' : 'none';
+            clearTimeout(memorySearchDebounceTimer);
+            memorySearchDebounceTimer = setTimeout(() => {
+                loadMemoryHubData(currentMemoryCategory, memorySearchQuery);
+            }, 250);
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            if (searchInput) searchInput.value = '';
+            memorySearchQuery = '';
+            clearSearchBtn.style.display = 'none';
+            loadMemoryHubData(currentMemoryCategory, '');
+        });
+    }
+
+    // Add / Edit Drawer
+    if (btnAddNew) {
+        btnAddNew.addEventListener('click', () => {
+            openMemoryDrawer();
+        });
+    }
+
+    if (drawerClose) drawerClose.addEventListener('click', () => closeMemoryDrawer());
+    if (btnCancel) btnCancel.addEventListener('click', () => closeMemoryDrawer());
+
+    if (btnSave) {
+        btnSave.addEventListener('click', async () => {
+            const factInput = document.getElementById('mem-form-fact');
+            const catSelect = document.getElementById('mem-form-category');
+            const editIdInput = document.getElementById('mem-edit-id');
+
+            const fact = factInput ? factInput.value.trim() : '';
+            const category = catSelect ? catSelect.value : 'identity';
+            const editId = editIdInput ? editIdInput.value.trim() : '';
+
+            if (!fact) {
+                alert('กรุณากรอกข้อเท็จจริงที่ต้องการให้คิระจดจำค่ะ');
+                return;
+            }
+
+            try {
+                btnSave.disabled = true;
+                btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+
+                let res, data;
+                if (editId) {
+                    res = await fetch(`/api/user/memories/${editId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: (typeof currentUser !== 'undefined' && currentUser) ? currentUser : 'boss',
+                            fact: fact,
+                            category: category
+                        })
+                    });
+                } else {
+                    res = await fetch('/api/user/graph/memory', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: (typeof currentUser !== 'undefined' && currentUser) ? currentUser : 'boss',
+                            fact: fact,
+                            category: category
+                        })
+                    });
+                }
+
+                data = await res.json();
+                if (data.status === 'success') {
+                    closeMemoryDrawer();
+                    loadMemoryHubData(currentMemoryCategory, memorySearchQuery);
+                } else {
+                    alert(data.message || 'เกิดข้อผิดพลาดในการบันทึกความจำ');
+                }
+            } catch (err) {
+                console.error('Save memory error:', err);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = '<i class="fa-solid fa-check"></i> บันทึกลงสมอง';
+            }
+        });
+    }
+
+    // Export Memories
+    if (btnExport) {
+        btnExport.addEventListener('click', async () => {
+            try {
+                const u = encodeURIComponent((typeof currentUser !== 'undefined' && currentUser) ? currentUser : 'boss');
+                const res = await fetch(`/api/user/memories/${u}`);
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `kira_memories_${currentUser || 'boss'}_${Date.now()}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            } catch (err) {
+                console.error('Export error:', err);
+                alert('ไม่สามารถส่งออกข้อมูลความจำได้ค่ะ');
+            }
+        });
+    }
+
+    // Wipe all
+    if (btnWipeAll) {
+        btnWipeAll.addEventListener('click', async () => {
+            const cf = confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างความจำทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้ค่ะ');
+            if (!cf) return;
+            try {
+                const u = encodeURIComponent((typeof currentUser !== 'undefined' && currentUser) ? currentUser : 'boss');
+                const res = await fetch(`/api/user/graph/all?username=${u}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    loadMemoryHubData('all', '');
+                } else {
+                    alert(data.message || 'เกิดข้อผิดพลาดในการล้างความจำ');
+                }
+            } catch (err) {
+                console.error('Wipe error:', err);
+            }
+        });
+    }
+}
+
+function openMemoryDrawer(id, fact, category) {
+    const drawer = document.getElementById('mem-editor-drawer');
+    const heading = document.getElementById('mem-drawer-heading');
+    const factInput = document.getElementById('mem-form-fact');
+    const catSelect = document.getElementById('mem-form-category');
+    const editIdInput = document.getElementById('mem-edit-id');
+
+    if (!drawer) return;
+    drawer.style.display = 'flex';
+    if (editIdInput) editIdInput.value = id || '';
+    if (factInput) {
+        factInput.value = fact ? decodeURIComponent(fact) : '';
+        factInput.focus();
+    }
+    if (catSelect) catSelect.value = category || 'identity';
+    if (heading) {
+        heading.innerHTML = id
+            ? '<i class="fa-solid fa-pen-to-square text-cyan"></i> แก้ไขข้อเท็จจริงในสมอง'
+            : '<i class="fa-solid fa-plus text-cyan"></i> เพิ่มข้อเท็จจริงใหม่ลงในสมอง';
+    }
+}
+
+function closeMemoryDrawer() {
+    const drawer = document.getElementById('mem-editor-drawer');
+    const factInput = document.getElementById('mem-form-fact');
+    const editIdInput = document.getElementById('mem-edit-id');
+    if (drawer) drawer.style.display = 'none';
+    if (factInput) factInput.value = '';
+    if (editIdInput) editIdInput.value = '';
+}
+
+async function loadMemoryHubData(category, search) {
+    category = category || 'all';
+    search = search || '';
+    const container = document.getElementById('memory-cards-container');
+    const countFacts = document.getElementById('mem-count-facts');
+    const countTriples = document.getElementById('mem-count-triples');
+
+    if (!container) return;
+
+    try {
+        const u = encodeURIComponent((typeof currentUser !== 'undefined' && currentUser) ? currentUser : 'boss');
+        const c = encodeURIComponent(category);
+        const s = encodeURIComponent(search);
+        const res = await fetch(`/api/user/memories/${u}?category=${c}&search=${s}`);
+        const data = await res.json();
+
+        if (data.status !== 'success') {
+            container.innerHTML = `<div class="mem-empty-state"><i class="fa-solid fa-triangle-exclamation mem-empty-icon text-amber"></i><span>${data.message || 'ไม่สามารถโหลดข้อมูลความจำได้'}</span></div>`;
+            return;
+        }
+
+        if (countFacts) countFacts.textContent = data.total_memories || 0;
+        if (countTriples) countTriples.textContent = data.total_triples || 0;
+
+        const allItems = [...(data.memories || []), ...(data.triples || [])];
+
+        if (allItems.length === 0) {
+            container.innerHTML = `
+                <div class="mem-empty-state">
+                    <i class="fa-solid fa-brain mem-empty-icon"></i>
+                    <strong style="color: #cbd5e1; font-size: 1rem;">ยังไม่พบความจำในหมวดหมู่นี้</strong>
+                    <p style="font-size: 0.82rem; max-width: 420px; margin: 0;">คิระจะสังเกตและจดจำเรื่องสำคัญของคุณโดยอัตโนมัติขณะคุยกัน หรือคุณสามารถคลิกปุ่ม <strong>[ + เพิ่มความจำ ]</strong> ด้านบนเพื่อบันทึกทันทีได้เลยค่ะ</p>
+                </div>
+            `;
+            return;
+        }
+
+        const categoryIcons = {
+            'identity': 'fa-solid fa-user-tag',
+            'projects': 'fa-solid fa-diagram-project',
+            'preferences': 'fa-solid fa-heart',
+            'rules': 'fa-solid fa-scale-balanced',
+            'custom': 'fa-solid fa-sparkles'
+        };
+
+        const categoryTitles = {
+            'identity': 'อัตลักษณ์ & ตัวตน',
+            'projects': 'โปรเจกต์ & งาน',
+            'preferences': 'ความชอบ & สไตล์',
+            'rules': 'กฎ & คำสั่งถาวร',
+            'custom': 'อื่นๆ'
+        };
+
+        let html = '';
+        allItems.forEach(item => {
+            const cat = item.category || (item.type === 'triple' ? 'projects' : 'identity');
+            const icon = categoryIcons[cat] || 'fa-solid fa-brain';
+            const title = categoryTitles[cat] || cat;
+            const factText = item.fact || (item.type === 'triple' ? `${item.subject} ${item.predicate} ${item.object}` : '');
+            const isTriple = item.type === 'triple';
+            const timestamp = item.timestamp ? item.timestamp.split(' ')[0] : 'ล่าสุด';
+
+            const safeFact = (typeof escapeHtml === 'function') ? escapeHtml(factText) : factText;
+            const encodedFact = encodeURIComponent(factText);
+
+            html += `
+                <div class="memory-card" data-id="${item.id}" data-type="${item.type}">
+                    <div class="memory-card-header">
+                        <span class="mem-tag ${cat}">
+                            <i class="${icon}"></i> ${title}
+                        </span>
+                        ${isTriple ? `<span class="mem-triple-badge"><i class="fa-solid fa-link"></i> Triple</span>` : ''}
+                    </div>
+                    <div class="memory-card-body">
+                        ${safeFact}
+                    </div>
+                    <div class="memory-card-footer">
+                        <span><i class="fa-regular fa-clock"></i> ${timestamp}</span>
+                        <div class="memory-card-actions">
+                            ${!isTriple ? `<button class="mem-card-btn edit" onclick="openMemoryDrawer('${item.id}', '${encodedFact}', '${cat}')"><i class="fa-solid fa-pen"></i> แก้ไข</button>` : ''}
+                            <button class="mem-card-btn delete" onclick="deleteMemoryItem('${item.id}', '${item.type}')"><i class="fa-solid fa-trash-can"></i> ลบ</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    } catch (err) {
+        console.error('Load memories error:', err);
+        container.innerHTML = `<div class="mem-empty-state"><i class="fa-solid fa-triangle-exclamation mem-empty-icon text-rose"></i><span>เกิดข้อผิดพลาดในการโหลดข้อมูล</span></div>`;
+    }
+}
+
+window.deleteMemoryItem = async function(id, type) {
+    const cf = confirm('คุณต้องการลบความจำนี้ออกจากสมองของคิระหรือไม่คะ?');
+    if (!cf) return;
+
+    try {
+        const u = encodeURIComponent((typeof currentUser !== 'undefined' && currentUser) ? currentUser : 'boss');
+        let url = '';
+        if (type === 'triple') {
+            url = `/api/user/graph/triple/${id}?username=${u}`;
+        } else {
+            url = `/api/user/graph/memory/${id}?username=${u}`;
+        }
+
+        const res = await fetch(url, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            loadMemoryHubData(currentMemoryCategory, memorySearchQuery);
+        } else {
+            alert(data.message || 'เกิดข้อผิดพลาดในการลบ');
+        }
+    } catch (err) {
+        console.error('Delete item error:', err);
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+    }
+};

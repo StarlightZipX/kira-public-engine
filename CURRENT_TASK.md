@@ -4,41 +4,43 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 2 พฤศจิกายน 2026 (Kira v2.8.1 Enterprise - Phase 1: Autonomous Deep Web Research & Citations Engine)
+### 🕒 อัปเดตล่าสุด: 2 พฤศจิกายน 2026 (Kira v2.8.2 Enterprise - Phase 2: Proactive Cognitive Memory Hub & Brain Studio)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **เปิดตัว Phase 1: Autonomous Deep Web Research & Live Fact-Checker (ระบบค้นคว้าเว็บสดสไตล์ Perplexity & Realtime Grounding):**
-  1. **Multi-Source Autonomous Search Engine (`app.py`):**
-     - พัฒนาฟังก์ชัน `_perform_autonomous_deep_search(query, deep_mode)`
-     - ผสาน 3 แหล่งข้อมูลชั้นยอดแบบ Zero-API-Cost & Zero-Rate-Limit:
-       - **Google News RSS Feed**: ดึงข่าวสารสดล่าสุดเรียลไทม์ภาษาไทยและสากล
-       - **DuckDuckGo Instant Answer API**: ดึงประเด็นสรุปและ Topics
-       - **Wikipedia API**: ค้นคว้าข้อเท็จจริง สารานุกรม และประวัติความเป็นมา
-     - ผสาน Parallel Page Scraper เพื่อเจาะอ่านเนื้อหาเชิงลึกจาก URL ชั้นนำ
-  2. **Streaming Protocol with Sources & Citations (`app.py`):**
-     - อัปเกรด `ChatRequest` รองรับ `web_search: bool` และ `deep_research: bool`
-     - สตรีม JSON แหล่งข้อมูลผ่านแท็ก `[SOURCES_JSON]...[/SOURCES_JSON]` ขึ้นสู่ไคลเอนต์แบบ Non-blocking
-  3. **Perplexity-Style Source Pills & Interactive Citation Badges (`static/script.js`, `static/style.css`):**
-     - เรนเดอร์แถบ `.kira-search-sources-bar` แสดง Favicon จริงจาก Google Favicon Service พร้อมชื่อโดเมนและเลขกำกับ `[1]`, `[2]`
-     - แปลงตัวเลขการอ้างอิงในข้อความตอบกลับเป็น Interactive Citation Badges `<sup class="citation-badge" data-index="i">[i]</sup>` สามารถคลิกหรือโฮเวอร์เพื่อไฮไลต์และกระโดดไปยังแหล่งอ้างอิงจริง
-  4. **Chat Input Web Search Toggle Button & Active Pill (`templates/index.html`):**
-     - เพิ่มปุ่มไอคอนโลก `#btn-web-search-toggle` ข้างปุ่มแนบไฟล์
-     - เพิ่ม Pill แจ้งเตือนสถานะ `#web-search-active-pill` สไตล์ Cyan Glow เมื่อเปิดใช้งาน
-     - เปลี่ยน Placeholder ในกล่องข้อความเป็น `🌐 ค้นหาข้อมูลสดจากทั่วโลก (Web Search & Citations)...`
-  5. **การทดสอบจริงผ่านเบราว์เซอร์ (Live Browser Verification & Proof of Work):**
-     - ผ่านการทดสอบด้วย Playwright Chromium Headless ครบถ้วน (`verify_phase1_web_search_browser.py`)
-     - ตรวจสอบผ่านฉลุย ไม่พบ JavaScript Error (0 Errors)
-     - บันทึกภาพถ่ายยืนยันผล: `kira_v281_web_search_toggle_active.png`, `kira_v281_citations_sources_verified.png`
-  6. **การอัปเกรดเวอร์ชันและซิงค์แคช (Rule 9):**
-     - อัปเกรดเวอร์ชันสู่ **Kira v2.8.1 Enterprise**
-     - อัปเกรดแคช Service Worker (`sw.js`) เป็น `kira-ai-cache-v2.8.1` (Timestamp `20261102_2810`)
-     - อัปเกรด Cache-Busting ใน HTML/JS (`?v=20261102_2810`)
+* **เปิดตัว Phase 2: Proactive Cognitive Memory Hub & Memory Manager (ระบบจัดการความจำอัจฉริยะแบบโปร่งใสและการเรียนรู้เชิงรุก):**
+  1. **Cognitive Memory Management Backend Engine (`app.py`):**
+     - พัฒนา RESTful CRUD API เต็มรูปแบบ:
+       - `GET /api/user/memories/{username}`: ดึงรายการข้อเท็จจริง (Memories) และเส้นใยความสัมพันธ์ (Knowledge Graph Triples) พร้อมฟิลเตอร์หมวดหมู่และการค้นหา Full-text Search
+       - `POST /api/user/graph/memory`: เพิ่มข้อเท็จจริงหรือความสัมพันธ์ใหม่ลงฐานข้อมูล
+       - `PUT /api/user/memories/{memory_id}`: แก้ไขข้อเท็จจริงและหมวดหมู่ของความจำแบบ Real-time
+       - `DELETE /api/user/graph/memory/{memory_id}`: ลบข้อเท็จจริงรายรายการ
+       - `DELETE /api/user/graph/all`: ล้างความจำทั้งหมดพร้อมการยืนยันตัวตน
+     - เพิ่มคอลัมน์ `category` (identity, projects, preferences, rules, custom) และ `confidence` ลงในตาราง `user_memories` อัตโนมัติ
+  2. **Cognitive Memory Hub Modal & Brain Studio UI (`templates/index.html`, `static/style.css`):**
+     - สร้างหน้าต่างโมดอลหรูหรา `#memory-hub-modal` กระจกแก้ว Glassmorphism กว้าง 920px
+     - แถบเมตริกวัดผลสด: จำนวนข้อเท็จจริง, จำนวนเส้นใยความสัมพันธ์, และสถานะการเรียนรู้เชิงรุก (`🟢 เชิงรุกอัตโนมัติ (Proactive)`)
+     - ช่องค้นหาด่วนแบบ Debounce 250ms พร้อมปุ่มล้างคำค้น
+     - แถบพิลล์กรองหมวดหมู่: ทั้งหมด, 👤 อัตลักษณ์ & ตัวตน, 💼 โปรเจกต์ & งาน, ☕ ความชอบ & สไตล์, ⚖️ กฎ & คำสั่งถาวร
+     - ตัวลิ้นชักสำหรับเพิ่ม/แก้ไขความจำแบบพับเก็บได้ (`#mem-editor-drawer`)
+     - ปุ่มส่งออกความจำเป็นไฟล์ JSON (`#btn-mem-export`)
+     - ปุ่มสลับไปดู 2D Physics Knowledge Graph (`#btn-mem-switch-graph`)
+  3. **Frontend Integration (`static/script.js`):**
+     - ฟังก์ชัน `initCognitiveMemoryHub()`, `loadMemoryHubData()`, `openMemoryDrawer()`, `deleteMemoryItem()`
+     - เชื่อมต่อจุดเข้าสู่ศูนย์ความจำจากเมนูเครื่องมือ (`#btn-tools-memory-hub`) และจากแท็บข้อมูลในการตั้งค่า (`#btn-open-memory-hub-from-settings`)
+  4. **การทดสอบจริงผ่านเบราว์เซอร์ (Live Browser Verification & Proof of Work):**
+     - ผ่านการทดสอบด้วย Playwright Chromium Headless ครบถ้วน (`verify_phase2_memory_hub_browser.py`)
+     - ทดสอบเปิดโมดอล, เพิ่มความจำใหม่, ตรวจสอบการเรนเดอร์การ์ด, แก้ไขข้อความในความจำสด, ทดสอบค้นหาและกรอง
+     - ตรวจสอบไม่พบ JavaScript Error (0 Errors)
+     - บันทึกภาพถ่ายยืนยันผล: `kira_v282_memory_hub_modal.png`, `kira_v282_memory_card_verified.png`
+  5. **การอัปเกรดเวอร์ชันและซิงค์แคช (Rule 9):**
+     - อัปเกรดเวอร์ชันสู่ **Kira v2.8.2 Enterprise**
+     - อัปเกรดแคช Service Worker (`sw.js`) เป็น `kira-ai-cache-v2.8.2` (Timestamp `20261102_2820`)
+     - อัปเกรด Cache-Busting ใน HTML/JS/CSS (`?v=20261102_2820`)
      - ซิงค์โมเดลทดสอบ `live_audit_swarm.py`, `test_100_agents.py`, `test_zero_silence_protocol.py`
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `feat(search): launch Phase 1 Autonomous Deep Web Research & Citations Engine with Perplexity-style source pills (v2.8.1)`
+* **Git Commit ล่าสุด:** `feat(memory): launch Phase 2 Proactive Cognitive Memory Hub & Brain Studio Suite (v2.8.2)`
 * **สถานะบน Render:** ทำการ Git Push สู่ GitHub Repository `main` เพื่อให้ Render ทำการ Auto-Deploy ขึ้นเซิร์ฟเวอร์จริงทันที
 
-#### 3. 🎯 แผนการก้าวกระโดดชิ้นถัดไป (Next Phase):
-* **Phase 2:** Proactive Cognitive Memory Hub & Memory Manager (สร้างความจำเชิงรุก, กราฟความจำส่วนบุคคล และหน้าต่างจัดการความจำให้ผู้ใช้)
-* **Phase 3:** Autonomous Multi-Agent Swarm (ระบบฝูงเอเจนต์ 4 สหาย Architect, Researcher, Coder, Reviewer)
+#### 3. 🎯 แผนการก้าวกระโดดชิ้นถัดไป (Final Phase):
+* **Phase 3:** Autonomous Multi-Agent Swarm (ระบบฝูงเอเจนต์ 4 สหาย Architect, Researcher, Coder, Reviewer พร้อม Visual Pipeline สด)

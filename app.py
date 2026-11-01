@@ -200,7 +200,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.8.1"
+KIRA_SYSTEM_VERSION = "2.8.2"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -1644,6 +1644,14 @@ def init_db():
             execute_query("ALTER TABLE user_preferences ADD COLUMN user_mode TEXT DEFAULT 'general'")
         except:
             pass
+        try:
+            execute_query("ALTER TABLE user_memories ADD COLUMN category TEXT DEFAULT 'identity'")
+        except:
+            pass
+        try:
+            execute_query("ALTER TABLE user_memories ADD COLUMN confidence REAL DEFAULT 1.0")
+        except:
+            pass
 
         execute_query('''CREATE TABLE IF NOT EXISTS tasks
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -2960,10 +2968,15 @@ class ChangePasswordRequest(BaseModel):
 class MemoryCreateRequest(BaseModel):
     username: str
     fact: str
-    category: Optional[str] = "custom"
+    category: Optional[str] = "identity"
     subject: Optional[str] = None
     predicate: Optional[str] = None
     object: Optional[str] = None
+
+class MemoryUpdateRequest(BaseModel):
+    username: str
+    fact: str
+    category: Optional[str] = "identity"
 
 # --- 📋 Kira Omni-Task Suite Pydantic Models ---
 class TaskCreateRequest(BaseModel):
@@ -6218,22 +6231,138 @@ async def get_user_knowledge_graph(username: Optional[str] = None):
         print("Graph Fetch Error:", e)
         return {"status": "error", "message": str(e), "total_nodes": 0, "total_links": 0, "nodes": [], "links": [], "graph": {"nodes": [], "links": []}}
 
+@app.get("/api/user/memories/{username}")
+async def get_user_memories_list(username: str, category: Optional[str] = None, search: Optional[str] = None):
+    """Kira 2.8.2 Cognitive Memory Hub: ดึงรายการความจำและโครงข่ายความรู้ทั้งหมดของผู้ใช้ พร้อมค้นหาและกรองหมวดหมู่"""
+    clean_user = (username or "").strip()
+    if not clean_user:
+        return {"status": "error", "message": "ไม่พบชื่อผู้ใช้", "memories": [], "triples": []}
+    
+    try:
+        has_cat = False
+        try:
+            cols = execute_query("PRAGMA table_info(user_memories)", fetch='all')
+            has_cat = any(c[1] == 'category' for c in (cols or []))
+        except:
+            pass
+
+        if has_cat:
+            m_rows = execute_query("SELECT id, fact, timestamp, category, confidence FROM user_memories WHERE username=? ORDER BY id DESC", (clean_user,), fetch='all')
+        else:
+            m_rows = execute_query("SELECT id, fact, timestamp FROM user_memories WHERE username=? ORDER BY id DESC", (clean_user,), fetch='all')
+
+        t_rows = execute_query("SELECT id, subject, predicate, object, category, fact, confidence, timestamp FROM user_knowledge_graph WHERE username=? ORDER BY id DESC", (clean_user,), fetch='all')
+
+        memories_list = []
+        for r in (m_rows or []):
+            mid = r[0]
+            fact = r[1] or ""
+            ts = r[2] or ""
+            cat = r[3] if len(r) > 3 and r[3] else "identity"
+            conf = r[4] if len(r) > 4 and r[4] is not None else 1.0
+
+            if category and category != "all" and cat != category:
+                continue
+            if search and search.lower() not in fact.lower():
+                continue
+
+            memories_list.append({
+                "id": mid,
+                "fact": fact,
+                "timestamp": ts,
+                "category": cat,
+                "confidence": conf,
+                "type": "memory"
+            })
+
+        triples_list = []
+        for r in (t_rows or []):
+            tid = r[0]
+            subj = r[1] or ""
+            pred = r[2] or ""
+            obj = r[3] or ""
+            cat = r[4] or "projects"
+            fact = r[5] or f"{subj} {pred} {obj}"
+            conf = r[6] if len(r) > 6 and r[6] is not None else 1.0
+            ts = r[7] if len(r) > 7 else ""
+
+            if category and category != "all" and cat != category:
+                continue
+            if search:
+                s_lower = search.lower()
+                if s_lower not in fact.lower() and s_lower not in subj.lower() and s_lower not in obj.lower():
+                    continue
+
+            triples_list.append({
+                "id": tid,
+                "subject": subj,
+                "predicate": pred,
+                "object": obj,
+                "category": cat,
+                "fact": fact,
+                "confidence": conf,
+                "timestamp": ts,
+                "type": "triple"
+            })
+
+        return {
+            "status": "success",
+            "username": clean_user,
+            "total_memories": len(memories_list),
+            "total_triples": len(triples_list),
+            "memories": memories_list,
+            "triples": triples_list
+        }
+    except Exception as e:
+        print("Fetch memories list error:", e)
+        return {"status": "error", "message": str(e), "memories": [], "triples": []}
+
+@app.put("/api/user/memories/{memory_id}")
+async def update_user_memory(memory_id: int, req: MemoryUpdateRequest):
+    """Kira 2.8.2 Cognitive Memory Hub: แก้ไขข้อเท็จจริงในความจำ"""
+    try:
+        clean_user = req.username.strip()
+        tz = timezone(timedelta(hours=7))
+        ts = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+
+        try:
+            execute_query("UPDATE user_memories SET fact=?, category=?, timestamp=? WHERE id=? AND username=?",
+                          (req.fact.strip(), req.category or "identity", ts, memory_id, clean_user))
+        except:
+            execute_query("UPDATE user_memories SET fact=?, timestamp=? WHERE id=? AND username=?",
+                          (req.fact.strip(), ts, memory_id, clean_user))
+        return {"status": "success", "message": "อัปเดตความจำเรียบร้อยแล้วค่ะ"}
+    except Exception as e:
+        print("Update memory error:", e)
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
 @app.post("/api/user/graph/memory")
 async def add_user_memory_node(req: MemoryCreateRequest):
-    """Kira 2.6 Interactive Brain Editing: เพิ่มความจำหรือความสัมพันธ์ใหม่ลงในสมองของคิระโดยตรง"""
+    """Kira 2.8.2 Cognitive Memory Hub: เพิ่มความจำหรือความสัมพันธ์ใหม่ลงในสมองของคิระโดยตรง"""
     try:
         uname = req.username
         tz = timezone(timedelta(hours=7))
         ts = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+        cat = req.category or "identity"
         
         if req.subject and req.predicate and req.object:
             fact_desc = req.fact or f"{req.subject} {req.predicate} {req.object}"
             execute_query("INSERT INTO user_knowledge_graph (username, subject, predicate, object, category, fact, confidence, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                          (uname, req.subject.strip(), req.predicate.strip(), req.object.strip(), req.category or "custom", fact_desc, 1.0, ts))
-            return {"status": "success", "message": "เพิ่มความสัมพันธ์ลงในสมองเรียบร้อยแล้วค่ะ"}
+                          (uname, req.subject.strip(), req.predicate.strip(), req.object.strip(), cat, fact_desc, 1.0, ts))
+            try:
+                execute_query("INSERT INTO user_memories (username, fact, timestamp, category, confidence) VALUES (?, ?, ?, ?, ?)",
+                              (uname, fact_desc, ts, cat, 1.0))
+            except:
+                execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
+                              (uname, fact_desc, ts))
+            return {"status": "success", "message": "เพิ่มความสัมพันธ์และข้อเท็จจริงลงในสมองเรียบร้อยแล้วค่ะ"}
         elif req.fact:
-            execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
-                          (uname, req.fact.strip(), ts))
+            try:
+                execute_query("INSERT INTO user_memories (username, fact, timestamp, category, confidence) VALUES (?, ?, ?, ?, ?)",
+                              (uname, req.fact.strip(), ts, cat, 1.0))
+            except:
+                execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
+                              (uname, req.fact.strip(), ts))
             return {"status": "success", "message": "เพิ่มความจำลงในสมองเรียบร้อยแล้วค่ะ"}
         else:
             return JSONResponse(status_code=400, content={"status": "error", "message": "กรุณาระบุข้อเท็จจริงหรือความสัมพันธ์ให้ครบถ้วนค่ะ"})
