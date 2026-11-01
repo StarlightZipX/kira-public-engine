@@ -4,28 +4,44 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 1 พฤศจิกายน 2026 (Kira v2.7.15 Enterprise - Bank Account Masking & Anti-Scraping Protection)
+### 🕒 อัปเดตล่าสุด: 1 พฤศจิกายน 2026 (Kira v2.8.0 Enterprise - Live Interactive Artifacts & Next-Gen Code Playground Suite)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **ปกปิดเลขที่บัญชีธนาคารกสิกรไทยของบอสบนหน้าเว็บสาธารณะและ API เพื่อความปลอดภัยสูงสุด (Financial Privacy & Anti-Scraping Masking — `Kira v2.7.15 Enterprise`):**
-  1. **วิเคราะห์ความปลอดภัยและการปกปิดข้อมูล (Root-Cause & Financial OPSEC):**
-     - เพื่อป้องกันผู้ไม่หวังดี สแปมเมอร์ หรือบอทดักจับข้อมูลนำเลขบัญชีเต็ม 10 หลักไปใช้ในทางมิชอบ คิระได้ทำการ **ปกปิดตัวเลขบัญชีส่วนหน้า 6 หลักตามมาตรฐานความปลอดภัยของธนาคารไทย (KBANK Standard Masking: `xxx-x-xx252-5`)**
-     - ผู้ใช้งานยังคงสามารถชำระเงินได้อย่างสะดวก รวดเร็ว และแม่นยำ 100% ผ่าน **Thai PromptPay QR Code** ด้านบน และสามารถตรวจสอบตัวเลขท้าย 4 หลัก (`252-5`) บนหน้าจอยืนยันของแอปธนาคารก่อนกดยืนยันโอนเงินได้ตามปกติ
-  2. **การอัปเกรดระบบครบวงจร (`app.py`, `templates/index.html`, `static/script.js`):**
-     - **Backend API Masking (`app.py`):** ใน `/api/subscription/plans` และ `/api/subscription/create-order` ส่งค่า `promptpay_account: "xxx-x-xx252-5"` และ `promptpay_account_masked: "xxx-x-xx252-5"` ทำให้แม้ตรวจสอบผ่าน Network Tab (F12) ก็จะไม่พบเลขบัญชีเต็ม 10 หลัก
-     - **AI Slip Verification Hardening (`app.py`):** ปรับระบบตรวจจับสลิปของคิระให้รองรับทั้งเลขบัญชีจริง เลขที่แสดงบนสลิปแบบ Masked (`xxx-x-xx252-5`, `2525`, `252-5`) และตรวจจับชื่อผู้รับคุณศิวัช รอสวัสดิ์ แม่นยำ 100%
-     - **UI Masking & Security Badge (`templates/index.html`, `static/script.js`):** แสดง `ธนาคารกสิกรไทย (KBANK) • บัญชี xxx-x-xx252-5` พร้อมป้ายเตือนความปลอดภัย `<i class="fa-solid fa-shield-halved"></i> ปกปิดเลขบัญชีบางส่วนเพื่อความปลอดภัย (สแกนผ่าน QR Code ด้านบน)` รองรับ 5 ภาษา (`TH / EN / ZH / KO / JA`)
-  3. **ผลการทดสอบและหลักฐานหน้างานจริง (Proof of Work):**
-     - `test_local_failover.py`: ผ่านครบ **4/4 PASSED (100%)**
-     - `test_auth_suite.py`: ผ่านครบ **14/14 PASSED (100%)**
-     - `test_zero_silence_protocol.py`: ผ่านครบ **4/4 OK**
-     - Live Playwright Browser Screenshots: `kira_v2715_masked_account_verified.png` (ยืนยันตรวจสอบพบ 0 Raw Account Leak บนหน้าจอชำระเงิน, 0 JS Errors)
-  4. **การอัปเกรดเวอร์ชันและแคช (Rule 9):**
-     - ซิงโครไนซ์ระบบหลัก Service Worker (`static/sw.js`) และฝูงเอเจนต์ทดสอบทั้งหมดสู่ **Kira v2.7.15 Enterprise** (`kira-ai-cache-v2.7.15` / `20261101_2715`)
+* **ยกระดับระบบสู่ Kira v2.8.0 Enterprise — Live Interactive Artifacts & Code Playground (ห้องทดลองโค้ดและพรีวิวสดแบบ Claude Artifacts):**
+  1. **Claude-Style Interactive Artifact Cards ในกล่องแชต (`static/script.js`, `static/style.css`):**
+     - แปลงทุกบล็อกโค้ด Markdown (HTML, Tailwind, SVG, Mermaid, Python, Chart.js) ให้กลายเป็นการ์ด Artifact สุดหรูหรา `.kira-artifact-container`
+     - พร้อมหัวการ์ดแยกสีและไอคอนตามภาษา (Web App Cyan, Python Emerald, Mermaid Purple, Chart.js Amber, SVG Rose)
+     - ปุ่มควบคุมครบครัน:
+       - `[ ▶️ พรีวิวสด ]`: เปิด Split Canvas 50/50 ทันทีข้างกล่องแชต
+       - `[ 🌐 เปิดในแท็บใหม่ ]`: เรนเดอร์เป็น Standalone Web App เปิดในแท็บเบราว์เซอร์ใหม่แบบเต็มจอไร้กรอบ
+       - `[ 📋 คัดลอกโค้ด ]`: คัดลอกโค้ดลง Clipboard พร้อม Feedback
+       - `[ 💻 ดูโค้ด / ซ่อนโค้ด ]`: พับโค้ดที่ยาวเกิน 14 บรรทัดอัตโนมัติ ทำให้กล่องแชตสะอาด สบายตา ไม่รก
+  2. **In-Browser WebAssembly Python Runner (Pyodide 3.12 Engine):**
+     - ฝัง Pyodide WebAssembly Runner ลงใน Sandbox iframe ของ Live Canvas
+     - สคริปต์ Python ที่ผู้ใช้สั่ง สามารถรันสดในเบราว์เซอร์ได้ทันทีโดยไม่ต้องลง Python ในเครื่อง
+     - แสดง Terminal Output พร้อมตัวจับเวลา `⏱️ 0.xxs` ปุ่ม `[ 🔄 รันใหม่ (Re-Run) ]` และส่ง stdout/stderr เข้าแท็บ Console
+  3. **Chart.js 4.4 & Tailwind Data Analytics Suite:**
+     - เพิ่ม Chart.js UMD 4.4 และ Canvas-Confetti ลงใน Sandbox iframe อัตโนมัติ
+     - โค้ดกราฟิกและแดชบอร์ดทำงานได้ทันที มีคอนเทนเนอร์ `<canvas id="myChart">` รองรับ
+  4. **Starter Template Gallery Modal (`templates/index.html`):**
+     - เพิ่มปุ่ม `[ ✨ เทมเพลต ]` บนแถบควบคุม Canvas พร้อมโมดอลรวม 5 สุดยอดเทมเพลต:
+       1. 📊 Financial & KPI Analytics Dashboard (Chart.js + Metric Cards)
+       2. 🕹️ Retro Neon Canvas Arcade Game (HTML5 Canvas Pong)
+       3. 📐 Cloud Microservices Architecture (Mermaid Flowchart)
+       4. 🐍 Python WebAssembly Statistical Sandbox (Monte Carlo Pi Simulation)
+       5. 📱 Futuristic Glassmorphism SaaS Hero Page (Tailwind CSS + Confetti)
+  5. **การทดสอบจริงผ่านเบราว์เซอร์ (Live Browser Verification & Proof of Work):**
+     - ผ่านการทดสอบด้วย Playwright Chromium Headless ครบทุกองค์ประกอบ (`verify_artifacts_browser.py`)
+     - ตรวจสอบไม่พบ JS Error (0 Errors), ไม่พบการทับซ้อนของปุ่ม Toolbar
+     - บันทึกภาพถ่ายยืนยันผล: `kira_v280_templates_gallery.png`, `kira_v280_artifacts_split_canvas.png`, `kira_v280_artifacts_code_editor.png`, `kira_v280_chat_artifact_card.png`
+  6. **การอัปเกรดเวอร์ชันและซิงค์แคช (Rule 9):**
+     - ซิงค์ระบบสู่ **Kira v2.8.0 Enterprise**
+     - อัปเกรดแคช Service Worker (`sw.js`) เป็น `kira-ai-cache-v2.8.0` (Timestamp `20261101_2800`)
+     - ซิงค์โมเดลทดสอบ `live_audit_swarm.py`, `test_100_agents.py`, `test_zero_silence_protocol.py`
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `fix(security): mask Boss bank account on payment UI & public APIs to prevent scraping and social engineering (v2.7.15)`
-* **สถานะบน Render:** ทำการ Git Push สู่ GitHub Repository `main` เรียบร้อยแล้ว เพื่อให้ Render Auto-Deploy ขึ้นเซิร์ฟเวอร์จริงทันที
+* **Git Commit ล่าสุด:** `feat(artifacts): launch Claude-style Live Interactive Artifacts, Pyodide Wasm Python runner, Chart.js suite and Starter Template Gallery (v2.8.0)`
+* **สถานะบน Render:** ทำการ Git Push สู่ GitHub Repository `main` เพื่อให้ Render Auto-Deploy ขึ้นเซิร์ฟเวอร์จริงทันที
 
 #### 3. 🏆 สรุปความสำเร็จล่าสุด:
-* ✅ ปกปิดเลขบัญชีธนาคารแบบ Industry-Standard (`xxx-x-xx252-5`) ป้องกันผู้ไม่หวังดี 100% พร้อมเกราะป้องกัน Anti-Fragile Edge Failover เสร็จสมบูรณ์ 100% 🌸
+* ✅ ระบบ Live Interactive Artifacts & Code Playground สไตล์ Claude เสร็จสมบูรณ์ 100% พร้อมใช้งานบน Production! 🌸💻✨

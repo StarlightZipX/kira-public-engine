@@ -1235,7 +1235,7 @@ async function renderWelcomeHub() {
         { title: "Fast Concept Explainer", desc: "Explain complex topics clearly in 3 minutes with examples", prompt: "Please explain this concept clearly in 3 minutes with intuitive analogies.", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
         { title: "Live Code & Diagram Studio", desc: "Build interactive web UI on Live Canvas or Mermaid flowcharts", prompt: "Please generate a modern Dark Minimal Dashboard on Live Canvas with interactive components.", icon: "fa-solid fa-code", tag: "CANVAS", category: "tech" }
     ] : [
-        { title: isBossFallback ? "รายงานสถานะสถาปัตยกรรมระบบ" : "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: isBossFallback ? "ตรวจเช็กความพร้อม Multi-Brain Engine และเกราะป้องกัน Enterprise" : "ช่วยย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: isBossFallback ? "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.7.15 ตรวจสอบความพร้อมของ Multi-Brain Engine และเกราะป้องกันล่าสุดให้บอสหน่อยค่ะ" : "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: isBossFallback ? "ADMIN CORE" : "ADVISOR", category: "advisor" },
+        { title: isBossFallback ? "รายงานสถานะสถาปัตยกรรมระบบ" : "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: isBossFallback ? "ตรวจเช็กความพร้อม Multi-Brain Engine และเกราะป้องกัน Enterprise" : "ช่วยย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: isBossFallback ? "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.8.0 ตรวจสอบความพร้อมของ Multi-Brain Engine และเกราะป้องกันล่าสุดให้บอสหน่อยค่ะ" : "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: isBossFallback ? "ADMIN CORE" : "ADVISOR", category: "advisor" },
         { title: "สร้างดราฟต์แรกของงานเขียน (First-Draft Machine)", desc: "ร่างอีเมลธุรกิจ บทความ โพสต์โซเชียล หรือโครงสร้างรายงานทันที", prompt: "ช่วยร่างโครงสร้างและเขียนดราฟต์แรกของเนื้อหาอย่างมืออาชีพ ปรับภาษาให้อ่านง่ายและน่าเชื่อถือให้หน่อยนะคะ", icon: "fa-solid fa-pen-nib", tag: "FIRST DRAFT", category: "draft" },
         { title: "ตรวจทาน & เกลาเอกสารระดับผู้บริหาร", desc: "ตรวจความถูกต้อง กรองความเสี่ยง และเกลาสำนวนให้น่าเชื่อถือ", prompt: "ช่วยตรวจทานความถูกต้องและเกลาข้อความต่อไปนี้ให้สุภาพ กระชับ เป็นมืออาชีพ และไม่มีคำผิดให้หน่อยค่ะ", icon: "fa-solid fa-magnifying-glass-chart", tag: "REVIEW", category: "review" },
         { title: "ย่อยเรื่องยากให้เข้าใจง่าย (Concept Explainer)", desc: "สรุปสาระสำคัญใน 3 นาที พร้อมยกตัวอย่างให้เห็นภาพชัดเจน", prompt: "ช่วยสรุปและอธิบายเรื่องนี้ให้เข้าใจง่ายใน 3 นาที แบบที่คนไม่มีพื้นฐานก็เข้าใจได้ทันทีให้หน่อยนะคะ", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
@@ -1243,7 +1243,7 @@ async function renderWelcomeHub() {
     ];
     const data = briefing || {
         greeting_title: isBossFallback && currentLang === 'th' ? 'สวัสดีค่ะ ท่านประธาน' : wDict.prep_title(currentUser),
-        greeting_subtitle: isBossFallback && currentLang === 'th' ? 'ระบบสถาปัตยกรรม Kira 2.7.15 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ' : (currentLang === 'en' ? 'Kira AI 2.7.15 is online and ready to assist with strategy, coding, and productivity.' : 'ระบบประมวลผล Kira 2.7.15 พร้อมช่วยคิดวิเคราะห์ เขียนโค้ด และจัดการภารกิจของคุณแล้วค่ะ'),
+        greeting_subtitle: isBossFallback && currentLang === 'th' ? 'ระบบสถาปัตยกรรม Kira 2.8.0 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ' : (currentLang === 'en' ? 'Kira AI 2.8.0 is online and ready to assist with strategy, coding, and productivity.' : 'ระบบประมวลผล Kira 2.8.0 พร้อมช่วยคิดวิเคราะห์ เขียนโค้ด และจัดการภารกิจของคุณแล้วค่ะ'),
         time_str: new Date().toLocaleTimeString(currentLang === 'ja' ? 'ja-JP' : (currentLang === 'en' ? 'en-US' : 'th-TH'), { hour: '2-digit', minute: '2-digit' }),
         date_thai: new Date().toLocaleDateString(currentLang === 'ja' ? 'ja-JP' : (currentLang === 'en' ? 'en-US' : 'th-TH'), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
         is_boss: isBossFallback,
@@ -3222,7 +3222,304 @@ if (btnCanvasMaximize) {
 
 // Close Canvas
 if (btnCloseArtifact) {
-    btnCloseArtifact.addEventListener('click', () => {
+    
+    // 🎨 Live Interactive Artifacts Toolbar Buttons (v2.8.0)
+    const btnOpenNewTab = document.getElementById('btn-open-new-tab');
+    if (btnOpenNewTab) {
+        btnOpenNewTab.addEventListener('click', () => {
+            if (currentArtifactCode) {
+                openArtifactInNewTab(currentArtifactCode, currentArtifactTitle);
+            } else {
+                if (typeof showToast === 'function') showToast('ยังไม่มีชิ้นงานใน Canvas ค่ะ', 'info');
+            }
+        });
+    }
+
+    const btnCanvasTemplates = document.getElementById('btn-canvas-templates');
+    const templatesModal = document.getElementById('canvas-templates-modal');
+    const btnCloseTemplates = document.getElementById('btn-close-templates-modal');
+
+    if (btnCanvasTemplates && templatesModal) {
+        btnCanvasTemplates.addEventListener('click', () => {
+            templatesModal.style.display = 'flex';
+        });
+    }
+    if (btnCloseTemplates && templatesModal) {
+        btnCloseTemplates.addEventListener('click', () => {
+            templatesModal.style.display = 'none';
+        });
+    }
+    if (templatesModal) {
+        templatesModal.addEventListener('click', (e) => {
+            if (e.target === templatesModal) templatesModal.style.display = 'none';
+        });
+    }
+
+    // Starter Template Definitions
+    const KIRA_STARTER_TEMPLATES = {
+        chart_dashboard: {
+            title: 'Financial & KPI Analytics Dashboard',
+            type: 'chart',
+            code: `<div class="max-w-4xl mx-auto p-4 space-y-6">
+    <div class="flex items-center justify-between pb-4 border-b border-slate-700/60">
+        <div>
+            <h1 class="text-2xl font-bold text-sky-400">📊 Enterprise Executive Analytics</h1>
+            <p class="text-xs text-slate-400">ระบบจำลองการประมวลผลข้อมูลและตัวชี้วัดสำคัญ</p>
+        </div>
+        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">🟢 Live Streaming</span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
+            <div class="text-xs text-slate-400">รายได้รวมสะสม (YTD)</div>
+            <div class="text-2xl font-bold text-sky-400 mt-1">฿4,285,000</div>
+            <div class="text-xs text-emerald-400 mt-1">▲ +24.8% เทียบปีก่อน</div>
+        </div>
+        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
+            <div class="text-xs text-slate-400">ผู้ใช้งานจริง (Active Users)</div>
+            <div class="text-2xl font-bold text-amber-400 mt-1">128,490</div>
+            <div class="text-xs text-emerald-400 mt-1">▲ +12.3% สัปดาห์นี้</div>
+        </div>
+        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
+            <div class="text-xs text-slate-400">อัตราความพึงพอใจ (CSAT)</div>
+            <div class="text-2xl font-bold text-purple-400 mt-1">98.6%</div>
+            <div class="text-xs text-purple-400 mt-1">★ มาตรฐานระดับองค์กร</div>
+        </div>
+    </div>
+    <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700">
+        <h3 class="text-sm font-semibold text-slate-300 mb-4">แนวโน้มรายได้และอัตราเติบโตรายเดือน</h3>
+        <canvas id="revenueChart" height="120"></canvas>
+    </div>
+    <div class="flex justify-end">
+        <button onclick="confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } })" class="px-5 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white rounded-xl font-semibold text-sm shadow-lg shadow-sky-500/30 transition">
+            🎉 เฉลิมฉลองเป้าหมายรายได้ (Confetti)
+        </button>
+    </div>
+</div>
+<script>
+const ctx = document.getElementById('revenueChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
+        datasets: [{
+            label: 'รายได้จริง (ล้านบาท)',
+            data: [1.8, 2.1, 2.6, 2.9, 3.4, 3.2, 3.9, 4.1, 4.6, 5.0, 5.4, 6.2],
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+            fill: true,
+            tension: 0.4
+        }, {
+            label: 'เป้าหมาย (ล้านบาท)',
+            data: [1.5, 2.0, 2.5, 3.0, 3.2, 3.5, 3.8, 4.0, 4.3, 4.7, 5.0, 5.5],
+            borderColor: '#fbbf24',
+            borderDash: [5, 5],
+            fill: false,
+            tension: 0.2
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#cbd5e1' } } },
+        scales: {
+            x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+    }
+});
+<\/script>`
+        },
+        arcade_game: {
+            title: 'Retro Neon Canvas Arcade Game',
+            type: 'web',
+            code: `<div class="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-4">
+    <div class="flex items-center justify-between w-full max-w-lg mb-3">
+        <h2 class="text-xl font-bold text-sky-400">🕹️ Kira Cyber Arcade: Neon Pong</h2>
+        <div class="text-sm font-semibold text-emerald-400">Score: <span id="game-score">0</span></div>
+    </div>
+    <div class="relative rounded-2xl overflow-hidden border-2 border-sky-500/40 shadow-2xl shadow-sky-500/20">
+        <canvas id="pongCanvas" width="480" height="320" class="bg-slate-900 block"></canvas>
+    </div>
+    <p class="text-xs text-slate-400 mt-3">🎮 เลื่อนเมาส์หรือใช้นิ้วลากซ้าย-ขวาบนหน้าจอเพื่อควบคุมแป้นรับลูกบอล</p>
+</div>
+<script>
+const canvas = document.getElementById('pongCanvas');
+const ctx = canvas.getContext('2d');
+let score = 0;
+let ballX = canvas.width / 2;
+let ballY = canvas.height / 2;
+let ballSpeedX = 4;
+let ballSpeedY = -4;
+const paddleWidth = 80;
+const paddleHeight = 10;
+let paddleX = (canvas.width - paddleWidth) / 2;
+
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    paddleX = e.clientX - rect.left - paddleWidth / 2;
+    if (paddleX < 0) paddleX = 0;
+    if (paddleX + paddleWidth > canvas.width) paddleX = canvas.width - paddleWidth;
+});
+
+canvas.addEventListener('touchmove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    paddleX = e.touches[0].clientX - rect.left - paddleWidth / 2;
+    if (paddleX < 0) paddleX = 0;
+    if (paddleX + paddleWidth > canvas.width) paddleX = canvas.width - paddleWidth;
+    e.preventDefault();
+}, { passive: false });
+
+function update() {
+    ballX += ballSpeedX;
+    ballY += ballSpeedY;
+
+    if (ballX <= 6 || ballX >= canvas.width - 6) ballSpeedX = -ballSpeedX;
+    if (ballY <= 6) ballSpeedY = -ballSpeedY;
+
+    if (ballY >= canvas.height - paddleHeight - 8 && ballX >= paddleX && ballX <= paddleX + paddleWidth) {
+        ballSpeedY = -Math.abs(ballSpeedY) - 0.2;
+        score += 10;
+        document.getElementById('game-score').textContent = score;
+    }
+
+    if (ballY > canvas.height) {
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+        ballSpeedY = -4;
+        ballSpeedX = (Math.random() > 0.5 ? 4 : -4);
+        score = 0;
+        document.getElementById('game-score').textContent = score;
+    }
+
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#38bdf8';
+    ctx.fillRect(paddleX, canvas.height - paddleHeight - 6, paddleWidth, paddleHeight);
+
+    ctx.fillStyle = '#ec4899';
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#ec4899';
+    ctx.beginPath();
+    ctx.arc(ballX, ballY, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    requestAnimationFrame(update);
+}
+update();
+<\/script>`
+        },
+        mermaid_arch: {
+            title: 'Cloud Microservices Architecture',
+            type: 'mermaid',
+            code: `graph TD
+    User["🌐 ผู้ใช้งาน (Kira Client PWA)"] --> CloudFlare["🛡️ Iron Citadel / Cloudflare Armor"]
+    CloudFlare --> APIGateway["⚡ FastAPI Ultra Gateway (app.py)"]
+    
+    subgraph CoreEngine ["🤖 Kira AI Core Intelligence Suite"]
+        APIGateway --> MultiModel["🧠 Dynamic Multi-Model Arbiter"]
+        MultiModel --> GroqBrain["⚡ Groq Llama 3.3 70B & 3.1 8B"]
+        MultiModel --> OpenRouter["🚀 OpenRouter Qwen 2.5 & DeepSeek"]
+        MultiModel --> LocalEdge["🖥️ Anti-Fragile Ollama Failover Node"]
+    end
+    
+    subgraph StorageVault ["📂 Knowledge & Persistence Vault"]
+        APIGateway --> RAGVector["📚 ChromaDB / Hybrid Vector Store"]
+        APIGateway --> SQLCipher["🔒 SQLite Zero-Trust Encrypted DB"]
+        APIGateway --> MemoryGraph["🧠 Living Knowledge Graph"]
+    end
+
+    subgraph ClientCanvas ["🎨 Split Workspace Suite"]
+        APIGateway --> LiveCanvas["💻 Interactive Live Artifacts"]
+        LiveCanvas --> PyodideWasm["🐍 Pyodide Python Runner"]
+        LiveCanvas --> ChartSuite["📊 Chart.js Analytics"]
+    end`
+        },
+        python_calc: {
+            title: 'Python WebAssembly Statistical Sandbox',
+            type: 'python',
+            code: `# 🐍 Kira WebAssembly Python Statistical Engine (Pyodide)
+import math
+import random
+
+print("=" * 55)
+print("  🚀 KIRA AI ENTERPRISE - MONTE CARLO SIMULATION")
+print("=" * 55)
+
+iterations = 50000
+inside_circle = 0
+
+for i in range(iterations):
+    x = random.random()
+    y = random.random()
+    if x*x + y*y <= 1.0:
+        inside_circle += 1
+
+pi_estimate = 4.0 * inside_circle / iterations
+error_pct = abs(pi_estimate - math.pi) / math.pi * 100
+
+print(f"📊 จำนวนการจำลอง (Iterations): {iterations:,} ครั้ง")
+print(f"🎯 ค่า Pi โดยประมาณ (Estimated Pi): {pi_estimate:.6f}")
+print(f"📏 ค่า Pi มาตรฐาน (Actual Pi):     {math.pi:.6f}")
+print(f"✅ ความคลาดเคลื่อน (Error Margin):  {error_pct:.4f}%")
+print("=" * 55)
+print("✨ ประมวลผลบนเบราว์เซอร์ด้วย WebAssembly สำเร็จ 100%!")`
+        },
+        landing_page: {
+            title: 'Futuristic Glassmorphism SaaS Hero',
+            type: 'web',
+            code: `<div class="min-h-screen bg-slate-950 text-white flex flex-col justify-between p-6">
+    <header class="flex items-center justify-between pb-6 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center font-bold text-xl shadow-lg shadow-sky-500/30">K</div>
+            <span class="font-bold text-lg tracking-wider text-sky-400">KIRA ENTERPRISE</span>
+        </div>
+        <button class="px-4 py-2 text-xs font-semibold rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/40 hover:bg-sky-500/30 transition">
+            เข้าสู่ระบบ
+        </button>
+    </header>
+
+    <main class="max-w-2xl mx-auto text-center my-auto py-12">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-semibold mb-6">
+            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span> Kira v2.8.0 Live Interactive Suite
+        </div>
+        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+            สัมผัสประสบการณ์ AI Assistant ที่ไร้ขีดจำกัด
+        </h1>
+        <p class="text-slate-400 text-sm sm:text-base mb-8 leading-relaxed">
+            ระบบปัญญาประดิษฐ์อัจฉริยะที่พร้อมร่วมคิด วิเคราะห์ ออกแบบ และรันโค้ดสดข้างกล่องแชตของคุณแบบเรียลไทม์
+        </p>
+        <div class="flex justify-center gap-3">
+            <button onclick="confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 } })" class="px-6 py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 font-bold text-sm rounded-xl shadow-xl shadow-sky-500/30 transition transform hover:-translate-y-0.5">
+                🎉 ปล่อย Confetti ฉลองความสำเร็จ
+            </button>
+        </div>
+    </main>
+
+    <footer class="text-center text-xs text-slate-500 pt-6 border-t border-slate-900">
+        © 2026 Kira AI System Team. All rights reserved.
+    </footer>
+</div>`
+        }
+    };
+
+    // Attach click handlers to template cards
+    document.querySelectorAll('.template-item-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const tKey = card.dataset.template;
+            const tpl = KIRA_STARTER_TEMPLATES[tKey];
+            if (tpl) {
+                if (templatesModal) templatesModal.style.display = 'none';
+                openArtifacts(tpl.code, tpl.title, tpl.type);
+                if (typeof showToast === 'function') {
+                    showToast(`✨ โหลดเทมเพลต "${tpl.title}" เข้าสู่ Live Canvas แล้วค่ะ`, 'success');
+                }
+            }
+        });
+    });
+
+btnCloseArtifact.addEventListener('click', () => {
         artifactsDrawer.classList.remove('open');
         isCanvasMaximized = false;
         updateCanvasLayout();
@@ -3360,14 +3657,25 @@ window.addEventListener('message', (event) => {
 });
 
 // Build Safe HTML Wrapper with Console Interception
-function buildCanvasHtmlWrapper(code, title = 'Live Preview') {
-    const isMermaid = title.toLowerCase().includes('mermaid') || 
-                      code.trim().startsWith('graph ') || 
-                      code.trim().startsWith('flowchart ') || 
-                      code.trim().startsWith('sequenceDiagram ') || 
-                      code.trim().startsWith('classDiagram ') || 
-                      code.trim().startsWith('stateDiagram') || 
-                      code.trim().startsWith('erDiagram');
+// Build Safe HTML Wrapper with Console Interception & Multi-Engine Sandbox (v2.8.0)
+function buildCanvasHtmlWrapper(code, title = 'Live Preview', type = '') {
+    const codeTrim = (code || '').trim();
+    const titleLower = (title || '').toLowerCase();
+    const isMermaid = type === 'mermaid' || titleLower.includes('mermaid') || 
+                      codeTrim.startsWith('graph ') || 
+                      codeTrim.startsWith('flowchart ') || 
+                      codeTrim.startsWith('sequenceDiagram ') || 
+                      codeTrim.startsWith('classDiagram ') || 
+                      codeTrim.startsWith('stateDiagram') || 
+                      codeTrim.startsWith('erDiagram');
+
+    const isPython = type === 'python' || titleLower.includes('python') || 
+                     (codeTrim.includes('def ') && codeTrim.includes(':') && codeTrim.includes('import ')) || 
+                     (codeTrim.startsWith('import ') || codeTrim.startsWith('from ') || codeTrim.startsWith('print('));
+
+    const isChart = type === 'chart' || titleLower.includes('chart') || 
+                    codeTrim.includes('Chart(') || codeTrim.includes('chart.js') || 
+                    codeTrim.includes('new Chart');
 
     const consoleScript = `
     <script>
@@ -3393,6 +3701,7 @@ function buildCanvasHtmlWrapper(code, title = 'Live Preview') {
     })();
     <\/script>`;
 
+    // 1. Mermaid Architecture Diagram
     if (isMermaid) {
         return `<!DOCTYPE html>
 <html lang="th">
@@ -3409,7 +3718,7 @@ function buildCanvasHtmlWrapper(code, title = 'Live Preview') {
 </head>
 <body>
     <div class="mermaid">
-${code}
+${codeTrim}
     </div>
     <script>
         mermaid.initialize({ startOnLoad: true, theme: 'dark' });
@@ -3418,34 +3727,152 @@ ${code}
 </html>`;
     }
 
-    if (!code.toLowerCase().includes('<!doctype') && !code.toLowerCase().includes('<html')) {
+    // 2. Python Pyodide WebAssembly Runner
+    if (isPython) {
+        const escapedCode = JSON.stringify(codeTrim);
         return `<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kira Live Canvas</title>
+    <title>Kira Python Wasm Runner</title>
     ${consoleScript}
     <script src="https://cdn.tailwindcss.com"><\/script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"><\/script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: #090e1a; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+        .terminal-box { background: #030712; border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; font-family: 'Consolas', 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.6; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 p-4">
-    ${code}
+<body class="p-4 flex flex-col h-screen box-border">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-800 flex-shrink-0">
+        <div class="flex items-center gap-2">
+            <span id="py-status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <span class="font-bold text-sky-400 text-xs sm:text-sm">🐍 Python 3.12 (Pyodide WebAssembly Sandbox)</span>
+            <span id="py-timer" class="text-xs text-slate-400 ml-2"></span>
+        </div>
+        <button id="btn-rerun-py" class="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-lg shadow-sky-500/20">
+            <i class="fa-solid fa-rotate-right"></i> รันใหม่ (Re-Run)
+        </button>
+    </div>
+    <div class="flex-1 mt-3 terminal-box p-4 overflow-auto" id="terminal-output">
+        <div class="text-slate-400 text-xs mb-2">⚡ กำลังเริ่มต้น Pyodide WebAssembly Engine ในเบราว์เซอร์...</div>
+    </div>
+    <script>
+    const userCode = ${escapedCode};
+    const terminal = document.getElementById('terminal-output');
+    const statusDot = document.getElementById('py-status-dot');
+    const timerEl = document.getElementById('py-timer');
+    let pyodideInstance = null;
+
+    function appendTerm(text, color = '#f1f5f9') {
+        const line = document.createElement('div');
+        line.style.color = color;
+        line.style.whiteSpace = 'pre-wrap';
+        line.textContent = text;
+        terminal.appendChild(line);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    async function runCode() {
+        terminal.innerHTML = '';
+        statusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse';
+        appendTerm('⚡ กำลังประมวลผลโค้ด Python...', '#94a3b8');
+        const t0 = performance.now();
+        try {
+            if (!pyodideInstance) {
+                pyodideInstance = await loadPyodide({
+                    stdout: (msg) => {
+                        appendTerm(msg, '#38bdf8');
+                        console.log('[Python stdout]', msg);
+                    },
+                    stderr: (msg) => {
+                        appendTerm(msg, '#f87171');
+                        console.error('[Python stderr]', msg);
+                    }
+                });
+            }
+            terminal.innerHTML = '';
+            statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
+            const result = await pyodideInstance.runPythonAsync(userCode);
+            const duration = ((performance.now() - t0) / 1000).toFixed(2);
+            timerEl.textContent = '⏱️ ' + duration + 's';
+            if (result !== undefined && result !== null) {
+                appendTerm('\n[Return Value]: ' + String(result), '#34d399');
+            }
+            appendTerm('\n✨ [Finished in ' + duration + 's - Process Exited 0]', '#10b981');
+        } catch (err) {
+            statusDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+            appendTerm('\n❌ [Python Error]:
+' + err.message, '#f87171');
+            console.error('[Python Error]', err);
+        }
+    }
+
+    document.getElementById('btn-rerun-py').addEventListener('click', runCode);
+    runCode();
+    <\/script>
 </body>
 </html>`;
     }
 
-    // Inject console script into existing HTML head or body
-    if (code.includes('</head>')) {
-        return code.replace('</head>', `${consoleScript}</head>`);
-    } else if (code.includes('<body')) {
-        return code.replace('<body', `${consoleScript}<body`);
+    // 3. Modern Interactive Web App / Chart.js / Tailwind App
+    const hasHtmlTags = codeTrim.toLowerCase().includes('<!doctype') || codeTrim.toLowerCase().includes('<html');
+
+    if (!hasHtmlTags) {
+        // If code is pure JS or Chart without container, wrap with container
+        let bodyContent = codeTrim;
+        if (isChart && !codeTrim.includes('<canvas')) {
+            bodyContent = `<div class="max-w-3xl mx-auto bg-slate-900/80 p-6 rounded-2xl border border-slate-700/60 shadow-2xl">
+                <h2 class="text-xl font-bold text-sky-400 mb-4">${title}</h2>
+                <canvas id="myChart" class="w-full"></canvas>
+            </div>
+<script>
+${codeTrim}
+<\/script>`;
+        } else if (!codeTrim.includes('<div') && !codeTrim.includes('<section') && (codeTrim.includes('const ') || codeTrim.includes('let ') || codeTrim.includes('function '))) {
+            bodyContent = `<div id="app" class="p-4"></div>
+<script>
+${codeTrim}
+<\/script>`;
+        }
+
+        return `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    ${consoleScript}
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"><\/script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 p-4 min-h-screen">
+    ${bodyContent}
+</body>
+</html>`;
     }
-    return consoleScript + code;
+
+    // Inject console script and modern libs into existing HTML
+    let output = codeTrim;
+    const injectionLibs = `${consoleScript}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"><\/script>`;
+
+    if (output.includes('</head>')) {
+        return output.replace('</head>', `${injectionLibs}</head>`);
+    } else if (output.includes('<body')) {
+        return output.replace('<body', `${injectionLibs}<body`);
+    }
+    return injectionLibs + output;
 }
+
 
 // Render Specific Artifact Version
 function renderArtifactVersion(versionId) {
@@ -3472,6 +3899,23 @@ function renderArtifactVersion(versionId) {
 }
 
 // Open Artifacts in Canvas & Activate Split Workspace
+
+// 🌐 Open Artifact in New Standalone Tab (v2.8.0)
+function openArtifactInNewTab(code, title = 'Kira Artifact', type = '') {
+    if (!code) return;
+    const fullHtml = buildCanvasHtmlWrapper(code, title, type);
+    const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if (!win) {
+        if (typeof showToast === 'function') {
+            showToast('กรุณาอนุญาต Pop-up บนเบราว์เซอร์เพื่อเปิดแท็บใหม่ค่ะ', 'warning');
+        } else {
+            alert('กรุณาอนุญาต Pop-up เพื่อเปิดแท็บใหม่ค่ะ');
+        }
+    }
+}
+
 function openArtifacts(code, title = 'Live Preview') {
     if (!artifactsDrawer || !artifactsIframe) return;
     currentArtifactTitle = title;
@@ -3566,16 +4010,19 @@ if (canvasAiPromptInput) {
 }
 
 // Attach Code Actions (Copy & Live Canvas Preview) to chat blocks
+// Attach Next-Gen Claude-Style Interactive Artifact Cards & Controls (v2.8.0)
 function applyCodeActions(container) {
     if (!container) return;
     
     const codeBlocks = container.querySelectorAll('pre code');
     codeBlocks.forEach(block => {
         const pre = block.parentElement;
-        if (pre.parentElement.querySelector('.code-action-bar')) return; // Already has bar
+        if (!pre || pre.closest('.kira-artifact-container') || pre.parentElement.querySelector('.code-action-bar')) return;
         
         const codeText = block.innerText;
         const className = block.className || '';
+        
+        // Detect Language & Type
         const isMermaid = className.includes('mermaid') || 
                           codeText.trim().startsWith('graph ') || 
                           codeText.trim().startsWith('flowchart ') || 
@@ -3583,45 +4030,147 @@ function applyCodeActions(container) {
                           codeText.trim().startsWith('classDiagram ') || 
                           codeText.trim().startsWith('stateDiagram') || 
                           codeText.trim().startsWith('erDiagram');
-        const isHtmlOrWeb = className.includes('html') || className.includes('svg') || className.includes('xml') || codeText.includes('<div') || codeText.includes('<html') || codeText.includes('<svg');
-        
-        const actionBar = document.createElement('div');
-        actionBar.className = 'code-action-bar';
-        
-        // Copy Button
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'action-btn';
-        copyBtn.style.fontSize = '0.75rem';
-        copyBtn.style.padding = '2px 8px';
-        copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
-        copyBtn.onclick = () => {
-            navigator.clipboard.writeText(codeText);
-            copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> คัดลอกแล้ว';
-            setTimeout(() => {
-                copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
-            }, 2000);
-        };
-        actionBar.appendChild(copyBtn);
-        
-        // Live Preview Button (Mermaid or Web Canvas)
-        if (isMermaid) {
-            const mermaidBtn = document.createElement('button');
-            mermaidBtn.className = 'btn-run-code';
-            mermaidBtn.style.background = 'linear-gradient(135deg, #8b5cf6, #ec4899)';
-            mermaidBtn.innerHTML = '<i class="fa-solid fa-project-diagram"></i> ดูผังไดอะแกรม (Mermaid Flowchart)';
-            mermaidBtn.onclick = () => openArtifacts(codeText, 'Mermaid Flowchart / Diagram');
-            actionBar.appendChild(mermaidBtn);
-        } else if (isHtmlOrWeb) {
-            const previewBtn = document.createElement('button');
-            previewBtn.className = 'btn-run-code';
-            previewBtn.innerHTML = '<i class="fa-solid fa-play"></i> พรีวิวสด (Interactive Canvas)';
-            previewBtn.onclick = () => openArtifacts(codeText, 'Interactive Live Artifact');
-            actionBar.appendChild(previewBtn);
+
+        const isPython = className.includes('python') || className.includes('py') ||
+                         (codeText.includes('def ') && codeText.includes(':') && codeText.includes('import ')) ||
+                         (codeText.trim().startsWith('import ') || codeText.trim().startsWith('from ') || codeText.trim().startsWith('print('));
+
+        const isChart = className.includes('chart') || codeText.includes('Chart(') || codeText.includes('chart.js');
+        const isSvg = className.includes('svg') || codeText.trim().startsWith('<svg');
+        const isHtmlOrWeb = className.includes('html') || className.includes('xml') || 
+                            codeText.includes('<!DOCTYPE') || codeText.includes('<html') || 
+                            codeText.includes('<div') || codeText.includes('<script');
+
+        const isInteractiveArtifact = isMermaid || isPython || isChart || isSvg || isHtmlOrWeb;
+
+        if (isInteractiveArtifact) {
+            // Determine Title, Tag, and Theme
+            let artifactTitle = 'Interactive Application';
+            let artifactType = 'web';
+            let iconClass = 'fa-solid fa-window-maximize';
+            let themeClass = 'theme-web';
+            let iconTheme = 'icon-web';
+            let badgeText = 'WEB APP';
+
+            if (isMermaid) {
+                artifactTitle = 'System Architecture & Flowchart';
+                artifactType = 'mermaid';
+                iconClass = 'fa-solid fa-diagram-project';
+                themeClass = 'theme-diagram';
+                iconTheme = 'icon-diagram';
+                badgeText = 'MERMAID';
+            } else if (isPython) {
+                artifactTitle = 'Python WebAssembly Script';
+                artifactType = 'python';
+                iconClass = 'fa-brands fa-python';
+                themeClass = 'theme-python';
+                iconTheme = 'icon-python';
+                badgeText = 'PYTHON WASM';
+            } else if (isChart) {
+                artifactTitle = 'Data Analytics & Chart Dashboard';
+                artifactType = 'chart';
+                iconClass = 'fa-solid fa-chart-line';
+                themeClass = 'theme-chart';
+                iconTheme = 'icon-chart';
+                badgeText = 'CHART.JS';
+            } else if (isSvg) {
+                artifactTitle = 'Vector Graphic Design';
+                artifactType = 'svg';
+                iconClass = 'fa-solid fa-bezier-curve';
+                themeClass = 'theme-svg';
+                iconTheme = 'icon-svg';
+                badgeText = 'SVG ART';
+            }
+
+            const lines = codeText.trim().split('\n').length;
+            const isLongCode = lines > 14;
+
+            // Build Claude-Style Artifact Card
+            const card = document.createElement('div');
+            card.className = `kira-artifact-container ${themeClass}`;
+            
+            card.innerHTML = `
+                <div class="kira-artifact-header">
+                    <div class="kira-artifact-info">
+                        <div class="kira-artifact-icon ${iconTheme}">
+                            <i class="${iconClass}"></i>
+                        </div>
+                        <div class="kira-artifact-titles">
+                            <div class="kira-artifact-title">${artifactTitle}</div>
+                            <div class="kira-artifact-meta">
+                                <span class="kira-artifact-badge">${badgeText}</span>
+                                <span>• ${lines} บรรทัด</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kira-artifact-controls">
+                        <button class="btn-artifact-open" title="เปิดทดสอบและปรับแต่งใน Live Canvas 50/50">
+                            <i class="fa-solid fa-play"></i> พรีวิวสด
+                        </button>
+                        <button class="btn-artifact-control btn-artifact-newtab" title="เปิดในแท็บใหม่แบบเต็มหน้าจอ">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </button>
+                        <button class="btn-artifact-control btn-artifact-copy" title="คัดลอกโค้ด">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                        <button class="btn-artifact-control btn-artifact-toggle-code" title="ย่อ/ขยายโค้ด">
+                            <i class="fa-solid fa-code"></i> <span class="toggle-label">${isLongCode ? 'ดูโค้ด' : 'ซ่อนโค้ด'}</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="kira-artifact-code-wrapper ${isLongCode ? 'collapsed' : ''}">
+                </div>
+            `;
+
+            // Replace pre with card and put pre inside wrapper
+            const parent = pre.parentNode;
+            parent.insertBefore(card, pre);
+            const wrapper = card.querySelector('.kira-artifact-code-wrapper');
+            wrapper.appendChild(pre);
+
+            // Bind Event Listeners
+            const btnOpen = card.querySelector('.btn-artifact-open');
+            btnOpen.onclick = () => openArtifacts(codeText, artifactTitle, artifactType);
+
+            const btnNewTab = card.querySelector('.btn-artifact-newtab');
+            btnNewTab.onclick = () => openArtifactInNewTab(codeText, artifactTitle, artifactType);
+
+            const btnCopy = card.querySelector('.btn-artifact-copy');
+            btnCopy.onclick = () => {
+                navigator.clipboard.writeText(codeText).then(() => {
+                    btnCopy.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i>';
+                    setTimeout(() => { btnCopy.innerHTML = '<i class="fa-regular fa-copy"></i>'; }, 2000);
+                });
+            };
+
+            const btnToggle = card.querySelector('.btn-artifact-toggle-code');
+            btnToggle.onclick = () => {
+                const isCollapsed = wrapper.classList.toggle('collapsed');
+                const label = btnToggle.querySelector('.toggle-label');
+                if (label) label.textContent = isCollapsed ? 'ดูโค้ด' : 'ซ่อนโค้ด';
+            };
+
+        } else {
+            // Standard sleek copy action bar for bash, json, sql, plain text
+            const actionBar = document.createElement('div');
+            actionBar.className = 'code-action-bar';
+            
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'action-btn';
+            copyBtn.style.fontSize = '0.75rem';
+            copyBtn.style.padding = '2px 8px';
+            copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก';
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(codeText);
+                copyBtn.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> คัดลอกแล้ว';
+                setTimeout(() => { copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> คัดลอก'; }, 2000);
+            };
+            actionBar.appendChild(copyBtn);
+            pre.parentElement.insertBefore(actionBar, pre);
         }
-        
-        pre.parentElement.insertBefore(actionBar, pre);
     });
 }
+
 
 // =========================================================================
 // 🚀 2.6 Social Viral Share Engine & Viral Social Card Generator
