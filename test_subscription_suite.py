@@ -38,7 +38,7 @@ def run_tests():
     print(f"  ✅ Plans validated: Starter (39฿), Pro (129฿), Founder (499฿)")
     assert data.get('promptpay_name') == "นาย ศิวัช รอสวัสดิ์", f"Expected Boss name, got {data.get('promptpay_name')}"
     assert data.get('promptpay_number') == "004999252517585", f"Expected Boss PromptPay number, got {data.get('promptpay_number')}"
-    assert data.get('promptpay_account') == "004-9-99252-5", f"Expected Boss Account Number, got {data.get('promptpay_account')}"
+    assert data.get('promptpay_account') == "xxx-x-xx252-5", f"Expected Boss Account Number, got {data.get('promptpay_account')}"
     print(f"  PromptPay Real Account Verified: {data.get('promptpay_number')} ({data.get('promptpay_name')}) - {data.get('promptpay_bank')} • Acc: {data.get('promptpay_account')}")
 
     # 3. Test Subscription Status for Normal Free User & Boss
@@ -74,7 +74,7 @@ def run_tests():
     assert order_data["amount"] == 129
     assert order_data["days"] == 30
     assert order_data["promptpay_name"] == "นาย ศิวัช รอสวัสดิ์"
-    assert order_data["promptpay_account"] == "004-9-99252-5"
+    assert order_data["promptpay_account"] == "xxx-x-xx252-5"
     print(f"  ✅ Order created successfully: {order_id} (129฿ / 30 Days) -> QR target: {order_data['promptpay_name']} • Acc: {order_data['promptpay_account']}")
 
     # 5. Upload Slip (Instant Auto-Activation)
