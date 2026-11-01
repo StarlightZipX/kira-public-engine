@@ -1,3 +1,35 @@
+
+// =========================================================================
+// 🌐 Phase 1: Real-Time Autonomous Web Search & Citation Controller (v2.8.1)
+// =========================================================================
+let isWebSearchActive = false;
+
+function initWebSearchController() {
+    const btnToggleSearch = document.getElementById('btn-web-search-toggle');
+    const pillSearch = document.getElementById('web-search-active-pill');
+    const uInput = document.getElementById('user-input');
+
+    if (btnToggleSearch) {
+        btnToggleSearch.addEventListener('click', () => {
+            isWebSearchActive = !isWebSearchActive;
+            btnToggleSearch.classList.toggle('active', isWebSearchActive);
+            if (pillSearch) pillSearch.style.display = isWebSearchActive ? 'inline-flex' : 'none';
+
+            if (isWebSearchActive) {
+                if (uInput) uInput.placeholder = '🌐 ค้นหาข้อมูลสดจากทั่วโลก (Web Search & Citations)...';
+                if (typeof showToast === 'function') {
+                    showToast('🌐 เปิดโหมดค้นหาเว็บสดแล้วค่ะ (Realtime Grounding Active)', 'success');
+                }
+            } else {
+                if (uInput) uInput.placeholder = 'พิมพ์ข้อความหรือคำถามถึง Kira...';
+                if (typeof showToast === 'function') {
+                    showToast('ปิดโหมดค้นหาเว็บสดแล้วค่ะ', 'info');
+                }
+            }
+        });
+    }
+}
+
 // ====================================================================
 // 🚀 Kira AI v2.7.0 Client State & Cache Synchronizer (Auto-Purge Legacy)
 // ====================================================================
@@ -1235,7 +1267,7 @@ async function renderWelcomeHub() {
         { title: "Fast Concept Explainer", desc: "Explain complex topics clearly in 3 minutes with examples", prompt: "Please explain this concept clearly in 3 minutes with intuitive analogies.", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
         { title: "Live Code & Diagram Studio", desc: "Build interactive web UI on Live Canvas or Mermaid flowcharts", prompt: "Please generate a modern Dark Minimal Dashboard on Live Canvas with interactive components.", icon: "fa-solid fa-code", tag: "CANVAS", category: "tech" }
     ] : [
-        { title: isBossFallback ? "รายงานสถานะสถาปัตยกรรมระบบ" : "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: isBossFallback ? "ตรวจเช็กความพร้อม Multi-Brain Engine และเกราะป้องกัน Enterprise" : "ช่วยย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: isBossFallback ? "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.8.0 ตรวจสอบความพร้อมของ Multi-Brain Engine และเกราะป้องกันล่าสุดให้บอสหน่อยค่ะ" : "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: isBossFallback ? "ADMIN CORE" : "ADVISOR", category: "advisor" },
+        { title: isBossFallback ? "รายงานสถานะสถาปัตยกรรมระบบ" : "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: isBossFallback ? "ตรวจเช็กความพร้อม Multi-Brain Engine และเกราะป้องกัน Enterprise" : "ช่วยย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: isBossFallback ? "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.8.1 ตรวจสอบความพร้อมของ Multi-Brain Engine และเกราะป้องกันล่าสุดให้บอสหน่อยค่ะ" : "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: isBossFallback ? "ADMIN CORE" : "ADVISOR", category: "advisor" },
         { title: "สร้างดราฟต์แรกของงานเขียน (First-Draft Machine)", desc: "ร่างอีเมลธุรกิจ บทความ โพสต์โซเชียล หรือโครงสร้างรายงานทันที", prompt: "ช่วยร่างโครงสร้างและเขียนดราฟต์แรกของเนื้อหาอย่างมืออาชีพ ปรับภาษาให้อ่านง่ายและน่าเชื่อถือให้หน่อยนะคะ", icon: "fa-solid fa-pen-nib", tag: "FIRST DRAFT", category: "draft" },
         { title: "ตรวจทาน & เกลาเอกสารระดับผู้บริหาร", desc: "ตรวจความถูกต้อง กรองความเสี่ยง และเกลาสำนวนให้น่าเชื่อถือ", prompt: "ช่วยตรวจทานความถูกต้องและเกลาข้อความต่อไปนี้ให้สุภาพ กระชับ เป็นมืออาชีพ และไม่มีคำผิดให้หน่อยค่ะ", icon: "fa-solid fa-magnifying-glass-chart", tag: "REVIEW", category: "review" },
         { title: "ย่อยเรื่องยากให้เข้าใจง่าย (Concept Explainer)", desc: "สรุปสาระสำคัญใน 3 นาที พร้อมยกตัวอย่างให้เห็นภาพชัดเจน", prompt: "ช่วยสรุปและอธิบายเรื่องนี้ให้เข้าใจง่ายใน 3 นาที แบบที่คนไม่มีพื้นฐานก็เข้าใจได้ทันทีให้หน่อยนะคะ", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
@@ -1243,7 +1275,7 @@ async function renderWelcomeHub() {
     ];
     const data = briefing || {
         greeting_title: isBossFallback && currentLang === 'th' ? 'สวัสดีค่ะ ท่านประธาน' : wDict.prep_title(currentUser),
-        greeting_subtitle: isBossFallback && currentLang === 'th' ? 'ระบบสถาปัตยกรรม Kira 2.8.0 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ' : (currentLang === 'en' ? 'Kira AI 2.8.0 is online and ready to assist with strategy, coding, and productivity.' : 'ระบบประมวลผล Kira 2.8.0 พร้อมช่วยคิดวิเคราะห์ เขียนโค้ด และจัดการภารกิจของคุณแล้วค่ะ'),
+        greeting_subtitle: isBossFallback && currentLang === 'th' ? 'ระบบสถาปัตยกรรม Kira 2.8.1 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ' : (currentLang === 'en' ? 'Kira AI 2.8.1 is online and ready to assist with strategy, coding, and productivity.' : 'ระบบประมวลผล Kira 2.8.1 พร้อมช่วยคิดวิเคราะห์ เขียนโค้ด และจัดการภารกิจของคุณแล้วค่ะ'),
         time_str: new Date().toLocaleTimeString(currentLang === 'ja' ? 'ja-JP' : (currentLang === 'en' ? 'en-US' : 'th-TH'), { hour: '2-digit', minute: '2-digit' }),
         date_thai: new Date().toLocaleDateString(currentLang === 'ja' ? 'ja-JP' : (currentLang === 'en' ? 'en-US' : 'th-TH'), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
         is_boss: isBossFallback,
@@ -2212,7 +2244,8 @@ async function sendMessage() {
                 flavor: flavor,
                 persona: persona,
                 user_mode: currentUserMode || 'general',
-                ui_lang: localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th'
+                ui_lang: localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th',
+                web_search: isWebSearchActive
             })
         });
 
@@ -2250,6 +2283,36 @@ async function sendMessage() {
                     chatBox.scrollTop = chatBox.scrollHeight;
                 }
                 continue;
+            }
+
+            
+            // --- 🌐 Parse Perplexity-Style Realtime Sources ([SOURCES_JSON]) ---
+            let sourcesHeaderHtml = "";
+            if (normalizedTxt.includes("[SOURCES_JSON]")) {
+                const sMatch = normalizedTxt.match(/\[SOURCES_JSON\]([\s\S]*?)\[\/SOURCES_JSON\]/);
+                if (sMatch && sMatch[1]) {
+                    try {
+                        const sourcesData = JSON.parse(sMatch[1]);
+                        const sourcesList = sourcesData.sources || [];
+                        if (sourcesList.length > 0) {
+                            sourcesHeaderHtml = `
+                            <div class="kira-search-sources-bar">
+                                <div class="sources-label"><i class="fa-solid fa-globe text-cyan"></i> แหล่งข้อมูลอ้างอิงสด (${sourcesList.length} เว็บไซต์):</div>
+                                <div class="sources-pills-row">
+                                    ${sourcesList.map(s => `
+                                        <a href="${s.url}" target="_blank" rel="noopener noreferrer" class="source-pill" title="${escapeHtml(s.title || '')}">
+                                            <img src="https://www.google.com/s2/favicons?domain=${s.domain || 'google.com'}&sz=32" class="source-favicon" onerror="this.style.display='none'">
+                                            <span class="source-domain">${escapeHtml(s.domain || '')}</span>
+                                            <span class="source-num">[${s.index}]</span>
+                                        </a>
+                                    `).join('')}
+                                </div>
+                            </div>`;
+                        }
+                    } catch(e) {}
+                }
+                normalizedTxt = normalizedTxt.replace(/\[SOURCES_JSON\][\s\S]*?\[\/SOURCES_JSON\]/g, "").trim();
+                finalMarkdown = finalMarkdown.replace(/\[SOURCES_JSON\][\s\S]*?\[\/SOURCES_JSON\]/g, "").trim();
             }
 
             let displayTxt = fullText.replace(/^(✨ \*\*\[Kira.*?\]\*\*\n\n|🤖 \*\*\[Kira.*?\]\*\*\n\n|👁️ \*\*\[Kira.*?\]\*\*\n\n|🧠 \*\*\[Kira.*?\]\*\*\n\n|👑 \*\*\[Kira.*?\]\*\*\n\n|💼 \*\*\[Kira.*?\]\*\*\n\n)/i, "");
@@ -3223,7 +3286,7 @@ if (btnCanvasMaximize) {
 // Close Canvas
 if (btnCloseArtifact) {
     
-    // 🎨 Live Interactive Artifacts Toolbar Buttons (v2.8.0)
+    // 🎨 Live Interactive Artifacts Toolbar Buttons (v2.8.1)
     const btnOpenNewTab = document.getElementById('btn-open-new-tab');
     if (btnOpenNewTab) {
         btnOpenNewTab.addEventListener('click', () => {
@@ -3482,7 +3545,7 @@ print("✨ ประมวลผลบนเบราว์เซอร์ด้
 
     <main class="max-w-2xl mx-auto text-center my-auto py-12">
         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-semibold mb-6">
-            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span> Kira v2.8.0 Live Interactive Suite
+            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span> Kira v2.8.1 Live Interactive Suite
         </div>
         <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
             สัมผัสประสบการณ์ AI Assistant ที่ไร้ขีดจำกัด
@@ -3657,7 +3720,7 @@ window.addEventListener('message', (event) => {
 });
 
 // Build Safe HTML Wrapper with Console Interception
-// Build Safe HTML Wrapper with Console Interception & Multi-Engine Sandbox (v2.8.0)
+// Build Safe HTML Wrapper with Console Interception & Multi-Engine Sandbox (v2.8.1)
 function buildCanvasHtmlWrapper(code, title = 'Live Preview', type = '') {
     const codeTrim = (code || '').trim();
     const titleLower = (title || '').toLowerCase();
@@ -3900,7 +3963,7 @@ function renderArtifactVersion(versionId) {
 
 // Open Artifacts in Canvas & Activate Split Workspace
 
-// 🌐 Open Artifact in New Standalone Tab (v2.8.0)
+// 🌐 Open Artifact in New Standalone Tab (v2.8.1)
 function openArtifactInNewTab(code, title = 'Kira Artifact', type = '') {
     if (!code) return;
     const fullHtml = buildCanvasHtmlWrapper(code, title, type);
@@ -4010,7 +4073,7 @@ if (canvasAiPromptInput) {
 }
 
 // Attach Code Actions (Copy & Live Canvas Preview) to chat blocks
-// Attach Next-Gen Claude-Style Interactive Artifact Cards & Controls (v2.8.0)
+// Attach Next-Gen Claude-Style Interactive Artifact Cards & Controls (v2.8.1)
 function applyCodeActions(container) {
     if (!container) return;
     
@@ -12124,6 +12187,7 @@ function initLiveVoiceAssistant() {
                     persona: persona,
                     user_mode: currentUserMode || 'general',
                     ui_lang: localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th',
+                web_search: isWebSearchActive,
                     voice_mode: true
                 }),
                 signal: signal
@@ -17244,7 +17308,8 @@ function initKiraApp() {
     try { initBoardroomController(); } catch (e) { console.error("Boardroom controller init error:", e); }
 
     // 3. Productivity & Studio Controllers
-    try { initLiveCanvasController(); } catch (e) { console.error("Live canvas init error:", e); }
+    try { initLiveCanvasController();
+    initWebSearchController(); } catch (e) { console.error("Live canvas init error:", e); }
     try { initTaskMatrixController(); } catch (e) { console.error("Task matrix init error:", e); }
     try { initLiveScreenInspector(); } catch (e) { console.error("Live screen inspector init error:", e); }
     try { initSpeechRecognition(); } catch (e) { console.error("Speech recognition init error:", e); }

@@ -88,14 +88,14 @@ class TestZeroSilenceProtocol(unittest.TestCase):
         """Verify sw.js and index.html cache-busting versions are synchronized"""
         with open("static/sw.js", "r", encoding="utf-8") as f:
             sw_content = f.read()
-        self.assertIn("kira-ai-cache-v2.8.0", sw_content)
-        self.assertIn("script.js?v=20261101_2800", sw_content)
+        self.assertIn("kira-ai-cache-v2.8.1", sw_content)
+        self.assertIn("script.js?v=20261102_2810", sw_content)
 
         with open("templates/index.html", "r", encoding="utf-8") as f:
             html_content = f.read()
-        self.assertIn("script.js?v=20261101_2800", html_content)
+        self.assertIn("script.js?v=20261102_2810", html_content)
 
-        print("  ✅ [Passed] Service Worker and HTML cache-busting synchronized to v2.8.0")
+        print("  ✅ [Passed] Service Worker and HTML cache-busting synchronized to v2.8.1")
 
 if __name__ == "__main__":
     unittest.main()

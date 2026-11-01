@@ -17320,3 +17320,157 @@ body.light-mode .study-chip.hub-trigger {
     }
 }
 
+
+
+/* ====================================================================
+   🌐 Phase 1: Autonomous Deep Web Research & Citations Suite (v2.8.1)
+   ==================================================================== */
+.web-search-toggle-btn {
+    transition: all 0.25s ease;
+    color: #94a3b8;
+}
+
+.web-search-toggle-btn:hover {
+    color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.12) !important;
+}
+
+.web-search-toggle-btn.active {
+    color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.22) !important;
+    border-color: rgba(56, 189, 248, 0.55) !important;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+    animation: webSearchGlow 2.5s infinite alternate ease-in-out;
+}
+
+@keyframes webSearchGlow {
+    0% { box-shadow: 0 0 8px rgba(56, 189, 248, 0.25); }
+    100% { box-shadow: 0 0 16px rgba(56, 189, 248, 0.45); }
+}
+
+.web-search-active-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 10px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 20px;
+    font-size: 0.74rem;
+    color: #38bdf8;
+    margin: 4px 0 8px 6px;
+    font-weight: 600;
+    animation: fadeInPill 0.25s ease;
+}
+
+.web-search-pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+    animation: pulseDot 1.5s infinite;
+}
+
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+@keyframes fadeInPill {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Perplexity-Style Source Pills Bar */
+.kira-search-sources-bar {
+    margin: 4px 0 14px 0;
+    padding: 10px 14px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+}
+
+.sources-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sources-pills-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.source-pill {
+    background: rgba(30, 41, 59, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 4px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    text-decoration: none;
+    color: #f1f5f9;
+    transition: all 0.2s ease;
+}
+
+.source-pill:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.45);
+    color: #38bdf8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.source-favicon {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    object-fit: cover;
+}
+
+.source-domain {
+    font-weight: 600;
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.source-num {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+/* Interactive Superscript Citation Badges */
+.citation-badge {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin: 0 2px;
+    display: inline-block;
+    transition: all 0.15s ease;
+    vertical-align: super;
+    line-height: 1;
+}
+
+.citation-badge:hover {
+    background: #38bdf8;
+    color: #0f172a;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    transform: scale(1.08);
+}
