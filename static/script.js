@@ -365,22 +365,87 @@ async function checkEngineStatus() {
     const unifiedText = document.getElementById('unified-status-text');
     const unifiedPill = document.getElementById('kira-unified-status');
     try {
-        const res = await fetch('/api/ollama/status');
+        const savedUrl = localStorage.getItem('kira_ollama_url') || '';
+        const query = savedUrl ? `?url=${encodeURIComponent(savedUrl)}` : '';
+        const res = await fetch(`/api/ollama/status${query}`);
         const data = await res.json();
         if (data.status === 'online' && data.models && data.models.length > 0) {
             if (badge) badge.innerHTML = `<span class="pulse-dot local"></span><span class="engine-text">Local GPU (${data.models[0]})</span>`;
             if (unifiedText) unifiedText.textContent = `Local GPU (${data.models[0]})`;
-            if (unifiedPill) unifiedPill.title = `เชื่อมต่อกับ Local GPU สำเร็จ (Ollama: ${data.models.join(', ')}) • Heartbeat Active`;
+            if (unifiedPill) {
+                unifiedPill.title = `เชื่อมต่อกับ Local GPU สำเร็จ (Ollama: ${data.models.join(', ')}) • Anti-Fragile Edge Active`;
+                unifiedPill.classList.add('local-edge-active');
+            }
         } else {
-            if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Engine 2.6</span>`;
+            if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Engine 2.7</span>`;
             if (unifiedText) unifiedText.textContent = 'Cloud Engine 2.7';
-            if (unifiedPill) unifiedPill.title = 'ระบบพร้อมใช้งาน 100% | Cloud Multi-Brain Engine พร้อมทำงาน';
+            if (unifiedPill) {
+                unifiedPill.title = 'ระบบพร้อมใช้งาน 100% | Cloud Multi-Brain Engine พร้อมทำงาน (Anti-Fragile Standby)';
+                unifiedPill.classList.remove('local-edge-active');
+            }
         }
     } catch (e) {
-        if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Engine 2.6</span>`;
+        if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Engine 2.7</span>`;
         if (unifiedText) unifiedText.textContent = 'Cloud Engine 2.7';
+        if (unifiedPill) unifiedPill.classList.remove('local-edge-active');
     }
 }
+
+async function testOllamaConnection(customUrl = null) {
+    const urlInput = document.getElementById('setting-ollama-url');
+    const chip = document.getElementById('ollama-live-chip');
+    const modelsDiv = document.getElementById('ollama-detected-models');
+    const testBtn = document.getElementById('btn-test-ollama');
+
+    const targetUrl = (customUrl || (urlInput ? urlInput.value : '') || localStorage.getItem('kira_ollama_url') || 'http://localhost:11434').trim();
+    if (chip) {
+        chip.style.background = 'rgba(255, 255, 255, 0.08)';
+        chip.style.color = '#94a3b8';
+        chip.textContent = 'Checking...';
+    }
+    if (testBtn) testBtn.disabled = true;
+
+    try {
+        const res = await fetch(`/api/ollama/status?url=${encodeURIComponent(targetUrl)}`);
+        const data = await res.json();
+        if (data.status === 'online') {
+            localStorage.setItem('kira_ollama_url', targetUrl);
+            if (chip) {
+                chip.style.background = 'rgba(16, 185, 129, 0.15)';
+                chip.style.color = '#34d399';
+                chip.innerHTML = `<i class="fa-solid fa-circle-check"></i> ออนไลน์ (${data.count} โมเดล)`;
+            }
+            if (modelsDiv) {
+                const modelList = data.models && data.models.length > 0 ? data.models.join(', ') : 'พร้อมใช้งาน';
+                modelsDiv.innerHTML = `<span style="color: #34d399;"><i class="fa-solid fa-check"></i> เชื่อมต่อสำเร็จ:</span> พบโมเดลในเครื่อง: <code>${modelList}</code>`;
+            }
+            fetch('/api/ollama/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: targetUrl })
+            }).catch(() => {});
+        } else {
+            if (chip) {
+                chip.style.background = 'rgba(239, 68, 68, 0.15)';
+                chip.style.color = '#f87171';
+                chip.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ออฟไลน์`;
+            }
+            if (modelsDiv) {
+                modelsDiv.innerHTML = `<span style="color: #94a3b8;"><i class="fa-solid fa-info-circle"></i> ไม่พบ Ollama ที่ ${targetUrl} (เปิดแอป Ollama ในเครื่องเพื่อเปิดใช้เกราะป้องกันออฟไลน์นะคะ)</span>`;
+            }
+        }
+    } catch (e) {
+        if (chip) {
+            chip.style.background = 'rgba(239, 68, 68, 0.15)';
+            chip.style.color = '#f87171';
+            chip.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ออฟไลน์`;
+        }
+    } finally {
+        if (testBtn) testBtn.disabled = false;
+        checkEngineStatus();
+    }
+}
+window.testOllamaConnection = testOllamaConnection;
 
 // --- AI Core Connection & Cold-Start Supervisor ---
 let isCoreWaking = false;
@@ -1170,7 +1235,7 @@ async function renderWelcomeHub() {
         { title: "Fast Concept Explainer", desc: "Explain complex topics clearly in 3 minutes with examples", prompt: "Please explain this concept clearly in 3 minutes with intuitive analogies.", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
         { title: "Live Code & Diagram Studio", desc: "Build interactive web UI on Live Canvas or Mermaid flowcharts", prompt: "Please generate a modern Dark Minimal Dashboard on Live Canvas with interactive components.", icon: "fa-solid fa-code", tag: "CANVAS", category: "tech" }
     ] : [
-        { title: isBossFallback ? "รายงานสถานะสถาปัตยกรรมระบบ" : "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: isBossFallback ? "ตรวจเช็กความพร้อม Multi-Brain Engine และเกราะป้องกัน Enterprise" : "ช่วยย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: isBossFallback ? "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.7.13 ตรวจสอบความพร้อมของ Multi-Brain Engine และเกราะป้องกันล่าสุดให้บอสหน่อยค่ะ" : "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: isBossFallback ? "ADMIN CORE" : "ADVISOR", category: "advisor" },
+        { title: isBossFallback ? "รายงานสถานะสถาปัตยกรรมระบบ" : "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: isBossFallback ? "ตรวจเช็กความพร้อม Multi-Brain Engine และเกราะป้องกัน Enterprise" : "ช่วยย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: isBossFallback ? "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.7.14 ตรวจสอบความพร้อมของ Multi-Brain Engine และเกราะป้องกันล่าสุดให้บอสหน่อยค่ะ" : "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: isBossFallback ? "ADMIN CORE" : "ADVISOR", category: "advisor" },
         { title: "สร้างดราฟต์แรกของงานเขียน (First-Draft Machine)", desc: "ร่างอีเมลธุรกิจ บทความ โพสต์โซเชียล หรือโครงสร้างรายงานทันที", prompt: "ช่วยร่างโครงสร้างและเขียนดราฟต์แรกของเนื้อหาอย่างมืออาชีพ ปรับภาษาให้อ่านง่ายและน่าเชื่อถือให้หน่อยนะคะ", icon: "fa-solid fa-pen-nib", tag: "FIRST DRAFT", category: "draft" },
         { title: "ตรวจทาน & เกลาเอกสารระดับผู้บริหาร", desc: "ตรวจความถูกต้อง กรองความเสี่ยง และเกลาสำนวนให้น่าเชื่อถือ", prompt: "ช่วยตรวจทานความถูกต้องและเกลาข้อความต่อไปนี้ให้สุภาพ กระชับ เป็นมืออาชีพ และไม่มีคำผิดให้หน่อยค่ะ", icon: "fa-solid fa-magnifying-glass-chart", tag: "REVIEW", category: "review" },
         { title: "ย่อยเรื่องยากให้เข้าใจง่าย (Concept Explainer)", desc: "สรุปสาระสำคัญใน 3 นาที พร้อมยกตัวอย่างให้เห็นภาพชัดเจน", prompt: "ช่วยสรุปและอธิบายเรื่องนี้ให้เข้าใจง่ายใน 3 นาที แบบที่คนไม่มีพื้นฐานก็เข้าใจได้ทันทีให้หน่อยนะคะ", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
@@ -1178,7 +1243,7 @@ async function renderWelcomeHub() {
     ];
     const data = briefing || {
         greeting_title: isBossFallback && currentLang === 'th' ? 'สวัสดีค่ะ ท่านประธาน' : wDict.prep_title(currentUser),
-        greeting_subtitle: isBossFallback && currentLang === 'th' ? 'ระบบสถาปัตยกรรม Kira 2.7.13 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ' : (currentLang === 'en' ? 'Kira AI 2.7.13 is online and ready to assist with strategy, coding, and productivity.' : 'ระบบประมวลผล Kira 2.7.13 พร้อมช่วยคิดวิเคราะห์ เขียนโค้ด และจัดการภารกิจของคุณแล้วค่ะ'),
+        greeting_subtitle: isBossFallback && currentLang === 'th' ? 'ระบบสถาปัตยกรรม Kira 2.7.14 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ' : (currentLang === 'en' ? 'Kira AI 2.7.14 is online and ready to assist with strategy, coding, and productivity.' : 'ระบบประมวลผล Kira 2.7.14 พร้อมช่วยคิดวิเคราะห์ เขียนโค้ด และจัดการภารกิจของคุณแล้วค่ะ'),
         time_str: new Date().toLocaleTimeString(currentLang === 'ja' ? 'ja-JP' : (currentLang === 'en' ? 'en-US' : 'th-TH'), { hour: '2-digit', minute: '2-digit' }),
         date_thai: new Date().toLocaleDateString(currentLang === 'ja' ? 'ja-JP' : (currentLang === 'en' ? 'en-US' : 'th-TH'), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
         is_boss: isBossFallback,
@@ -4547,6 +4612,21 @@ async function loadSettingsPreferences() {
     
     const pyConfirmChk = document.getElementById('setting-python-confirm');
     if (pyConfirmChk) pyConfirmChk.checked = localStorage.getItem('kira_python_confirm') !== 'false';
+
+    const ollamaInput = document.getElementById('setting-ollama-url');
+    if (ollamaInput) {
+        const savedOllama = localStorage.getItem('kira_ollama_url') || 'http://localhost:11434';
+        ollamaInput.value = savedOllama;
+        testOllamaConnection(savedOllama);
+    }
+    const btnTestOllama = document.getElementById('btn-test-ollama');
+    if (btnTestOllama && !btnTestOllama.dataset.bound) {
+        btnTestOllama.dataset.bound = 'true';
+        btnTestOllama.addEventListener('click', () => {
+            const urlVal = document.getElementById('setting-ollama-url')?.value;
+            testOllamaConnection(urlVal);
+        });
+    }
     
     const thinkingSelect = document.getElementById('setting-thinking-accordion');
     if (thinkingSelect) thinkingSelect.value = localStorage.getItem('kira_thinking_accordion') || 'auto_collapse';
