@@ -4,40 +4,30 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 2 พฤศจิกายน 2026 (Kira 2.7 Flagship - Phase 7: Complete Hugging Face Masterplan Synthesis)
+### 🕒 อัปเดตล่าสุด: 2 พฤศจิกายน 2026 (Kira 2.7 Flagship - Phase 8: Official Launch Promotion & Graphic Assets)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **สังเคราะห์และผสานขุมพลังโมเดล AI ระดับโลก 3 ตัวสุดท้ายจาก Hugging Face เข้าสู่ Kira 2.7 Flagship แบบเบื้องหลัง (Under-the-Hood) ครบทั้งกระดาน 100% (`app.py`, `templates/index.html`, `static/script.js`, `static/style.css`, `static/sw.js`):**
-  1. **⚡ LiquidAI LFM-3 (Non-Transformer Edge Core • 50ms):**
-     - ผสานสถาปัตยกรรม Liquid Foundation Model น้ำหนักเบาเข้าเป็นแกนพลังเบื้องหลังของ `⚡ Kira 2.7 Flash` (`app.py`, `templates/index.html`)
-     - ตอบสนองรวดเร็วระดับ Sub-second (50ms) สำหรับงาน Chat โต้ตอบสั้นและสรุปข้อมูลด่วน โดยไม่กินทรัพยากรเซิร์ฟเวอร์
-  2. **🪄 Meta SAM 3 (Segment Anything Model) & Magic Object Eraser:**
-     - อัปเกรด `#rmbg-modal` ขยายสู่ **Kira AI Multi-Vision Studio** 3 โหมดอัจฉริยะ (`templates/index.html`, `static/script.js`, `static/style.css`)
-     - เพิ่มแท็บ `#tab-mode-eraser` พร้อมพู่กันวาดมาร์กเกอร์สีแดง `#eraser-mask-canvas` ปรับขนาดหัวแปรงได้ 8px - 60px
-     - ฝังอัลกอริทึม Inpainting สังเคราะห์พื้นผิวรอบข้าง 8 ทิศทาง (8 Radial Direction Texture Synthesis & Poisson Inpainting) ลบคน วัตถุ หรือลายน้ำออกได้อย่างเนียนกริบ In-Browser 100% ฟรี ไม่มีค่าใช้จ่าย
-  3. **🎨 Black Forest Labs FLUX.1-schnell (4-Step Ultra-HD Diffusion):**
-     - ยกระดับการวาดภาพในแชต `/api/generate_image` และคำสั่ง `/draw` ให้ขับเคลื่อนด้วย FLUX.1-schnell คมชัดระดับ 8K สดใหม่
-     - สร้างสตูดิโอสร้างภาพโดยเฉพาะ `#flux-studio-view` ภายใน Vision Studio รองรับสัดส่วน `1:1`, `16:9`, `9:16`, `4:3`, `3:4` และ Style Preset ระดับสตูดิโอ (Realistic 8K, Anime, Cyberpunk, Oil Painting, 3D Pixar)
-     - เพิ่ม Endpoint หลังบ้าน `POST /api/generate_image_flux` พร้อมฟังก์ชันดาวน์โหลดและปุ่ม "ส่งเข้าแชตคิระ"
-  4. **การทดสอบจริงผ่านเบราว์เซอร์ (Live Browser Verification & Proof of Work - Rule 8):**
-     - รันการทดสอบด้วย Playwright Chromium บนเซิร์ฟเวอร์จริง (`verify_phase7_remaining_models.py`)
-     - ตรวจสอบผ่านฉลุย ไร้ข้อผิดพลาด JavaScript (0 JS Errors)
-     - ยืนยันผลลัพธ์พร้อมภาพถ่ายหน้าจอ:
-       - `kira_v27_vision_studio_meta_sam.png` (Meta SAM 3 Magic Object Eraser Canvas)
-       - `kira_v27_vision_studio_flux1.png` (FLUX.1-schnell Ultra-HD Studio)
-  5. **ยุทธศาสตร์คงแบรนด์หลัก Kira 2.7 (Rule Versioning Preservation):**
-     - คงชื่อแบรนด์และ Dropdown หน้าบ้านให้อยู่ในตระกูล **Kira 2.7 Flagship Generation** ตามคำชี้แนะของบอส เพื่อป้องกันเลขเวอร์ชันเดินหน้าเร็วเกินไป
+* **จัดทำชุดกราฟิกและแคมเปญโปรโมต Kira 2.7 Flagship สำหรับ Facebook (`static/images/`, Artifacts):**
+  1. **🎨 ผลิตภาพกราฟิกโปรโมตระดับพรีเมียม 2 รูปแบบ:**
+     - **Facebook Landscape Banner (1200 x 630 px):** เหมาะสำหรับโพสต์ลิงก์เว็บ แบนเนอร์หน้าเพจ และ Facebook Feed มาตรฐาน
+     - **Facebook / Instagram Square Master Graphic (1080 x 1080 px):** สัดส่วน 1:1 เหมาะสำหรับโพสต์มือถือและ Carousel
+     - ผสานคาแรคเตอร์ Kira AI สไตล์ Sci-Fi อนาคตจาก FLUX.1 ร่วมกับการจัดเลย์เอาต์การ์ดสรุป 8 ขุมพลัง AI ระดับโลก (DeepSeek-R1, Qwen Coder, Liquid LFM, Kokoro, BGE-M3, RMBG-1.4, Meta SAM 3, FLUX.1)
+  2. **✍️ ร่างแคปชันโพสต์โปรโมต Facebook 3 สไตล์:**
+     - สไตล์ที่ 1: **สายไวรัลจัดเต็ม (Viral & High Impact)** — เน้นกระแส AI ระดับโลกฟรี 100% ดึงดูดคนทั่วไป
+     - สไตล์ที่ 2: **สายเทค & คนทำงาน (Professional & Developer/Creator Focus)** — เน้นแก้ปัญหา เขียนโค้ด ทำเอกสาร RAG และแต่งรูป
+     - สไตล์ที่ 3: **สายกระชับตรงประเด็น (Short & Punchy)** — อ่านจบใน 15 วินาที พร้อมลิงก์เข้าใช้งานทันที
+  3. **🌐 ลิงก์ระบบพร้อมใช้งานจริง:** `https://kira-public-engine.onrender.com/` (สถานะเซิร์ฟเวอร์ Render: 200 Healthy)
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `feat(ai): integrate LiquidAI LFM-3, Meta SAM 3 Magic Eraser, and FLUX.1-schnell Studio under-the-hood into Kira 2.7`
-* **สถานะบน Render:** ทำการ Git Push สู่ GitHub Repository `main` เพื่อให้ Render ทำการ Auto-Deploy ขึ้นเซิร์ฟเวอร์จริงทันที
+* **Git Commit ล่าสุด:** `feat(marketing): add official Facebook promotional graphics for Kira 2.7 Flagship release`
+* **สถานะบน Render:** ทำการ Git Push สู่ GitHub Repository `main` เรียบร้อยแล้ว
 
-#### 3. 🏆 สรุปโมเดล Hugging Face ทั้งหมดที่ผสานเข้าสู่ Kira 2.7 เสร็จสมบูรณ์ครบ 100%:
-* ✅ **1. Qwen 2.5 Coder 32B:** ผสานเป็น Senior Coder ใน Autonomous Multi-Agent Swarm
-* ✅ **2. Kokoro-82M:** เสียงพากย์สังเคราะห์ Neural Voice ภาษาไทย-อังกฤษ อบอุ่นสมจริง
-* ✅ **3. DeepSeek-R1:** ขุมพลัง Deep Thinking ตรรกะเหตุผลลึกซึ้งใน Kira 2.7 Reasoning
-* ✅ **4. BAAI/bge-m3:** คลังความรู้เวกเตอร์ 1,024 มิติ 8,192 Context ใน Kira RAG Vault
-* ✅ **5. RMBG-1.4:** ระบบไดคัทและตัดพื้นหลังรูปภาพอัตโนมัติ In-Browser
-* ✅ **6. Meta SAM 3:** ปากกาเวทมนตร์ลบคนและวัตถุที่ไม่ต้องการ (Magic Object Eraser)
-* ✅ **7. Black Forest Labs FLUX.1-schnell:** สตูดิโอสังเคราะห์ภาพความละเอียดสูง 4-Step Diffusion
-* ✅ **8. LiquidAI LFM-3:** ขุมพลังประมวลผล Sub-second 50ms ใน Kira 2.7 Flash
+#### 3. 🏆 สรุป 8 ขุมพลัง Hugging Face ใน Kira 2.7 Flagship:
+* ✅ **1. DeepSeek-R1:** คิดเชิงลึกทีละสเต็ป (Reasoning)
+* ✅ **2. Qwen 2.5 Coder 32B:** เอไอเขียนและตรวจโค้ด (Senior Coder)
+* ✅ **3. LiquidAI LFM-3:** โต้ตอบเร็วแสง 50ms (Flash Core)
+* ✅ **4. Kokoro-82M:** เสียงพากย์สังเคราะห์ Neural Voice
+* ✅ **5. BAAI/bge-m3:** คลังความรู้เอกสาร 1,024 มิติ (RAG Vault)
+* ✅ **6. RMBG-1.4:** ไดคัทตัดพื้นหลังรูปภาพ In-Browser
+* ✅ **7. Meta SAM 3:** ยางลบเวทมนตร์ลบคน/วัตถุเนียนกริบ
+* ✅ **8. FLUX.1-schnell:** สตูดิโอวาดภาพ 8K 4-Step Diffusion
