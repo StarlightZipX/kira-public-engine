@@ -1301,6 +1301,66 @@ async function renderWelcomeHub() {
     const currentLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
     const wDict = WELCOME_I18N[currentLang] || WELCOME_I18N['th'];
 
+        const isEn = currentLang === 'en';
+    const flagshipHubHtml = `
+        <div class="flagship-quick-hub" id="flagship-quick-hub">
+            <div class="flagship-hub-title-row">
+                <span class="flagship-hub-badge"><i class="fa-solid fa-wand-magic-sparkles text-cyan"></i> ${isEn ? 'Featured 1-Click Actions' : 'ฟีเจอร์เด่น แตะเพื่อเริ่มใช้งานทันที'}</span>
+                <span class="flagship-hub-sub">${isEn ? 'Try flagship tools in 1 click' : 'เครื่องมือยอดนิยม ไม่ต้องรอพิมพ์คำสั่ง'}</span>
+            </div>
+            <div class="flagship-actions-grid">
+                <div class="flagship-action-card action-flux" onclick="triggerQuickAction('flux')" title="${isEn ? 'Generate 8K Image' : 'เปิดสตูดิโอสร้างภาพ 8K'}">
+                    <div class="flagship-card-icon icon-flux"><i class="fa-solid fa-palette"></i></div>
+                    <div class="flagship-card-info">
+                        <span class="flagship-card-title">${isEn ? 'AI Image Studio' : 'วาดภาพด้วย AI'}</span>
+                        <span class="flagship-card-desc">${isEn ? 'Ultra-HD 8K Diffusion art' : 'สร้างภาพคมชัดสูงตามสั่ง'}</span>
+                    </div>
+                    <span class="flagship-card-pill text-amber"><i class="fa-solid fa-bolt"></i> ${isEn ? 'Studio' : 'สตูดิโอ'}</span>
+                </div>
+                <div class="flagship-action-card action-rmbg" onclick="triggerQuickAction('rmbg')" title="${isEn ? 'Remove Image Background' : 'ตัดพื้นหลังรูปภาพอัตโนมัติ'}">
+                    <div class="flagship-card-icon icon-rmbg"><i class="fa-solid fa-scissors"></i></div>
+                    <div class="flagship-card-info">
+                        <span class="flagship-card-title">${isEn ? 'Instant Cutout' : 'ไดคัทตัดพื้นหลัง'}</span>
+                        <span class="flagship-card-desc">${isEn ? 'In-browser background removal' : 'ลบพื้นหลังสินค้า/บุคคลในคลิกเดียว'}</span>
+                    </div>
+                    <span class="flagship-card-pill text-teal"><i class="fa-solid fa-wand-magic"></i> ${isEn ? 'Free' : 'ฟรี 100%'}</span>
+                </div>
+                <div class="flagship-action-card action-eraser" onclick="triggerQuickAction('eraser')" title="${isEn ? 'Erase Objects or People' : 'ลบสิ่งของหรือคนส่วนเกินในภาพ'}">
+                    <div class="flagship-card-icon icon-eraser"><i class="fa-solid fa-eraser"></i></div>
+                    <div class="flagship-card-info">
+                        <span class="flagship-card-title">${isEn ? 'Magic Eraser' : 'ลบคน / วัตถุในภาพ'}</span>
+                        <span class="flagship-card-desc">${isEn ? 'Brush & seamless inpainting' : 'ป้ายสีแดงลบส่วนเกินเนียนกริบ'}</span>
+                    </div>
+                    <span class="flagship-card-pill text-orange"><i class="fa-solid fa-sparkles"></i> ${isEn ? 'Magic' : 'เนียนตา'}</span>
+                </div>
+                <div class="flagship-action-card action-rag" onclick="triggerQuickAction('rag')" title="${isEn ? 'PDF & Document Research' : 'ถามตอบและสรุปไฟล์เอกสาร PDF'}">
+                    <div class="flagship-card-icon icon-rag"><i class="fa-solid fa-folder-open"></i></div>
+                    <div class="flagship-card-info">
+                        <span class="flagship-card-title">${isEn ? 'Document Vault' : 'สรุปเนื้อหาเอกสาร'}</span>
+                        <span class="flagship-card-desc">${isEn ? 'Deep semantic RAG search' : 'ค้นคว้าจากไฟล์ PDF และสัญญา'}</span>
+                    </div>
+                    <span class="flagship-card-pill text-emerald"><i class="fa-solid fa-book-open"></i> ${isEn ? 'RAG' : 'คลังเอกสาร'}</span>
+                </div>
+                <div class="flagship-action-card action-reasoning" onclick="triggerQuickAction('reasoning')" title="${isEn ? 'Step-by-Step Logic Analysis' : 'คิดแก้โจทย์ซับซ้อนทีละขั้นตอน'}">
+                    <div class="flagship-card-icon icon-reasoning"><i class="fa-solid fa-brain"></i></div>
+                    <div class="flagship-card-info">
+                        <span class="flagship-card-title">${isEn ? 'Deep Reasoning' : 'คิดวิเคราะห์เป็นขั้นตอน'}</span>
+                        <span class="flagship-card-desc">${isEn ? 'Complex logic & math breakdown' : 'แก้โจทย์คณิตและตรรกะซับซ้อน'}</span>
+                    </div>
+                    <span class="flagship-card-pill text-purple"><i class="fa-solid fa-lightbulb"></i> ${isEn ? 'Thinking' : 'คิดลึก'}</span>
+                </div>
+                <div class="flagship-action-card action-code" onclick="triggerQuickAction('code')" title="${isEn ? 'Code Assistant & Debugger' : 'ช่วยเขียนและตรวจโค้ด'}">
+                    <div class="flagship-card-icon icon-code"><i class="fa-solid fa-code"></i></div>
+                    <div class="flagship-card-info">
+                        <span class="flagship-card-title">${isEn ? 'Code Assistant' : 'ผู้ช่วยเขียนโปรแกรม'}</span>
+                        <span class="flagship-card-desc">${isEn ? 'Debug code & architecture' : 'แนะนำโค้ดและตรวจหาบั๊ก'}</span>
+                    </div>
+                    <span class="flagship-card-pill text-blue"><i class="fa-solid fa-terminal"></i> ${isEn ? 'Coder' : 'เซียนโค้ด'}</span>
+                </div>
+            </div>
+        </div>
+    `;
+
     chatBox.innerHTML = `
         <div class="welcome-hero-card">
             <div class="welcome-meta-bar">
@@ -1423,6 +1483,7 @@ async function renderWelcomeHub() {
             </div>
             ${continueHtml}
             ${memoryHtml}
+            ${flagshipHubHtml}
             <div class="welcome-category-bar">
                 <button type="button" class="welcome-cat-btn active" onclick="filterWelcomeCategory('all', this)">${wDict.cat_all}</button>
                 <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('advisor', this)">${wDict.cat_advisor}</button>
@@ -18412,3 +18473,54 @@ function initRMBGController() {
         });
     }
 }
+
+// ====================================================================
+// 🚀 Kira 2.7 Flagship 1-Click Interactive Action Trigger
+// ====================================================================
+window.triggerQuickAction = function(action) {
+    if (action === 'flux') {
+        if (typeof window.openRMBGModal === 'function') {
+            window.openRMBGModal();
+            const tabFlux = document.getElementById('tab-mode-flux');
+            if (tabFlux) tabFlux.click();
+        }
+    } else if (action === 'rmbg') {
+        if (typeof window.openRMBGModal === 'function') {
+            window.openRMBGModal();
+            const tabRMBG = document.getElementById('tab-mode-rmbg');
+            if (tabRMBG) tabRMBG.click();
+        }
+    } else if (action === 'eraser') {
+        if (typeof window.openRMBGModal === 'function') {
+            window.openRMBGModal();
+            const tabEraser = document.getElementById('tab-mode-eraser');
+            if (tabEraser) tabEraser.click();
+        }
+    } else if (action === 'rag') {
+        const btnRag = document.getElementById('btn-rag-vault');
+        if (btnRag) {
+            btnRag.click();
+        } else if (window.KiraRAGVault && typeof window.KiraRAGVault.open === 'function') {
+            window.KiraRAGVault.open();
+        }
+    } else if (action === 'reasoning') {
+        const modelSelect = document.getElementById('model-select');
+        if (modelSelect) {
+            modelSelect.value = '2.7-reasoning';
+            modelSelect.dispatchEvent(new Event('change'));
+        }
+        const input = document.getElementById('user-input');
+        if (input) {
+            input.value = 'ช่วยวิเคราะห์และแสดงวิธีคิดทีละขั้นตอน (Step-by-Step Reasoning) ในการแก้ปัญหานี้ให้หน่อยค่ะ: ';
+            input.focus();
+            input.setSelectionRange(input.value.length, input.value.length);
+        }
+    } else if (action === 'code') {
+        const input = document.getElementById('user-input');
+        if (input) {
+            input.value = 'ช่วยตรวจสอบโค้ดต่อไปนี้ หาจุดบั๊ก หรือช่วยออกแบบฟังก์ชัน: \n```\n\n```';
+            input.focus();
+            input.setSelectionRange(input.value.length - 4, input.value.length - 4);
+        }
+    }
+};
