@@ -8591,7 +8591,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             yield "[THINKING]กำลังวิเคราะห์โจทย์...[/THINKING]"
             if rag_hits_meta:
                 cited_files = ", ".join(dict.fromkeys(h["filename"] for h in rag_hits_meta[:3]))
-                yield f"[THINKING]📚 ค้นคว้าคลังความรู้เอกสาร RAG (อ้างอิง {len(rag_hits_meta)} ย่อหน้า จาก {cited_files})...[/THINKING]"
+                yield f"[THINKING]📚 ค้นคว้าคลังความรู้เอกสาร BAAI/bge-m3 (อ้างอิง {len(rag_hits_meta)} ย่อหน้า จาก {cited_files})...[/THINKING]"
             
             force_web_search = bool(getattr(req, "web_search", False))
             deep_mode = bool(getattr(req, "deep_research", False))

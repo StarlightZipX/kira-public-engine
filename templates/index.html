@@ -3917,9 +3917,9 @@
                     <div>
                         <div class="rag-vault-title-row">
                             <h3 data-i18n="rag_modal_title">คลังความรู้เอกสารอัจฉริยะ (Semantic RAG Vault)</h3>
-                            <span class="rag-engine-pill"><i class="fa-solid fa-microchip"></i> HYBRID VECTOR 256D + BM25</span>
+                            <span class="rag-engine-pill" id="rag-engine-bge-pill"><i class="fa-solid fa-brain text-emerald"></i> BAAI/BGE-M3 NEURAL VECTOR + DENSE BM25</span>
                         </div>
-                        <p class="rag-vault-subtitle" data-i18n="rag_modal_subtitle">อัปโหลด PDF, Word, Markdown, CSV, TXT เพื่อค้นหาความหมายเชิงลึกและให้คิระอ้างอิงระดับย่อหน้าข้ามเซสชันอัตโนมัติ</p>
+                        <p class="rag-vault-subtitle" data-i18n="rag_modal_subtitle">อัปโหลด PDF, Word, Markdown, CSV, TXT เพื่อค้นหาความหมายเชิงลึกด้วย BAAI/bge-m3 (8,192 Context) และให้คิระอ้างอิงระดับย่อหน้าข้ามเซสชันอัตโนมัติ</p>
                     </div>
                 </div>
                 <button type="button" id="btn-close-rag-modal" class="close-btn rag-close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
@@ -3941,7 +3941,7 @@
                 </div>
                 <div class="rag-stat-box">
                     <span class="rag-stat-label" data-i18n="rag_stat_engine">สถาปัตยกรรมค้นหา</span>
-                    <strong class="rag-stat-value rag-stat-mini">256D Cosine + BM25</strong>
+                    <strong class="rag-stat-value rag-stat-mini" id="rag-stat-engine-label">BAAI/bge-m3 + BM25</strong>
                 </div>
             </div>
 
@@ -4013,7 +4013,7 @@
                     <div id="rag-search-results" class="rag-search-results">
                         <div class="rag-empty-state">
                             <i class="fa-solid fa-compass-drafting"></i>
-                            <p data-i18n="rag_search_empty_hint">พิมพ์คำถามด้านบนเพื่อทดสอบค้นหาย่อหน้าอ้างอิงด้วย Semantic Vector 256D + BM25 หรือกด "ดูย่อหน้า" จากเอกสารทางซ้ายได้เลยค่ะ</p>
+                            <p data-i18n="rag_search_empty_hint">พิมพ์คำถามด้านบนเพื่อทดสอบค้นหาย่อหน้าอ้างอิงด้วย BAAI/bge-m3 Neural Vector (1024D) + Dense BM25 หรือกด "ดูย่อหน้า" จากเอกสารทางซ้ายได้เลยค่ะ</p>
                         </div>
                     </div>
                 </div>

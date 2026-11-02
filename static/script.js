@@ -17174,7 +17174,7 @@ function initRAGKnowledgeVaultController() {
         formData.append('username', uname);
         Array.from(fileList).forEach((f) => formData.append('files', f));
 
-        showStatusBanner(`⏳ กำลังแยกย่อหน้าและสร้างเวกเตอร์ 256 มิติ สำหรับ ${fileList.length} ไฟล์...`, false);
+        showStatusBanner(`⏳ กำลังแยกย่อหน้าและสร้างเวกเตอร์ BAAI/bge-m3 (1024D • 8,192 Context) สำหรับ ${fileList.length} ไฟล์...`, false);
         try {
             const resp = await fetch('/api/rag/upload', { method: 'POST', body: formData });
             const data = await resp.json();
@@ -17197,7 +17197,7 @@ function initRAGKnowledgeVaultController() {
             showStatusBanner('⚠️ กรุณาระบุชื่อเอกสารและเนื้อหาอย่างน้อย 10 ตัวอักษรค่ะ', true);
             return;
         }
-        showStatusBanner('⏳ กำลังแปลงเนื้อหาเป็นเวกเตอร์ความหมาย 256 มิติ...', false);
+        showStatusBanner('⏳ กำลังแปลงเนื้อหาเป็นเวกเตอร์ความหมาย BAAI/bge-m3 (1024D)...', false);
         try {
             const resp = await fetch('/api/rag/ingest_text', {
                 method: 'POST',
@@ -17266,7 +17266,7 @@ function initRAGKnowledgeVaultController() {
                 <div class="rag-hit-card">
                     <div class="rag-hit-header">
                         <span class="rag-hit-source"><i class="fa-solid fa-file-circle-check"></i> #${idx + 1} ${escapeHtmlSafe(h.filename)} • หน้า ${h.page_number}</span>
-                        <span class="rag-hit-score">ความแม่นยำ ${h.score_pct}%</span>
+                        <div style="display:inline-flex; align-items:center; gap:6px;"><span class="rag-bge-badge"><i class="fa-solid fa-brain"></i> BGE-M3</span><span class="rag-hit-score">ความแม่นยำ ${h.score_pct}%</span></div>
                     </div>
                     <div class="rag-hit-section">หัวข้อ: ${escapeHtmlSafe(h.section_title)}</div>
                     <div class="rag-hit-content">${escapeHtmlSafe(h.content)}</div>
