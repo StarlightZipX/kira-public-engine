@@ -1,8 +1,68 @@
 
 // =========================================================================
-// 🌐 Phase 1: Real-Time Autonomous Web Search & Citation Controller (v2.8.2)
+// 🌐 Phase 1: Real-Time Autonomous Web Search & Citation Controller (v2.8.3)
 // =========================================================================
 let isWebSearchActive = false;
+let isSwarmActive = false;
+
+function initSwarmController() {
+    const btnToggleSwarm = document.getElementById('btn-swarm-toggle');
+    const pillSwarm = document.getElementById('swarm-active-pill');
+    const uInput = document.getElementById('user-input');
+    const btnToolsSwarm = document.getElementById('btn-tools-swarm');
+    const swarmModal = document.getElementById('swarm-modal');
+    const closeSwarmModal = document.getElementById('close-swarm-modal');
+
+    if (btnToggleSwarm) {
+        btnToggleSwarm.addEventListener('click', () => {
+            isSwarmActive = !isSwarmActive;
+            btnToggleSwarm.classList.toggle('active', isSwarmActive);
+            if (pillSwarm) pillSwarm.style.display = isSwarmActive ? 'inline-flex' : 'none';
+
+            if (isSwarmActive) {
+                if (uInput) uInput.placeholder = '⚡ โหมดฝูงเอเจนต์อัตโนมัติ 4 สหาย (Architect, Researcher, Coder, Reviewer)...';
+                if (typeof showToast === 'function') {
+                    showToast('⚡ เปิดโหมดฝูงเอเจนต์อัตโนมัติแล้วค่ะ (Multi-Agent Swarm Active)', 'success');
+                }
+            } else {
+                if (uInput) uInput.placeholder = 'พิมพ์ข้อความหรือคำถามถึง Kira...';
+                if (typeof showToast === 'function') {
+                    showToast('ปิดโหมดฝูงเอเจนต์แล้วค่ะ', 'info');
+                }
+            }
+        });
+    }
+
+    if (btnToolsSwarm) {
+        btnToolsSwarm.addEventListener('click', () => {
+            const wrapper = document.getElementById('tools-dropdown-wrapper');
+            if (wrapper) wrapper.classList.remove('open');
+            if (swarmModal) swarmModal.style.display = 'flex';
+        });
+    }
+
+    if (closeSwarmModal) {
+        closeSwarmModal.addEventListener('click', () => {
+            if (swarmModal) swarmModal.style.display = 'none';
+        });
+    }
+
+    // Quick prompt chips
+    document.querySelectorAll('.swarm-prompt-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const prompt = chip.getAttribute('data-prompt');
+            if (prompt && uInput) {
+                uInput.value = prompt;
+                if (!isSwarmActive && btnToggleSwarm) {
+                    btnToggleSwarm.click();
+                }
+                if (swarmModal) swarmModal.style.display = 'none';
+                uInput.focus();
+            }
+        });
+    });
+}
+
 
 function initWebSearchController() {
     const btnToggleSearch = document.getElementById('btn-web-search-toggle');
@@ -2245,7 +2305,8 @@ async function sendMessage() {
                 persona: persona,
                 user_mode: currentUserMode || 'general',
                 ui_lang: localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th',
-                web_search: isWebSearchActive
+                web_search: isWebSearchActive,
+                swarm_mode: isSwarmActive
             })
         });
 
@@ -2286,6 +2347,100 @@ async function sendMessage() {
             }
 
             
+            let displayTxt = fullText.replace(/^(✨ \*\*\[Kira.*?\]\*\*\\n\\n|🤖 \*\*\[Kira.*?\]\*\*\\n\\n|👁️ \*\*\[Kira.*?\]\*\*\\n\\n|🧠 \*\*\[Kira.*?\]\*\*\\n\\n|👑 \*\*\[Kira.*?\]\*\*\\n\\n|💼 \*\*\[Kira.*?\]\*\*\\n\\n)/i, "");
+            let normalizedTxt = displayTxt.replace(/<think>/gi, "[THINKING]").replace(/<\/think>/gi, "[/THINKING][THINKING_DONE]");
+            let htmlContent = "";
+            finalMarkdown = normalizedTxt;
+
+            // --- ⚡ Phase 3: Autonomous Multi-Agent Swarm Pipeline Parser ---
+            let swarmHeaderHtml = "";
+            if (normalizedTxt.includes("[SWARM_PIPELINE:init]") || normalizedTxt.includes("[SWARM_EVENT:")) {
+                let archStatus = "waiting";
+                let resStatus = "waiting";
+                let coderStatus = "waiting";
+                let revStatus = "waiting";
+                let currentLog = "กำลังประสานงานฝูงเอเจนต์...";
+                let isComplete = normalizedTxt.includes("[SWARM_COMPLETE]");
+
+                if (normalizedTxt.includes("[SWARM_EVENT:architect:active")) {
+                    archStatus = "active";
+                    currentLog = "🏛️ Architect กำลังร่างโครงสร้างสถาปัตยกรรมและแผนแม่บท...";
+                }
+                if (normalizedTxt.includes("[SWARM_EVENT:architect:done")) {
+                    archStatus = "done";
+                }
+                if (normalizedTxt.includes("[SWARM_EVENT:researcher:active")) {
+                    resStatus = "active";
+                    currentLog = "🔍 Researcher กำลังค้นคว้า Best Practices และมาตรฐานความปลอดภัย...";
+                }
+                if (normalizedTxt.includes("[SWARM_EVENT:researcher:done")) {
+                    resStatus = "done";
+                }
+                if (normalizedTxt.includes("[SWARM_EVENT:coder:active")) {
+                    coderStatus = "active";
+                    currentLog = "💻 Senior Coder กำลังสร้างสรรค์โค้ดและประกอบร่างชิ้นงานจริง...";
+                }
+                if (normalizedTxt.includes("[SWARM_EVENT:coder:done")) {
+                    coderStatus = "done";
+                }
+                if (normalizedTxt.includes("[SWARM_EVENT:reviewer:active")) {
+                    revStatus = "active";
+                    currentLog = "🛡️ Quality Reviewer กำลังตรวจสอบความถูกต้องและรับรองความปลอดภัย...";
+                }
+                if (normalizedTxt.includes("[SWARM_EVENT:reviewer:done")) {
+                    revStatus = "done";
+                }
+                if (isComplete) {
+                    archStatus = "done";
+                    resStatus = "done";
+                    coderStatus = "done";
+                    revStatus = "done";
+                    currentLog = "✅ ประมวลผลเสร็จสิ้นสมบูรณ์ครบ 4 สเตจ 100%";
+                }
+
+                swarmHeaderHtml = `
+                <div class="kira-swarm-pipeline-container">
+                    <div class="swarm-pipeline-header">
+                        <span class="swarm-title"><i class="fa-solid fa-network-wired text-purple"></i> Kira Multi-Agent Swarm Pipeline</span>
+                        <span class="swarm-status-badge ${isComplete ? 'done' : 'active'}">
+                            ${isComplete ? '<i class="fa-solid fa-check"></i> เสร็จสมบูรณ์' : '<span class="pulse-dot-green"></span> กำลังประมวลผล 4 เอเจนต์'}
+                        </span>
+                    </div>
+                    <div class="swarm-pipeline-track">
+                        <div class="swarm-agent-node ${archStatus}">
+                            <div class="node-icon"><i class="fa-solid fa-landmark"></i></div>
+                            <div class="node-label">Architect</div>
+                            <div class="node-desc">${archStatus === 'done' ? '✓ สำเร็จ' : (archStatus === 'active' ? '● วางผัง' : 'รอคิว')}</div>
+                        </div>
+                        <div class="swarm-step-line"></div>
+                        <div class="swarm-agent-node ${resStatus}">
+                            <div class="node-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                            <div class="node-label">Researcher</div>
+                            <div class="node-desc">${resStatus === 'done' ? '✓ สำเร็จ' : (resStatus === 'active' ? '● ค้นคว้า' : 'รอคิว')}</div>
+                        </div>
+                        <div class="swarm-step-line"></div>
+                        <div class="swarm-agent-node ${coderStatus}">
+                            <div class="node-icon"><i class="fa-solid fa-laptop-code"></i></div>
+                            <div class="node-label">Coder</div>
+                            <div class="node-desc">${coderStatus === 'done' ? '✓ สำเร็จ' : (coderStatus === 'active' ? '● เขียนโค้ด' : 'รอคิว')}</div>
+                        </div>
+                        <div class="swarm-step-line"></div>
+                        <div class="swarm-agent-node ${revStatus}">
+                            <div class="node-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                            <div class="node-label">Reviewer</div>
+                            <div class="node-desc">${revStatus === 'done' ? '✓ สำเร็จ' : (revStatus === 'active' ? '● ตรวจสอบ' : 'รอคิว')}</div>
+                        </div>
+                    </div>
+                    <div class="swarm-current-log">${currentLog}</div>
+                </div>`;
+
+                normalizedTxt = normalizedTxt.replace(/\[SWARM_PIPELINE:init\]/g, "")
+                                             .replace(/\[SWARM_EVENT:[^\]]+\]/g, "")
+                                             .replace(/\[SWARM_COMPLETE\]/g, "")
+                                             .trim();
+                finalMarkdown = normalizedTxt;
+            }
+
             // --- 🌐 Parse Perplexity-Style Realtime Sources ([SOURCES_JSON]) ---
             let sourcesHeaderHtml = "";
             if (normalizedTxt.includes("[SOURCES_JSON]")) {
@@ -2314,13 +2469,6 @@ async function sendMessage() {
                 normalizedTxt = normalizedTxt.replace(/\[SOURCES_JSON\][\s\S]*?\[\/SOURCES_JSON\]/g, "").trim();
                 finalMarkdown = finalMarkdown.replace(/\[SOURCES_JSON\][\s\S]*?\[\/SOURCES_JSON\]/g, "").trim();
             }
-
-            let displayTxt = fullText.replace(/^(✨ \*\*\[Kira.*?\]\*\*\n\n|🤖 \*\*\[Kira.*?\]\*\*\n\n|👁️ \*\*\[Kira.*?\]\*\*\n\n|🧠 \*\*\[Kira.*?\]\*\*\n\n|👑 \*\*\[Kira.*?\]\*\*\n\n|💼 \*\*\[Kira.*?\]\*\*\n\n)/i, "");
-            
-            // --- Parse Thinking Tags (<think> and [THINKING]) ---
-            let normalizedTxt = displayTxt.replace(/<think>/gi, "[THINKING]").replace(/<\/think>/gi, "[/THINKING][THINKING_DONE]");
-            let htmlContent = "";
-            finalMarkdown = normalizedTxt;
             
             if (normalizedTxt.includes("[THINKING]")) {
                 let isDone = normalizedTxt.includes("[THINKING_DONE]") || normalizedTxt.includes("[/THINKING]");
@@ -3286,7 +3434,7 @@ if (btnCanvasMaximize) {
 // Close Canvas
 if (btnCloseArtifact) {
     
-    // 🎨 Live Interactive Artifacts Toolbar Buttons (v2.8.2)
+    // 🎨 Live Interactive Artifacts Toolbar Buttons (v2.8.3)
     const btnOpenNewTab = document.getElementById('btn-open-new-tab');
     if (btnOpenNewTab) {
         btnOpenNewTab.addEventListener('click', () => {
@@ -3545,7 +3693,7 @@ print("✨ ประมวลผลบนเบราว์เซอร์ด้
 
     <main class="max-w-2xl mx-auto text-center my-auto py-12">
         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-semibold mb-6">
-            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span> Kira v2.8.2 Live Interactive Suite
+            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span> Kira v2.8.3 Live Interactive Suite
         </div>
         <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
             สัมผัสประสบการณ์ AI Assistant ที่ไร้ขีดจำกัด
@@ -3720,7 +3868,7 @@ window.addEventListener('message', (event) => {
 });
 
 // Build Safe HTML Wrapper with Console Interception
-// Build Safe HTML Wrapper with Console Interception & Multi-Engine Sandbox (v2.8.2)
+// Build Safe HTML Wrapper with Console Interception & Multi-Engine Sandbox (v2.8.3)
 function buildCanvasHtmlWrapper(code, title = 'Live Preview', type = '') {
     const codeTrim = (code || '').trim();
     const titleLower = (title || '').toLowerCase();
@@ -3963,7 +4111,7 @@ function renderArtifactVersion(versionId) {
 
 // Open Artifacts in Canvas & Activate Split Workspace
 
-// 🌐 Open Artifact in New Standalone Tab (v2.8.2)
+// 🌐 Open Artifact in New Standalone Tab (v2.8.3)
 function openArtifactInNewTab(code, title = 'Kira Artifact', type = '') {
     if (!code) return;
     const fullHtml = buildCanvasHtmlWrapper(code, title, type);
@@ -4073,7 +4221,7 @@ if (canvasAiPromptInput) {
 }
 
 // Attach Code Actions (Copy & Live Canvas Preview) to chat blocks
-// Attach Next-Gen Claude-Style Interactive Artifact Cards & Controls (v2.8.2)
+// Attach Next-Gen Claude-Style Interactive Artifact Cards & Controls (v2.8.3)
 function applyCodeActions(container) {
     if (!container) return;
     
@@ -17323,6 +17471,7 @@ function initKiraApp() {
     try { initOfflineVaultController(); } catch (e) { console.error("Offline Vault controller init error:", e); }
     try { initRAGKnowledgeVaultController(); } catch (e) { console.error("RAG Knowledge Vault controller init error:", e); }
 try { initCognitiveMemoryHub(); } catch (e) { console.error("Cognitive Memory Hub controller init error:", e); }
+try { initSwarmController(); } catch (e) { console.error("Swarm controller init error:", e); }
 
     // 4. Background Care & Assistance
     try { initProactiveHeartbeat(); } catch (e) { console.warn("Heartbeat init error:", e); }
@@ -17353,7 +17502,7 @@ if (document.readyState === 'loading') {
 
 
 // ====================================================================
-// 🧠 Kira Cognitive Memory Hub & Brain Studio Controller (v2.8.2 Enterprise)
+// 🧠 Kira Cognitive Memory Hub & Brain Studio Controller (v2.8.3 Enterprise)
 // ====================================================================
 
 let currentMemoryCategory = 'all';
