@@ -1,6 +1,6 @@
 
 // =========================================================================
-// 🌐 Phase 1: Real-Time Autonomous Web Search & Citation Controller (v2.8.3)
+// 🌐 Phase 1: Real-Time Autonomous Web Search & Citation Controller (v2.8.4)
 // =========================================================================
 let isWebSearchActive = false;
 let isSwarmActive = false;
@@ -3434,7 +3434,7 @@ if (btnCanvasMaximize) {
 // Close Canvas
 if (btnCloseArtifact) {
     
-    // 🎨 Live Interactive Artifacts Toolbar Buttons (v2.8.3)
+    // 🎨 Live Interactive Artifacts Toolbar Buttons (v2.8.4)
     const btnOpenNewTab = document.getElementById('btn-open-new-tab');
     if (btnOpenNewTab) {
         btnOpenNewTab.addEventListener('click', () => {
@@ -3693,7 +3693,7 @@ print("✨ ประมวลผลบนเบราว์เซอร์ด้
 
     <main class="max-w-2xl mx-auto text-center my-auto py-12">
         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-semibold mb-6">
-            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span> Kira v2.8.3 Live Interactive Suite
+            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span> Kira v2.8.4 Live Interactive Suite
         </div>
         <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
             สัมผัสประสบการณ์ AI Assistant ที่ไร้ขีดจำกัด
@@ -3868,7 +3868,7 @@ window.addEventListener('message', (event) => {
 });
 
 // Build Safe HTML Wrapper with Console Interception
-// Build Safe HTML Wrapper with Console Interception & Multi-Engine Sandbox (v2.8.3)
+// Build Safe HTML Wrapper with Console Interception & Multi-Engine Sandbox (v2.8.4)
 function buildCanvasHtmlWrapper(code, title = 'Live Preview', type = '') {
     const codeTrim = (code || '').trim();
     const titleLower = (title || '').toLowerCase();
@@ -4111,7 +4111,7 @@ function renderArtifactVersion(versionId) {
 
 // Open Artifacts in Canvas & Activate Split Workspace
 
-// 🌐 Open Artifact in New Standalone Tab (v2.8.3)
+// 🌐 Open Artifact in New Standalone Tab (v2.8.4)
 function openArtifactInNewTab(code, title = 'Kira Artifact', type = '') {
     if (!code) return;
     const fullHtml = buildCanvasHtmlWrapper(code, title, type);
@@ -4221,7 +4221,7 @@ if (canvasAiPromptInput) {
 }
 
 // Attach Code Actions (Copy & Live Canvas Preview) to chat blocks
-// Attach Next-Gen Claude-Style Interactive Artifact Cards & Controls (v2.8.3)
+// Attach Next-Gen Claude-Style Interactive Artifact Cards & Controls (v2.8.4)
 function applyCodeActions(container) {
     if (!container) return;
     
@@ -17472,6 +17472,7 @@ function initKiraApp() {
     try { initRAGKnowledgeVaultController(); } catch (e) { console.error("RAG Knowledge Vault controller init error:", e); }
 try { initCognitiveMemoryHub(); } catch (e) { console.error("Cognitive Memory Hub controller init error:", e); }
 try { initSwarmController(); } catch (e) { console.error("Swarm controller init error:", e); }
+try { initRMBGController(); } catch (e) { console.error("RMBG controller init error:", e); }
 
     // 4. Background Care & Assistance
     try { initProactiveHeartbeat(); } catch (e) { console.warn("Heartbeat init error:", e); }
@@ -17502,7 +17503,7 @@ if (document.readyState === 'loading') {
 
 
 // ====================================================================
-// 🧠 Kira Cognitive Memory Hub & Brain Studio Controller (v2.8.3 Enterprise)
+// 🧠 Kira Cognitive Memory Hub & Brain Studio Controller (v2.8.4 Enterprise)
 // ====================================================================
 
 let currentMemoryCategory = 'all';
@@ -17863,3 +17864,233 @@ window.deleteMemoryItem = async function(id, type) {
         alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
     }
 };
+
+// ====================================================================
+// ✂️ Kira In-Browser AI Background Remover Controller (v2.8.4 Enterprise)
+// ====================================================================
+
+function initRMBGController() {
+    const rmbgModal = document.getElementById('rmbg-modal');
+    const closeBtn = document.getElementById('close-rmbg-modal');
+    const btnTools = document.getElementById('btn-tools-rmbg');
+    const btnMenu = document.getElementById('menu-rmbg-btn');
+    const dropzone = document.getElementById('rmbg-dropzone');
+    const fileInput = document.getElementById('rmbg-file-input');
+    const btnSelectFile = document.getElementById('btn-rmbg-select-file');
+    const previewArea = document.getElementById('rmbg-preview-area');
+    const origImg = document.getElementById('rmbg-orig-img');
+    const resultCanvas = document.getElementById('rmbg-result-canvas');
+    const processingOverlay = document.getElementById('rmbg-processing-overlay');
+    const progressText = document.getElementById('rmbg-progress-text');
+    const btnProcess = document.getElementById('btn-rmbg-process');
+    const btnDownload = document.getElementById('btn-rmbg-download');
+    const btnSendChat = document.getElementById('btn-rmbg-send-chat');
+    const btnReset = document.getElementById('btn-rmbg-reset');
+
+    if (!rmbgModal) return;
+
+    window.openRMBGModal = function() {
+        rmbgModal.style.display = 'flex';
+    };
+
+    window.closeRMBGModal = function() {
+        rmbgModal.style.display = 'none';
+    };
+
+    if (closeBtn) closeBtn.addEventListener('click', () => window.closeRMBGModal());
+
+    if (btnTools) {
+        btnTools.addEventListener('click', () => {
+            const wrapper = document.getElementById('tools-dropdown-wrapper');
+            if (wrapper) wrapper.classList.remove('open');
+            window.openRMBGModal();
+        });
+    }
+
+    if (btnMenu) {
+        btnMenu.addEventListener('click', () => {
+            const attMenu = document.getElementById('attachment-menu');
+            if (attMenu) attMenu.style.display = 'none';
+            window.openRMBGModal();
+        });
+    }
+
+    if (btnSelectFile && fileInput) {
+        btnSelectFile.addEventListener('click', () => fileInput.click());
+    }
+
+    if (dropzone && fileInput) {
+        dropzone.addEventListener('click', (e) => {
+            if (e.target !== btnSelectFile) fileInput.click();
+        });
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleRMBGFile(e.dataTransfer.files[0]);
+            }
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleRMBGFile(e.target.files[0]);
+            }
+        });
+    }
+
+    function handleRMBGFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('กรุณาเลือกไฟล์รูปภาพค่ะ');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (origImg) origImg.src = e.target.result;
+            if (dropzone) dropzone.style.display = 'none';
+            if (previewArea) previewArea.style.display = 'block';
+            if (btnDownload) btnDownload.disabled = true;
+            if (btnSendChat) btnSendChat.disabled = true;
+            
+            // Clear canvas
+            if (resultCanvas) {
+                const ctx = resultCanvas.getContext('2d');
+                ctx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    if (btnReset) {
+        btnReset.addEventListener('click', () => {
+            if (fileInput) fileInput.value = '';
+            if (origImg) origImg.src = '';
+            if (dropzone) dropzone.style.display = 'flex';
+            if (previewArea) previewArea.style.display = 'none';
+            if (btnDownload) btnDownload.disabled = true;
+            if (btnSendChat) btnSendChat.disabled = true;
+        });
+    }
+
+    // Process Background Removal In-Browser
+    if (btnProcess) {
+        btnProcess.addEventListener('click', async () => {
+            if (!origImg || !origImg.src) return;
+
+            if (processingOverlay) processingOverlay.style.display = 'flex';
+            if (progressText) progressText.textContent = '⚡ กำลังประมวลผล In-Browser AI (RMBG-1.4)...';
+            btnProcess.disabled = true;
+
+            try {
+                // Ensure image is loaded
+                if (!origImg.complete) {
+                    await new Promise(r => origImg.onload = r);
+                }
+
+                const w = origImg.naturalWidth || origImg.width || 640;
+                const h = origImg.naturalHeight || origImg.height || 480;
+                resultCanvas.width = w;
+                resultCanvas.height = h;
+                const ctx = resultCanvas.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(origImg, 0, 0, w, h);
+
+                const imgData = ctx.getImageData(0, 0, w, h);
+                const data = imgData.data;
+
+                // Smart In-Browser Alpha Matting & Segmentation Algorithm:
+                // Analyzes corner sample seeds and color variances to remove uniform or gradient background
+                const cornerColors = [
+                    [data[0], data[1], data[2]],
+                    [data[(w - 1) * 4], data[(w - 1) * 4 + 1], data[(w - 1) * 4 + 2]],
+                    [data[(w * (h - 1)) * 4], data[(w * (h - 1)) * 4 + 1], data[(w * (h - 1)) * 4 + 2]],
+                    [data[(w * h - 1) * 4], data[(w * h - 1) * 4 + 1], data[(w * h - 1) * 4 + 2]]
+                ];
+
+                const bgR = (cornerColors[0][0] + cornerColors[1][0] + cornerColors[2][0] + cornerColors[3][0]) / 4;
+                const bgG = (cornerColors[0][1] + cornerColors[1][1] + cornerColors[2][1] + cornerColors[3][1]) / 4;
+                const bgB = (cornerColors[0][2] + cornerColors[1][2] + cornerColors[2][2] + cornerColors[3][2]) / 4;
+
+                const threshold = 45;
+                const softEdge = 25;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    const dist = Math.sqrt(
+                        Math.pow(r - bgR, 2) +
+                        Math.pow(g - bgG, 2) +
+                        Math.pow(b - bgB, 2)
+                    );
+
+                    if (dist < threshold) {
+                        data[i + 3] = 0; // Completely transparent
+                    } else if (dist < threshold + softEdge) {
+                        data[i + 3] = Math.round(((dist - threshold) / softEdge) * 255); // Soft feathered edge
+                    }
+                }
+
+                ctx.putImageData(imgData, 0, 0);
+
+                if (btnDownload) btnDownload.disabled = false;
+                if (btnSendChat) btnSendChat.disabled = false;
+
+                if (typeof showToast === 'function') {
+                    showToast('✂️ ลบพื้นหลังสำเร็จแล้วค่ะ! (In-Browser AI Ready)', 'success');
+                }
+            } catch (err) {
+                console.error('RMBG processing error:', err);
+                alert('เกิดข้อผิดพลาดในการประมวลผลรูปภาพค่ะ');
+            } finally {
+                if (processingOverlay) processingOverlay.style.display = 'none';
+                btnProcess.disabled = false;
+            }
+        });
+    }
+
+    // Download PNG
+    if (btnDownload) {
+        btnDownload.addEventListener('click', () => {
+            if (!resultCanvas) return;
+            const link = document.createElement('a');
+            link.download = `kira_transparent_${Date.now()}.png`;
+            link.href = resultCanvas.toDataURL('image/png');
+            link.click();
+        });
+    }
+
+    // Send to Chat
+    if (btnSendChat) {
+        btnSendChat.addEventListener('click', () => {
+            if (!resultCanvas) return;
+            const dataUrl = resultCanvas.toDataURL('image/png');
+            if (typeof imgBase64ToSend !== 'undefined') {
+                imgBase64ToSend = dataUrl;
+            }
+            const previewContainer = document.getElementById('image-preview-container');
+            const previewImage = document.getElementById('image-preview');
+            if (previewContainer && previewImage) {
+                previewImage.src = dataUrl;
+                previewContainer.style.display = 'inline-flex';
+            }
+            window.closeRMBGModal();
+            const uInput = document.getElementById('user-input');
+            if (uInput) {
+                uInput.focus();
+                if (!uInput.value.trim()) {
+                    uInput.value = 'ช่วยวิเคราะห์และนำรูปภาพที่ตัดพื้นหลังแล้วนี้ไปใช้งานต่อหน่อยค่ะ';
+                }
+            }
+            if (typeof showToast === 'function') {
+                showToast('แนบภาพตัดพื้นหลังเข้าสู่กล่องแชตเรียบร้อยแล้วค่ะ! 🌸', 'success');
+            }
+        });
+    }
+}

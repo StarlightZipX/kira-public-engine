@@ -200,7 +200,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.8.3"
+KIRA_SYSTEM_VERSION = "2.8.4"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -2324,7 +2324,7 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
         primary_provider = "gemini" if GEMINI_API_KEYS else "openrouter"
     elif any(k in preferred_model.lower() for k in ["qwen", "deepseek", "openrouter", "vl", "nemotron", "nvidia", ":free"]):
         primary_provider = "openrouter"
-    elif any(k in preferred_model.lower() for k in ["ollama", "local/"]):
+    elif any(k in preferred_model.lower() for k in ["ollama", "local/", "qwen2.5-coder"]):
         primary_provider = "ollama"
     elif OPENROUTER_API_KEYS and (not API_KEYS or API_KEYS[0] == "YOUR_GROQ_API_KEY_HERE"):
         primary_provider = "openrouter"
@@ -2347,7 +2347,7 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
         models = [preferred_model, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
         execution_stages.append(("gemini", models, GEMINI_API_KEYS))
     elif primary_provider == "ollama":
-        execution_stages.append(("ollama", [preferred_model, "llama3.2", "qwen2.5"], ["ollama"]))
+        execution_stages.append(("ollama", [preferred_model, "qwen2.5-coder:14b", "qwen2.5-coder:7b", "llama3.2", "qwen2.5"], ["ollama"]))
     else: # Groq
         models = [preferred_model]
         for m in ALL_MODEL_CANDIDATES:
@@ -2374,7 +2374,7 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
 
     local_ollama_models = get_active_ollama_models()
     if primary_provider != "ollama" and (ENABLE_OLLAMA or local_ollama_models):
-        execution_stages.append(("ollama", local_ollama_models or ["llama3.2", "qwen2.5"], ["ollama"]))
+        execution_stages.append(("ollama", local_ollama_models or ["qwen2.5-coder:14b", "qwen2.5-coder:7b", "llama3.2", "qwen2.5"], ["ollama"]))
 
     # Execution Loop
     for provider, models, keys in execution_stages:
