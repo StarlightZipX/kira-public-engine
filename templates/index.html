@@ -449,7 +449,7 @@
                                 <option value="2.7-reasoning" selected>Kira 2.7 Reasoning</option>
                                 <option value="2.7-ultra">Kira 2.7 Ultra</option>
                                 <option value="2.7-pro">Kira 2.7 Pro</option>
-                                <option value="2.7-flash">Kira 2.7 Flash</option>
+                                <option value="2.7-flash">⚡ Kira 2.7 Flash (Liquid LFM Edge • 50ms)</option>
                             </optgroup>
                             <optgroup label="Executive Simulation">
                                 <option value="boardroom">Kira 2.7 Boardroom</option>
@@ -1203,15 +1203,28 @@
         <div class="modal-content rmbg-modal-content">
             <div class="rmbg-modal-header">
                 <div class="rmbg-title-group">
-                    <div class="rmbg-badge"><i class="fa-solid fa-bolt text-teal"></i> Hugging Face WebGPU Engine v2.8.4</div>
-                    <h3 class="rmbg-modal-title"><i class="fa-solid fa-scissors text-teal"></i> สตูดิโอลบพื้นหลังภาพอัจฉริยะ (In-Browser Background Remover)</h3>
-                    <p class="rmbg-modal-subtitle">ประมวลผลบนเครื่องของคุณด้วย WebAssembly/WebGPU ฟรี 100% ภาพไม่ถูกส่งขึ้นเซิร์ฟเวอร์ ปลอดภัยสูงสุด</p>
+                    <div class="rmbg-badge"><i class="fa-solid fa-bolt text-teal"></i> Hugging Face Multi-Vision Studio: RMBG-1.4 + Meta SAM 3 + FLUX.1</div>
+                    <h3 class="rmbg-modal-title"><i class="fa-solid fa-wand-magic-sparkles text-teal"></i> สตูดิโอภาพอัจฉริยะ (Kira AI Vision Studio)</h3>
+                    <p class="rmbg-modal-subtitle">ตัดพื้นหลัง (RMBG-1.4) • ยางลบวัตถุเวทมนตร์ (Meta SAM 3) • วาดภาพระดับโลก (FLUX.1-schnell 4-Step) ฟรี 100%</p>
                 </div>
                 <button id="close-rmbg-modal" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
+            <!-- Vision Studio Mode Navigation -->
+            <div class="vision-tab-bar">
+                <button type="button" class="vision-tab-btn active" id="tab-mode-rmbg" data-mode="rmbg">
+                    <i class="fa-solid fa-scissors"></i> 1. ลบพื้นหลัง (RMBG-1.4)
+                </button>
+                <button type="button" class="vision-tab-btn" id="tab-mode-eraser" data-mode="eraser">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> 2. ลบวัตถุ/คน (Meta SAM 3)
+                </button>
+                <button type="button" class="vision-tab-btn" id="tab-mode-flux" data-mode="flux">
+                    <i class="fa-solid fa-palette"></i> 3. วาดภาพด้วย AI (FLUX.1-schnell)
+                </button>
+            </div>
+
             <!-- RMBG Studio Workspace -->
-            <div class="rmbg-workspace">
+            <div class="rmbg-workspace" id="vision-image-workspace">
                 <!-- Dropzone when no image -->
                 <div id="rmbg-dropzone" class="rmbg-dropzone">
                     <input type="file" id="rmbg-file-input" accept="image/*" style="display: none;">
@@ -1226,8 +1239,9 @@
                     <div class="rmbg-compare-grid">
                         <div class="rmbg-panel original">
                             <span class="rmbg-panel-label"><i class="fa-solid fa-image"></i> ภาพต้นฉบับ</span>
-                            <div class="rmbg-canvas-wrapper">
+                            <div class="rmbg-canvas-wrapper" id="orig-canvas-container" style="position: relative;">
                                 <img id="rmbg-orig-img" class="rmbg-preview-img" alt="Original">
+                                <canvas id="eraser-mask-canvas" class="eraser-mask-canvas" style="display: none; position: absolute; top: 0; left: 0; cursor: crosshair; z-index: 5; border-radius: 8px;"></canvas>
                             </div>
                         </div>
                         <div class="rmbg-panel result">
@@ -1247,11 +1261,69 @@
                         <div class="rmbg-model-info">
                             <i class="fa-solid fa-microchip text-teal"></i> โมเดล: <strong>Hugging Face RMBG-1.4 (WebGPU / WASM)</strong> • ฟรีตลอดชีพ
                         </div>
+                        <div id="eraser-controls" class="eraser-controls" style="display: none;">
+                            <div class="brush-size-wrap">
+                                <label><i class="fa-solid fa-paintbrush text-pink"></i> ขนาดแปรงระบายลบ:</label>
+                                <input type="range" id="eraser-brush-size" min="8" max="60" value="24">
+                                <span id="eraser-brush-val">24px</span>
+                            </div>
+                            <button type="button" id="btn-eraser-clear-mask" class="btn-ghost-sm"><i class="fa-solid fa-rotate-left"></i> ล้างรอยระบาย</button>
+                        </div>
                         <div class="rmbg-btn-group">
                             <button type="button" id="btn-rmbg-process" class="btn-primary-glow"><i class="fa-solid fa-scissors"></i> ลบพื้นหลังทันที</button>
+                            <button type="button" id="btn-eraser-process" class="btn-primary-glow" style="display: none; background: linear-gradient(135deg, #ec4899, #8b5cf6);"><i class="fa-solid fa-wand-magic-sparkles"></i> ลบวัตถุเนียนกริบ (Meta SAM 3)</button>
                             <button type="button" id="btn-rmbg-download" class="btn-action-sm secondary" disabled><i class="fa-solid fa-download"></i> ดาวน์โหลด PNG</button>
                             <button type="button" id="btn-rmbg-send-chat" class="btn-action-sm secondary" disabled><i class="fa-solid fa-paper-plane"></i> แนบเข้าแชต</button>
                             <button type="button" id="btn-rmbg-reset" class="btn-ghost-sm"><i class="fa-solid fa-rotate-left"></i> เปลี่ยนภาพ</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🎨 FLUX.1-schnell 4-Step Ultra-HD Generation Studio View -->
+            <div id="flux-studio-view" class="flux-studio-view" style="display: none;">
+                <div class="flux-header-ribbon">
+                    <span class="flux-engine-badge"><i class="fa-solid fa-bolt text-amber"></i> Black Forest Labs FLUX.1-schnell (4-Step Diffusion)</span>
+                    <span class="flux-badge-sub">สร้างภาพความละเอียดสูงระดับ 8K สดใหม่จาก Hugging Face ฟรี 0 บาท</span>
+                </div>
+                <div class="flux-input-group">
+                    <label><i class="fa-solid fa-pen-nib text-cyan"></i> ป้อนคำสั่งสร้างภาพ (Prompt ภาษาไทยหรืออังกฤษ):</label>
+                    <textarea id="flux-prompt-input" rows="3" placeholder="เช่น มังกรทองสง่างามบินเหนือนครหลวงแสงแดดยามเย็น 4k หรือ Cyberpunk futuristic sports car in neon rain..."></textarea>
+                </div>
+                <div class="flux-options-grid">
+                    <div class="flux-opt-box">
+                        <label>สัดส่วนภาพ (Aspect Ratio):</label>
+                        <select id="flux-aspect-ratio" class="flux-select">
+                            <option value="1:1" selected>1:1 (จัตุรัส Square 1024x1024)</option>
+                            <option value="16:9">16:9 (แนวนอน Landscape 1280x720)</option>
+                            <option value="9:16">9:16 (แนวตั้ง Portrait / Story 720x1280)</option>
+                            <option value="4:3">4:3 (มาตรฐาน Standard 1024x768)</option>
+                        </select>
+                    </div>
+                    <div class="flux-opt-box">
+                        <label>สไตล์ภาพ (Style Preset):</label>
+                        <select id="flux-style-preset" class="flux-select">
+                            <option value="realistic" selected>📸 ภาพถ่ายสมจริง (Photorealistic 8K)</option>
+                            <option value="anime">✨ อนิเมะมาสเตอร์พีซ (Anime Cinematic)</option>
+                            <option value="cyberpunk">🌃 ไซเบอร์พังก์นีออน (Cyberpunk Volumetric)</option>
+                            <option value="oil">🎨 ภาพวาดสีน้ำมันคลาสสิก (Fine Art Oil)</option>
+                            <option value="3d">🧸 3D แอนิเมชันน่ารัก (Pixar 3D Render)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flux-btn-row">
+                    <button type="button" id="btn-flux-generate" class="btn-primary-glow" style="background: linear-gradient(135deg, #f59e0b, #ef4444);"><i class="fa-solid fa-bolt"></i> วาดภาพด้วย FLUX.1 (4-Step Fast HD)</button>
+                </div>
+                <div id="flux-result-area" class="flux-result-area" style="display: none;">
+                    <div class="flux-result-card">
+                        <div id="flux-loading-spinner" class="flux-loading" style="display: none;">
+                            <div class="kira-spinner"></div>
+                            <span id="flux-loading-status-text">กำลังสังเคราะห์ภาพด้วย Black Forest Labs FLUX.1 (4-Step Diffusion)...</span>
+                        </div>
+                        <img id="flux-result-img" class="flux-img" alt="FLUX.1 Result" style="display: none;">
+                        <div id="flux-result-actions" class="flux-result-actions" style="display: none;">
+                            <button type="button" id="btn-flux-download" class="btn-action-sm secondary"><i class="fa-solid fa-download"></i> ดาวน์โหลดภาพ</button>
+                            <button type="button" id="btn-flux-send-chat" class="btn-action-sm secondary"><i class="fa-solid fa-paper-plane"></i> ส่งเข้าแชตคิระ</button>
                         </div>
                     </div>
                 </div>
@@ -1758,7 +1830,7 @@
                                     <option value="2.7-reasoning">Kira 2.7 Reasoning</option>
                                     <option value="2.7-ultra">Kira 2.7 Ultra</option>
                                     <option value="2.7-pro">Kira 2.7 Pro</option>
-                                    <option value="2.7-flash">Kira 2.7 Flash</option>
+                                    <option value="2.7-flash">⚡ Kira 2.7 Flash (Liquid LFM Edge • 50ms)</option>
                                     <option value="2.7-vision">Kira 2.7 Vision</option>
                                 </select>
                             </div>

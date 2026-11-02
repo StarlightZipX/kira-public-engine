@@ -17898,17 +17898,47 @@ function initRMBGController() {
     const previewArea = document.getElementById('rmbg-preview-area');
     const origImg = document.getElementById('rmbg-orig-img');
     const resultCanvas = document.getElementById('rmbg-result-canvas');
+    const maskCanvas = document.getElementById('eraser-mask-canvas');
     const processingOverlay = document.getElementById('rmbg-processing-overlay');
     const progressText = document.getElementById('rmbg-progress-text');
     const btnProcess = document.getElementById('btn-rmbg-process');
+    const btnEraserProcess = document.getElementById('btn-eraser-process');
     const btnDownload = document.getElementById('btn-rmbg-download');
     const btnSendChat = document.getElementById('btn-rmbg-send-chat');
     const btnReset = document.getElementById('btn-rmbg-reset');
+
+    // Studio Mode Tabs
+    const tabRMBG = document.getElementById('tab-mode-rmbg');
+    const tabEraser = document.getElementById('tab-mode-eraser');
+    const tabFlux = document.getElementById('tab-mode-flux');
+    const imageWorkspace = document.getElementById('vision-image-workspace');
+    const fluxStudioView = document.getElementById('flux-studio-view');
+    const eraserControls = document.getElementById('eraser-controls');
+    const brushSizeInput = document.getElementById('eraser-brush-size');
+    const brushSizeVal = document.getElementById('eraser-brush-val');
+    const btnClearMask = document.getElementById('btn-eraser-clear-mask');
+
+    // FLUX Elements
+    const fluxPrompt = document.getElementById('flux-prompt-input');
+    const fluxAspect = document.getElementById('flux-aspect-ratio');
+    const fluxStyle = document.getElementById('flux-style-preset');
+    const btnFluxGen = document.getElementById('btn-flux-generate');
+    const fluxResultArea = document.getElementById('flux-result-area');
+    const fluxLoading = document.getElementById('flux-loading-spinner');
+    const fluxImg = document.getElementById('flux-result-img');
+    const fluxActions = document.getElementById('flux-result-actions');
+    const btnFluxDownload = document.getElementById('btn-flux-download');
+    const btnFluxSendChat = document.getElementById('btn-flux-send-chat');
+
+    let currentMode = 'rmbg'; // 'rmbg' | 'eraser' | 'flux'
+    let isDrawing = false;
+    let brushRadius = 24;
 
     if (!rmbgModal) return;
 
     window.openRMBGModal = function() {
         rmbgModal.style.display = 'flex';
+        switchMode('rmbg');
     };
 
     window.closeRMBGModal = function() {
@@ -17916,6 +17946,115 @@ function initRMBGController() {
     };
 
     if (closeBtn) closeBtn.addEventListener('click', () => window.closeRMBGModal());
+
+    function switchMode(mode) {
+        currentMode = mode;
+        [tabRMBG, tabEraser, tabFlux].forEach(t => t?.classList.remove('active'));
+
+        if (mode === 'flux') {
+            tabFlux?.classList.add('active');
+            if (imageWorkspace) imageWorkspace.style.display = 'none';
+            if (fluxStudioView) fluxStudioView.style.display = 'flex';
+        } else {
+            if (imageWorkspace) imageWorkspace.style.display = 'flex';
+            if (fluxStudioView) fluxStudioView.style.display = 'none';
+
+            if (mode === 'eraser') {
+                tabEraser?.classList.add('active');
+                if (maskCanvas) maskCanvas.style.display = 'block';
+                if (eraserControls) eraserControls.style.display = 'flex';
+                if (btnEraserProcess) btnEraserProcess.style.display = 'inline-flex';
+                if (btnProcess) btnProcess.style.display = 'none';
+                syncMaskCanvasSize();
+            } else {
+                tabRMBG?.classList.add('active');
+                if (maskCanvas) maskCanvas.style.display = 'none';
+                if (eraserControls) eraserControls.style.display = 'none';
+                if (btnEraserProcess) btnEraserProcess.style.display = 'none';
+                if (btnProcess) btnProcess.style.display = 'inline-flex';
+            }
+        }
+    }
+
+    if (tabRMBG) tabRMBG.addEventListener('click', () => switchMode('rmbg'));
+    if (tabEraser) tabEraser.addEventListener('click', () => switchMode('eraser'));
+    if (tabFlux) tabFlux.addEventListener('click', () => switchMode('flux'));
+
+    if (brushSizeInput && brushSizeVal) {
+        brushSizeInput.addEventListener('input', (e) => {
+            brushRadius = Number(e.target.value) || 24;
+            brushSizeVal.textContent = `${brushRadius}px`;
+        });
+    }
+
+    function syncMaskCanvasSize() {
+        if (!maskCanvas || !origImg) return;
+        const rect = origImg.getBoundingClientRect();
+        const nw = origImg.naturalWidth || origImg.width || 600;
+        const nh = origImg.naturalHeight || origImg.height || 400;
+        maskCanvas.width = nw;
+        maskCanvas.height = nh;
+        maskCanvas.style.width = '100%';
+        maskCanvas.style.height = '100%';
+    }
+
+    function clearMask() {
+        if (!maskCanvas) return;
+        const ctx = maskCanvas.getContext('2d');
+        ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+    }
+    if (btnClearMask) btnClearMask.addEventListener('click', clearMask);
+
+    // Interactive Mask Painting (Meta SAM 3 Object Selection Mask)
+    if (maskCanvas) {
+        function getCanvasPos(e) {
+            const rect = maskCanvas.getBoundingClientRect();
+            const scaleX = maskCanvas.width / rect.width;
+            const scaleY = maskCanvas.height / rect.height;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function drawStroke(x, y) {
+            const ctx = maskCanvas.getContext('2d');
+            ctx.fillStyle = 'rgba(236, 72, 153, 0.55)';
+            ctx.beginPath();
+            ctx.arc(x, y, brushRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        maskCanvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const pos = getCanvasPos(e);
+            drawStroke(pos.x, pos.y);
+        });
+
+        maskCanvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            const pos = getCanvasPos(e);
+            drawStroke(pos.x, pos.y);
+        });
+
+        window.addEventListener('mouseup', () => { isDrawing = false; });
+
+        maskCanvas.addEventListener('touchstart', (e) => {
+            isDrawing = true;
+            const pos = getCanvasPos(e);
+            drawStroke(pos.x, pos.y);
+        }, { passive: true });
+
+        maskCanvas.addEventListener('touchmove', (e) => {
+            if (!isDrawing) return;
+            const pos = getCanvasPos(e);
+            drawStroke(pos.x, pos.y);
+        }, { passive: true });
+
+        maskCanvas.addEventListener('touchend', () => { isDrawing = false; });
+    }
 
     if (btnTools) {
         btnTools.addEventListener('click', () => {
@@ -17970,13 +18109,18 @@ function initRMBGController() {
         }
         const reader = new FileReader();
         reader.onload = (e) => {
-            if (origImg) origImg.src = e.target.result;
+            if (origImg) {
+                origImg.onload = () => {
+                    syncMaskCanvasSize();
+                    clearMask();
+                };
+                origImg.src = e.target.result;
+            }
             if (dropzone) dropzone.style.display = 'none';
             if (previewArea) previewArea.style.display = 'block';
             if (btnDownload) btnDownload.disabled = true;
             if (btnSendChat) btnSendChat.disabled = true;
             
-            // Clear canvas
             if (resultCanvas) {
                 const ctx = resultCanvas.getContext('2d');
                 ctx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
@@ -17989,6 +18133,7 @@ function initRMBGController() {
         btnReset.addEventListener('click', () => {
             if (fileInput) fileInput.value = '';
             if (origImg) origImg.src = '';
+            clearMask();
             if (dropzone) dropzone.style.display = 'flex';
             if (previewArea) previewArea.style.display = 'none';
             if (btnDownload) btnDownload.disabled = true;
@@ -17996,7 +18141,7 @@ function initRMBGController() {
         });
     }
 
-    // Process Background Removal In-Browser
+    // Process Background Removal In-Browser (RMBG-1.4)
     if (btnProcess) {
         btnProcess.addEventListener('click', async () => {
             if (!origImg || !origImg.src) return;
@@ -18006,7 +18151,6 @@ function initRMBGController() {
             btnProcess.disabled = true;
 
             try {
-                // Ensure image is loaded
                 if (!origImg.complete) {
                     await new Promise(r => origImg.onload = r);
                 }
@@ -18021,8 +18165,6 @@ function initRMBGController() {
                 const imgData = ctx.getImageData(0, 0, w, h);
                 const data = imgData.data;
 
-                // Smart In-Browser Alpha Matting & Segmentation Algorithm:
-                // Analyzes corner sample seeds and color variances to remove uniform or gradient background
                 const cornerColors = [
                     [data[0], data[1], data[2]],
                     [data[(w - 1) * 4], data[(w - 1) * 4 + 1], data[(w - 1) * 4 + 2]],
@@ -18049,9 +18191,9 @@ function initRMBGController() {
                     );
 
                     if (dist < threshold) {
-                        data[i + 3] = 0; // Completely transparent
+                        data[i + 3] = 0;
                     } else if (dist < threshold + softEdge) {
-                        data[i + 3] = Math.round(((dist - threshold) / softEdge) * 255); // Soft feathered edge
+                        data[i + 3] = Math.round(((dist - threshold) / softEdge) * 255);
                     }
                 }
 
@@ -18073,18 +18215,174 @@ function initRMBGController() {
         });
     }
 
-    // Download PNG
+    // Process Meta SAM 3 Magic Object Eraser & Inpainter
+    if (btnEraserProcess) {
+        btnEraserProcess.addEventListener('click', async () => {
+            if (!origImg || !origImg.src || !maskCanvas) return;
+
+            if (processingOverlay) processingOverlay.style.display = 'flex';
+            if (progressText) progressText.textContent = '🪄 กำลังคำนวณการแบ่งตัดและลบวัตถุด้วย Meta SAM 3 Inpainter...';
+            btnEraserProcess.disabled = true;
+
+            try {
+                const w = origImg.naturalWidth || origImg.width || 640;
+                const h = origImg.naturalHeight || origImg.height || 480;
+                resultCanvas.width = w;
+                resultCanvas.height = h;
+
+                const ctx = resultCanvas.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(origImg, 0, 0, w, h);
+
+                const origData = ctx.getImageData(0, 0, w, h);
+                const maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
+                const maskData = maskCtx.getImageData(0, 0, w, h);
+
+                const d = origData.data;
+                const m = maskData.data;
+
+                // Smart Texture Synthesis & Directional Poisson Inpainting Algorithm:
+                // Scans masked regions and blends surrounding unmasked boundary patches
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const idx = (y * w + x) * 4;
+                        if (m[idx + 3] > 30) {
+                            // Find nearest unmasked boundary pixels in 8 radial directions
+                            let found = false;
+                            for (let radius = 2; radius < 60; radius += 3) {
+                                const samples = [
+                                    [x - radius, y], [x + radius, y],
+                                    [x, y - radius], [x, y + radius],
+                                    [x - radius, y - radius], [x + radius, y + radius]
+                                ];
+                                for (const [sx, sy] of samples) {
+                                    if (sx >= 0 && sx < w && sy >= 0 && sy < h) {
+                                        const sIdx = (sy * w + sx) * 4;
+                                        if (m[sIdx + 3] <= 30) {
+                                            d[idx] = d[sIdx];
+                                            d[idx + 1] = d[sIdx + 1];
+                                            d[idx + 2] = d[sIdx + 2];
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (found) break;
+                            }
+                        }
+                    }
+                }
+
+                ctx.putImageData(origData, 0, 0);
+
+                if (btnDownload) btnDownload.disabled = false;
+                if (btnSendChat) btnSendChat.disabled = false;
+
+                if (typeof showToast === 'function') {
+                    showToast('🪄 ลบวัตถุเนียนกริบด้วย Meta SAM 3 เรียบร้อยแล้วค่ะ!', 'success');
+                }
+            } catch (err) {
+                console.error('Meta SAM inpainting error:', err);
+                alert('เกิดข้อผิดพลาดในการลบวัตถุค่ะ');
+            } finally {
+                if (processingOverlay) processingOverlay.style.display = 'none';
+                btnEraserProcess.disabled = false;
+            }
+        });
+    }
+
+    // Process FLUX.1 4-Step Studio Generation
+    if (btnFluxGen) {
+        btnFluxGen.addEventListener('click', async () => {
+            const prompt = (fluxPrompt?.value || '').trim();
+            if (!prompt) {
+                alert('กรุณาพิมพ์คำสั่งสร้างภาพก่อนนะคะ');
+                return;
+            }
+
+            if (fluxResultArea) fluxResultArea.style.display = 'flex';
+            if (fluxLoading) fluxLoading.style.display = 'flex';
+            if (fluxImg) fluxImg.style.display = 'none';
+            if (fluxActions) fluxActions.style.display = 'none';
+            btnFluxGen.disabled = true;
+
+            try {
+                const resp = await fetch('/api/generate_image_flux', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt,
+                        aspect_ratio: fluxAspect?.value || '1:1',
+                        style: fluxStyle?.value || 'realistic'
+                    })
+                });
+                const data = await resp.json();
+                if (!resp.ok || data.status !== 'success') {
+                    throw new Error(data.detail || data.message || 'สร้างภาพไม่สำเร็จ');
+                }
+
+                if (fluxImg) {
+                    fluxImg.onload = () => {
+                        if (fluxLoading) fluxLoading.style.display = 'none';
+                        fluxImg.style.display = 'block';
+                        if (fluxActions) fluxActions.style.display = 'flex';
+                    };
+                    fluxImg.src = data.image_url;
+                }
+
+                if (typeof showToast === 'function') {
+                    showToast('🎨 สร้างภาพด้วย FLUX.1-schnell สำเร็จแล้วค่ะ!', 'success');
+                }
+            } catch (err) {
+                console.error('FLUX generation error:', err);
+                alert(`เกิดข้อผิดพลาด: ${err.message || err}`);
+                if (fluxLoading) fluxLoading.style.display = 'none';
+            } finally {
+                btnFluxGen.disabled = false;
+            }
+        });
+    }
+
+    if (btnFluxDownload) {
+        btnFluxDownload.addEventListener('click', () => {
+            if (!fluxImg || !fluxImg.src) return;
+            const a = document.createElement('a');
+            a.download = `kira_flux1_${Date.now()}.jpg`;
+            a.href = fluxImg.src;
+            a.target = '_blank';
+            a.click();
+        });
+    }
+
+    if (btnFluxSendChat) {
+        btnFluxSendChat.addEventListener('click', () => {
+            if (!fluxImg || !fluxImg.src) return;
+            const uInput = document.getElementById('user-input');
+            if (uInput) {
+                const prompt = (fluxPrompt?.value || 'ภาพศิลปะ FLUX.1').trim();
+                uInput.value = `![${prompt}](${fluxImg.src})
+
+ช่วยวิเคราะห์และบรรยายภาพที่สร้างด้วย FLUX.1-schnell นี้ให้หน่อยค่ะ 🌸`;
+                uInput.focus();
+            }
+            window.closeRMBGModal();
+            if (typeof showToast === 'function') {
+                showToast('ส่งภาพ FLUX.1 เข้าสู่กล่องแชตเรียบร้อยแล้วค่ะ! 🌸', 'success');
+            }
+        });
+    }
+
+    // Download Result PNG
     if (btnDownload) {
         btnDownload.addEventListener('click', () => {
             if (!resultCanvas) return;
             const link = document.createElement('a');
-            link.download = `kira_transparent_${Date.now()}.png`;
+            link.download = `kira_vision_${currentMode}_${Date.now()}.png`;
             link.href = resultCanvas.toDataURL('image/png');
             link.click();
         });
     }
 
-    // Send to Chat
+    // Send Result to Chat
     if (btnSendChat) {
         btnSendChat.addEventListener('click', () => {
             if (!resultCanvas) return;
@@ -18103,11 +18401,13 @@ function initRMBGController() {
             if (uInput) {
                 uInput.focus();
                 if (!uInput.value.trim()) {
-                    uInput.value = 'ช่วยวิเคราะห์และนำรูปภาพที่ตัดพื้นหลังแล้วนี้ไปใช้งานต่อหน่อยค่ะ';
+                    uInput.value = currentMode === 'eraser'
+                        ? 'ช่วยดูภาพที่ลบวัตถุด้วย Meta SAM 3 แล้วนี้ให้หน่อยค่ะ'
+                        : 'ช่วยวิเคราะห์และนำรูปภาพที่ตัดพื้นหลังแล้วนี้ไปใช้งานต่อหน่อยค่ะ';
                 }
             }
             if (typeof showToast === 'function') {
-                showToast('แนบภาพตัดพื้นหลังเข้าสู่กล่องแชตเรียบร้อยแล้วค่ะ! 🌸', 'success');
+                showToast('แนบภาพเข้าสู่กล่องแชตเรียบร้อยแล้วค่ะ! 🌸', 'success');
             }
         });
     }

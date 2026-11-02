@@ -18624,18 +18624,258 @@ body.light-mode .study-chip.hub-trigger {
     gap: 8px;
     flex-wrap: wrap;
 }
-
-/* BAAI/bge-m3 Semantic Vector Badge */
-.rag-bge-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.15);
-    border: 1px solid rgba(56, 189, 248, 0.35);
-}
+
+
+/* BAAI/bge-m3 Semantic Vector Badge */
+
+.rag-bge-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 4px;
+
+    padding: 2px 8px;
+
+    border-radius: 999px;
+
+    font-size: 10.5px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.3px;
+
+    color: #38bdf8;
+
+    background: rgba(56, 189, 248, 0.15);
+
+    border: 1px solid rgba(56, 189, 248, 0.35);
+
+}
+
+
+
+/* ====================================================================
+   🎨 Kira AI Vision Studio: RMBG + Meta SAM 3 + FLUX.1
+   ==================================================================== */
+
+.vision-tab-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    margin-bottom: 12px;
+}
+
+.vision-tab-btn {
+    flex: 1;
+    padding: 9px 14px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.vision-tab-btn:hover {
+    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.vision-tab-btn.active {
+    background: rgba(20, 184, 166, 0.16);
+    border-color: rgba(20, 184, 166, 0.45);
+    color: #2dd4bf;
+    font-weight: 700;
+    box-shadow: 0 0 15px rgba(20, 184, 166, 0.2);
+}
+
+.vision-tab-btn#tab-mode-eraser.active {
+    background: rgba(236, 72, 153, 0.16);
+    border-color: rgba(236, 72, 153, 0.45);
+    color: #f472b6;
+    box-shadow: 0 0 15px rgba(236, 72, 153, 0.2);
+}
+
+.vision-tab-btn#tab-mode-flux.active {
+    background: rgba(245, 158, 11, 0.16);
+    border-color: rgba(245, 158, 11, 0.45);
+    color: #fbbf24;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.eraser-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 14px;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(236, 72, 153, 0.3);
+    border-radius: 12px;
+    width: 100%;
+}
+
+.brush-size-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: #f1f5f9;
+}
+
+.brush-size-wrap input[type="range"] {
+    accent-color: #ec4899;
+    cursor: pointer;
+}
+
+.flux-studio-view {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.flux-header-ribbon {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.28);
+    border-radius: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.flux-engine-badge {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #fbbf24;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flux-badge-sub {
+    font-size: 0.78rem;
+    color: #cbd5e1;
+}
+
+.flux-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.flux-input-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flux-input-group textarea {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #f8fafc;
+    font-size: 0.92rem;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+.flux-input-group textarea:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+}
+
+.flux-options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.flux-opt-box {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.flux-opt-box label {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.flux-select {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 8px 12px;
+    color: #f8fafc;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+}
+
+.flux-btn-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.flux-result-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: 16px;
+}
+
+.flux-result-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    max-width: 100%;
+}
+
+.flux-img {
+    max-width: 100%;
+    max-height: 480px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6);
+}
+
+.flux-result-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.flux-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 30px;
+    color: #fbbf24;
+    font-size: 0.9rem;
+}

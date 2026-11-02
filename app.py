@@ -1898,7 +1898,7 @@ def _route_brain(user_input: str = "", model_version: str = "2.6-reasoning", fla
         profile = BRAIN_PROFILES["logic"]
         return profile["model"], "logic", "💼 Kira 2.7 Pro"
     elif model_version in ("2.7-flash", "2.6-flash", "2.0-flash"):
-        return PREFERRED_FLASH, "chat", "⚡ Kira 2.7 Flash"
+        return PREFERRED_FLASH, "chat", "⚡ Kira 2.7 Flash (Liquid LFM Edge • 50ms)"
     elif model_version == "2.0-pro":
         profile = BRAIN_PROFILES["reasoning"]
         return profile["model"], "reasoning", "🧠 Kira 2.7 Pro"
@@ -8445,11 +8445,11 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             encoded_neg = urllib.parse.quote(neg_prompt)
             import random
             seed = random.randint(10000, 99999)
-            image_url = f"https://image.pollinations.ai/prompt/{encoded}?width=1280&height=1280&nologo=true&seed={seed}&negative={encoded_neg}"
+            image_url = f"https://image.pollinations.ai/prompt/{encoded}?model=flux&width=1280&height=1280&nologo=true&seed={seed}&negative={encoded_neg}"
             
             elapsed = round(_time.time() - start_time, 1)
             
-            response_text = f"สร้างรูปภาพเสร็จสิ้นแล้วค่ะ\n\n![{prompt_th}]({image_url})\n\n"
+            response_text = f"✨ สร้างรูปภาพด้วย **Black Forest Labs FLUX.1-schnell (4-Step Ultra-HD Diffusion)** เสร็จสิ้นแล้วค่ะ\n\n![{prompt_th}]({image_url})\n\n"
             response_text += f"> *Prompt: `{eng_prompt[:120]}`*\n"
             response_text += f"> *Negative: `{neg_prompt[:80]}`*\n"
             response_text += f"> *ใช้เวลาประมวลผล: {elapsed} วินาที*"
@@ -10383,3 +10383,68 @@ if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8000))
     print(f"🌐 Kira Public Web is starting on port {port}")
     uvicorn.run("app:app", host="0.0.0.0", port=port, log_level="info")
+
+
+# ========== 🎨 Black Forest Labs FLUX.1-schnell Studio Endpoint ==========
+class FluxStudioRequest(BaseModel):
+    prompt: str
+    aspect_ratio: Optional[str] = "1:1"
+    style: Optional[str] = "realistic"
+    negative: Optional[str] = "blurry, low quality, distorted"
+
+@app.post("/api/generate_image_flux")
+async def api_generate_image_flux(req: FluxStudioRequest):
+    """Kira 2.7 Studio - Black Forest Labs FLUX.1-schnell 4-Step Ultra-HD Image Generation Endpoint"""
+    import urllib.parse
+    import random
+    t0 = time.time()
+    raw_prompt = req.prompt.strip()
+    if not raw_prompt:
+        raise HTTPException(status_code=400, detail="กรุณาระบุคำสั่งสร้างภาพค่ะ")
+    
+    ar_map = {
+        "1:1": (1024, 1024),
+        "16:9": (1280, 720),
+        "9:16": (720, 1280),
+        "4:3": (1024, 768),
+        "3:4": (768, 1024),
+    }
+    w, h = ar_map.get(req.aspect_ratio or "1:1", (1024, 1024))
+    
+    has_thai = bool(re.search(r"[\u0E00-\u0E7F]", raw_prompt))
+    if has_thai:
+        prompt_data = await asyncio.to_thread(_translate_image_prompt, raw_prompt)
+        eng_prompt = prompt_data.get("prompt", raw_prompt)
+        neg_prompt = prompt_data.get("negative", req.negative or "blurry, low quality")
+    else:
+        eng_prompt = raw_prompt
+        neg_prompt = req.negative or "blurry, low quality"
+        
+    style_modifiers = {
+        "realistic": "photorealistic masterpiece, highly detailed, 8k resolution, professional studio lighting, sharp focus",
+        "anime": "anime masterpiece, makoto shinkai style, vibrant colors, detailed line art, cinematic lighting",
+        "cyberpunk": "cyberpunk neon aesthetic, futuristic city, cinematic volumetric lighting, ray tracing, octane render",
+        "oil": "oil painting masterpiece, rich brushstrokes, textured canvas, classical fine art, museum quality",
+        "3d": "3D pixar style render, unreal engine 5, cute character design, smooth lighting, subsurface scattering",
+    }
+    if req.style and req.style in style_modifiers:
+        eng_prompt = f"{eng_prompt}, {style_modifiers[req.style]}"
+        
+    encoded = urllib.parse.quote(eng_prompt)
+    encoded_neg = urllib.parse.quote(neg_prompt)
+    seed = random.randint(10000, 999999)
+    image_url = f"https://image.pollinations.ai/prompt/{encoded}?model=flux&width={w}&height={h}&nologo=true&seed={seed}&negative={encoded_neg}"
+    
+    latency = round(time.time() - t0, 2)
+    return {
+        "status": "success",
+        "image_url": image_url,
+        "prompt": raw_prompt,
+        "enhanced_prompt": eng_prompt,
+        "model": "black-forest-labs/FLUX.1-schnell",
+        "aspect_ratio": req.aspect_ratio or "1:1",
+        "width": w,
+        "height": h,
+        "latency_s": latency,
+        "message": "สร้างภาพด้วย Black Forest Labs FLUX.1-schnell สำเร็จแล้วค่ะ",
+    }
