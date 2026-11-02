@@ -4,32 +4,36 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 2 พฤศจิกายน 2026 (Kira 2.7 Flagship Architecture - Under-the-Hood Synthesis & Version Runway Preservation)
+### 🕒 อัปเดตล่าสุด: 2 พฤศจิกายน 2026 (Kira 2.7 Flagship - Dual Super-Intelligence Synthesis: Kokoro-82M Neural Voice & DeepSeek-R1 Deep Reasoning)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **ยุทธศาสตร์ทางเลือก B: หลอมรวมโมเดลระดับโลกเข้าสู่ร่างของคิระ 100% (Under-the-Hood Synthesis):**
-  1. **หน้าบ้านคลีน 100% Pure Kira 2.7 Brand (`templates/index.html`):**
-     - ถอดชื่อโมเดลภายนอก (`qwen2.5-coder:14b`) ออกจากเมนู Dropdown หน้าบ้านอย่างหมดจด
-     - คงเมนูหลักให้อยู่ในตระกูล **Kira 2.7 Flagship Series** ทั้งหมด (`Kira 2.7 Reasoning`, `Kira 2.7 Ultra`, `Kira 2.7 Pro`, `Kira 2.7 Flash`)
-  2. **หลอมรวมเป็นอวัยวะภายในสมองของคิระ (`app.py`):**
-     - ผสานโมเดลเขียนโค้ด `Qwen 2.5 Coder 14B` เป็นขุมพลังขับเคลื่อนหลักประจำตำแหน่ง **`Senior Coder Agent`** ในระบบ Multi-Agent Swarm อัตโนมัติ
-     - เชื่อมต่อเข้ากับ Consensus Engine ของ `Kira 2.7 Ultra` และ `Kira 2.7 Reasoning` เมื่อผู้ใช้สั่งงานเขียนโค้ดหรือแก้บั๊ก ระบบจะดึงโมเดลนี้มาตอบในนาม "คิระ" ทันที
-  3. **ยุทธศาสตร์การรักษาระยะรันเวย์ของเวอร์ชัน (Version Runway Preservation Strategy):**
-     - กำหนดให้ชื่อแบรนด์หลักของผลิตภัณฑ์หยุดและตรึงอยู่ที่ **Kira 2.7 Flagship Generation** ตามคำแนะนำอันชาญฉลาดของบอส
-     - การอัปเกรดฟีเจอร์ระดับจุลภาค จะไม่ขยับเลข Major/Minor หน้าบ้าน (ไม่เร่งไป 2.8 / 2.9 พร่ำเพรื่อ) เพื่อป้องกันปัญหาคิดชื่อไม่ออกและคงความขลังของชื่อรุ่น
-     - สงวนเลข **Kira 3.0** ไว้สำหรับการก้าวกระโดดข้ามยุคครั้งใหญ่ระดับปฏิวัติวงการ (เช่น Full Realtime Multimodal Native & Autonomous OS) เท่านั้น!
-  4. **การทดสอบจริงผ่านเบราว์เซอร์ (Live Browser Verification & Proof of Work):**
-     - ผ่านการทดสอบด้วย Playwright Chromium บนเซิร์ฟเวอร์จริง (`verify_choice_b_browser.py`)
-     - ยืนยัน 0 JavaScript Errors และไม่มีชื่อโมเดลภายนอกหลุดรอดใน UI
-     - บันทึกภาพถ่ายยืนยันผล: `kira_v27_pure_model_select.png`
+* **เปิดตัวการหลอมรวม 2 สุดยอดโมเดลระดับโลกฟรีล่าสุดเข้าสู่ร่างของคิระ (Under-the-Hood Synthesis):**
+  1. **🎙️ สังเคราะห์เสียงพูดธรรมชาติขั้นสุดยอด `Kokoro-82M Neural Voice Studio` (`app.py`, `templates/index.html`, `static/script.js`):**
+     - ผสานเทคโนโลยีโมเดลเสียงพากย์เสมือนมนุษย์จริงจาก Hugging Face (Kokoro-82M / Edge Studio Calibrated Prosody) เข้าสู่ระบบเสียงคิระ 100% ฟรี
+     - ปรับแต่งการออกเสียงภาษาไทย 3 โทนเสียงระดับพรีเมียม:
+       - 🌸 **`kokoro-th-sweet`:** เสียงหวานละมุน นุ่มนวล มีชีวิตชีวา (Default แนะนำสำหรับน้องคิระ)
+       - 💼 **`kokoro-th-smart`:** เสียงผู้บริหารฉะฉาน มั่นใจ ชัดถ้อยชัดคำ
+       - 🕊️ **`kokoro-th-gentle`:** เสียงอบอุ่น อ่อนโยน สำหรับโหมดวัยเก๋าอุ่นใจ (Silver Care)
+     - เพิ่มตัวเลือกในหน้าต่าง **Kira Live Voice (`#live-voice-modal`)** ให้เปลี่ยนโทนเสียงขณะคุยสดได้ทันที
+     - อัปเกรดตัวเลือกในหน้าต่างการตั้งค่าเสียง (`#setting-voice-name`)
+  2. **🧠 ระบบคิดในใจเชิงลึก `DeepSeek-R1 Chain-of-Thought (CoT) Engine` (`app.py`, `static/script.js`, `static/style.css`):**
+     - ผสานโมเดลสายตรรกะและเหตุผลขั้นสูงสุดของโลก `DeepSeek-R1` เข้าสู่สมองของ **`Kira 2.7 Reasoning`** และ **`Multi-Brain Consensus Engine`**
+     - ติดตั้งโปรโตคอลบังคับคิดในใจก่อนตอบด้วยแท็ก `<think>...</think>` เพื่อวิเคราะห์โจทย์ซับซ้อนอย่างรอบคอบ
+     - แสดงผลเป็น Accordion คิดในใจแบบเปิด-ปิดได้: **"💭 กระบวนการคิดเชิงลึกของคิระ (DeepSeek-R1 CoT)"**
+  3. **การทดสอบจริงผ่านเบราว์เซอร์ (Live Browser Verification & Proof of Work - Rule 8):**
+     - ผ่านการทดสอบด้วย Playwright Chromium บนเซิร์ฟเวอร์จริง (`verify_phase5_kokoro_deepseek.py`)
+     - ตรวจสอบผ่านฉลุย ไร้ข้อผิดพลาด JavaScript (0 JS Errors)
+     - บันทึกภาพถ่ายยืนยันผล: `kira_v27_live_voice_kokoro.png`, `kira_v27_settings_kokoro_voice.png`, `kira_v27_deepseek_r1_thinking.png`
+  4. **ยุทธศาสตร์คงแบรนด์หลัก Kira 2.7 (Rule Versioning Preservation):**
+     - คงชื่อแบรนด์และ Dropdown หน้าบ้านให้อยู่ในตระกูล **Kira 2.7 Flagship Generation** ตามคำชี้แนะของบอส
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `refactor(models): synthesize Qwen Coder under-the-hood into Senior Coder Swarm & anchor pure Kira 2.7 brand`
+* **Git Commit ล่าสุด:** `feat(ai): integrate Kokoro-82M Neural Voice and DeepSeek-R1 Chain-of-Thought Reasoning under-the-hood into Kira 2.7`
 * **สถานะบน Render:** ทำการ Git Push สู่ GitHub Repository `main` เพื่อให้ Render ทำการ Auto-Deploy ขึ้นเซิร์ฟเวอร์จริงทันที
 
-#### 3. 🏆 สรุปโครงสร้างโมเดลตระกูล Kira 2.7 Flagship:
-* 🧠 **Kira 2.7 Reasoning:** สมองคิดวิเคราะห์เชิงลึก Multi-Model Consensus
-* 👑 **Kira 2.7 Ultra:** สุดยอดสมองประสานงานความฉลาดสูงสุด (Integrated with Code Specialist)
-* 💼 **Kira 2.7 Pro:** สมองตรรกะและการบริหารจัดการระดับองค์กร
-* ⚡ **Kira 2.7 Flash:** สมองความเร็วสูง ตอบฉับไวทันใจ
-* 🐝 **Kira 2.7 Swarm:** ฝูง 4 เอเจนต์อัตโนมัติ (Architect, Researcher, Coder, Reviewer)
+#### 3. 🏆 สรุป 5 ยุทธศาสตร์ใหญ่เสร็จสมบูรณ์ 100%:
+* ✅ **Phase 1:** Autonomous Deep Web Research & Citations Engine (v2.8.1)
+* ✅ **Phase 2:** Proactive Cognitive Memory Hub & Brain Studio (v2.8.2)
+* ✅ **Phase 3:** Autonomous Multi-Agent Swarm Pipeline (v2.8.3)
+* ✅ **Phase 4:** Hugging Face RMBG-1.4 In-Browser Studio & Qwen Coder Swarm (v2.8.4)
+* ✅ **Phase 5:** Kokoro-82M Human-like Neural Voice & DeepSeek-R1 Deep Thinking (v2.7 Flagship)

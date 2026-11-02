@@ -1089,6 +1089,11 @@
                         <option value="whisper">☁️ Whisper Turbo Cloud</option>
                         <option value="browser">🌐 Browser Web Speech</option>
                     </select>
+                    <select id="live-voice-neural-engine" class="lv-mini-select" title="เครื่องยนต์สร้างเสียงพูดธรรมชาติ (Next-Gen Neural Voice Engine)">
+                        <option value="kokoro-th-sweet" selected>🎙️ Kokoro-82M หวานละมุน</option>
+                        <option value="kokoro-th-smart">💼 Kokoro-82M มั่นใจ</option>
+                        <option value="kokoro-th-gentle">🕊️ Kokoro-82M อ่อนโยน</option>
+                    </select>
                 </div>
             </div>
 
@@ -1859,8 +1864,13 @@
                             <label class="settings-label" data-i18n="settings_voice_label">เลือกน้ำเสียง AI (Natural Voice Engine)</label>
                             <div class="voice-selector-row">
                                 <select id="setting-voice-name" class="settings-select" style="flex: 1;">
-                                    <optgroup label="🇹🇭 ภาษาไทย (Thai)" data-i18n-label="voice_group_th">
-                                        <option value="th-TH-PremwadeeNeural" selected data-i18n="voice_th_premwadee">เปรมวดี (Premwadee) - หญิงไทย นุ่มนวล อบอุ่น เป็นธรรมชาติ</option>
+                                    <optgroup label="🎙️ Next-Gen Neural Voices (Kokoro-82M Studio Quality)" data-i18n-label="voice_group_kokoro">
+                                        <option value="kokoro-th-sweet" selected>🌸 คิระ เสียงหวานละมุนเป็นธรรมชาติ (Kokoro-82M Neural Edge)</option>
+                                        <option value="kokoro-th-smart">💼 คิระ เสียงผู้บริหารฉะฉานมั่นใจ (Kokoro-82M Pro)</option>
+                                        <option value="kokoro-th-gentle">🕊️ คิระ เสียงอบอุ่นอ่อนโยน (Silver Care Edition)</option>
+                                    </optgroup>
+                                    <optgroup label="🇹🇭 ภาษาไทย (Standard Neural)" data-i18n-label="voice_group_th">
+                                        <option value="th-TH-PremwadeeNeural" data-i18n="voice_th_premwadee">เปรมวดี (Premwadee) - หญิงไทย นุ่มนวล อบอุ่น เป็นธรรมชาติ</option>
                                     </optgroup>
                                     <optgroup label="🇺🇸 English (US)" data-i18n-label="voice_group_en">
                                         <option value="en-US-JennyNeural" data-i18n="voice_en_jenny">Jenny - หญิงอเมริกัน คล่องแคล่ว ทันสมัย สดใส</option>

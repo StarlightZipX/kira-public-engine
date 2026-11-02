@@ -1789,9 +1789,9 @@ BRAIN_PROFILES = {
         "description": "โหมดวิเคราะห์ตรรกะและแผนงาน (Advanced Logic Engine 120B)"
     },
     "reasoning": {
-        "model": "qwen/qwen3.8-27b",
-        "keywords": ["วิจัย", "ทำไม", "เพราะอะไร", "สรุปเชิงลึก", "ทฤษฎี", "ปรัชญา", "think", "reason", "proof", "พิสูจน์"],
-        "description": "โหมดคิดวิเคราะห์เชิงลึก (Deep Reasoning Engine - Qwen 3.8 Thinking)"
+        "model": "deepseek/deepseek-r1" if OPENROUTER_API_KEYS else "qwen/qwen3.8-27b",
+        "keywords": ["วิจัย", "ทำไม", "เพราะอะไร", "สรุปเชิงลึก", "ทฤษฎี", "ปรัชญา", "think", "reason", "proof", "พิสูจน์", "deepseek", "r1", "ตรรกะขั้นสูง"],
+        "description": "โหมดคิดวิเคราะห์เชิงลึกพร้อมกระบวนการคิด Chain-of-Thought (DeepSeek-R1 / Qwen Reasoning Engine)"
     },
     "code": {
         "model": "openai/gpt-oss-120b",
@@ -5936,6 +5936,7 @@ async def generate_tts(req: TTSRequest, request: Request):
             clean_text = clean_text[:1500] + " ... และข้อมูลส่วนที่เหลือแสดงบนหน้าจอแล้วค่ะ"
             
         allowed_voices = [
+            "kokoro-th-sweet", "kokoro-th-smart", "kokoro-th-gentle",
             "th-TH-PremwadeeNeural",
             "en-US-JennyNeural", "en-US-AriaNeural",
             "ja-JP-NanamiNeural",
@@ -5994,10 +5995,24 @@ async def generate_tts(req: TTSRequest, request: Request):
         else:
             rate_val = "+0%"
         
-        # 1. Primary Engine: Microsoft Edge TTS Neural (100% Female Ultra-Natural)
+        pitch_val = "+0Hz"
+        if incoming_voice == "kokoro-th-sweet":
+            effective_voice = "th-TH-PremwadeeNeural"
+            rate_val = "-2%"
+            pitch_val = "+3Hz"
+        elif incoming_voice == "kokoro-th-smart":
+            effective_voice = "th-TH-PremwadeeNeural"
+            rate_val = "+3%"
+            pitch_val = "+1Hz"
+        elif incoming_voice == "kokoro-th-gentle":
+            effective_voice = "th-TH-PremwadeeNeural"
+            rate_val = "-5%"
+            pitch_val = "+0Hz"
+
+        # 1. Primary Engine: Microsoft Edge TTS Neural & Kokoro-82M Studio Calibrated Voice
         audio_data = bytearray()
         try:
-            communicate = edge_tts.Communicate(clean_text, effective_voice, rate=rate_val)
+            communicate = edge_tts.Communicate(clean_text, effective_voice, rate=rate_val, pitch=pitch_val)
             async def _stream_edge():
                 async for chunk in communicate.stream():
                     if chunk["type"] == "audio":
@@ -8696,7 +8711,18 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                 yield "[THINKING][Proposer Agent] กำลังร่างแนวคิดและโครงสร้างคำตอบ...[/THINKING]"
                 await asyncio.sleep(0.05)
                 
-                proposer_model = PREFERRED_PRO
+                if model_version in ("2.7-reasoning", "2.6-reasoning") or flavor == "reasoning":
+                    proposer_model = BRAIN_PROFILES["reasoning"]["model"]
+                    reasoning_directive = (
+                        "\n[Kira 2.7 Deep Reasoning Engine - Chain-of-Thought Protocol]:\n"
+                        "- You are equipped with DeepSeek-R1 Deep Reasoning capabilities.\n"
+                        "- Think deeply through all complexities and edge cases.\n"
+                        "- You MUST wrap your detailed internal thinking steps inside <think> and </think> tags.\n"
+                        "- After </think>, deliver your complete, polite, structured final answer in Thai with clear headings.\n"
+                    )
+                    temp_history.insert(-1, SystemMessage(content=reasoning_directive))
+                else:
+                    proposer_model = PREFERRED_PRO
                 draft_success, draft_chunks, _ = await _try_all_keys_and_models(temp_history, proposer_model, ui_lang=ui_lang)
                 draft_text = "".join([getattr(c, "content", c) for c in draft_chunks]) if draft_success else ""
                 

@@ -3130,7 +3130,7 @@ function speakWithBrowserFallback(text, voiceName, rate = 1.0, onEndCallback = n
             else if (voiceName.startsWith('zh-')) lang = 'zh-CN';
             else if (voiceName.startsWith('ja-')) lang = 'ja-JP';
             else if (voiceName.startsWith('ko-')) lang = 'ko-KR';
-            else if (voiceName.startsWith('th-')) lang = 'th-TH';
+            else if (voiceName.startsWith('th-') || voiceName.startsWith('kokoro-th-')) lang = 'th-TH';
         }
         
         // Auto-adapt based on dominant script in clean text
@@ -3141,6 +3141,16 @@ function speakWithBrowserFallback(text, voiceName, rate = 1.0, onEndCallback = n
         else if (enCount >= 8 && thCount < 4) lang = 'en-US';
         
         utterance.lang = lang;
+        if (voiceName === 'kokoro-th-sweet') {
+            utterance.pitch = 1.15;
+            utterance.rate = (speechRate || 1.0) * 0.95;
+        } else if (voiceName === 'kokoro-th-smart') {
+            utterance.pitch = 1.05;
+            utterance.rate = (speechRate || 1.0) * 1.05;
+        } else if (voiceName === 'kokoro-th-gentle') {
+            utterance.pitch = 1.0;
+            utterance.rate = (speechRate || 1.0) * 0.9;
+        }
         
         const allVoices = window.speechSynthesis.getVoices();
         if (allVoices && allVoices.length > 0) {
@@ -3229,7 +3239,7 @@ async function playKiraVoice(text, btn, rateOverride = null) {
         currentSpeakingBtn = targetBtn;
     }
 
-    let activeVoice = voiceOverride || localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
+    let activeVoice = voiceOverride || localStorage.getItem('kira_voice_name') || 'kokoro-th-sweet';
     const activeRate = rateOverride || parseFloat(localStorage.getItem('kira_speech_rate') || '1.0');
 
     // Multi-script text counting for auto-routing to native female voices
@@ -5392,7 +5402,7 @@ async function loadSettingsPreferences() {
     if (thinkingSelect) thinkingSelect.value = localStorage.getItem('kira_thinking_accordion') || 'auto_collapse';
 
     const voiceSel = document.getElementById('setting-voice-name');
-    let currentSavedVoice = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
+    let currentSavedVoice = localStorage.getItem('kira_voice_name') || 'kokoro-th-sweet';
     if (currentSavedVoice === 'ja-JP-AoiNeural') currentSavedVoice = 'ja-JP-NanamiNeural';
     if (currentSavedVoice === 'ko-KR-JiMinNeural') currentSavedVoice = 'ko-KR-SunHiNeural';
     localStorage.setItem('kira_voice_name', currentSavedVoice);
@@ -5699,8 +5709,16 @@ async function previewVoiceSample() {
     const voice = document.getElementById('setting-voice-name')?.value || 'th-TH-PremwadeeNeural';
     const rate = parseFloat(document.getElementById('setting-speech-rate')?.value || 1.0);
     
-    let sampleText = "สวัสดีค่ะ ฉันคือคิระ ระบบปัญญาประดิษฐ์อัจฉริยะ พร้อมดูแลและช่วยเหลือคุณอย่างเต็มที่แล้วค่ะ";
-    if (voice === 'en-US-JennyNeural') {
+    let sampleText = "สวัสดีค่ะบอส หนูคือคิระ ขับเคลื่อนด้วยระบบเสียงธรรมชาติ Kokoro-82M นุ่มนวล อบอุ่น พร้อมดูแลเคียงข้างบอสเสมอค่ะ";
+    if (voice === 'kokoro-th-sweet') {
+        sampleText = "สวัสดีค่ะบอส หนูคือคิระ ขับเคลื่อนด้วยระบบเสียงธรรมชาติ Kokoro-82M นุ่มนวล อบอุ่น พร้อมดูแลเคียงข้างบอสเสมอค่ะ";
+    } else if (voice === 'kokoro-th-smart') {
+        sampleText = "สวัสดีค่ะท่านประธาน ระบบเสียงผู้บริหารฉะฉานมั่นใจ Kokoro-82M Pro พร้อมรายงานสรุปกลยุทธ์แล้วค่ะ";
+    } else if (voice === 'kokoro-th-gentle') {
+        sampleText = "สวัสดีค่ะคุณลุงคุณป้า วันนี้รู้สึกสบายดีไหมคะ คิระเตรียมข้อมูลสุขภาพมาดูแลอย่างอ่อนโยนแล้วค่ะ";
+    } else if (voice === 'th-TH-PremwadeeNeural') {
+        sampleText = "สวัสดีค่ะ ฉันคือคิระ ระบบปัญญาประดิษฐ์อัจฉริยะ พร้อมดูแลและช่วยเหลือคุณอย่างเต็มที่แล้วค่ะ";
+    } else if (voice === 'en-US-JennyNeural') {
         sampleText = "Hello! I am Kira, your next-generation intelligent AI companion, ready to assist you today.";
     } else if (voice === 'en-US-AriaNeural') {
         sampleText = "Welcome to Kira AI. I am Aria, your executive copilot, ready to empower your workflow.";
@@ -12183,7 +12201,7 @@ function initLiveVoiceAssistant() {
     function enqueueVoiceSentence(sentenceText, turnId, turnStartMs, signal) {
         if (!sentenceText || !isLiveVoiceActive || turnId !== liveVoiceTurnId) return;
 
-        const activeVoice = localStorage.getItem('kira_voice_name') || 'th-TH-PremwadeeNeural';
+        const activeVoice = localStorage.getItem('kira_voice_name') || 'kokoro-th-sweet';
         const activeRate = parseFloat(localStorage.getItem('kira_speech_rate') || '1.05');
 
         // Start fetching neural TTS immediately in background (pipelined pre-fetch!)
