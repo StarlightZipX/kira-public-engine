@@ -8138,7 +8138,7 @@ async def _generate_swarm_stream(user_input: str, uname: str, session_id: str, i
             {"role": "system", "content": "You are Kira's System Architect Agent. Analyze the user request and provide a high-level architectural blueprint: 1) System Goals & Scope, 2) Core Architecture & Tech Stack, 3) Component Breakdown, 4) Data Flow & Security Considerations. Write in professional, structured Thai with clear headings."},
             {"role": "user", "content": clean_goal}
         ]
-        llm = _create_llm(PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
+        llm = _create_llm(PREFERRED_PRO or PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
         arch_res = await asyncio.to_thread(llm.invoke, arch_prompt)
         arch_text = arch_res.content.strip()
     except Exception as e:
@@ -8174,7 +8174,9 @@ async def _generate_swarm_stream(user_input: str, uname: str, session_id: str, i
             {"role": "system", "content": "You are Kira's Senior Coder Agent. Using the Architect Blueprint and Research Findings, provide the complete, clean, production-ready code implementation (HTML/CSS/JS or Python). Use standard markdown code blocks with proper syntax highlighting. Write clean, self-contained code without placeholders."},
             {"role": "user", "content": f"User Goal: {clean_goal}\n\nBlueprint:\n{arch_text[:800]}\n\nResearch:\n{res_text[:800]}"}
         ]
-        llm = _create_llm(PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
+        active_local_models = get_active_ollama_models() or []
+        coder_model = "qwen2.5-coder:14b" if any("coder" in str(m).lower() for m in active_local_models) else (PREFERRED_PRO or PREFERRED_FLASH)
+        llm = _create_llm(coder_model, API_KEYS[0] if API_KEYS else None)
         coder_res = await asyncio.to_thread(llm.invoke, coder_prompt)
         coder_text = coder_res.content.strip()
     except Exception as e:
@@ -8192,7 +8194,7 @@ async def _generate_swarm_stream(user_input: str, uname: str, session_id: str, i
             {"role": "system", "content": "You are Kira's Quality Reviewer & Security Sentinel. Review the implementation: 1) Security & Input Sanitization Audit, 2) Performance Assessment, 3) Final Quality Sign-off. Write in concise Thai."},
             {"role": "user", "content": f"User Goal: {clean_goal}\n\nImplementation:\n{coder_text[:1000]}"}
         ]
-        llm = _create_llm(PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
+        llm = _create_llm(PREFERRED_PRO or PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
         rev_res = await asyncio.to_thread(llm.invoke, rev_prompt)
         rev_text = rev_res.content.strip()
     except Exception as e:
