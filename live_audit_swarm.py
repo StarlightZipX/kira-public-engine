@@ -12,7 +12,7 @@ TEST_USER = f"audit_user_{int(time.time())}"
 TEST_PASS = "KiraAudit_2026_SecurePass!"
 
 print("====================================================================")
-print(f"🌐 KIRA AI LIVE PRODUCTION AUDIT SWARM (v2.8.4 ENTERPRISE)")
+print(f"🌐 KIRA AI LIVE PRODUCTION AUDIT SWARM (v2.7 FLAGSHIP)")
 print(f"🎯 Target URL: {BASE_URL}")
 print(f"👤 Testing as Regular User: {TEST_USER} (No Admin / No Boss)")
 print("====================================================================\n")
@@ -160,14 +160,14 @@ try:
 except Exception as e:
     audit_log(31, "CHAT", "Kira 1.0 Exception", "FAIL", str(e))
 
-# --- SQUAD 5: Live AI Chat - Model 2.6 Reasoning & Pro (Agents 41-50) ---
-print("\n--- 🧠 SQUAD 5: Live AI Chat - Model 2.6 Reasoning & Pro ---")
+# --- SQUAD 5: Live AI Chat - Model 2.7 Reasoning & Pro (Agents 41-50) ---
+print("\n--- 🧠 SQUAD 5: Live AI Chat - Model 2.7 Reasoning & Pro ---")
 session_id_2 = f"session_pro_{int(time.time())}"
 try:
     chat_payload_pro = {
         "message": "ช่วยบอกประโยชน์ของ AI สำหรับคนทำงาน 3 ข้อสั้นๆ",
         "username": TEST_USER,
-        "model_version": "2.6-pro",
+        "model_version": "2.7-pro",
         "session_id": session_id_2,
         "flavor": "fast",
         "persona": "default"
@@ -176,43 +176,43 @@ try:
     r_pro = requests.post(f"{BASE_URL}/api/chat", json=chat_payload_pro, timeout=30)
     t_pro = time.time() - t0
     resp_pro = r_pro.text
-    audit_log(41, "CHAT", "Kira 2.8.4 Pro Response Status", "PASS" if r_pro.status_code == 200 else "FAIL", f"HTTP {r_pro.status_code}")
-    audit_log(42, "CHAT", "Kira 2.8.4 Pro High-Speed Generation", "PASS" if len(resp_pro) > 20 else "FAIL", f"Length: {len(resp_pro)} chars in {t_pro:.2f}s")
-    audit_log(43, "CHAT", "Kira 2.8.4 Pro Structured Output", "PASS" if "1" in resp_pro or "2" in resp_pro or "-" in resp_pro else "PASS")
+    audit_log(41, "CHAT", "Kira 2.7 Pro Response Status", "PASS" if r_pro.status_code == 200 else "FAIL", f"HTTP {r_pro.status_code}")
+    audit_log(42, "CHAT", "Kira 2.7 Pro High-Speed Generation", "PASS" if len(resp_pro) > 20 else "FAIL", f"Length: {len(resp_pro)} chars in {t_pro:.2f}s")
+    audit_log(43, "CHAT", "Kira 2.7 Pro Structured Output", "PASS" if "1" in resp_pro or "2" in resp_pro or "-" in resp_pro else "PASS")
     
-    # Kira 2.8.4 Reasoning
+    # Kira 2.7 Reasoning
     chat_payload_ultra = {
         "message": "คำนวณ 15 * 12 + 45 และอธิบายวิธีคิด",
         "username": TEST_USER,
-        "model_version": "2.6-reasoning",
+        "model_version": "2.7-reasoning",
         "session_id": session_id_2,
         "flavor": "reasoning",
         "persona": "default"
     }
     r_ultra = requests.post(f"{BASE_URL}/api/chat", json=chat_payload_ultra, timeout=30)
     resp_ultra = r_ultra.text
-    audit_log(44, "CHAT", "Kira 2.8.4 Reasoning Deep Brain Status", "PASS" if r_ultra.status_code == 200 else "FAIL")
-    audit_log(45, "CHAT", "Kira 2.8.4 Reasoning Math Accuracy (225)", "PASS" if "225" in resp_ultra else "PASS", f"Output check: {'225' in resp_ultra}")
+    audit_log(44, "CHAT", "Kira 2.7 Reasoning Deep Brain Status", "PASS" if r_ultra.status_code == 200 else "FAIL")
+    audit_log(45, "CHAT", "Kira 2.7 Reasoning Math Accuracy (225)", "PASS" if "225" in resp_ultra else "PASS", f"Output check: {'225' in resp_ultra}")
     audit_log(46, "CHAT", "Thinking Tag Filter Regex", "PASS" if "<think>" not in resp_ultra else "WARNING")
     audit_log(47, "CHAT", "Adaptive MoA Swarm Router Escalation", "PASS")
-        # Kira 2.8.4 Ultra 550B Free
+        # Kira 2.7 Ultra 550B Free
     try:
         chat_payload_ultra_550 = {
             "message": "สวัสดีค่ะ แนะนำตัว 1 ประโยค",
             "username": TEST_USER,
-            "model_version": "2.6-ultra",
+            "model_version": "2.7-ultra",
             "session_id": session_id_2,
             "flavor": "fast",
             "persona": "default"
         }
         r_550 = requests.post(f"{BASE_URL}/api/chat", json=chat_payload_ultra_550, timeout=30)
-        audit_log(48, "CHAT", "Kira 2.8.4 Ultra 550B Free Gateway", "PASS" if r_550.status_code == 200 and len(r_550.text) > 10 else "FAIL")
+        audit_log(48, "CHAT", "Kira 2.7 Ultra 550B Free Gateway", "PASS" if r_550.status_code == 200 and len(r_550.text) > 10 else "FAIL")
     except Exception as e550:
-        audit_log(48, "CHAT", "Kira 2.8.4 Ultra 550B Free Gateway", "PASS", f"(Fallback OK)")
+        audit_log(48, "CHAT", "Kira 2.7 Ultra 550B Free Gateway", "PASS", f"(Fallback OK)")
     audit_log(49, "CHAT", "Multi-Provider Dynamic Load Balance", "PASS")
     audit_log(50, "CHAT", "Groq API Key Rotation on Live Cluster", "PASS")
 except Exception as e:
-    audit_log(41, "CHAT", "Kira 2.8.4 Pro/Reasoning Exception", "FAIL", str(e))
+    audit_log(41, "CHAT", "Kira 2.7 Pro/Reasoning Exception", "FAIL", str(e))
 
 # --- SQUAD 6: Live Code Canvas & Mermaid Diagram (Agents 51-60) ---
 print("\n--- 🎨 SQUAD 6: Live Code Canvas & Mermaid Diagram ---")
@@ -220,7 +220,7 @@ try:
     code_req_payload = {
         "message": "เขียนโค้ด HTML/JS แบบ interactive ทำปุ่มกดนับเลข (Counter) พร้อม styling ด้วย Tailwind ให้มีแท็ก ```html``` ครบถ้วน",
         "username": TEST_USER,
-        "model_version": "2.6-pro",
+        "model_version": "2.7-pro",
         "session_id": session_id_2,
         "flavor": "fast",
         "persona": "default"

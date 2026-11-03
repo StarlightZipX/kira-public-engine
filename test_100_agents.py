@@ -18,7 +18,7 @@ if BASE_DIR not in sys.path:
 from app import app, init_db, execute_query, DB_FILE, _should_trigger_moa, _compress_and_roll_history, get_user_briefing, HumanMessage, AIMessage, SystemMessage, BRAIN_PROFILES, _route_brain
 
 print("====================================================================")
-print("🌐 KIRA 2.8.4 - 100 ENGINEERING AGENTS DIAGNOSTIC & AUDIT SWARM")
+print("🌐 KIRA 2.7 FLAGSHIP - 100 ENGINEERING AGENTS DIAGNOSTIC & AUDIT SWARM")
 print("====================================================================\n")
 
 init_db()
@@ -107,18 +107,18 @@ log_result(30, "SEC", "Audio Streaming Buffer Overflow Protection", "PASS")
 
 # --- SQUAD 4: Multi-Model Gateway & Adaptive MoA Swarm (Agents 31-40) ---
 print("\n--- 🧠 SQUAD 4: Multi-Model Gateway & Adaptive MoA Swarm ---")
-greeting_moa, _, _ = _should_trigger_moa("สวัสดีครับ", "2.6-pro", "fast")
-code_moa, _, _ = _should_trigger_moa("เขียนโค้ด Python", "2.6-pro", "fast")
-reason_moa, _, _ = _should_trigger_moa("วาดแผนผังระบบ", "2.6-reasoning", "fast")
+greeting_moa, _, _ = _should_trigger_moa("สวัสดีครับ", "2.7-pro", "fast")
+code_moa, _, _ = _should_trigger_moa("เขียนโค้ด Python", "2.7-pro", "fast")
+reason_moa, _, _ = _should_trigger_moa("วาดแผนผังระบบ", "2.7-reasoning", "fast")
 
 log_result(31, "MOA", "Adaptive Router - Fast Greeting Bypass (0.2s)", "PASS" if not greeting_moa else "FAIL")
 log_result(32, "MOA", "Adaptive Router - Deep Coding Swarm Activation", "PASS" if code_moa and reason_moa else "FAIL")
-ultra_model, ultra_brain_type, _ = _route_brain("ช่วยอธิบาย", "2.6-ultra", "fast")
+ultra_model, ultra_brain_type, _ = _route_brain("ช่วยอธิบาย", "2.7-ultra", "fast")
 ultra_ok = ultra_model == "nvidia/nemotron-3-ultra-550b-a55b:free" and ultra_brain_type == "ultra" and "ultra" in BRAIN_PROFILES
-log_result(33, "MOA", "Kira 2.8.4 Ultra 550B Free Cloud Gateway Routing", "PASS" if ultra_ok else "FAIL")
+log_result(33, "MOA", "Kira 2.7 Ultra 550B Free Cloud Gateway Routing", "PASS" if ultra_ok else "FAIL")
 log_result(34, "MOA", "MoA Verifier & Critic Engine (Llama 70B)", "PASS")
 log_result(35, "MOA", "MoA Synthesizer Logic Consensus", "PASS")
-vision_model, vision_brain_type, _ = _route_brain("ช่วยดูรูปนี้", "2.6-vision", "fast")
+vision_model, vision_brain_type, _ = _route_brain("ช่วยดูรูปนี้", "2.7-vision", "fast")
 vision_ok = vision_model in ["qwen/qwen3.8-27b", "qwen/qwen-2.5-vl-72b-instruct"] and vision_brain_type == "vision" and "vision" in BRAIN_PROFILES
 log_result(36, "MOA", "Multimodal Vision Gateway (Qwen 3.8 / Qwen-VL Routing)", "PASS" if vision_ok else "FAIL")
 log_result(37, "MOA", "Groq API Key Rotation", "PASS")

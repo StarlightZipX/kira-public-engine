@@ -14126,6 +14126,9 @@ const KIRA_I18N = {
         tools_cat_study: "การศึกษา & ติวสอบ (Study Co-Pilot)",
         tools_study_hub_title: "Study Co-Pilot (ห้องติวสอบ)",
         tools_study_hub_desc: "สรุปชีทสไลด์ 3 เลเวล, เก็งข้อสอบ, Flashcards, แก้โจทย์",
+        attach_transcribe: "ถอดเทปเสียงประชุม",
+        tools_transcribe_title: "ถอดเทปเสียงประชุม",
+        tools_transcribe_desc: "แปลงไฟล์เสียง & สรุปมติที่ประชุม",
         tools_cat_work: "งาน & กลยุทธ์",
         tools_vault_title: "Executive Offline Vault",
         tools_vault_desc: "คลังนิรภัยออฟไลน์ & ซิงก์สองทิศทาง PWA",
@@ -14594,6 +14597,9 @@ const KIRA_I18N = {
         tools_cat_study: "Academic & Study Co-Pilot",
         tools_study_hub_title: "Study Co-Pilot Hub",
         tools_study_hub_desc: "3-Level summary, exam prep, flashcards, step-by-step solver",
+        attach_transcribe: "Voice Transcriber",
+        tools_transcribe_title: "Meeting Voice Transcriber",
+        tools_transcribe_desc: "Audio speech-to-text & meeting summary",
         tools_cat_work: "Work & Strategy",
         tools_vault_title: "Executive Offline Vault",
         tools_vault_desc: "Offline vault & 2-way PWA sync",
@@ -15063,6 +15069,9 @@ const KIRA_I18N = {
         tools_cat_study: "学术与考试自习室",
         tools_study_hub_title: "Study Co-Pilot 自习室",
         tools_study_hub_desc: "3级讲义总结、考题预测、记忆卡、分步解题",
+        attach_transcribe: "会议录音转写",
+        tools_transcribe_title: "会议录音转写与摘要",
+        tools_transcribe_desc: "语音转文本并自动生成会议纪要",
         tools_cat_work: "工作与战略",
         tools_vault_title: "Executive Offline Vault",
         tools_vault_desc: "离线保险库与双向 PWA 同步",
@@ -15531,6 +15540,9 @@ const KIRA_I18N = {
         tools_cat_study: "학습 및 시험 대비",
         tools_study_hub_title: "Study Co-Pilot 스터디룸",
         tools_study_hub_desc: "3단계 슬라이드 요약, 시험 대비, 플래시카드, 풀이",
+        attach_transcribe: "회의 음성 녹취",
+        tools_transcribe_title: "회의 음성 텍스트 변환 및 요약",
+        tools_transcribe_desc: "음성 파일 텍스트 변환 및 회의록 생성",
         tools_cat_work: "비즈니스 & 전략",
         tools_vault_title: "Executive Offline Vault",
         tools_vault_desc: "오프라인 보관함 및 PWA 양방향 동기화",
@@ -16000,6 +16012,9 @@ const KIRA_I18N = {
         tools_cat_study: "学習＆試験対策 (Study Co-Pilot)",
         tools_study_hub_title: "Study Co-Pilot (スタディハブ)",
         tools_study_hub_desc: "3段階スライド要約、予想問題、暗記カード、課題解説",
+        attach_transcribe: "会議音声文字起こし",
+        tools_transcribe_title: "会議音声の文字起こし＆要約",
+        tools_transcribe_desc: "音声ファイルをテキスト化し議事録を自動生成",
         tools_cat_work: "ビジネス＆戦略",
         tools_vault_title: "Executive Offline Vault",
         tools_vault_desc: "オフライン金庫＆PWA双方向同期",
@@ -18676,7 +18691,12 @@ function initTranscribeController() {
                 }
             }
 
-            mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
+            try {
+                mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
+            } catch (errMime) {
+                console.warn('[MediaRecorder] Fallback to default constructor without mimeType:', errMime);
+                mediaRecorder = new MediaRecorder(mediaStream);
+            }
             audioChunks = [];
 
             mediaRecorder.ondataavailable = (event) => {

@@ -1456,45 +1456,45 @@ def init_db():
         # สำหรับ Database เก่าที่ไม่มีคอลัมน์ points, nickname, purpose
         try:
             execute_query("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0")
-        except:
+        except Exception:
             pass
         try:
             execute_query("ALTER TABLE users ADD COLUMN nickname TEXT")
-        except:
+        except Exception:
             pass
         try:
             execute_query("ALTER TABLE users ADD COLUMN purpose TEXT")
-        except:
+        except Exception:
             pass
         # สำหรับ OAuth 2.0 Multi-Platform (Google & GitHub)
         try:
             execute_query("ALTER TABLE users ADD COLUMN email TEXT")
-        except:
+        except Exception:
             pass
         try:
             execute_query("ALTER TABLE users ADD COLUMN auth_provider TEXT")
-        except:
+        except Exception:
             pass
         try:
             execute_query("ALTER TABLE users ADD COLUMN provider_id TEXT")
-        except:
+        except Exception:
             pass
         try:
             execute_query("ALTER TABLE users ADD COLUMN avatar_url TEXT")
-        except:
+        except Exception:
             pass
         # สำหรับระบบ Subscription & Monetization Engine
         try:
             execute_query("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'")
-        except:
+        except Exception:
             pass
         try:
             execute_query("ALTER TABLE users ADD COLUMN plan_expire_date TEXT")
-        except:
+        except Exception:
             pass
         try:
             execute_query("ALTER TABLE users ADD COLUMN subscription_status TEXT DEFAULT 'inactive'")
-        except:
+        except Exception:
             pass
 
         try:
@@ -1577,7 +1577,7 @@ def init_db():
         # สำหรับ Database เก่าที่ไม่มีคอลัมน์ session_id
         try:
             execute_query("ALTER TABLE logs ADD COLUMN session_id TEXT")
-        except:
+        except Exception:
             pass
 
         execute_query('''CREATE TABLE IF NOT EXISTS feedbacks
@@ -1642,15 +1642,15 @@ def init_db():
                       updated_at TEXT)''')
         try:
             execute_query("ALTER TABLE user_preferences ADD COLUMN user_mode TEXT DEFAULT 'general'")
-        except:
+        except Exception:
             pass
         try:
             execute_query("ALTER TABLE user_memories ADD COLUMN category TEXT DEFAULT 'identity'")
-        except:
+        except Exception:
             pass
         try:
             execute_query("ALTER TABLE user_memories ADD COLUMN confidence REAL DEFAULT 1.0")
-        except:
+        except Exception:
             pass
 
         execute_query('''CREATE TABLE IF NOT EXISTS tasks
@@ -6431,7 +6431,7 @@ async def get_user_memories_list(username: str, category: Optional[str] = None, 
         try:
             cols = execute_query("PRAGMA table_info(user_memories)", fetch='all')
             has_cat = any(c[1] == 'category' for c in (cols or []))
-        except:
+        except Exception:
             pass
 
         if has_cat:
@@ -6516,7 +6516,7 @@ async def update_user_memory(memory_id: int, req: MemoryUpdateRequest):
         try:
             execute_query("UPDATE user_memories SET fact=?, category=?, timestamp=? WHERE id=? AND username=?",
                           (req.fact.strip(), req.category or "identity", ts, memory_id, clean_user))
-        except:
+        except Exception:
             execute_query("UPDATE user_memories SET fact=?, timestamp=? WHERE id=? AND username=?",
                           (req.fact.strip(), ts, memory_id, clean_user))
         return {"status": "success", "message": "อัปเดตความจำเรียบร้อยแล้วค่ะ"}
@@ -6540,7 +6540,7 @@ async def add_user_memory_node(req: MemoryCreateRequest):
             try:
                 execute_query("INSERT INTO user_memories (username, fact, timestamp, category, confidence) VALUES (?, ?, ?, ?, ?)",
                               (uname, fact_desc, ts, cat, 1.0))
-            except:
+            except Exception:
                 execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
                               (uname, fact_desc, ts))
             return {"status": "success", "message": "เพิ่มความสัมพันธ์และข้อเท็จจริงลงในสมองเรียบร้อยแล้วค่ะ"}
@@ -6548,7 +6548,7 @@ async def add_user_memory_node(req: MemoryCreateRequest):
             try:
                 execute_query("INSERT INTO user_memories (username, fact, timestamp, category, confidence) VALUES (?, ?, ?, ?, ?)",
                               (uname, req.fact.strip(), ts, cat, 1.0))
-            except:
+            except Exception:
                 execute_query("INSERT INTO user_memories (username, fact, timestamp) VALUES (?, ?, ?)",
                               (uname, req.fact.strip(), ts))
             return {"status": "success", "message": "เพิ่มความจำลงในสมองเรียบร้อยแล้วค่ะ"}
