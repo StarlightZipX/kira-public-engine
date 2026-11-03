@@ -1379,6 +1379,16 @@
                 </div>
             </div>
 
+            <!-- Input Mode Selector -->
+            <div class="transcribe-input-modes">
+                <button type="button" class="transcribe-mode-pill active" id="btn-transcribe-mode-upload">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลดไฟล์เสียง
+                </button>
+                <button type="button" class="transcribe-mode-pill" id="btn-transcribe-mode-record">
+                    <i class="fa-solid fa-microphone"></i> บันทึกเสียงสดจากไมค์
+                </button>
+            </div>
+
             <!-- Upload Dropzone -->
             <div id="transcribe-dropzone" class="transcribe-dropzone">
                 <input type="file" id="transcribe-file-input" accept=".mp3,.wav,.m4a,.ogg,.webm,.flac,.aac,.mp4" style="display: none;">
@@ -1389,6 +1399,19 @@
                     </div>
                     <div class="transcribe-dropzone-sub">
                         รองรับ MP3, WAV, M4A, OGG, WEBM, FLAC (สูงสุด 25MB)
+                    </div>
+                </div>
+            </div>
+            <!-- Live Mic Recorder Zone -->
+            <div id="transcribe-record-zone" class="transcribe-record-zone" style="display: none;">
+                <div class="record-center-box">
+                    <button type="button" id="btn-transcribe-mic-toggle" class="btn-mic-record" title="กดเพื่อเริ่ม/หยุดบันทึกเสียง">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                    <div class="record-timer" id="transcribe-record-timer">00:00</div>
+                    <div class="record-status-text" id="transcribe-record-status">กดปุ่มไมค์เพื่อเริ่มอัดเสียงการประชุม</div>
+                    <div class="record-visualizer" id="transcribe-record-visualizer" style="display: none;">
+                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
                     </div>
                 </div>
             </div>
@@ -1451,6 +1474,8 @@
                 <div class="transcribe-result-footer">
                     <button type="button" id="btn-transcribe-copy" class="btn-action-ghost"><i class="fa-regular fa-copy"></i> คัดลอกข้อความ</button>
                     <button type="button" id="btn-transcribe-download" class="btn-action-ghost"><i class="fa-solid fa-download"></i> ดาวน์โหลด .TXT</button>
+                    <button type="button" id="btn-transcribe-export-pdf" class="btn-action-ghost"><i class="fa-solid fa-file-pdf text-red"></i> ส่งออก PDF / พิมพ์</button>
+                    <button type="button" id="btn-transcribe-export-doc" class="btn-action-ghost"><i class="fa-solid fa-file-word text-blue"></i> ส่งออก Word (.doc)</button>
                     <button type="button" id="btn-transcribe-send-chat" class="btn-action-primary"><i class="fa-solid fa-paper-plane"></i> ส่งเข้าห้องแชตคิระ</button>
                 </div>
             </div>

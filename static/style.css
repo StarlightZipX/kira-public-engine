@@ -19478,3 +19478,169 @@ body.light-mode .study-chip.hub-trigger {
     background: rgba(168, 85, 247, 0.15);
     color: #c084fc;
 }
+
+
+/* ====================================================================
+   🎙️ Live Mic Recording & Document Export Styles
+   ==================================================================== */
+.transcribe-input-modes {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.transcribe-mode-pill {
+    flex: 1;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.transcribe-mode-pill:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.transcribe-mode-pill.active {
+    background: rgba(168, 85, 247, 0.2);
+    border-color: #a855f7;
+    color: #f1f5f9;
+}
+
+.transcribe-record-zone {
+    border: 2px dashed rgba(168, 85, 247, 0.35);
+    background: rgba(168, 85, 247, 0.04);
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-align: center;
+    margin-bottom: 18px;
+    transition: all 0.3s ease;
+}
+
+.transcribe-record-zone.is-recording {
+    border-color: rgba(239, 68, 68, 0.6);
+    background: rgba(239, 68, 68, 0.06);
+}
+
+.record-center-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-mic-record {
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
+    color: #fff;
+    font-size: 1.8rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+    transition: all 0.25s ease;
+}
+
+.btn-mic-record:hover {
+    transform: scale(1.06);
+    background: linear-gradient(135deg, #c084fc, #9333ea);
+    box-shadow: 0 8px 25px rgba(168, 85, 247, 0.6);
+}
+
+.btn-mic-record.recording {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    animation: pulse-mic-red 1.3s infinite;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.7);
+}
+
+@keyframes pulse-mic-red {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 0 16px rgba(239, 68, 68, 0);
+        transform: scale(1.05);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        transform: scale(1);
+    }
+}
+
+.record-timer {
+    font-size: 1.6rem;
+    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: #f1f5f9;
+    letter-spacing: 1px;
+}
+
+.record-status-text {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.record-visualizer {
+    display: flex;
+    gap: 4px;
+    height: 26px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.record-visualizer span {
+    width: 4px;
+    height: 8px;
+    background: #ef4444;
+    border-radius: 2px;
+    animation: sound-wave 0.8s ease-in-out infinite alternate;
+}
+
+.record-visualizer span:nth-child(2) { animation-delay: 0.12s; }
+.record-visualizer span:nth-child(3) { animation-delay: 0.24s; }
+.record-visualizer span:nth-child(4) { animation-delay: 0.36s; }
+.record-visualizer span:nth-child(5) { animation-delay: 0.48s; }
+.record-visualizer span:nth-child(6) { animation-delay: 0.36s; }
+.record-visualizer span:nth-child(7) { animation-delay: 0.24s; }
+.record-visualizer span:nth-child(8) { animation-delay: 0.12s; }
+
+@keyframes sound-wave {
+    0% { height: 6px; opacity: 0.4; }
+    100% { height: 24px; opacity: 1; }
+}
+
+/* Printable Report Styles */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #kira-print-container, #kira-print-container * {
+        visibility: visible;
+    }
+    #kira-print-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: #fff !important;
+        color: #0f172a !important;
+        padding: 40px;
+        font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+}

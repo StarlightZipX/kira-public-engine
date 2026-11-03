@@ -18552,7 +18552,19 @@ function initTranscribeController() {
     const closeBtn = document.getElementById('close-transcribe-modal');
     const btnTools = document.getElementById('btn-tools-transcribe');
     const btnMenu = document.getElementById('menu-transcribe-btn');
+    
+    // Mode switcher
+    const btnModeUpload = document.getElementById('btn-transcribe-mode-upload');
+    const btnModeRecord = document.getElementById('btn-transcribe-mode-record');
     const dropzone = document.getElementById('transcribe-dropzone');
+    const recordZone = document.getElementById('transcribe-record-zone');
+    
+    // Live Recorder Elements
+    const btnMicToggle = document.getElementById('btn-transcribe-mic-toggle');
+    const recordTimerEl = document.getElementById('transcribe-record-timer');
+    const recordStatusEl = document.getElementById('transcribe-record-status');
+    const recordVisualizer = document.getElementById('transcribe-record-visualizer');
+    
     const fileInput = document.getElementById('transcribe-file-input');
     const previewBox = document.getElementById('transcribe-file-preview');
     const fileNameEl = document.getElementById('transcribe-file-name');
@@ -18576,10 +18588,21 @@ function initTranscribeController() {
     const badgeSpeed = document.getElementById('badge-transcribe-speed');
     const btnCopy = document.getElementById('btn-transcribe-copy');
     const btnDownload = document.getElementById('btn-transcribe-download');
+    const btnExportPdf = document.getElementById('btn-transcribe-export-pdf');
+    const btnExportDoc = document.getElementById('btn-transcribe-export-doc');
     const btnSendChat = document.getElementById('btn-transcribe-send-chat');
 
     let selectedAudioFile = null;
     let latestResult = null;
+    let activeInputMode = 'upload'; // 'upload' or 'record'
+
+    // MediaRecorder state
+    let mediaRecorder = null;
+    let mediaStream = null;
+    let audioChunks = [];
+    let isRecording = false;
+    let recordTimerInterval = null;
+    let recordSeconds = 0;
 
     window.openTranscribeModal = function() {
         modal.style.display = 'flex';
@@ -18594,6 +18617,9 @@ function initTranscribeController() {
         if (audioPlayer) {
             audioPlayer.pause();
         }
+        if (isRecording) {
+            stopLiveRecording();
+        }
     };
 
     if (closeBtn) closeBtn.addEventListener('click', window.closeTranscribeModal);
@@ -18603,6 +18629,140 @@ function initTranscribeController() {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) window.closeTranscribeModal();
     });
+
+    // Mode Switching
+    if (btnModeUpload && btnModeRecord) {
+        btnModeUpload.addEventListener('click', () => {
+            if (activeInputMode === 'upload') return;
+            activeInputMode = 'upload';
+            btnModeUpload.classList.add('active');
+            btnModeRecord.classList.remove('active');
+            if (dropzone) dropzone.style.display = selectedAudioFile ? 'none' : 'block';
+            if (recordZone) recordZone.style.display = 'none';
+            if (isRecording) stopLiveRecording();
+        });
+
+        btnModeRecord.addEventListener('click', () => {
+            if (activeInputMode === 'record') return;
+            activeInputMode = 'record';
+            btnModeRecord.classList.add('active');
+            btnModeUpload.classList.remove('active');
+            if (dropzone) dropzone.style.display = 'none';
+            if (recordZone) recordZone.style.display = selectedAudioFile ? 'none' : 'block';
+        });
+    }
+
+    // Live Recording Functions
+    async function startLiveRecording() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            if (typeof showToast === 'function') {
+                showToast('เบราว์เซอร์ของท่านไม่รองรับการเข้าถึงไมโครโฟนค่ะ', 'error');
+            } else {
+                alert('เบราว์เซอร์ของท่านไม่รองรับการเข้าถึงไมโครโฟนค่ะ');
+            }
+            return;
+        }
+
+        try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            let mimeType = 'audio/webm';
+            if (typeof MediaRecorder.isTypeSupported === 'function') {
+                if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                    mimeType = 'audio/webm;codecs=opus';
+                } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                    mimeType = 'audio/mp4';
+                } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+                    mimeType = 'audio/ogg';
+                }
+            }
+
+            mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                clearInterval(recordTimerInterval);
+                const audioBlob = new Blob(audioChunks, { type: mimeType });
+                const ext = mimeType.includes('mp4') ? 'm4a' : (mimeType.includes('ogg') ? 'ogg' : 'webm');
+                const recFile = new File([audioBlob], `kira_live_meeting_${Date.now()}.${ext}`, { type: mimeType });
+                handleSelectedFile(recFile);
+
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(t => t.stop());
+                    mediaStream = null;
+                }
+            };
+
+            mediaRecorder.start(250);
+            isRecording = true;
+            recordSeconds = 0;
+            if (recordTimerEl) recordTimerEl.textContent = '00:00';
+            if (btnMicToggle) {
+                btnMicToggle.classList.add('recording');
+                btnMicToggle.innerHTML = '<i class="fa-solid fa-stop"></i>';
+            }
+            if (recordZone) recordZone.classList.add('is-recording');
+            if (recordStatusEl) recordStatusEl.textContent = '🔴 กำลังบันทึกเสียงการประชุม... (แตะอีกครั้งเพื่อหยุด)';
+            if (recordVisualizer) recordVisualizer.style.display = 'flex';
+
+            recordTimerInterval = setInterval(() => {
+                recordSeconds++;
+                const mins = String(Math.floor(recordSeconds / 60)).padStart(2, '0');
+                const secs = String(recordSeconds % 60).padStart(2, '0');
+                if (recordTimerEl) recordTimerEl.textContent = `${mins}:${secs}`;
+            }, 1000);
+
+            if (typeof showToast === 'function') {
+                showToast('เริ่มบันทึกเสียงการประชุมแล้วค่ะ พูดคุยได้เลยนะคะ', 'info');
+            }
+        } catch (err) {
+            console.error('[Mic Permission Error]', err);
+            const msg = err.name === 'NotAllowedError' 
+                ? 'กรุณากดอนุญาตสิทธิ์การเข้าถึงไมโครโฟนในเบราว์เซอร์นะคะ' 
+                : 'ไม่สามารถเปิดไมโครโฟนได้: ' + err.message;
+            if (typeof showToast === 'function') {
+                showToast(msg, 'error');
+            } else {
+                alert(msg);
+            }
+        }
+    }
+
+    function stopLiveRecording() {
+        if (!isRecording || !mediaRecorder) return;
+        isRecording = false;
+        clearInterval(recordTimerInterval);
+        if (btnMicToggle) {
+            btnMicToggle.classList.remove('recording');
+            btnMicToggle.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+        }
+        if (recordZone) recordZone.classList.remove('is-recording');
+        if (recordStatusEl) recordStatusEl.textContent = 'กดปุ่มไมค์เพื่อเริ่มอัดเสียงการประชุม';
+        if (recordVisualizer) recordVisualizer.style.display = 'none';
+
+        try {
+            if (mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+        } catch (e) {
+            console.warn('Error stopping mediaRecorder', e);
+        }
+    }
+
+    if (btnMicToggle) {
+        btnMicToggle.addEventListener('click', () => {
+            if (isRecording) {
+                stopLiveRecording();
+            } else {
+                startLiveRecording();
+            }
+        });
+    }
 
     function handleSelectedFile(file) {
         if (!file) return;
@@ -18637,7 +18797,8 @@ function initTranscribeController() {
             console.warn('Cannot create object URL for audio', e);
         }
 
-        dropzone.style.display = 'none';
+        if (dropzone) dropzone.style.display = 'none';
+        if (recordZone) recordZone.style.display = 'none';
         previewBox.style.display = 'block';
         btnStart.disabled = false;
         resultBox.style.display = 'none';
@@ -18680,7 +18841,11 @@ function initTranscribeController() {
                 audioPlayer.src = '';
             }
             previewBox.style.display = 'none';
-            dropzone.style.display = 'block';
+            if (activeInputMode === 'upload') {
+                if (dropzone) dropzone.style.display = 'block';
+            } else {
+                if (recordZone) recordZone.style.display = 'block';
+            }
             btnStart.disabled = true;
             resultBox.style.display = 'none';
         });
@@ -18803,6 +18968,189 @@ function initTranscribeController() {
             link.download = `kira_meeting_transcript_${Date.now()}.txt`;
             link.click();
             URL.revokeObjectURL(link.href);
+        });
+    }
+
+    // Export PDF / Print Feature
+    if (btnExportPdf) {
+        btnExportPdf.addEventListener('click', () => {
+            if (!latestResult) return;
+            const dateStr = new Date().toLocaleString('th-TH');
+            const summaryHtml = summaryTextEl.innerHTML || '<p>ไม่มีบทสรุป</p>';
+            const rawTranscriptSafe = (latestResult.transcript || '').replace(/\n/g, '<br>');
+
+            const printWin = window.open('', '_blank');
+            if (!printWin) {
+                if (typeof showToast === 'function') showToast('กรุณาอนุญาตป๊อปอัปเพื่อสั่งพิมพ์หรือบันทึกเป็น PDF นะคะ', 'warning');
+                return;
+            }
+
+            printWin.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Kira Meeting Report - ${latestResult.filename || 'Audio'}</title>
+                    <meta charset="utf-8">
+                    <style>
+                        body {
+                            font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                            line-height: 1.6;
+                            color: #1e293b;
+                            padding: 40px;
+                            max-width: 820px;
+                            margin: 0 auto;
+                        }
+                        .header-table {
+                            width: 100%;
+                            border-bottom: 2px solid #6366f1;
+                            padding-bottom: 15px;
+                            margin-bottom: 25px;
+                        }
+                        .logo-text {
+                            font-size: 24px;
+                            font-weight: 800;
+                            color: #6366f1;
+                            letter-spacing: -0.5px;
+                        }
+                        .meta-info {
+                            font-size: 13px;
+                            color: #64748b;
+                            margin-top: 5px;
+                        }
+                        h1, h2, h3 {
+                            color: #0f172a;
+                        }
+                        .summary-box {
+                            background: #f8fafc;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 8px;
+                            padding: 20px;
+                            margin-bottom: 30px;
+                        }
+                        .transcript-box {
+                            background: #ffffff;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 8px;
+                            padding: 20px;
+                            font-size: 14px;
+                            color: #334155;
+                            line-height: 1.8;
+                        }
+                        .footer {
+                            margin-top: 40px;
+                            padding-top: 15px;
+                            border-top: 1px solid #e2e8f0;
+                            font-size: 12px;
+                            color: #94a3b8;
+                            text-align: center;
+                        }
+                        @media print {
+                            body { padding: 0; }
+                            button { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <table class="header-table">
+                        <tr>
+                            <td>
+                                <div class="logo-text">KIRA AI ENTERPRISE</div>
+                                <div class="meta-info">บันทึกรายงานการประชุมและถอดเทปเสียง (Executive Meeting Intelligence)</div>
+                            </td>
+                            <td style="text-align: right;" class="meta-info">
+                                <strong>วันที่:</strong> ${dateStr}<br>
+                                <strong>ไฟล์:</strong> ${latestResult.filename || 'Audio Recording'}<br>
+                                <strong>ความยาว:</strong> ${latestResult.duration_sec || 0} วินาที (${(latestResult.detected_language || 'TH').toUpperCase()})
+                            </td>
+                        </tr>
+                    </table>
+
+                    <h2>📋 บันทึกรายงานการประชุม (Executive Summary)</h2>
+                    <div class="summary-box">
+                        ${summaryHtml}
+                    </div>
+
+                    <h2>💬 ข้อความถอดเทปคำต่อคำ (Full Transcript)</h2>
+                    <div class="transcript-box">
+                        ${rawTranscriptSafe}
+                    </div>
+
+                    <div class="footer">
+                        จัดทำโดย Kira 2.7 Flagship Neural Engine • ถอดเทปด้วยความเร็วสูง Whisper Large-v3-turbo
+                    </div>
+
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() {
+                                window.print();
+                            }, 350);
+                        };
+                    </script>
+                </body>
+                </html>
+            `);
+            printWin.document.close();
+            if (typeof showToast === 'function') showToast('เปิดหน้าต่างบันทึก PDF / พิมพ์เรียบร้อยแล้วค่ะ!', 'success');
+        });
+    }
+
+    // Export Word (.doc) Feature
+    if (btnExportDoc) {
+        btnExportDoc.addEventListener('click', () => {
+            if (!latestResult) return;
+            const dateStr = new Date().toLocaleString('th-TH');
+            const summaryHtml = summaryTextEl.innerHTML || '<p>ไม่มีบทสรุป</p>';
+            const rawTranscriptSafe = (latestResult.transcript || '').replace(/\n/g, '<br>');
+
+            const wordDocContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>Kira Meeting Report</title>
+                    <style>
+                        body { font-family: 'Calibri', 'Sarabun', Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #1e293b; }
+                        h1 { color: #4338ca; font-size: 18pt; border-bottom: 2pt solid #4338ca; padding-bottom: 6pt; }
+                        h2 { color: #1e1b4b; font-size: 14pt; margin-top: 14pt; }
+                        .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 16pt; }
+                        .meta-table td { padding: 4pt; font-size: 10pt; color: #475569; }
+                        .summary-card { background: #f8fafc; border: 1pt solid #cbd5e1; padding: 12pt; margin-bottom: 16pt; }
+                        .transcript-card { border: 1pt solid #e2e8f0; padding: 12pt; font-size: 10pt; }
+                    </style>
+                </head>
+                <body>
+                    <h1>KIRA AI ENTERPRISE — บันทึกรายงานการประชุมผู้บริหาร</h1>
+                    <table class='meta-table'>
+                        <tr>
+                            <td><strong>วันที่จัดทำ:</strong> ${dateStr}</td>
+                            <td><strong>ชื่อไฟล์:</strong> ${latestResult.filename || 'Audio Recording'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ความยาวเสียง:</strong> ${latestResult.duration_sec || 0} วินาที</td>
+                            <td><strong>ภาษาหลัก:</strong> ${(latestResult.detected_language || 'TH').toUpperCase()}</td>
+                        </tr>
+                    </table>
+
+                    <h2>1. บันทึกรายงานการประชุมและมติที่ประชุม (Executive Summary)</h2>
+                    <div class='summary-card'>
+                        ${summaryHtml}
+                    </div>
+
+                    <h2>2. ข้อความจากการถอดเทปเสียงทั้งหมด (Full Transcript)</h2>
+                    <div class='transcript-card'>
+                        ${rawTranscriptSafe}
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff' + wordDocContent], { type: 'application/msword;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `kira_meeting_report_${Date.now()}.doc`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            if (typeof showToast === 'function') showToast('ดาวน์โหลดเอกสาร Word (.doc) สำเร็จแล้วค่ะ!', 'success');
         });
     }
 

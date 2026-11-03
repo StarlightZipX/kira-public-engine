@@ -4,43 +4,35 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 3 พฤศจิกายน 2026 (Kira 2.7 Flagship - Phase 11: Voice Transcriber & Audio Meeting Summarizer)
+### 🕒 อัปเดตล่าสุด: 3 พฤศจิกายน 2026 (Kira 2.7 Flagship - Phase 12: Triple Power Pack - Live Mic, PDF/Word Export & Launch Ready)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **ระบบถอดเทปเสียงและสรุปรายงานการประชุมผู้บริหาร (Kira Voice Transcriber & Meeting Summarizer):**
-  1. **🎙️ Backend API Endpoint (`POST /api/transcribe_audio` ใน `app.py`):**
-     - ขับเคลื่อนด้วยโมเดลถอดเทปความเร็วสูงระดับโลก **Groq Whisper Large-v3-turbo** (ประมวลผลเร็วเพียง ~390ms)
-     - รองรับไฟล์เสียงทั้ง `.mp3`, `.wav`, `.m4a`, `.ogg`, `.webm`, `.flac`, `.aac`, `.mp4` ขนาดสูงสุด 25MB
-     - สถาปัตยกรรม 2-in-1 Dual Output:
-       - **Full Transcript:** ถอดเสียงพูดคำต่อคำอย่างแม่นยำสูง รองรับทั้งภาษาไทย อังกฤษ ญี่ปุ่น จีน
-       - **Executive AI Summary:** Kira Reasoning Core วิเคราะห์และสังเคราะห์เป็นบันทึกรายงานการประชุมทันที (สรุปภาพรวม, ประเด็นสำคัญ/ข้อหารือ, มติที่ประชุม และ Action Items)
-     - มีระบบสลับโหมดสรุป: `meeting` (บันทึกการประชุม), `lecture` (สรุปเลคเชอร์/บทเรียน), `general` (สรุปทั่วไป)
-  2. **🖥️ หน้าต่าง UI สตูดิโอ (`#transcribe-modal` ใน `templates/index.html`):**
-     - แผงควบคุมดีไซน์กระจก Frost Glass หรูหราทันสมัย
-     - พื้นที่ Dropzone สำหรับลากวางหรือคลิกเลือกไฟล์เสียง พร้อมเครื่องเล่นเสียงพรีวิวในตัว
-     - ตัวเลือกภาษาเสียงพูด และตัวเลือกเปิด/ปิดการสรุปรายงานอัตโนมัติ
-     - Dual-Tab View: สลับดูรายงานการประชุม (Executive Summary) และข้อความดิบ (Full Transcript)
-     - ปุ่มฟังก์ชันด่วน: คัดลอก (Copy), ดาวน์โหลดไฟล์ข้อความ (.TXT), และ "ส่งเข้าห้องแชตคิระ" (Send to Chat) เพื่อพูดคุยถามเจาะลึกต่อได้ทันที
-  3. **⚡ เมนูเรียกใช้งานสะดวกทุกจุด (Accessibility):**
-     - ปุ่มในเมนูแนบไฟล์ (`#menu-transcribe-btn` ใน `#attachment-menu`)
-     - ปุ่มในแถบเครื่องมือหลัก (`#btn-tools-transcribe` ใน Tools Dropdown)
-     - บัตรทางลัดคลิกเดียวบนหน้าจอแรก Welcome Hub (`triggerQuickAction('transcribe')`)
-  4. **🛡️ ความปลอดภัยและความเป็นส่วนตัวของแบรนด์ (Zero-Leakage):**
-     - ยืนยันชื่อโมเดลหน้าบ้านสะอาดตา **`Kira 2.7 Flash`** ปราศจากอีโมจิและข้อความในวงเล็บ 100%
-  5. **🌐 การทดสอบจริงผ่านเบราว์เซอร์ (Proof of Work - Rule 8):**
-     - รัน Playwright Chromium ทดสอบเปิดเซิร์ฟเวอร์จริงและเปิดสตูดิโอถอดเทปเสียง (`verify_transcribe_live.py`)
+* **แพ็กเกจเหมาครบ 3 วงจรตามคำสั่งบอส (Live Recording + PDF/Word Export + Launch Package):**
+  1. **🎙️ ระบบอัดเสียงสดจากไมโครโฟนในตัว (In-Browser Live Mic Recorder):**
+     - เพิ่มแท็บสลับโหมด: **1. อัปโหลดไฟล์เสียง** และ **2. บันทึกเสียงสดจากไมค์**
+     - ปุ่มไมค์ขนาดใหญ่พร้อมเอฟเฟกต์วงแหวนแสงสีแดงกระพริบ (Pulsating Red Ring Animation)
+     - ตัวจับเวลาบันทึกเสียงแบบเรียลไทม์ (Live MM:SS Counter) และ Audio Wave Visualizer แสดงคลื่นเสียงพูด
+     - สตรีมผ่าน Browser `MediaRecorder` API เมื่อกดหยุดปุ๊บ ระบบจะแพ็กเป็นไฟล์เสียงพรีวิวฟังซ้ำได้ทันที และส่งเข้า Whisper Large-v3-turbo เพื่อถอดเทปและสรุปมติการประชุมทันทีแบบ Zero-Lag
+  2. **📄 ระบบส่งออกเอกสารรายงานการประชุมระดับผู้บริหาร (Executive PDF & Word Export):**
+     - **ปุ่ม "ส่งออก PDF / พิมพ์":** เจนหน้าเอกสารทางการพร้อมหัวจดหมาย *KIRA AI ENTERPRISE*, ข้อมูลวันที่, ความยาวเสียง, บันทึกรายงานการประชุม (Executive Summary) และข้อความถอดเทปคำต่อคำ พร้อมคำสั่งพิมพ์หรือบันทึกเป็น PDF สวยงามทันที
+     - **ปุ่ม "ส่งออก Word (.doc)":** สร้างไฟล์ Word Document ที่รองรับสไตล์ Office และ UTF-8 BOM เปิดอ่านและแก้ไขต่อได้สมบูรณ์แบบ 100% ใน Microsoft Word, WPS Office และ Google Docs
+  3. **📢 แพ็กเกจข้อความโปรโมตสำหรับเปิดตัวจริง (Ready-to-Post Launch Package):**
+     - ชุดแคปชันโปรโมตสำหรับ Facebook และ Social Media ที่เน้นหมัดฮุกฟีเจอร์เด็ดของ Kira 2.7 ครบครัน พร้อมให้บอสคัดลอกไปโพสต์ได้ทันที
+  4. **🌐 การทดสอบจริงผ่านเบราว์เซอร์ (Proof of Work - Rule 8):**
+     - ตรวจสอบผ่าน Playwright Chromium บนเซิร์ฟเวอร์จริง (`test_live_recorder_final.py`)
+     - ทดสอบการสลับโหมด Upload <-> Record และตรวจสอบปุ่ม Export ครบถ้วน
      - ผลการทดสอบผ่านฉลุย 100% ไร้ข้อผิดพลาด JavaScript (0 JS Errors)
-     - บันทึกภาพถ่ายหน้าจอยืนยันผล: `kira_v27_transcribe_modal.png`
-  6. **🔄 อัปเกรด Service Worker Cache:**
-     - อัปเกรด `CACHE_NAME` ใน `static/sw.js` เป็น `kira-ai-cache-v2.7-whisper-transcribe`
+     - บันทึกภาพถ่ายหน้าจอยืนยันผล: `kira_v27_live_recorder_modal.png`
+  5. **🔄 อัปเกรด Service Worker Cache:**
+     - อัปเกรด `CACHE_NAME` ใน `static/sw.js` เป็น `kira-ai-cache-v2.7-live-record-export`
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `feat(ai): integrate Whisper Large-v3-turbo voice transcriber and meeting summarizer into Kira 2.7`
+* **Git Commit ล่าสุด:** `feat(transcribe): add live mic recording, printable PDF and Word export suite`
 * **สถานะบน Render:** ทำการ Git Push สู่ GitHub Repository `main` เพื่อให้ Render ทำการ Auto-Deploy ขึ้นเซิร์ฟเวอร์จริงทันที
 
 #### 3. 🏆 สรุปสถานะระบบ Kira 2.7 Flagship:
 * ✅ 1. Pure Kira 2.7 Brand Family (Zero-Leakage & Clean Names)
 * ✅ 2. 1-Click Interactive Action Hub on Welcome Screen
-* ✅ 3. Complete 8-Engine Multi-Modal Under-the-Hood Capabilities
-* ✅ 4. Kira Voice Transcriber & Audio Meeting Summarizer (Whisper Large-v3-turbo)
+* ✅ 3. Kira Voice Transcriber (Whisper Large-v3-turbo with Live Mic Recording)
+* ✅ 4. Executive Meeting Summary & PDF/Word Export Suite
 * ✅ 5. Production Healthy & Ready for Traffic

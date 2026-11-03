@@ -2,7 +2,7 @@
 // 🚀 Kira AI Progressive Web App - Service Worker (v2.7.0-Synchronized)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.7-whisper-transcribe';
+const CACHE_NAME = 'kira-ai-cache-v2.7-live-record-export';
 const STATIC_ASSETS = [
     '/',
     '/static/style.css?v=20261102_2840',
