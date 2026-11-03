@@ -1898,7 +1898,7 @@ def _route_brain(user_input: str = "", model_version: str = "2.6-reasoning", fla
         profile = BRAIN_PROFILES["logic"]
         return profile["model"], "logic", "💼 Kira 2.7 Pro"
     elif model_version in ("2.7-flash", "2.6-flash", "2.0-flash"):
-        return PREFERRED_FLASH, "chat", "⚡ Kira 2.7 Flash (Liquid LFM Edge • 50ms)"
+        return PREFERRED_FLASH, "chat", "Kira 2.7 Flash"
     elif model_version == "2.0-pro":
         profile = BRAIN_PROFILES["reasoning"]
         return profile["model"], "reasoning", "🧠 Kira 2.7 Pro"
