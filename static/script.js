@@ -1349,6 +1349,14 @@ async function renderWelcomeHub() {
                     </div>
                     <span class="flagship-card-pill text-purple"><i class="fa-solid fa-lightbulb"></i> ${isEn ? 'Thinking' : 'คิดลึก'}</span>
                 </div>
+                <div class="flagship-action-card action-transcribe" onclick="triggerQuickAction('transcribe')" title="${isEn ? 'Meeting Audio Transcriber' : 'ถอดเทปเสียงประชุมและสรุปรายงาน'}">
+                    <div class="flagship-card-icon icon-transcribe"><i class="fa-solid fa-microphone-lines"></i></div>
+                    <div class="flagship-card-info">
+                        <span class="flagship-card-title">${isEn ? 'Voice Transcriber' : 'ถอดเทปเสียงประชุม'}</span>
+                        <span class="flagship-card-desc">${isEn ? 'Whisper Turbo & meeting notes' : 'แปลงเสียงพูด & สรุปมติอัตโนมัติ'}</span>
+                    </div>
+                    <span class="flagship-card-pill text-purple"><i class="fa-solid fa-bolt"></i> ${isEn ? 'Whisper' : 'รวดเร็ว'}</span>
+                </div>
                 <div class="flagship-action-card action-code" onclick="triggerQuickAction('code')" title="${isEn ? 'Code Assistant & Debugger' : 'ช่วยเขียนและตรวจโค้ด'}">
                     <div class="flagship-card-icon icon-code"><i class="fa-solid fa-code"></i></div>
                     <div class="flagship-card-info">
@@ -17552,6 +17560,7 @@ function initKiraApp() {
 try { initCognitiveMemoryHub(); } catch (e) { console.error("Cognitive Memory Hub controller init error:", e); }
 try { initSwarmController(); } catch (e) { console.error("Swarm controller init error:", e); }
 try { initRMBGController(); } catch (e) { console.error("RMBG controller init error:", e); }
+    try { initTranscribeController(); } catch (e) { console.error("Transcribe controller init error:", e); }
 
     // 4. Background Care & Assistance
     try { initProactiveHeartbeat(); } catch (e) { console.warn("Heartbeat init error:", e); }
@@ -18478,6 +18487,12 @@ function initRMBGController() {
 // 🚀 Kira 2.7 Flagship 1-Click Interactive Action Trigger
 // ====================================================================
 window.triggerQuickAction = function(action) {
+    if (action === 'transcribe') {
+        if (typeof window.openTranscribeModal === 'function') {
+            window.openTranscribeModal();
+        }
+        return;
+    }
     if (action === 'flux') {
         if (typeof window.openRMBGModal === 'function') {
             window.openRMBGModal();
@@ -18524,3 +18539,288 @@ window.triggerQuickAction = function(action) {
         }
     }
 };
+
+
+// ====================================================================
+// 🎙️ Kira Voice Transcriber & Audio Meeting Summarizer Controller
+// Powered by Groq Whisper Large-v3-turbo + Kira Reasoning Core
+// ====================================================================
+function initTranscribeController() {
+    const modal = document.getElementById('transcribe-modal');
+    if (!modal) return;
+
+    const closeBtn = document.getElementById('close-transcribe-modal');
+    const btnTools = document.getElementById('btn-tools-transcribe');
+    const btnMenu = document.getElementById('menu-transcribe-btn');
+    const dropzone = document.getElementById('transcribe-dropzone');
+    const fileInput = document.getElementById('transcribe-file-input');
+    const previewBox = document.getElementById('transcribe-file-preview');
+    const fileNameEl = document.getElementById('transcribe-file-name');
+    const fileSizeEl = document.getElementById('transcribe-file-size');
+    const removeFileBtn = document.getElementById('btn-transcribe-remove-file');
+    const audioPlayer = document.getElementById('transcribe-audio-player');
+    const btnStart = document.getElementById('btn-start-transcribe');
+    const loadingBox = document.getElementById('transcribe-loading');
+    const resultBox = document.getElementById('transcribe-result-box');
+    const langSelect = document.getElementById('transcribe-lang-select');
+    const modeSelect = document.getElementById('transcribe-mode-select');
+    const enableSummaryCheckbox = document.getElementById('transcribe-enable-summary');
+    const summaryTextEl = document.getElementById('transcribe-summary-text');
+    const rawTranscriptEl = document.getElementById('transcribe-raw-transcript');
+    const tabBtnSummary = document.getElementById('tab-btn-summary');
+    const tabBtnTranscript = document.getElementById('tab-btn-transcript');
+    const tabContentSummary = document.getElementById('tab-content-summary');
+    const tabContentTranscript = document.getElementById('tab-content-transcript');
+    const badgeDuration = document.getElementById('badge-transcribe-duration');
+    const badgeLang = document.getElementById('badge-transcribe-lang');
+    const badgeSpeed = document.getElementById('badge-transcribe-speed');
+    const btnCopy = document.getElementById('btn-transcribe-copy');
+    const btnDownload = document.getElementById('btn-transcribe-download');
+    const btnSendChat = document.getElementById('btn-transcribe-send-chat');
+
+    let selectedAudioFile = null;
+    let latestResult = null;
+
+    window.openTranscribeModal = function() {
+        modal.style.display = 'flex';
+        const attachMenu = document.getElementById('attachment-menu');
+        if (attachMenu) attachMenu.style.display = 'none';
+        const toolsMenu = document.getElementById('tools-dropdown-wrapper');
+        if (toolsMenu) toolsMenu.classList.remove('open');
+    };
+
+    window.closeTranscribeModal = function() {
+        modal.style.display = 'none';
+        if (audioPlayer) {
+            audioPlayer.pause();
+        }
+    };
+
+    if (closeBtn) closeBtn.addEventListener('click', window.closeTranscribeModal);
+    if (btnTools) btnTools.addEventListener('click', window.openTranscribeModal);
+    if (btnMenu) btnMenu.addEventListener('click', window.openTranscribeModal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) window.closeTranscribeModal();
+    });
+
+    function handleSelectedFile(file) {
+        if (!file) return;
+        const validExtensions = ['.mp3', '.wav', '.m4a', '.ogg', '.webm', '.flac', '.aac', '.mp4'];
+        const nameLower = file.name.toLowerCase();
+        const isValid = validExtensions.some(ext => nameLower.endsWith(ext)) || file.type.startsWith('audio/');
+        if (!isValid) {
+            if (typeof showToast === 'function') {
+                showToast('กรุณาเลือกไฟล์เสียงที่รองรับ เช่น MP3, WAV, M4A, OGG, WEBM นะคะ', 'warning');
+            } else {
+                alert('กรุณาเลือกไฟล์เสียงที่รองรับ เช่น MP3, WAV, M4A, OGG, WEBM นะคะ');
+            }
+            return;
+        }
+
+        if (file.size > 25 * 1024 * 1024) {
+            if (typeof showToast === 'function') {
+                showToast('ไฟล์เสียงมีขนาดเกิน 25MB ซึ่งเป็นขีดจำกัดสูงสุด กรุณาตัดทอนก่อนนะคะ', 'error');
+            } else {
+                alert('ไฟล์เสียงมีขนาดเกิน 25MB ซึ่งเป็นขีดจำกัดสูงสุด กรุณาตัดทอนก่อนนะคะ');
+            }
+            return;
+        }
+
+        selectedAudioFile = file;
+        fileNameEl.textContent = file.name;
+        fileSizeEl.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+        
+        try {
+            audioPlayer.src = URL.createObjectURL(file);
+        } catch (e) {
+            console.warn('Cannot create object URL for audio', e);
+        }
+
+        dropzone.style.display = 'none';
+        previewBox.style.display = 'block';
+        btnStart.disabled = false;
+        resultBox.style.display = 'none';
+    }
+
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            if (fileInput) fileInput.click();
+        });
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleSelectedFile(e.dataTransfer.files[0]);
+            }
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files && fileInput.files[0]) {
+                handleSelectedFile(fileInput.files[0]);
+            }
+        });
+    }
+
+    if (removeFileBtn) {
+        removeFileBtn.addEventListener('click', () => {
+            selectedAudioFile = null;
+            if (fileInput) fileInput.value = '';
+            if (audioPlayer) {
+                audioPlayer.pause();
+                audioPlayer.src = '';
+            }
+            previewBox.style.display = 'none';
+            dropzone.style.display = 'block';
+            btnStart.disabled = true;
+            resultBox.style.display = 'none';
+        });
+    }
+
+    if (tabBtnSummary && tabBtnTranscript) {
+        tabBtnSummary.addEventListener('click', () => {
+            tabBtnSummary.classList.add('active');
+            tabBtnTranscript.classList.remove('active');
+            tabContentSummary.style.display = 'block';
+            tabContentTranscript.style.display = 'none';
+        });
+        tabBtnTranscript.addEventListener('click', () => {
+            tabBtnTranscript.classList.add('active');
+            tabBtnSummary.classList.remove('active');
+            tabContentTranscript.style.display = 'block';
+            tabContentSummary.style.display = 'none';
+        });
+    }
+
+    if (btnStart) {
+        btnStart.addEventListener('click', async () => {
+            if (!selectedAudioFile) return;
+
+            btnStart.disabled = true;
+            loadingBox.style.display = 'flex';
+            resultBox.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', selectedAudioFile);
+            formData.append('language', langSelect ? langSelect.value : 'auto');
+            formData.append('summarize', enableSummaryCheckbox && enableSummaryCheckbox.checked ? 'true' : 'false');
+            formData.append('summary_mode', modeSelect ? modeSelect.value : 'meeting');
+
+            try {
+                const response = await fetch('/api/transcribe_audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    latestResult = data;
+                    rawTranscriptEl.value = data.transcript || '(ไม่พบเสียงพูดในไฟล์นี้)';
+                    
+                    if (data.summary) {
+                        if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+                            summaryTextEl.innerHTML = marked.parse(data.summary);
+                        } else {
+                            summaryTextEl.textContent = data.summary;
+                        }
+                        tabBtnSummary.click();
+                    } else {
+                        summaryTextEl.innerHTML = '<p class="text-muted">ไม่ได้เลือกตัวเลือกสรุปเนื้อหาอัตโนมัติ</p>';
+                        tabBtnTranscript.click();
+                    }
+
+                    badgeDuration.innerHTML = '<i class="fa-regular fa-clock"></i> ' + (data.duration_sec || 0) + 's';
+                    badgeLang.innerHTML = '<i class="fa-solid fa-language"></i> ' + (data.detected_language || 'TH').toUpperCase();
+                    badgeSpeed.innerHTML = '<i class="fa-solid fa-bolt"></i> ' + (data.latency_ms || 0) + 'ms';
+
+                    resultBox.style.display = 'block';
+                    if (typeof showToast === 'function') {
+                        showToast('ถอดเทปเสียงและสรุปรายงานเรียบร้อยแล้วค่ะ!', 'success');
+                    }
+                } else {
+                    const errMsg = data.message || 'เกิดข้อผิดพลาดในการถอดเทปเสียง';
+                    if (typeof showToast === 'function') {
+                        showToast(errMsg, 'error');
+                    } else {
+                        alert(errMsg);
+                    }
+                }
+            } catch (err) {
+                console.error('[Transcribe Error]', err);
+                const errMsg = 'เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.message;
+                if (typeof showToast === 'function') {
+                    showToast(errMsg, 'error');
+                } else {
+                    alert(errMsg);
+                }
+            } finally {
+                loadingBox.style.display = 'none';
+                btnStart.disabled = false;
+            }
+        });
+    }
+
+    if (btnCopy) {
+        btnCopy.addEventListener('click', () => {
+            if (!latestResult) return;
+            const isSummaryActive = tabBtnSummary.classList.contains('active');
+            const textToCopy = isSummaryActive && latestResult.summary ? latestResult.summary : latestResult.transcript;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    if (typeof showToast === 'function') showToast('คัดลอกข้อความลงคลิปบอร์ดแล้วค่ะ!', 'success');
+                });
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = textToCopy;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                if (typeof showToast === 'function') showToast('คัดลอกข้อความแล้วค่ะ!', 'success');
+            }
+        });
+    }
+
+    if (btnDownload) {
+        btnDownload.addEventListener('click', () => {
+            if (!latestResult) return;
+            const isSummaryActive = tabBtnSummary.classList.contains('active');
+            const content = isSummaryActive && latestResult.summary 
+                ? `# บันทึกรายงานการประชุม (สรุปโดย Kira AI)\n\n${latestResult.summary}\n\n---\n# ข้อความถอดเทปเสียงทั้งหมด\n\n${latestResult.transcript}`
+                : latestResult.transcript;
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `kira_meeting_transcript_${Date.now()}.txt`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        });
+    }
+
+    if (btnSendChat) {
+        btnSendChat.addEventListener('click', () => {
+            if (!latestResult) return;
+            const input = document.getElementById('user-input');
+            if (input) {
+                const sendText = latestResult.summary 
+                    ? `นี่คือบันทึกรายงานการประชุมจากการถอดเทปเสียง (${latestResult.filename || 'Audio'}):\n\n${latestResult.summary}\n\nช่วยวิเคราะห์ประเด็นเพิ่มเติมหรือแนะนำขั้นตอนถัดไปให้หน่อยค่ะ`
+                    : `นี่คือข้อความจากการถอดเทปเสียง:\n\n${latestResult.transcript}\n\nช่วยสรุปประเด็นสำคัญและสิ่งที่ต้องทำต่อให้หน่อยค่ะ`;
+                input.value = sendText;
+                window.closeTranscribeModal();
+                input.focus();
+                if (typeof showToast === 'function') {
+                    showToast('ส่งรายงานเข้าห้องแชตคิระเรียบร้อยแล้วค่ะ!', 'info');
+                }
+            }
+        });
+    }
+}

@@ -660,6 +660,13 @@
                                         <span class="tool-item-desc" data-i18n="tools_rmbg_desc">In-Browser AI ลบพื้นหลังเนียนกริบ ฟรี 0 บาท</span>
                                     </div>
                                 </button>
+                                <button class="tools-menu-item" id="btn-tools-transcribe" type="button" title="ถอดเทปเสียงประชุมและสรุปรายงาน (Whisper Large-v3-Turbo Engine)">
+                                    <span class="tool-item-icon icon-purple"><i class="fa-solid fa-microphone-lines"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title" data-i18n="tools_transcribe_title">ถอดเทปเสียงประชุม</span>
+                                        <span class="tool-item-desc" data-i18n="tools_transcribe_desc">แปลงไฟล์เสียง & สรุปมติที่ประชุม</span>
+                                    </div>
+                                </button>
                                 <button class="tools-menu-item" id="btn-tools-swarm" title="โหมดฝูงเอเจนต์อัตโนมัติ (Multi-Agent Swarm)">
                                     <span class="tool-item-icon icon-indigo"><i class="fa-solid fa-people-group"></i></span>
                                     <div class="tool-item-info">
@@ -896,6 +903,7 @@
                         <button id="menu-doc-btn" class="popup-item"><i class="fa-regular fa-file-pdf"></i> <span data-i18n="attach_doc">ไฟล์เอกสาร</span></button>
                         <button id="menu-rag-vault-btn" class="popup-item"><i class="fa-solid fa-book-atlas text-emerald"></i> <span data-i18n="attach_rag_vault">คลังความรู้ RAG</span></button>
                         <button id="menu-rmbg-btn" class="popup-item"><i class="fa-solid fa-scissors text-teal"></i> <span data-i18n="attach_rmbg">ลบพื้นหลังภาพ (RMBG-1.4)</span></button>
+                        <button id="menu-transcribe-btn" class="popup-item" type="button"><i class="fa-solid fa-microphone-lines text-purple"></i> <span data-i18n="attach_transcribe">ถอดเทปเสียงประชุม</span></button>
                     </div>
                     <button class="attach-btn" id="mic-btn" data-i18n-title="mic_title" title="พิมพ์ด้วยเสียง"><i class="fa-solid fa-microphone"></i></button>
                     <button class="attach-btn" id="attach-toggle-btn" data-i18n-title="attach_title" title="แนบไฟล์หรือรูปภาพ"><i class="fa-solid fa-paperclip"></i></button>
@@ -1326,6 +1334,124 @@
                             <button type="button" id="btn-flux-send-chat" class="btn-action-sm secondary"><i class="fa-solid fa-paper-plane"></i> ส่งเข้าแชตคิระ</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🎙️ Kira Voice Transcriber & Audio Meeting Summarizer (Whisper Large-v3-Turbo) -->
+    <div id="transcribe-modal" class="modal-overlay" style="display: none; z-index: 1220;">
+        <div class="modal-content transcribe-modal-content">
+            <div class="transcribe-modal-header">
+                <div class="transcribe-title-group">
+                    <div class="transcribe-badge"><i class="fa-solid fa-bolt text-purple"></i> Kira Neural Audio Engine: Whisper Large-v3-turbo (50ms)</div>
+                    <h3 class="transcribe-modal-title"><i class="fa-solid fa-microphone-lines text-purple"></i> ถอดเทปเสียง & สรุปการประชุม (Kira Voice Transcriber)</h3>
+                    <p class="transcribe-modal-subtitle">แปลงไฟล์เสียงพูดเป็นข้อความแม่นยำสูงทุกภาษา (MP3, WAV, M4A, OGG, WEBM) พร้อมสรุปมติที่ประชุมอัตโนมัติ</p>
+                </div>
+                <button id="close-transcribe-modal" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Configuration Bar -->
+            <div class="transcribe-config-bar">
+                <div class="transcribe-config-item">
+                    <label for="transcribe-lang-select"><i class="fa-solid fa-language text-purple"></i> ภาษาเสียงพูด:</label>
+                    <select id="transcribe-lang-select" class="transcribe-select">
+                        <option value="auto">🌐 ตรวจจับภาษาอัตโนมัติ (Auto-Detect)</option>
+                        <option value="th" selected>🇹🇭 ภาษาไทย (Thai)</option>
+                        <option value="en">🇺🇸 ภาษาอังกฤษ (English)</option>
+                        <option value="ja">🇯🇵 ภาษาญี่ปุ่น (Japanese)</option>
+                        <option value="zh">🇨🇳 ภาษาจีน (Chinese)</option>
+                    </select>
+                </div>
+                <div class="transcribe-config-item">
+                    <label for="transcribe-mode-select"><i class="fa-solid fa-file-lines text-purple"></i> รูปแบบสรุปผล:</label>
+                    <select id="transcribe-mode-select" class="transcribe-select">
+                        <option value="meeting" selected>📋 บันทึกรายงานการประชุม (Executive Meeting)</option>
+                        <option value="lecture">🎓 สรุปบทเรียน & เลคเชอร์ (Lecture & Study)</option>
+                        <option value="general">📝 สรุปสาระสำคัญทั่วไป (General Summary)</option>
+                    </select>
+                </div>
+                <div class="transcribe-config-item transcribe-toggle-item">
+                    <label class="transcribe-switch-label">
+                        <input type="checkbox" id="transcribe-enable-summary" checked>
+                        <span>สรุปรายงานอัตโนมัติ (AI Summary)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Upload Dropzone -->
+            <div id="transcribe-dropzone" class="transcribe-dropzone">
+                <input type="file" id="transcribe-file-input" accept=".mp3,.wav,.m4a,.ogg,.webm,.flac,.aac,.mp4" style="display: none;">
+                <div class="transcribe-dropzone-inner">
+                    <div class="transcribe-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up text-purple"></i></div>
+                    <div class="transcribe-dropzone-text">
+                        <strong>คลิกเพื่อเลือกไฟล์เสียง</strong> หรือลากไฟล์มาวางที่นี่
+                    </div>
+                    <div class="transcribe-dropzone-sub">
+                        รองรับ MP3, WAV, M4A, OGG, WEBM, FLAC (สูงสุด 25MB)
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Selected Preview -->
+            <div id="transcribe-file-preview" class="transcribe-file-preview" style="display: none;">
+                <div class="transcribe-file-info">
+                    <i class="fa-solid fa-file-audio text-purple file-icon"></i>
+                    <div class="transcribe-file-details">
+                        <span id="transcribe-file-name" class="file-name">audio.mp3</span>
+                        <span id="transcribe-file-size" class="file-size">0 MB</span>
+                    </div>
+                    <button type="button" id="btn-transcribe-remove-file" class="btn-remove-file" title="ลบไฟล์เพื่อเลือกใหม่"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+                <audio id="transcribe-audio-player" controls class="transcribe-audio-player"></audio>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="transcribe-actions-row">
+                <button type="button" id="btn-start-transcribe" class="btn-primary-purple" disabled>
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> เริ่มถอดเทป & สรุปรายงาน (Start)
+                </button>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="transcribe-loading" class="transcribe-loading" style="display: none;">
+                <div class="transcribe-spinner"></div>
+                <div class="transcribe-loading-text">
+                    <strong id="transcribe-loading-title">กำลังวิเคราะห์และถอดเทปเสียง...</strong>
+                    <p id="transcribe-loading-sub">ประมวลผลด้วย Groq Whisper Large-v3-turbo ความเร็วสูง</p>
+                </div>
+            </div>
+
+            <!-- Result Section -->
+            <div id="transcribe-result-box" class="transcribe-result-box" style="display: none;">
+                <div class="transcribe-result-header">
+                    <div class="transcribe-tabs">
+                        <button type="button" class="transcribe-tab active" id="tab-btn-summary" data-tab="summary">
+                            <i class="fa-solid fa-list-check"></i> บันทึกรายงานการประชุม (Summary)
+                        </button>
+                        <button type="button" class="transcribe-tab" id="tab-btn-transcript" data-tab="transcript">
+                            <i class="fa-solid fa-align-left"></i> ข้อความถอดเทปทั้งหมด (Full Transcript)
+                        </button>
+                    </div>
+                    <div class="transcribe-meta-badges">
+                        <span class="meta-badge" id="badge-transcribe-duration"><i class="fa-regular fa-clock"></i> 0s</span>
+                        <span class="meta-badge" id="badge-transcribe-lang"><i class="fa-solid fa-language"></i> TH</span>
+                        <span class="meta-badge" id="badge-transcribe-speed"><i class="fa-solid fa-bolt"></i> 0ms</span>
+                    </div>
+                </div>
+
+                <div class="transcribe-tab-content" id="tab-content-summary">
+                    <div class="transcribe-rendered-content markdown-body" id="transcribe-summary-text"></div>
+                </div>
+
+                <div class="transcribe-tab-content" id="tab-content-transcript" style="display: none;">
+                    <textarea id="transcribe-raw-transcript" class="transcribe-raw-textarea" readonly></textarea>
+                </div>
+
+                <div class="transcribe-result-footer">
+                    <button type="button" id="btn-transcribe-copy" class="btn-action-ghost"><i class="fa-regular fa-copy"></i> คัดลอกข้อความ</button>
+                    <button type="button" id="btn-transcribe-download" class="btn-action-ghost"><i class="fa-solid fa-download"></i> ดาวน์โหลด .TXT</button>
+                    <button type="button" id="btn-transcribe-send-chat" class="btn-action-primary"><i class="fa-solid fa-paper-plane"></i> ส่งเข้าห้องแชตคิระ</button>
                 </div>
             </div>
         </div>

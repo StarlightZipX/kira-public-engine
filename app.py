@@ -6184,6 +6184,178 @@ async def transcribe_speech_stt(req: STTTranscribeRequest, request: Request):
     )
 
 
+@app.post("/api/transcribe_audio")
+async def transcribe_audio_endpoint(
+    request: Request,
+    file: Optional[UploadFile] = File(None),
+    language: Optional[str] = Form(None),
+    summarize: Optional[str] = Form("true"),
+    summary_mode: Optional[str] = Form("meeting")
+):
+    """Kira 2.7 Enterprise Voice Transcriber & Audio Meeting Summarizer
+    Powered by Groq Whisper-Large-v3-Turbo + Kira Multi-Modal Reasoning Core
+    Supports MP3, WAV, M4A, OGG, WEBM, FLAC, AAC up to 25MB.
+    Dual output: Full Transcript + Executive Actionable Meeting Summary
+    """
+    t0 = time.time()
+    client_ip = _get_client_ip(request)
+    if is_tts_rate_limited(client_ip):
+        return JSONResponse(
+            status_code=429,
+            content={"status": "error", "message": "⚠️ มีการส่งคำขอแปลงเสียงถี่เกินไป กรุณารอสักครู่นะคะ"}
+        )
+
+    content_type = request.headers.get("content-type", "").lower()
+    audio_bytes = None
+    orig_filename = "recording.wav"
+    norm_mime = "audio/wav"
+    lang_param = language or "auto"
+    do_summarize = str(summarize).lower() not in ("false", "0", "no")
+    mode = (summary_mode or "meeting").strip().lower()
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            b64_str = body.get("audio_base64", "")
+            orig_filename = body.get("filename", "recording.wav")
+            m_type = body.get("mime_type", "audio/wav")
+            lang_param = body.get("language", lang_param)
+            if "summarize" in body:
+                do_summarize = bool(body["summarize"])
+            if "summary_mode" in body:
+                mode = body["summary_mode"]
+            audio_bytes, orig_filename, norm_mime = _decode_stt_audio_payload(b64_str, m_type)
+        except Exception as e:
+            return JSONResponse(status_code=400, content={"status": "error", "message": f"ไม่สามารถอ่านข้อมูลเสียงจาก JSON ได้: {str(e)}"})
+    elif file is not None:
+        try:
+            audio_bytes = await file.read()
+            orig_filename = file.filename or "recording.wav"
+            norm_mime = file.content_type or "audio/wav"
+        except Exception as e:
+            return JSONResponse(status_code=400, content={"status": "error", "message": f"ไม่สามารถอ่านไฟล์เสียงที่อัปโหลดได้: {str(e)}"})
+    else:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "กรุณาแนบไฟล์เสียง (Audio File) หรือส่งข้อมูลเสียงมาด้วยนะคะ"})
+
+    if not audio_bytes or len(audio_bytes) < 64:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "ไฟล์เสียงว่างเปล่าหรือไม่พบสัญญาณเสียงค่ะ"})
+
+    if len(audio_bytes) > 25 * 1024 * 1024:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "ขนาดไฟล์เสียงเกิน 25MB ซึ่งเป็นขีดจำกัดสูงสุดของระบบถอดเทปค่ะ กรุณาย่อขนาดไฟล์ก่อนนะคะ"})
+
+    ext = os.path.splitext(orig_filename)[1].lower()
+    if not ext:
+        if "mp3" in norm_mime: ext = ".mp3"
+        elif "ogg" in norm_mime: ext = ".ogg"
+        elif "m4a" in norm_mime or "mp4" in norm_mime: ext = ".m4a"
+        elif "webm" in norm_mime: ext = ".webm"
+        elif "flac" in norm_mime: ext = ".flac"
+        else: ext = ".wav"
+        orig_filename = f"audio{ext}"
+
+    available_keys = [k for k in API_KEYS if k and k.strip() and k != "YOUR_GROQ_API_KEY_HERE"]
+    if not available_keys:
+        return JSONResponse(status_code=503, content={"status": "error", "message": "คลาวด์เอ็นจิ้นถอดเทปเสียงยังไม่พร้อมใช้งาน (API Key Standby)"})
+
+    whisper_models = ["whisper-large-v3-turbo", "whisper-large-v3"]
+    transcript = ""
+    detected_language = "th" if lang_param == "auto" else lang_param
+    duration_sec = 0.0
+    last_err = ""
+    used_model = "whisper-large-v3-turbo"
+
+    try:
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            for api_key in available_keys[:3]:
+                for w_model in whisper_models:
+                    form_data = {
+                        "model": w_model,
+                        "response_format": "verbose_json",
+                        "temperature": "0.0"
+                    }
+                    if lang_param and lang_param != "auto":
+                        form_data["language"] = lang_param[:5]
+                    
+                    files_payload = {
+                        "file": (orig_filename, audio_bytes, norm_mime)
+                    }
+                    resp = await client.post(
+                        "https://api.groq.com/openai/v1/audio/transcriptions",
+                        headers={"Authorization": f"Bearer {api_key}"},
+                        data=form_data,
+                        files=files_payload,
+                    )
+                    if resp.status_code == 200:
+                        payload = resp.json()
+                        transcript = (payload.get("text") or "").strip()
+                        detected_language = payload.get("language") or detected_language
+                        duration_sec = float(payload.get("duration") or 0.0)
+                        used_model = w_model
+                        break
+                    else:
+                        last_err = f"HTTP {resp.status_code}: {resp.text[:160]}"
+                        if resp.status_code == 400:
+                            break
+                if transcript:
+                    break
+    except Exception as exc:
+        last_err = str(exc)
+
+    if not transcript and last_err:
+        return JSONResponse(status_code=502, content={"status": "error", "message": f"ระบบไม่สามารถถอดเทปไฟล์เสียงนี้ได้: {last_err[:120]}"})
+
+    summary_text = ""
+    if do_summarize and len(transcript.strip()) > 10:
+        try:
+            summary_prompt_map = {
+                "meeting": (
+                    "คุณคือ 'คิระ (Kira)' เลขาธิการและที่ปรึกษาบริหารระดับสูง\n"
+                    "จงวิเคราะห์ข้อความจากการถอดเทปเสียงบันทึกการประชุมต่อไปนี้ แล้วสรุปเป็น 'บันทึกรายงานการประชุมผู้บริหาร' ที่เป็นระเบียบ สวยงาม และนำไปปฏิบัติได้จริง:\n\n"
+                    "### 📋 สรุปภาพรวมและวัตถุประสงค์การประชุม (Executive Summary)\n"
+                    "- สรุปสาระสำคัญใน 2-3 บรรทัด\n\n"
+                    "### 💬 ประเด็นสำคัญและข้อหารือ (Key Discussion Points)\n"
+                    "- ลิสต์เป็นข้อย่อยชัดเจน แยกประเด็นเนื้อหา ตัวเลข หรือข้อกังวล\n\n"
+                    "### 💡 มติที่ประชุมและสิ่งที่ต้องทำต่อ (Action Items & Next Steps)\n"
+                    "- ลิสต์สิ่งที่ต้องดำเนินการ (สิ่งที่ต้องทำ / ผู้รับผิดชอบถ้ามี / กำหนดส่งถ้ามี)\n\n"
+                    "ข้อความถอดเทปเสียง:\n"
+                ),
+                "lecture": (
+                    "คุณคือ 'คิระ (Kira)' ติวเตอร์และผู้ช่วยสรุปบทเรียนวิชาการอัจฉริยะ\n"
+                    "จงสรุปข้อความจากการบรรยาย/เลคเชอร์นี้ให้เข้าใจง่าย ชัดเจน ตรงจุดออกสอบ:\n\n"
+                    "### 🎓 สรุปแก่นสำคัญของบทเรียน (Core Concepts)\n\n"
+                    "### 📝 สรุปเนื้อหาและทฤษฎีสำคัญ (Detailed Lecture Notes)\n\n"
+                    "### 📌 คีย์เวิร์ดและจุดที่ควรจำ (Key Takeaways & Formulas)\n\n"
+                    "ข้อความถอดเทปเสียง:\n"
+                ),
+                "general": (
+                    "คุณคือ 'คิระ (Kira)' ผู้ช่วยอัจฉริยะ จงสรุปสาระสำคัญของเสียงพูดนี้อย่างกระชับ ชัดเจน และอ่านเข้าใจง่าย:\n\n"
+                    "ข้อความถอดเทปเสียง:\n"
+                )
+            }
+            chosen_instruction = summary_prompt_map.get(mode, summary_prompt_map["meeting"])
+            summarizer_model = globals().get("PREFERRED_PRO") or globals().get("PREFERRED_FLASH", "openai/gpt-oss-120b")
+            llm = _create_llm(summarizer_model, available_keys[0])
+            sum_prompt = chosen_instruction + "\n\n" + transcript[:12000]
+            sum_res = await asyncio.to_thread(llm.invoke, sum_prompt)
+            summary_text = sum_res.content.strip()
+        except Exception as e:
+            logger.warning(f"[Transcribe Summarize Error] {e}")
+            summary_text = f"*(หมายเหตุ: ถอดเทปสำเร็จเรียบร้อย แต่ระบบสรุปอัตโนมัติแจ้งเตือน: {str(e)[:80]})*"
+
+    elapsed_ms = int(round((time.time() - t0) * 1000))
+    return {
+        "status": "success",
+        "transcript": transcript,
+        "summary": summary_text,
+        "filename": orig_filename,
+        "detected_language": detected_language,
+        "duration_sec": round(duration_sec, 2),
+        "engine": "Kira Voice Transcriber",
+        "model": "Kira 2.7 Flagship (Whisper Large-v3-turbo)",
+        "latency_ms": elapsed_ms
+    }
+
+
 @app.get("/api/user/graph")
 @app.get("/api/user/graph/{username}")
 async def get_user_knowledge_graph(username: Optional[str] = None):
