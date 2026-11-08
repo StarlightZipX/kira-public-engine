@@ -43,6 +43,31 @@ intents.presences = True
 
 bot = commands.Bot(command_prefix=["!kira ", "/kira "], intents=intents, help_command=None)
 
+def clean_discord_reply(text: str) -> str:
+    """ทำความสะอาดข้อความอย่างสมบูรณ์แบบ ลบ [THINKING], <think>, [SOURCES_JSON], [SWARM_] 100%"""
+    if not text:
+        return ""
+    t = text
+    # 1. ลบ thinking blocks รูปแบบต่างๆ
+    t = re.sub(r'\[THINKING\][\s\S]*?\[/THINKING\]', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'\[THINKING\][\s\S]*?\[THINKING_DONE\]', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'\[THINKING_DONE\]', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'<think>[\s\S]*?</think>', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'<thought>[\s\S]*?</thought>', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'<reasoning>[\s\S]*?</reasoning>', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'\[SOURCES_JSON\][\s\S]*?\[/SOURCES_JSON\]', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'\[SWARM_[^\]]+\]', '', t, flags=re.IGNORECASE)
+    
+    # 2. ตัด unclosed tags ที่อาจค้างอยู่จนจบข้อความ
+    t = re.sub(r'\[THINKING\].*\Z', '', t, flags=re.IGNORECASE | re.DOTALL)
+    t = re.sub(r'<think>.*\Z', '', t, flags=re.IGNORECASE | re.DOTALL)
+    t = re.sub(r'<thought>.*\Z', '', t, flags=re.IGNORECASE | re.DOTALL)
+    
+    clean = t.strip()
+    if not clean:
+        clean = "สวัสดีค่ะ! ยินดีที่ได้คุยกับคุณนะคะ 🌸✨ มีเรื่องไหนให้คิระช่วยแจ้งหนูได้เลยนะคะ หนูพร้อมดูแลเต็มที่ค่ะ! 💜"
+    return clean
+
 def chunk_discord_message(text: str, max_chars: int = 1950) -> list:
     """ตัดข้อความยาวให้ไม่เกินขีดจำกัด 2000 ตัวอักษรของ Discord โดยตัดตามย่อหน้า"""
     if len(text) <= max_chars:
@@ -104,10 +129,7 @@ async def query_kira_engine(user_query: str, author_name: str, is_dm: bool = Fal
             
             if success and chunks:
                 raw_reply = "".join(chunks)
-                clean_reply = kira_backend.sanitize_ai_reply_for_chat(raw_reply)
-                # ล้าง metadata tags ที่อาจติดมา
-                clean_reply = re.sub(r'\[SOURCES_JSON\][\s\S]*?\[/SOURCES_JSON\]', '', clean_reply)
-                clean_reply = re.sub(r'\[SWARM_[^\]]+\]', '', clean_reply).strip()
+                clean_reply = clean_discord_reply(raw_reply)
                 if clean_reply:
                     return clean_reply
         except Exception as e:
@@ -130,8 +152,7 @@ async def query_kira_engine(user_query: str, author_name: str, is_dm: bool = Fal
         )
         with urllib.request.urlopen(req, timeout=30) as resp:
             content = resp.read().decode("utf-8")
-            # ถ้าเป็น sse สตรีมมิ่ง ดึงเฉพาะเนื้อหา
-            return content.strip() if content else "คิระได้รับข้อความแล้วค่ะ แต่ระบบปลายทางส่งผลลัพธ์ว่างเปล่า กรุณาลองใหม่อีกครั้งนะคะ 🌸"
+            return clean_discord_reply(content)
     except Exception as err:
         return f"ขออภัยด้วยนะคะ ในจังหวะนี้สัญญาณคิระอาจติดขัดเล็กน้อย ({err}) รบกวนลองใหม่อีกครั้งนะคะ 💜"
 
@@ -181,7 +202,8 @@ async def on_message(message: discord.Message):
     async with message.channel.typing():
         try:
             author_display = message.author.display_name or message.author.name
-            reply_text = await query_kira_engine(clean_text, author_display, is_dm=is_dm)
+            raw_reply_text = await query_kira_engine(clean_text, author_display, is_dm=is_dm)
+            reply_text = clean_discord_reply(raw_reply_text)
             
             # ตัดข้อความถ้าเกิน 2000 ตัวอักษร
             chunks = chunk_discord_message(reply_text)
