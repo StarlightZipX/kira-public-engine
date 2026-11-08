@@ -98,9 +98,8 @@ async def query_kira_engine(user_query: str, author_name: str, is_dm: bool = Fal
             preferred_model, brain_type, _ = kira_backend._route_brain(user_query, "2.7-flash", "fast")
             
             # เรียกกระบวนการคิดและกู้คืนฉุกเฉิน
-            loop = asyncio.get_running_loop()
-            success, chunks, err = await loop.run_in_executor(
-                None, kira_backend._try_all_keys_and_models, history, preferred_model, brain_type, "th"
+            success, chunks, err = await kira_backend._try_all_keys_and_models(
+                history, preferred_model, ui_lang="th"
             )
             
             if success and chunks:
