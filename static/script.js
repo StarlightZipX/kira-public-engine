@@ -2203,10 +2203,48 @@ function addMessage(text, isUser, imageBase64 = null) {
         } else {
             let normalizedTxt = text.replace(/<think>/gi, "[THINKING]").replace(/<\/think>/gi, "[/THINKING][THINKING_DONE]");
             let htmlContent = "";
+            let sourcesHeaderHtml = "";
+            let steps = [];
+
+            if (normalizedTxt.includes("[SWARM_PIPELINE:init]") || normalizedTxt.includes("[SWARM_EVENT:")) {
+                normalizedTxt = normalizedTxt.replace(/\[SWARM_PIPELINE:init\]/g, "")
+                                             .replace(/\[SWARM_EVENT:[^\]]+\]/g, "")
+                                             .replace(/\[SWARM_COMPLETE\]/g, "")
+                                             .trim();
+            }
+
+            if (normalizedTxt.includes("[SOURCES_JSON]")) {
+                const sMatch = normalizedTxt.match(/\[SOURCES_JSON\]([\s\S]*?)\[\/SOURCES_JSON\]/);
+                if (sMatch && sMatch[1]) {
+                    try {
+                        const sourcesData = JSON.parse(sMatch[1]);
+                        const sourcesList = sourcesData.sources || [];
+                        if (sourcesList.length > 0) {
+                            sourcesHeaderHtml = `
+                            <div class="kira-search-sources-bar">
+                                <div class="sources-label"><i class="fa-solid fa-globe text-cyan"></i> แหล่งข้อมูลอ้างอิงสด (${sourcesList.length} เว็บไซต์):</div>
+                                <div class="sources-pills-row">
+                                    ${sourcesList.map(s => `
+                                        <a href="${s.url}" target="_blank" rel="noopener noreferrer" class="source-pill" title="${escapeHtml(s.title || '')}">
+                                            <img src="https://www.google.com/s2/favicons?domain=${s.domain || 'google.com'}&sz=32" class="source-favicon" onerror="this.style.display='none'">
+                                            <span class="source-domain">${escapeHtml(s.domain || '')}</span>
+                                            <span class="source-num">[${s.index}]</span>
+                                        </a>
+                                    `).join('')}
+                                </div>
+                            </div>`;
+                        }
+                    } catch (e) {}
+                }
+                normalizedTxt = normalizedTxt.replace(/\[SOURCES_JSON\][\s\S]*?\[\/SOURCES_JSON\]/g, "")
+                                             .replace(/\[SOURCES_JSON\][\s\S]*$/g, "")
+                                             .trim();
+            }
+
+            htmlContent += sourcesHeaderHtml;
             let finalMarkdown = normalizedTxt;
             
             if (normalizedTxt.includes("[THINKING]")) {
-                let steps = [];
                 let regex = /\[THINKING\](.*?)(\[\/THINKING\]|$)/gs;
                 let match;
                 while ((match = regex.exec(normalizedTxt)) !== null) {
@@ -2243,6 +2281,9 @@ function addMessage(text, isUser, imageBase64 = null) {
             }
             
             try {
+                finalMarkdown = finalMarkdown
+                    .replace(/<tool_call>\s*(\{[\s\S]*?"type"\s*:\s*"(?:bar|line|pie|doughnut|radar|polarArea)"[\s\S]*?\})\s*<\/tool_call>/gi, "```json\n$1\n```")
+                    .replace(/<\/?tool_call>/gi, "");
                 htmlContent += finalMarkdown ? marked.parse(finalMarkdown) : "";
             } catch (mErr) {
                 htmlContent += `<div style="white-space: pre-wrap;">${finalMarkdown}</div>`;
@@ -2505,6 +2546,7 @@ async function sendMessage() {
 
                 normalizedTxt = normalizedTxt.replace(/\[SWARM_PIPELINE:init\]/g, "")
                                              .replace(/\[SWARM_EVENT:[^\]]+\]/g, "")
+                                             .replace(/\[SWARM_EVENT:[^\]]*$/g, "")
                                              .replace(/\[SWARM_COMPLETE\]/g, "")
                                              .trim();
                 finalMarkdown = normalizedTxt;
@@ -2535,13 +2577,19 @@ async function sendMessage() {
                         }
                     } catch(e) {}
                 }
-                normalizedTxt = normalizedTxt.replace(/\[SOURCES_JSON\][\s\S]*?\[\/SOURCES_JSON\]/g, "").trim();
-                finalMarkdown = finalMarkdown.replace(/\[SOURCES_JSON\][\s\S]*?\[\/SOURCES_JSON\]/g, "").trim();
+                normalizedTxt = normalizedTxt.replace(/\[SOURCES_JSON\][\s\S]*?\[\/SOURCES_JSON\]/g, "")
+                                             .replace(/\[SOURCES_JSON\][\s\S]*$/g, "")
+                                             .trim();
+                finalMarkdown = normalizedTxt;
             }
-            
+
+            htmlContent += swarmHeaderHtml + sourcesHeaderHtml;
+
+            let isDone = false;
+            let steps = [];
             if (normalizedTxt.includes("[THINKING]")) {
-                let isDone = normalizedTxt.includes("[THINKING_DONE]") || normalizedTxt.includes("[/THINKING]");
-                let steps = [];
+                const hasUnclosedThinking = normalizedTxt.lastIndexOf("[THINKING]") > normalizedTxt.lastIndexOf("[/THINKING]");
+                isDone = !hasUnclosedThinking && (normalizedTxt.includes("[THINKING_DONE]") || normalizedTxt.includes("[/THINKING]"));
                 let regex = /\[THINKING\](.*?)(\[\/THINKING\]|$)/gs;
                 let match;
                 while ((match = regex.exec(normalizedTxt)) !== null) {
@@ -2554,6 +2602,13 @@ async function sendMessage() {
                 finalMarkdown = normalizedTxt.replace(/\[THINKING\](.*?)(\[\/THINKING\]|$)/gs, "")
                                               .replace(/\[THINKING_DONE\]/g, "")
                                               .trim();
+            }
+
+            finalMarkdown = finalMarkdown
+                .replace(/<tool_call>\s*(\{[\s\S]*?"type"\s*:\s*"(?:bar|line|pie|doughnut|radar|polarArea)"[\s\S]*?\})\s*<\/tool_call>/gi, "```json\n$1\n```")
+                .replace(/<\/?tool_call>/gi, "");
+
+            if (normalizedTxt.includes("[THINKING]")) {
                 
                 let stepsHtml = steps.map(s => `<div class="thinking-step" style="white-space: pre-wrap; font-size: 0.9em; line-height: 1.5; color: #94a3b8;">${marked.parse(s)}</div>`).join('');
                 let hasSubstantialAnswer = finalMarkdown.length > 25;
@@ -2580,6 +2635,9 @@ async function sendMessage() {
             }
             
             try {
+                finalMarkdown = finalMarkdown
+                    .replace(/<tool_call>\s*(\{[\s\S]*?"type"\s*:\s*"(?:bar|line|pie|doughnut|radar|polarArea)"[\s\S]*?\})\s*<\/tool_call>/gi, "```json\n$1\n```")
+                    .replace(/<\/?tool_call>/gi, "");
                 htmlContent += finalMarkdown ? marked.parse(finalMarkdown) : "";
             } catch (mErr) {
                 htmlContent += `<div style="white-space: pre-wrap;">${finalMarkdown}</div>`;

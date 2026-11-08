@@ -441,6 +441,7 @@ async def list_mcp_tools():
     return {"status": "success", "count": len(tools_list), "tools": tools_list}
 
 @mcp_router.post("/tools/execute")
+@mcp_router.post("/execute")
 async def execute_mcp_tool(req: MCPToolExecuteRequest):
     """เรียกใช้ MCP Tool โดยตรง พร้อมบันทึก Performance และ Audit Log"""
     from app import is_boss, get_user_plan_status
@@ -474,7 +475,7 @@ async def execute_mcp_tool(req: MCPToolExecuteRequest):
         status = "failed"
 
     exec_ms = int((time.time() - t_start) * 1000)
-    exec_id = f"exec_{int(time.time())}_{req.tool_name}"
+    exec_id = f"exec_{int(time.time()*1000)}_{os.urandom(4).hex()}_{req.tool_name}"
     now = _get_now_str()
 
     execute_query("""INSERT INTO mcp_tool_audits (execution_id, username, server_id, tool_name, arguments, result, status, execution_time_ms, executed_at)

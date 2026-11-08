@@ -235,8 +235,16 @@ def tokenize_multilingual(text: str) -> Counter:
     return counts
 
 
+_OLLAMA_EMBED_CACHE: Dict[str, Any] = {"available": None, "checked_at": 0.0}
+
+
 def _fetch_ollama_bge_m3_embedding(text: str) -> Optional[List[float]]:
-    """พยายามเรียก BAAI/bge-m3 dense vector ผ่าน Local Ollama หากพร้อมใช้งาน"""
+    """พยายามเรียก BAAI/bge-m3 dense vector ผ่าน Local Ollama หากพร้อมใช้งาน (พร้อม Negative-Cache 300s ป้องกัน TCP stall)"""
+    if os.environ.get("ENABLE_OLLAMA", "").lower() not in ("1", "true", "yes"):
+        now_ts = time.time()
+        if _OLLAMA_EMBED_CACHE["available"] is False and (now_ts - _OLLAMA_EMBED_CACHE["checked_at"]) < 300.0:
+            return None
+
     import urllib.request
     try:
         req_data = json.dumps({"model": "bge-m3", "prompt": text[:4000]}).encode("utf-8")
@@ -245,8 +253,10 @@ def _fetch_ollama_bge_m3_embedding(text: str) -> Optional[List[float]]:
             data=req_data,
             headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=0.8) as resp:
+        with urllib.request.urlopen(req, timeout=0.35) as resp:
             if resp.status == 200:
+                _OLLAMA_EMBED_CACHE["available"] = True
+                _OLLAMA_EMBED_CACHE["checked_at"] = time.time()
                 res_json = json.loads(resp.read().decode("utf-8"))
                 emb = res_json.get("embedding")
                 if emb and isinstance(emb, list) and len(emb) >= 256:
@@ -256,7 +266,8 @@ def _fetch_ollama_bge_m3_embedding(text: str) -> Optional[List[float]]:
                         return [round(v * inv, 5) for v in emb]
                     return emb
     except Exception:
-        pass
+        _OLLAMA_EMBED_CACHE["available"] = False
+        _OLLAMA_EMBED_CACHE["checked_at"] = time.time()
     return None
 
 

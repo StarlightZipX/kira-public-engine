@@ -119,8 +119,8 @@ log_result(33, "MOA", "Kira 2.7 Ultra 550B Free Cloud Gateway Routing", "PASS" i
 log_result(34, "MOA", "MoA Verifier & Critic Engine (Llama 70B)", "PASS")
 log_result(35, "MOA", "MoA Synthesizer Logic Consensus", "PASS")
 vision_model, vision_brain_type, _ = _route_brain("ช่วยดูรูปนี้", "2.7-vision", "fast")
-vision_ok = vision_model in ["qwen/qwen3.8-27b", "qwen/qwen-2.5-vl-72b-instruct"] and vision_brain_type == "vision" and "vision" in BRAIN_PROFILES
-log_result(36, "MOA", "Multimodal Vision Gateway (Qwen 3.8 / Qwen-VL Routing)", "PASS" if vision_ok else "FAIL")
+vision_ok = vision_model in ["nvidia/nemotron-3.5-super-vl:free", "qwen/qwen3.8-27b", "qwen/qwen-2.5-vl-72b-instruct"] and vision_brain_type == "vision" and "vision" in BRAIN_PROFILES
+log_result(36, "MOA", "Multimodal Vision Gateway (Kira 2.7 Vision Routing)", "PASS" if vision_ok else "FAIL")
 log_result(37, "MOA", "Groq API Key Rotation", "PASS")
 log_result(38, "MOA", "Thinking Tag Streaming Regex", "PASS")
 log_result(39, "MOA", "Context Token Truncation", "PASS")

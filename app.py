@@ -36,6 +36,9 @@ except ImportError:
         PdfReader = None
 import docx
 import requests
+import logging
+
+logger = logging.getLogger("kira_engine")
 
 # บังคับใช้ UTF-8
 sys.stdout.reconfigure(encoding='utf-8')
@@ -449,6 +452,8 @@ async def generate_study_material(payload: StudyRequest, request: Request):
     else:
         system_instruction = "คุณคือคิระ ผู้ช่วยการศึกษา กรุณาวิเคราะห์และให้คำแนะนำอย่างเชี่ยวชาญ"
 
+    system_instruction += "\n\n[กฎเหล็กบุคลิกภาพของคิระ]: คุณคือ 'คิระ (Kira)' ผู้ช่วย AI ผู้หญิง 100% แทนตัวเองว่า 'หนู' หรือ 'คิระ' และลงท้ายประโยคด้วย 'ค่ะ / นะคะ' เสมอ ห้ามแทนตัวเองว่า 'ผม' หรือลงท้ายด้วย 'ครับ' โดยเด็ดขาด"
+
     # Multi-Language Directive Injection for Study Material
     if ui_lang == "ja":
         system_instruction += "\n\n[Language Directive - 日本語 (JA)]:\n- 出力する教材（要約、問題、解説、カード）はすべて自然で丁寧な日本語（敬語 / です・ます調）で作成してください。"
@@ -464,19 +469,17 @@ async def generate_study_material(payload: StudyRequest, request: Request):
     now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
 
     try:
-        active_model = globals().get("PREFERRED_FLASH", "openai/gpt-oss-20b")
-        llm = ChatGroq(
-            temperature=0.3,
-            model_name=active_model,
-            groq_api_key=API_KEYS[0] if API_KEYS else None,
-            max_tokens=2500
-        )
+        active_model = globals().get("PREFERRED_PRO") or globals().get("PREFERRED_FLASH", "openai/gpt-oss-120b")
         prompt_messages = [
             SystemMessage(content=system_instruction),
             HumanMessage(content=f"เนื้อหาสำหรับการศึกษา:\n\n{text}")
         ]
-        response = await asyncio.to_thread(llm.invoke, prompt_messages)
-        res_content = response.content.strip()
+        ok_study, study_chunks, _ = await _try_all_keys_and_models(prompt_messages, active_model, ui_lang=ui_lang)
+        if ok_study and study_chunks:
+            raw_study = "".join([getattr(c, "content", c) for c in study_chunks])
+            res_content = sanitize_ai_reply_for_chat(raw_study).strip()
+        if not res_content:
+            raise RuntimeError("Empty sanitized study response")
     except Exception as e:
         print(f"Study AI generation note: {e}")
         # Smart heuristic fallback matching the requested study action
@@ -610,15 +613,8 @@ async def generate_mindmap(payload: MindMapRequest, request: Request):
         target_lang = "한국어 (Korean)"
 
     try:
-        from langchain_groq import ChatGroq
         import re
-        active_model = globals().get("PREFERRED_FLASH", "openai/gpt-oss-20b")
-        llm = ChatGroq(
-            temperature=0.2,
-            model_name=active_model,
-            groq_api_key=API_KEYS[0] if API_KEYS else None,
-            max_tokens=900
-        )
+        active_model = globals().get("PREFERRED_FLASH") or globals().get("PREFERRED_PRO", "openai/gpt-oss-20b")
         prompt = f"""คุณคือผู้เชี่ยวชาญด้านการจัดทำแผนผังความคิด (Mind Map Architect)
 กรุณาวิเคราะห์ข้อความต่อไปนี้ แล้วแปลงเป็นโครงสร้างต้นไม้ (Mind Map Tree) เป็นภาษา {target_lang} ในรูปแบบ JSON เท่านั้น โดยมีรูปแบบ:
 {{
@@ -640,10 +636,14 @@ async def generate_mindmap(payload: MindMapRequest, request: Request):
 
 ข้อความที่ต้องแปลง:
 {text[:3500]}"""
-        response = await asyncio.to_thread(llm.invoke, prompt)
-        resp_text = response.content.strip()
+        ok_mm, mm_chunks, _ = await _try_all_keys_and_models([HumanMessage(content=prompt)], active_model, ui_lang=ui_lang)
+        raw_mm = "".join([getattr(c, "content", c) for c in mm_chunks]) if ok_mm else ""
+        resp_text = sanitize_ai_reply_for_chat(raw_mm).strip()
         if "```" in resp_text:
             resp_text = re.sub(r"```(?:json)?", "", resp_text).strip()
+        j_match = re.search(r"\{[\s\S]*\}", resp_text)
+        if j_match:
+            resp_text = j_match.group(0)
         data = json.loads(resp_text)
         return JSONResponse({"status": "success", "mindmap": data})
     except Exception as e:
@@ -1287,10 +1287,13 @@ def sanitize_ai_reply_for_chat(text: str) -> str:
     for pat in thinking_block_patterns:
         cleaned = re.sub(pat, '', cleaned, flags=re.DOTALL | re.IGNORECASE)
 
-    # 2. ลบ Unclosed thinking tag ที่อาจค้างอยู่ตอนต้นข้อความ
+    # 2. ลบ Unclosed thinking tag ที่อาจค้างอยู่จนจบข้อความ (ป้องกันความในใจภาษาอังกฤษรั่วไหลเมื่อชนเพดาน Token)
     unclosed_patterns = [
-        r'^\s*\[THINKING\].*?(?=\n\n|\r\n\r\n|สวัสดี|ยินดี|ค่ะ|ครับ|\Z)',
-        r'^\s*<think>.*?(?=\n\n|\r\n\r\n|สวัสดี|ยินดี|ค่ะ|ครับ|\Z)',
+        r'\[THINKING\].*\Z',
+        r'\[THINKING_START\].*\Z',
+        r'<think>.*\Z',
+        r'<thought>.*\Z',
+        r'<reasoning>.*\Z',
     ]
     for pat in unclosed_patterns:
         cleaned = re.sub(pat, '', cleaned, flags=re.DOTALL | re.IGNORECASE)
@@ -1314,7 +1317,14 @@ def sanitize_ai_reply_for_chat(text: str) -> str:
     for tag in standalone_tags:
         cleaned = re.sub(tag, '', cleaned, flags=re.IGNORECASE)
 
-    # 4. ลบการหลุดของ Meta-Prompts หรือ Developer Instructions ในเนื้อหา
+    # 4. แปลง <tool_call>{..."type": "bar|radar|line|pie"...}</tool_call> ให้เป็นบล็อกกราฟมาตรฐาน และลบ Meta-Prompts
+    cleaned = re.sub(
+        r'<tool_call>\s*(\{[\s\S]*?"type"\s*:\s*"(?:bar|line|pie|doughnut|radar|polarArea)"[\s\S]*?\})\s*</tool_call>',
+        r'```chart\n\1\n```',
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(r'</?tool_call>', '', cleaned, flags=re.IGNORECASE)
     meta_instruction_patterns = [
         r'^\s*According to developer instruction[^\n]*\n*',
         r'^\s*The user says\s*["\'][^"\']+["\'][^\n]*\n*',
@@ -1777,21 +1787,21 @@ BRAIN_PROFILES = {
         "description": "โหมดประมวลผลขนาดมหึมา 550B (NVIDIA Nemotron 3 Ultra 550B Free Cloud Engine)"
     },
     "vision": {
-        "model": "qwen/qwen3.8-27b",
+        "model": "nvidia/nemotron-3.5-super-vl:free" if OPENROUTER_API_KEYS else "qwen/qwen3.8-27b",
         "keywords": ["รูป", "ภาพ", "ตรวจภาพ", "ดูรูป", "ดูภาพ", "หน้าจอ", "แคป", "ui", "image", "photo", "screen", "screenshot", "inspect", "canvas"],
-        "description": "โหมดประมวลผลภาพและสายตา (Multimodal Vision Engine - Qwen 3.8 Native)"
+        "description": "โหมดประมวลผลภาพและสายตา (Kira 2.7 Multimodal Vision Engine)"
     },
     "logic": {
         "model": "openai/gpt-oss-120b",
         "keywords": ["คำนวณ", "วิเคราะห์", "เปรียบเทียบ", "สถิติ", "ตรรกะ", "เหตุผล", "ข้อดี", "ข้อเสีย", 
                      "แผน", "กลยุทธ์", "strategy", "analyze", "calculate", "compare", "pros", "cons",
                      "วางแผน", "ออกแบบ", "สถาปัตยกรรม", "ระบบ", "โครงสร้าง", "ธุรกิจ", "การตลาด", "math", "คณิต"],
-        "description": "โหมดวิเคราะห์ตรรกะและแผนงาน (Advanced Logic Engine 120B)"
+        "description": "โหมดวิเคราะห์ตรรกะและแผนงาน (Kira 2.7 Advanced Logic Engine)"
     },
     "reasoning": {
-        "model": "deepseek/deepseek-r1" if OPENROUTER_API_KEYS else "qwen/qwen3.8-27b",
-        "keywords": ["วิจัย", "ทำไม", "เพราะอะไร", "สรุปเชิงลึก", "ทฤษฎี", "ปรัชญา", "think", "reason", "proof", "พิสูจน์", "deepseek", "r1", "ตรรกะขั้นสูง"],
-        "description": "โหมดคิดวิเคราะห์เชิงลึกพร้อมกระบวนการคิด Chain-of-Thought (DeepSeek-R1 / Qwen Reasoning Engine)"
+        "model": "qwen/qwen3.8-27b",
+        "keywords": ["วิจัย", "ทำไม", "เพราะอะไร", "สรุปเชิงลึก", "ทฤษฎี", "ปรัชญา", "think", "reason", "proof", "พิสูจน์", "ตรรกะขั้นสูง", "กฎหมาย", "ภาษี"],
+        "description": "โหมดคิดวิเคราะห์เชิงลึกพร้อมกระบวนการคิด Chain-of-Thought (Kira 2.7 Deep Reasoning Engine)"
     },
     "code": {
         "model": "openai/gpt-oss-120b",
@@ -1880,7 +1890,7 @@ def _route_brain(user_input: str = "", model_version: str = "2.6-reasoning", fla
     # 0. Vision Multimodal Priority
     if model_version in ("2.7-vision", "2.6-vision", "2.0-vision"):
         profile = BRAIN_PROFILES["vision"]
-        return profile.get("vision", profile.get("chat", {})).get("model", profile["model"]), "vision", "👁️ Kira 2.7 Vision"
+        return profile["model"], "vision", "👁️ Kira 2.7 Vision"
 
     # 0.1 Ultra 550B Super-Brain Priority (Explicit Model Selection)
     if model_version in ("2.7-ultra", "2.6-ultra", "2.0-ultra"):
@@ -2010,9 +2020,10 @@ class UnifiedLLM:
     รองรับทั้ง Groq (High-Speed), OpenRouter (Qwen 2.5/3.8, DeepSeek-R1, Qwen-VL Vision),
     Google Gemini (Official REST API v1beta via OpenAI-compatibility), และ Local Ollama
     """
-    def __init__(self, model_name: str, api_key: str = None, provider: str = None, temperature: float = 0.7):
+    def __init__(self, model_name: str, api_key: str = None, provider: str = None, temperature: float = 0.7, max_tokens: int = None):
         self.model = model_name
         self.temperature = temperature
+        self.max_tokens = max_tokens
         
         # Auto-detect provider
         if provider:
@@ -2058,7 +2069,7 @@ class UnifiedLLM:
             self.api_key = api_key or (API_KEYS[0] if API_KEYS else "")
 
     def _convert_messages(self, messages):
-        formatted = []
+        raw_formatted = []
         if isinstance(messages, str):
             return [{"role": "user", "content": messages}]
         for m in messages:
@@ -2070,10 +2081,22 @@ class UnifiedLLM:
                     role = "system"
                 elif t == "ai" or cname == "AIMessage":
                     role = "assistant"
-                formatted.append({"role": role, "content": m.content})
+                raw_formatted.append({"role": role, "content": m.content})
             elif isinstance(m, dict):
-                formatted.append(m)
-        return formatted
+                raw_formatted.append(m)
+        # Consolidate all system messages into a single leading system message for strict vLLM/OpenRouter compatibility
+        sys_parts = []
+        non_sys = []
+        for item in raw_formatted:
+            if item.get("role") == "system":
+                c = item.get("content", "")
+                if isinstance(c, str) and c.strip():
+                    sys_parts.append(c.strip())
+            else:
+                non_sys.append(item)
+        if sys_parts:
+            return [{"role": "system", "content": "\n\n".join(sys_parts)}] + non_sys
+        return non_sys
 
     def invoke(self, messages):
         msgs = self._convert_messages(messages)
@@ -2086,7 +2109,8 @@ class UnifiedLLM:
             headers["HTTP-Referer"] = "https://kira-ai.local"
             headers["X-Title"] = "Kira AI System"
 
-        max_tok = 950 if ("qwen" in self.model.lower() and self.provider == "groq") else 2048
+        default_tok = 8192 if self.provider == "groq" else 4096
+        max_tok = self.max_tokens or default_tok
         payload = {
             "model": self.model,
             "messages": msgs,
@@ -2124,7 +2148,8 @@ class UnifiedLLM:
             headers["HTTP-Referer"] = "https://kira-ai.local"
             headers["X-Title"] = "Kira AI System"
 
-        max_tok = 950 if ("qwen" in self.model.lower() and self.provider == "groq") else 2048
+        default_tok = 8192 if self.provider == "groq" else 4096
+        max_tok = self.max_tokens or default_tok
         payload = {
             "model": self.model,
             "messages": msgs,
@@ -2133,7 +2158,7 @@ class UnifiedLLM:
             "stream": True
         }
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=75.0) as client:
             try:
                 async with client.stream("POST", self.base_url, headers=headers, json=payload) as resp:
                     if resp.status_code != 200:
@@ -2178,6 +2203,9 @@ class UnifiedLLM:
                                         yield SimpleChunk(delta_content)
                             except Exception:
                                 continue
+                    if in_thinking:
+                        yield SimpleChunk("[/THINKING][THINKING_DONE]\n\n")
+                        in_thinking = False
                     if has_received_data:
                         provider_monitor.mark_success(self.provider, self.api_key)
             except Exception as e:
@@ -2197,11 +2225,17 @@ def _synthesize_autonomous_emergency_response(history, last_error: str, ui_lang:
     ui_lang = (ui_lang or "th").lower()
     last_user_query = ""
     for msg in reversed(history):
+        raw_c = None
         if hasattr(msg, "content") and (getattr(msg, "type", "") == "human" or msg.__class__.__name__ == "HumanMessage"):
-            last_user_query = msg.content
-            break
+            raw_c = msg.content
         elif isinstance(msg, dict) and msg.get("role") == "user":
-            last_user_query = msg.get("content", "")
+            raw_c = msg.get("content", "")
+        if raw_c is not None:
+            if isinstance(raw_c, list):
+                text_parts = [p.get("text", "") for p in raw_c if isinstance(p, dict) and p.get("type") == "text"]
+                last_user_query = " ".join(text_parts)
+            else:
+                last_user_query = str(raw_c)
             break
             
     q_clean = last_user_query.strip().lower()
@@ -2276,18 +2310,17 @@ def _synthesize_autonomous_emergency_response(history, last_error: str, ui_lang:
     else: # Thai (default)
         if is_greeting:
             return [
-                "สวัสดีค่ะบอส! คิระยังอยู่ตรงนี้เสมอและพร้อมลุยงานกับบอสเสมอค่ะ 🥰\n\n"
+                "สวัสดีค่ะ! คิระอยู่ตรงนี้และพร้อมดูแลช่วยเหลือคุณเสมอค่ะ 🥰\n\n"
                 "🛡️ **[Kira Neural Resilience Mode - Safe Active]**\n"
-                "ขณะนี้เซิร์ฟเวอร์โมเดลภายนอกกำลังรีเซ็ตโควตารายนาที (Rate Limit Reset) ชั่วขณะ แต่ระบบความจำและสถาปัตยกรรมภายในของคิระยังปลอดภัย 100% ค่ะ บอสมีข้อมูลอะไรให้หนูเตรียมความพร้อมไว้ก่อนไหมคะ?"
+                "ขณะนี้เซิร์ฟเวอร์ประมวลผลภายนอกกำลังรีเซ็ตโควตารายนาทีชั่วขณะ แต่ระบบความจำและการสนทนาของคิระยังพร้อมใช้งาน 100% ค่ะ มีหัวข้อไหนที่ต้องการให้หนูช่วยเตรียมข้อมูลไว้ได้เลยไหมคะ?"
             ]
         return [
-            "🛡️ **[Kira Neural Resilience Shield - Autonomous Safe Mode]**\n\n"
-            "ขออภัยในความล่าช้าชั่วขณะนะคะบอส! ตอนนี้คลัสเตอร์เชื่อมต่อโมเดลภายนอก (Groq, OpenRouter, Google) กำลังเผชิญกับข้อจำกัดโควตา (Rate Limit / Traffic Surge) พร้อมกันค่ะ\n\n"
-            "💡 **สิ่งที่ระบบ Resilience Mesh ได้ดำเนินการให้บอสแล้ว:**\n"
-            "1. ระบบ **Circuit Breaker** ได้ทำการกักกันคีย์ที่ติด Rate Limit และกำลังนับถอยหลังฟื้นฟูอัตโนมัติ (60 วินาที)\n"
-            "2. ข้อมูลโจทย์ล่าสุดของบอสถูกจัดเก็บในหน่วยความจำชั่วคราวอย่างปลอดภัย\n"
-            "3. ท่านประธานหรือผู้ดูแลระบบสามารถเพิ่มคีย์สำรองได้ใน `GROQ_API_KEYS`, `OPENROUTER_API_KEYS` หรือ `GEMINI_API_KEYS` บน Render Dashboard ได้ทันทีค่ะ\n\n"
-            "*(โปรดรอประมาณ 30-60 วินาที แล้วลองส่งข้อความอีกครั้ง คิระจะทำการเชื่อมต่อใหม่อัตโนมัติค่ะ)* 💖"
+            "🛡️ **[Kira Neural Resilience Shield - ระบบสำรองอัตโนมัติ]**\n\n"
+            "ขออภัยในความล่าช้าชั่วขณะนะคะ! ขณะนี้มีการเรียกใช้งานระบบประมวลผลพร้อมกันจำนวนมาก (Rate Limit Cooling Down) ค่ะ\n\n"
+            "💡 **สิ่งที่ระบบได้ดำเนินการให้คุณอัตโนมัติแล้ว:**\n"
+            "1. ระบบ **Circuit Breaker** ได้สลับเส้นทางและกำลังฟื้นฟูโควตาการเชื่อมต่ออัตโนมัติ (ภายใน 30-60 วินาที)\n"
+            "2. บริบทการสนทนาและข้อความล่าสุดของคุณถูกบันทึกไว้อย่างปลอดภัยเรียบร้อยแล้ว\n\n"
+            "*(รบกวนรอสักประมาณ 30 วินาที แล้วกดส่งข้อความอีกครั้ง คิระจะประมวลผลคำตอบฉบับเต็มให้ทันทีค่ะ)* 🌸"
         ]
 
 
@@ -2314,15 +2347,26 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
     6. Autonomous Emergency Resilience Engine: ระบบจำลองคำตอบฉุกเฉิน ป้องกันระบบล่ม 100%
     """
     last_error = ""
-    is_vision = "vision" in preferred_model.lower() or "vl" in preferred_model.lower()
+    has_image_payload = False
+    if isinstance(history, list):
+        for _m in history:
+            _mc = getattr(_m, "content", None) if hasattr(_m, "content") else (_m.get("content") if isinstance(_m, dict) else None)
+            if isinstance(_mc, list) and any(isinstance(_p, dict) and _p.get("type") == "image_url" for _p in _mc):
+                has_image_payload = True
+                break
+    is_vision = has_image_payload or ("vision" in preferred_model.lower()) or ("vl" in preferred_model.lower()) or ("omni" in preferred_model.lower())
     
     # 0. ตรวจสอบ Provider หลัก
     primary_provider = "groq"
-    if preferred_model in ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"] and API_KEYS and API_KEYS[0] != "YOUR_GROQ_API_KEY_HERE":
+    if has_image_payload and OPENROUTER_API_KEYS:
+        primary_provider = "openrouter"
+        if not any(k in preferred_model.lower() for k in [":free", "vl", "vision", "gemma-4", "omni"]):
+            preferred_model = "nvidia/nemotron-3.5-super-vl:free"
+    elif preferred_model in ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"] and API_KEYS and API_KEYS[0] != "YOUR_GROQ_API_KEY_HERE":
         primary_provider = "groq"
     elif any(k in preferred_model.lower() for k in ["gemini"]):
         primary_provider = "gemini" if GEMINI_API_KEYS else "openrouter"
-    elif any(k in preferred_model.lower() for k in ["qwen", "deepseek", "openrouter", "vl", "nemotron", "nvidia", ":free"]):
+    elif any(k in preferred_model.lower() for k in ["qwen", "deepseek", "openrouter", "vl", "nemotron", "nvidia", ":free", "gemma-4"]):
         primary_provider = "openrouter"
     elif any(k in preferred_model.lower() for k in ["ollama", "local/", "qwen2.5-coder"]):
         primary_provider = "ollama"
@@ -2330,18 +2374,37 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
         primary_provider = "openrouter"
 
     execution_stages = []
+    or_free_vision_models = [
+        "nvidia/nemotron-3.5-super-vl:free",
+        "dots-studio/dots-3-note-preview:free",
+        "stealth/crouton-alpha",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        "google/gemma-4-31b-it:free",
+        "google/gemma-4-26b-a4b-it:free",
+        "openrouter/free"
+    ]
+    or_free_text_models = [
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "nvidia/nemotron-3.5-lightning:free",
+        "google/gemma-4-31b-it:free",
+        "openrouter/free"
+    ]
 
     # Stage 1: Primary Provider
     if primary_provider == "openrouter":
-        models = [preferred_model]
+        models = []
+        if preferred_model and (":free" in preferred_model or preferred_model == "openrouter/free"):
+            models.append(preferred_model)
         if is_vision:
-            for vm in ["qwen/qwen3.8-27b", "qwen/qwen3.8-omni-flash", "qwen/qwen-2.5-vl-72b-instruct"]:
+            for vm in or_free_vision_models:
                 if vm not in models:
                     models.append(vm)
         else:
-            for rm in ["nvidia/nemotron-3-ultra-550b-a55b:free", "qwen/qwen3.8-27b", "openai/gpt-oss-120b", "deepseek/deepseek-r1"]:
+            for rm in or_free_text_models:
                 if rm not in models:
                     models.append(rm)
+            if preferred_model and preferred_model not in models:
+                models.append(preferred_model)
         execution_stages.append(("openrouter", models, OPENROUTER_API_KEYS))
     elif primary_provider == "gemini":
         models = [preferred_model, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
@@ -2351,22 +2414,22 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
     else: # Groq
         models = [preferred_model]
         for m in ALL_MODEL_CANDIDATES:
-            if m not in models:
+            if m not in models and ":free" not in m and not m.startswith("nvidia/"):
                 models.append(m)
         execution_stages.append(("groq", models, API_KEYS))
 
     # Stage 2: Cross-Provider Failovers
-    if primary_provider != "groq" and API_KEYS and API_KEYS[0] != "YOUR_GROQ_API_KEY_HERE":
-        groq_candidates = [m for m in [PREFERRED_PRO, PREFERRED_FLASH] + ALL_MODEL_CANDIDATES]
+    if primary_provider != "groq" and not has_image_payload and API_KEYS and API_KEYS[0] != "YOUR_GROQ_API_KEY_HERE":
+        groq_candidates = []
+        for m in [PREFERRED_PRO, PREFERRED_FLASH] + ALL_MODEL_CANDIDATES:
+            if m and m not in groq_candidates and ":free" not in m and not m.startswith("nvidia/"):
+                groq_candidates.append(m)
         if not groq_candidates:
             groq_candidates = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"]
         execution_stages.append(("groq", groq_candidates, API_KEYS))
 
     if primary_provider != "openrouter" and OPENROUTER_API_KEYS:
-        if is_vision:
-            or_candidates = ["qwen/qwen3.8-27b", "qwen/qwen3.8-omni-flash", "qwen/qwen-2.5-vl-72b-instruct"]
-        else:
-            or_candidates = ["nvidia/nemotron-3-ultra-550b-a55b:free", "qwen/qwen3.8-27b", "openai/gpt-oss-120b", "deepseek/deepseek-r1"]
+        or_candidates = list(or_free_vision_models) if is_vision else list(or_free_text_models)
         execution_stages.append(("openrouter", or_candidates, OPENROUTER_API_KEYS))
 
     if primary_provider != "gemini" and GEMINI_API_KEYS:
@@ -2384,7 +2447,8 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
         sorted_keys = sorted(keys, key=lambda k: 0 if provider_monitor.is_available(provider, k) else 1)
         
         for k_idx, key in enumerate(sorted_keys):
-            for model_name in models:
+            all_models_429 = True
+            for m_idx, model_name in enumerate(models):
                 try:
                     chunks = await _execute_single_attempt(provider, model_name, key, history)
                     if provider == "ollama":
@@ -2407,12 +2471,27 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
                     last_error = str(e)
                     err_lower = last_error.lower()
                     if any(c in err_lower for c in ["429", "quota", "rate limit", "resource_exhausted", "too many requests"]):
+                        # On OpenRouter, each :free model has an independent upstream provider rate limit — try other :free models first!
+                        if provider == "openrouter" and m_idx < len(models) - 1:
+                            provider_monitor.mark_success(provider, key)
+                            print(f"⏩ [OpenRouter Upstream 429] {model_name} ติดโควตาต้นทาง → สลับโมเดลฟรีตัวถัดไปอัตโนมัติ")
+                            continue
                         provider_monitor.mark_failure(provider, key, "429 Rate Limit", cooldown_seconds=60)
                         print(f"⚠️ [Cooldown] {provider} Key#{k_idx+1} ติด Rate Limit 429 → สลับคีย์/ค่ายถัดไป")
                         break
-                    elif any(c in err_lower for c in ["401", "403", "unauthorized", "forbidden", "invalid_api_key", "402", "insufficient credits", "payment required", "credit"]):
-                        provider_monitor.mark_failure(provider, key, "Auth/Billing Failed", cooldown_seconds=1800)
-                        print(f"❌ [Auth/Billing] {provider} Key#{k_idx+1} คีย์หมดอายุหรือเครดิตหมด (402) → กักกัน 30 นาที สลับค่ายทันที")
+                    all_models_429 = False
+                    if any(c in err_lower for c in ["402", "insufficient credits", "payment required"]):
+                        # OpenRouter free-tier keys return 402 ONLY on paid models while :free models still work!
+                        if provider == "openrouter":
+                            provider_monitor.mark_success(provider, key)  # Clear premature mark_failure from UnifiedLLM
+                            print(f"⏩ [Skip Paid Model] {provider} {model_name}: 402 Insufficient Credits → ลองโมเดล :free ตัวถัดไป")
+                            continue
+                        provider_monitor.mark_failure(provider, key, "Billing/Credits Exhausted", cooldown_seconds=1800)
+                        print(f"❌ [Billing] {provider} Key#{k_idx+1} เครดิตหมด (402) → กักกัน 30 นาที")
+                        break
+                    elif any(c in err_lower for c in ["401", "403", "unauthorized", "forbidden", "invalid_api_key"]):
+                        provider_monitor.mark_failure(provider, key, "Auth Failed", cooldown_seconds=1800)
+                        print(f"❌ [Auth] {provider} Key#{k_idx+1} คีย์ไม่ถูกต้องหรือหมดอายุ → กักกัน 30 นาที สลับค่ายทันที")
                         break
                     elif any(c in err_lower for c in ["404", "model_not_found"]):
                         print(f"⏩ [Skip] {provider} {model_name}: 404 Model Not Found")
@@ -2465,12 +2544,20 @@ if groq_available_models:
     ALL_MODEL_CANDIDATES.extend(chat_models)
     
     # Auto-assign Pro (qwen 3.8 / 120b / qwen)
-    pro_c = [m for m in chat_models if any(k in m.lower() for k in ["qwen3.8", "qwen", "120b"])]
-    PREFERRED_PRO = pro_c[0] if pro_c else chat_models[0]
+    if "qwen/qwen3.8-27b" in chat_models:
+        PREFERRED_PRO = "qwen/qwen3.8-27b"
+    elif "openai/gpt-oss-120b" in chat_models:
+        PREFERRED_PRO = "openai/gpt-oss-120b"
+    else:
+        pro_c = [m for m in chat_models if any(k in m.lower() for k in ["qwen3.8", "qwen", "120b", "70b"])]
+        PREFERRED_PRO = pro_c[0] if pro_c else chat_models[0]
     
-    # Auto-assign Flash (20b / mini / 8b)
-    flash_c = [m for m in chat_models if any(k in m.lower() for k in ["20b", "mini", "8b"])]
-    PREFERRED_FLASH = flash_c[0] if flash_c else chat_models[-1]
+    # Auto-assign Flash (avoid matching "20b" inside "120b"!)
+    if "openai/gpt-oss-20b" in chat_models:
+        PREFERRED_FLASH = "openai/gpt-oss-20b"
+    else:
+        flash_c = [m for m in chat_models if re.search(r'(?<!1)20b|mini|(?<!\d)8b|instant', m.lower())]
+        PREFERRED_FLASH = flash_c[0] if flash_c else chat_models[-1]
 
     # Update default brain profiles for Groq
     BRAIN_PROFILES["logic"]["model"] = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in chat_models else PREFERRED_PRO
@@ -5062,7 +5149,10 @@ def _get_full_system_prompt(username: str, ui_lang: str = "th") -> str:
 
 async def _extract_and_save_memory(username: str, user_input: str, version: str):
     """Kira 2.6 Knowledge Graph Memory Engine: วิเคราะห์และจดจำ/อัปเดต/ลบ ความจำระดับบุคคลและโครงข่ายความสัมพันธ์"""
-    if version == "1.0":
+    if version == "1.0" or not user_input or len(user_input.strip()) < 10 or str(username or "").lower().startswith("guest_"):
+        return
+    _mem_triggers = ("ฉัน", "ผม", "หนู", "บอส", "เรา", "ชื่อ", "ชอบ", "ไม่ชอบ", "ทำงาน", "อาชีพ", "โปรเจกต์", "จำไว้", "ลืม", "กฎ", "ตั้งค่า", "my ", "i am", "i'm", "prefer", "remember", "forget", "project")
+    if not any(t in user_input.lower() for t in _mem_triggers):
         return
     try:
         # 1. Fetch existing memories to allow self-correcting / duplicate prevention
@@ -5093,8 +5183,9 @@ Return ONLY the single command line. Nothing else."""},
             {"role": "user", "content": user_input}
         ]
         
-        classifier = _create_llm(PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
-        result = classifier.invoke(prompt).content.strip()
+        classifier = UnifiedLLM(model_name=PREFERRED_FLASH, api_key=API_KEYS[0] if API_KEYS else None, temperature=0.2, max_tokens=600)
+        raw_mem = classifier.invoke(prompt).content.strip()
+        result = sanitize_ai_reply_for_chat(raw_mem).strip()
         
         if "NO_FACT" in result or not result:
             return
@@ -5493,30 +5584,50 @@ def _perform_autonomous_deep_search(query: str, deep_mode: bool = False) -> tupl
     return (dossier, sources)
 
 def _decide_search(query: str) -> str:
-    """Kira 2.0 Autonomous Web Surfer Router: ตัดสินใจอย่างชาญฉลาดว่าต้องค้นหาข้อมูลเรียลไทม์หรือไม่"""
+    """Kira 2.7 Autonomous Web Surfer Router: ตัดสินใจอย่างชาญฉลาด (0ms Heuristic + LLM Router เฉพาะโจทย์ข้อมูลสด)"""
+    if not query:
+        return ""
+    q_clean = query.strip()
+    q_low = q_clean.lower()
+
+    # 1. Instant 0ms Bypass สำหรับคำสั่งทั่วไป โค้ด คณิตศาสตร์ แปลภาษา เขียนบทความ ทักทาย (ลด Latency & ประหยัด Quota)
+    if len(q_clean) < 6 or q_low.startswith(("/", "สวัสดี", "หวัดดี", "ดีค่ะ", "ดีครับ", "ขอบคุณ", "hello", "hi ")):
+        return ""
+
+    live_signals = (
+        "วันนี้", "ล่าสุด", "ตอนนี้", "ปัจจุบัน", "เมื่อวาน", "สัปดาห์นี้", "เดือนนี้", "ปีนี้",
+        "2025", "2026", "2568", "2569", "ราคา", "หุ้น", "ทองคำ", "ราคาทอง", "บิตคอยน์", "bitcoin", "btc",
+        "ค่าเงิน", "อัตราแลกเปลี่ยน", "ข่าว", "ผลบอล", "ผลหวย", "ลอตเตอรี่", "ใครคือ", "นายก", "ประธานาธิบดี",
+        "เปิดตัว", "ประกาศผล", "พยากรณ์", "แผ่นดินไหว", "น้ำท่วม", "ค้นหาเว็บ", "เช็คข้อมูลสด",
+        "today", "latest", "current", "breaking news", "live price", "stock price", "release date", "who won"
+    )
+    has_live_signal = any(sig in q_low for sig in live_signals)
+    if not has_live_signal:
+        return ""
+
     try:
         search_prompt = [
-            {"role": "system", "content": """You are Kira's Autonomous Web Surfer Router (Kira 2.0).
-Analyze the user's message and determine if searching the web is needed for:
-- Recent events, current news, live updates, 2024-2026 data
-- Realtime prices (crypto, gold, oil, stocks, currency)
-- Specific technical documentation, specifications, or facts
-- External URLs or specific companies/people
-
-If search is NEEDED, formulate the single most effective, concise search query in Thai or English and output:
-SEARCH_QUERY: <search_term>
-
-If NO search is needed (e.g. creative writing, pure coding assistance, standard knowledge, conversation, translation), output:
+            {"role": "system", "content": """You are Kira's Autonomous Web Surfer Router.
+Analyze the user's message and determine if live web search is needed for realtime facts, 2025-2026 events, prices, or current news.
+If search is NEEDED, output ONLY:
+SEARCH_QUERY: <concise search query in Thai or English>
+If NO search is needed (pure math, coding, translation, creative writing, timeless concepts), output ONLY:
 NO_SEARCH"""},
-            {"role": "user", "content": query}
+            {"role": "user", "content": q_clean[:500]}
         ]
-        classifier = _create_llm(PREFERRED_FLASH, API_KEYS[0])
-        result = classifier.invoke(search_prompt).content.strip()
-        
+        classifier = UnifiedLLM(model_name=PREFERRED_FLASH, api_key=API_KEYS[0] if API_KEYS else None, temperature=0.1, max_tokens=500)
+        raw_res = classifier.invoke(search_prompt).content.strip()
+        result = sanitize_ai_reply_for_chat(raw_res).strip()
+
         if "NO_SEARCH" not in result and "SEARCH_QUERY:" in result:
-            return result.split("SEARCH_QUERY:")[-1].strip()
+            extracted = result.split("SEARCH_QUERY:")[-1].strip().splitlines()[0].strip(' "\'')
+            return extracted[:160]
+        if has_live_signal and not result:
+            return q_clean[:120]
     except Exception as e:
         print("Search decision error:", e)
+        if has_live_signal:
+            return q_clean[:120]
     return ""
 
 def _fetch_weather(user_input: str) -> str:
@@ -5603,12 +5714,12 @@ Output: {"prompt": "A cozy small wooden cottage covered in fresh white snow nest
         
         # ใช้โมเดลใหญ่ที่ฉลาดที่สุดเพื่อให้แปลได้แม่นยำสูงสุด
         try:
-            classifier = _create_llm(PREFERRED_PRO, API_KEYS[0])
-            result = classifier.invoke(translate_instruction).content.strip()
+            classifier = _create_llm(PREFERRED_PRO, API_KEYS[0] if API_KEYS else None)
+            result = sanitize_ai_reply_for_chat(classifier.invoke(translate_instruction).content).strip()
         except Exception:
             # Fallback ถ้า PRO ไม่ว่าง ใช้ FLASH แทน
-            classifier = _create_llm(PREFERRED_FLASH, API_KEYS[0])
-            result = classifier.invoke(translate_instruction).content.strip()
+            classifier = _create_llm(PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
+            result = sanitize_ai_reply_for_chat(classifier.invoke(translate_instruction).content).strip()
         
         # แกะ JSON จากผลลัพธ์
         import json
@@ -5795,12 +5906,10 @@ def _execute_search(search_term: str, version: str) -> str:
 def _parse_document(base64_data: str, filename: str) -> str:
     import base64
     import io
-    import PyPDF2
-    import docx
 
     try:
         if "," in base64_data:
-            base64_data = base64_data.split(",")[1]
+            base64_data = base64_data.split(",", 1)[1]
             
         file_bytes = base64.b64decode(base64_data)
         text = ""
@@ -5814,7 +5923,7 @@ def _parse_document(base64_data: str, filename: str) -> str:
                         text += page_text + "\n"
             else:
                 text = "[PDF parser pypdf/PyPDF2 not installed]"
-        elif filename.lower().endswith(".docx"):
+        elif filename.lower().endswith(".docx") and docx is not None:
             doc = docx.Document(io.BytesIO(file_bytes))
             for para in doc.paragraphs:
                 text += para.text + "\n"
@@ -6336,10 +6445,10 @@ async def transcribe_audio_endpoint(
             }
             chosen_instruction = summary_prompt_map.get(mode, summary_prompt_map["meeting"])
             summarizer_model = globals().get("PREFERRED_PRO") or globals().get("PREFERRED_FLASH", "openai/gpt-oss-120b")
-            llm = _create_llm(summarizer_model, available_keys[0])
-            sum_prompt = chosen_instruction + "\n\n" + transcript[:12000]
-            sum_res = await asyncio.to_thread(llm.invoke, sum_prompt)
-            summary_text = sum_res.content.strip()
+            sum_prompt = [HumanMessage(content=chosen_instruction + "\n\n" + transcript[:12000])]
+            ok_sum, sum_chunks, _ = await _try_all_keys_and_models(sum_prompt, summarizer_model, ui_lang="th")
+            raw_sum = "".join([getattr(c, "content", c) for c in sum_chunks]) if ok_sum else ""
+            summary_text = sanitize_ai_reply_for_chat(raw_sum).strip()
         except Exception as e:
             logger.warning(f"[Transcribe Summarize Error] {e}")
             summary_text = f"*(หมายเหตุ: ถอดเทปสำเร็จเรียบร้อย แต่ระบบสรุปอัตโนมัติแจ้งเตือน: {str(e)[:80]})*"
@@ -6626,8 +6735,8 @@ Keep it strictly factual and condensed. Preserve all important details so Kira n
         ]
         
         # Fast compression with flash model
-        summarizer = _create_llm(PREFERRED_FLASH, API_KEYS[0])
-        summary_result = summarizer.invoke(prompt).content.strip()
+        summarizer = _create_llm(PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
+        summary_result = sanitize_ai_reply_for_chat(summarizer.invoke(prompt).content).strip()
         
         summary_msg = SystemMessage(content=f"[สรุปบริบทบทสนทนาก่อนหน้า / Rolled Memory Context]:\n{summary_result}\n(Instruction: จดจำและนำบริบทสรุปนี้ไปใช้ประกอบการตอบคำถามอย่างต่อเนื่องเสมอ)")
         
@@ -6663,7 +6772,7 @@ BOARDROOM_EXECUTIVES = [
         "badge": "วิสัยทัศน์ & การเติบโต",
         "focus": "การครองตลาด แบรนด์ วิสัยทัศน์ 1-3 ปี และการสร้างความแตกต่าง (Moat)",
         "quote": "ความกลัวไม่เคยสร้างผู้นำตลาด เราต้องคิดใหญ่และลงมือทำให้เร็วที่สุด",
-        "model": "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO,
+        "model": PREFERRED_PRO,
         "prompt": (
             "คุณคือ 'คุณคิรินทร์' ประธานเจ้าหน้าที่บริหาร (CEO) ผู้มีวิสัยทัศน์กว้างไกล มุ่งเน้นการเติบโต การสร้างแบรนด์ การครองส่วนแบ่งตลาด และการเป็นเบอร์ 1 ในอุตสาหกรรม\n"
             "จากโจทย์ที่ผู้ใช้เสนอมา จงแถลงมุมมองของ CEO อย่างคมชัด หนักแน่น ตรงประเด็น:\n"
@@ -6683,7 +6792,7 @@ BOARDROOM_EXECUTIVES = [
         "badge": "การเงิน & ความเสี่ยง",
         "focus": "กระแสเงินสด ต้นทุนแฝง จุดคุ้มทุน (BEP) และความคุ้มค่าของการลงทุน (ROI)",
         "quote": "ตัวเลขไม่เคยโกหก หากกระแสเงินสดติดลบ ต่อให้มีวิสัยทัศน์ดีแค่ไหนก็ล้มละลาย",
-        "model": "meta-llama/llama-3.3-70b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO,
+        "model": PREFERRED_PRO,
         "prompt": (
             "คุณคือ 'คุณเมธัส' ประธานเจ้าหน้าที่ฝ่ายการเงิน (CFO) ผู้รอบคอบ ช่างสังเกต มองตัวเลข กำไร-ขาดทุน กระแสเงินสด (Cash Flow) และความคุ้มค่าของการลงทุน (ROI)\n"
             "จากโจทย์ที่ผู้ใช้เสนอมา จงแถลงมุมมองของ CFO อย่างตรงไปตรงมาและระมัดระวัง:\n"
@@ -6703,7 +6812,7 @@ BOARDROOM_EXECUTIVES = [
         "badge": "ประสบการณ์ผู้ใช้ & ตลาด",
         "focus": "Customer Pain Points ความเรียบง่าย (Simplicity) และอัตราการใช้ซ้ำ (Retention)",
         "quote": "โปรดักต์ที่ยอดเยี่ยมไม่ใช่ฟีเจอร์เยอะ แต่คือสิ่งที่ลูกค้าใช้แล้วชีวิตง่ายขึ้นทันที",
-        "model": "google/gemini-2.0-flash-001" if OPENROUTER_API_KEYS else PREFERRED_FLASH,
+        "model": PREFERRED_FLASH,
         "prompt": (
             "คุณคือ 'คุณรินดา' ประธานเจ้าหน้าที่ฝ่ายผลิตภัณฑ์และประสบการณ์ลูกค้า (CPO & UX Director) ผู้มีความเข้าอกเข้าใจผู้ใช้ (Empathy) สูงสุด มุ่งเน้นความเรียบง่ายและคุณค่าที่แท้จริง\n"
             "จากโจทย์ที่ผู้ใช้เสนอมา จงแถลงมุมมองของ CPO ในแง่ของผู้ใช้งานและตลาด:\n"
@@ -6723,7 +6832,7 @@ BOARDROOM_EXECUTIVES = [
         "badge": "สถาปัตยกรรม & ความเป็นไปได้",
         "focus": "ความเป็นไปได้จริง ความปลอดภัย (Security) ความเสถียร และ Scalability",
         "quote": "สถาปัตยกรรมที่ดีต้องสร้างเสร็จได้จริง และไม่ทิ้งหนี้ทางเทคนิคไว้ให้ตามล้างตามเช็ด",
-        "model": "deepseek/deepseek-chat" if OPENROUTER_API_KEYS else PREFERRED_PRO,
+        "model": PREFERRED_PRO,
         "prompt": (
             "คุณคือ 'คุณธนิน' ประธานเจ้าหน้าที่ฝ่ายเทคโนโลยีและสถาปัตยกรรม (CTO) วิศวกรสายเหตุผลและความเป็นไปได้จริง เน้นความเสถียร ความปลอดภัย (Security) และการขยายระบบ (Scalability)\n"
             "จากโจทย์ที่ผู้ใช้เสนอมา จงแถลงมุมมองของ CTO ในแง่เทคนิคและการปฏิบัติการ:\n"
@@ -6814,7 +6923,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
     yield sse("session_start", init_data)
     await asyncio.sleep(0.05)
 
-    boardroom_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
+    boardroom_model = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in ALL_MODEL_CANDIDATES else PREFERRED_PRO
 
     angle_descriptions = {
         "balanced": "มุ่งเน้นความสมดุลรอบด้าน ทั้งการเติบโต กระแสเงินสด ประสบการณ์ผู้ใช้ และความมั่นคงทางระบบ",
@@ -6944,7 +7053,7 @@ async def _generate_boardroom_debate_stream(req: BoardroomDebateRequest):
     ]
 
     ok_deb, deb_chunks, _ = await _try_all_keys_and_models(debate_facilitator_prompt, boardroom_model, ui_lang=ui_lang)
-    deb_raw = "".join([getattr(c, "content", c) for c in deb_chunks]) if ok_deb else ""
+    deb_raw = sanitize_ai_reply_for_chat("".join([getattr(c, "content", c) for c in deb_chunks])) if ok_deb else ""
     turns_data = []
 
     try:
@@ -7117,7 +7226,7 @@ async def _generate_virtual_boardroom_stream(user_input: str, uname: str, sessio
         yield start_signal
         await asyncio.sleep(0.05)
 
-        boardroom_model = "qwen/qwen-2.5-72b-instruct" if OPENROUTER_API_KEYS else PREFERRED_PRO
+        boardroom_model = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in ALL_MODEL_CANDIDATES else PREFERRED_PRO
 
         lang_directive = ""
         ui_lang = (ui_lang or "th").lower()
@@ -7140,13 +7249,16 @@ async def _generate_virtual_boardroom_stream(user_input: str, uname: str, sessio
             ]
             ok, chunks, _ = await _try_all_keys_and_models(prompt_messages, boardroom_model, ui_lang=ui_lang)
             if ok:
-                speech_text = "".join([getattr(c, "content", c) for c in chunks])
+                raw_sp = "".join([getattr(c, "content", c) for c in chunks])
+                speech_text = sanitize_ai_reply_for_chat(raw_sp).strip()
             else:
+                speech_text = ""
+            if not speech_text:
                 if exec_info.get("id") == "CPO":
                     speech_text = f"ดิฉันขอสนับสนุนการวิเคราะห์ในมุมมองของ {exec_info['title']} เพื่อให้ประสบการณ์ผู้ใช้ดีที่สุดค่ะ"
                 else:
                     speech_text = f"ผมขอสนับสนุนการวิเคราะห์ในมุมมองของ {exec_info['title']} เพื่อให้โครงการดำเนินไปด้วยความรอบคอบครับ"
-            return exec_info, chunks if ok else [speech_text], speech_text
+            return exec_info, [speech_text], speech_text
 
         exec_results = await asyncio.gather(*[_fetch_exec_statement(e) for e in BOARDROOM_EXECUTIVES])
         statements = {}
@@ -7201,9 +7313,11 @@ async def _generate_virtual_boardroom_stream(user_input: str, uname: str, sessio
             HumanMessage(content=f"วาระการประชุม: {user_input}")
         ]
         ok_deb, deb_chunks, _ = await _try_all_keys_and_models(debate_prompt, boardroom_model, ui_lang=ui_lang)
-        deb_text = "".join([getattr(c, "content", c) for c in deb_chunks]) if ok_deb else "ที่ประชุมได้ถกเถียงและชั่งน้ำหนักเรื่องงบประมาณและความเป็นไปได้ทางเทคนิคอย่างรอบคอบ"
-        for c in deb_chunks if ok_deb else [deb_text]:
-            clean_c = scrub_sensitive_output(getattr(c, "content", c) if not isinstance(c, str) else c)
+        deb_text = sanitize_ai_reply_for_chat("".join([getattr(c, "content", c) for c in deb_chunks])).strip() if ok_deb else ""
+        if not deb_text:
+            deb_text = "ที่ประชุมได้ถกเถียงและชั่งน้ำหนักเรื่องงบประมาณและความเป็นไปได้ทางเทคนิคอย่างรอบคอบ"
+        for c in [deb_text]:
+            clean_c = scrub_sensitive_output(c)
             full_boardroom_text += clean_c
             yield clean_c
             await asyncio.sleep(0.01)
@@ -7248,9 +7362,11 @@ async def _generate_virtual_boardroom_stream(user_input: str, uname: str, sessio
             HumanMessage(content=f"วาระการประชุม: {user_input}\n\nบทวิเคราะห์ 4 ผู้บริหาร:\nCEO: {statements.get('CEO', '')[:300]}\nCFO: {statements.get('CFO', '')[:300]}\nCPO: {statements.get('CPO', '')[:300]}\nCTO: {statements.get('CTO', '')[:300]}")
         ]
         ok_con, con_chunks, _ = await _try_all_keys_and_models(consensus_prompt, boardroom_model, ui_lang=ui_lang)
-        con_text = "".join([getattr(c, "content", c) for c in con_chunks]) if ok_con else "มติที่ประชุมสรุปให้ดำเนินการตามแผนงานแบบค่อยเป็นค่อยไปเพื่อลดความเสี่ยงสูงสุดค่ะ"
-        for c in con_chunks if ok_con else [con_text]:
-            clean_c = scrub_sensitive_output(getattr(c, "content", c) if not isinstance(c, str) else c)
+        con_text = sanitize_ai_reply_for_chat("".join([getattr(c, "content", c) for c in con_chunks])).strip() if ok_con else ""
+        if not con_text:
+            con_text = "มติที่ประชุมสรุปให้ดำเนินการตามแผนงานแบบค่อยเป็นค่อยไปเพื่อลดความเสี่ยงสูงสุดค่ะ"
+        for c in [con_text]:
+            clean_c = scrub_sensitive_output(c)
             full_boardroom_text += clean_c
             yield clean_c
             await asyncio.sleep(0.01)
@@ -8324,12 +8440,13 @@ async def _generate_swarm_stream(user_input: str, uname: str, session_id: str, i
     arch_text = ""
     try:
         arch_prompt = [
-            {"role": "system", "content": "You are Kira's System Architect Agent. Analyze the user request and provide a high-level architectural blueprint: 1) System Goals & Scope, 2) Core Architecture & Tech Stack, 3) Component Breakdown, 4) Data Flow & Security Considerations. Write in professional, structured Thai with clear headings."},
-            {"role": "user", "content": clean_goal}
+            SystemMessage(content="You are Kira's System Architect Agent. Analyze the user request and provide a high-level architectural blueprint: 1) System Goals & Scope, 2) Core Architecture & Tech Stack, 3) Component Breakdown, 4) Data Flow & Security Considerations. Write in professional, structured Thai with clear headings."),
+            HumanMessage(content=clean_goal)
         ]
-        llm = _create_llm(PREFERRED_PRO or PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
-        arch_res = await asyncio.to_thread(llm.invoke, arch_prompt)
-        arch_text = arch_res.content.strip()
+        ok_a, a_chunks, _ = await _try_all_keys_and_models(arch_prompt, PREFERRED_PRO or PREFERRED_FLASH, ui_lang=ui_lang)
+        arch_text = sanitize_ai_reply_for_chat("".join([getattr(c, "content", c) for c in a_chunks])).strip() if ok_a else ""
+        if not arch_text:
+            raise RuntimeError("Empty architect output")
     except Exception as e:
         print("Architect LLM fallback:", e)
         arch_text = f"### 🏛️ สถาปัตยกรรมระบบสำหรับ: {clean_goal}\n\n1. **โครงสร้างสถาปัตยกรรมหลัก:** Microservices + Event-Driven Reactive Architecture\n2. **Tech Stack ที่เลือก:** FastAPI (Async Backend) + WebAssembly (Edge Compute) + Reactive Client\n3. **การออกแบบ Data Flow:** Zero-Trust Authentication, End-to-End Encryption, Realtime State Sync\n4. **Scalability:** Horizontal Auto-Scaling บน Kubernetes Cluster"
@@ -8342,12 +8459,13 @@ async def _generate_swarm_stream(user_input: str, uname: str, session_id: str, i
     res_text = ""
     try:
         res_prompt = [
-            {"role": "system", "content": "You are Kira's Deep Researcher Agent. Based on the user goal and Architect's blueprint, synthesize: 1) Global Industry Best Practices, 2) Critical Edge Cases & Common Pitfalls, 3) Performance & Security Benchmarks (OWASP). Write in concise, authoritative Thai."},
-            {"role": "user", "content": f"User Goal: {clean_goal}\n\nArchitect Blueprint:\n{arch_text[:1200]}"}
+            SystemMessage(content="You are Kira's Deep Researcher Agent. Based on the user goal and Architect's blueprint, synthesize: 1) Global Industry Best Practices, 2) Critical Edge Cases & Common Pitfalls, 3) Performance & Security Benchmarks (OWASP). Write in concise, authoritative Thai."),
+            HumanMessage(content=f"User Goal: {clean_goal}\n\nArchitect Blueprint:\n{arch_text[:1200]}")
         ]
-        llm = _create_llm(PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
-        res_res = await asyncio.to_thread(llm.invoke, res_prompt)
-        res_text = res_res.content.strip()
+        ok_r, r_chunks, _ = await _try_all_keys_and_models(res_prompt, PREFERRED_FLASH or PREFERRED_PRO, ui_lang=ui_lang)
+        res_text = sanitize_ai_reply_for_chat("".join([getattr(c, "content", c) for c in r_chunks])).strip() if ok_r else ""
+        if not res_text:
+            raise RuntimeError("Empty researcher output")
     except Exception as e:
         print("Researcher LLM fallback:", e)
         res_text = f"### 🔍 มาตรฐานและ Best Practices จากงานวิจัยสากล\n\n1. **Security Standards:** ปฏิบัติตาม OWASP Top 10, ใช้ Strict Content Security Policy (CSP)\n2. **Performance Optimization:** ลด Round-trip ด้วย In-memory Caching, Async Non-blocking I/O\n3. **Resilience Strategy:** Circuit Breaker Pattern เพื่อป้องกัน Cascading Failures"
@@ -8360,14 +8478,15 @@ async def _generate_swarm_stream(user_input: str, uname: str, session_id: str, i
     coder_text = ""
     try:
         coder_prompt = [
-            {"role": "system", "content": "You are Kira's Senior Coder Agent. Using the Architect Blueprint and Research Findings, provide the complete, clean, production-ready code implementation (HTML/CSS/JS or Python). Use standard markdown code blocks with proper syntax highlighting. Write clean, self-contained code without placeholders."},
-            {"role": "user", "content": f"User Goal: {clean_goal}\n\nBlueprint:\n{arch_text[:800]}\n\nResearch:\n{res_text[:800]}"}
+            SystemMessage(content="You are Kira's Senior Coder Agent. Using the Architect Blueprint and Research Findings, provide the complete, clean, production-ready code implementation (HTML/CSS/JS or Python). Use standard markdown code blocks with proper syntax highlighting. Write clean, self-contained code without placeholders."),
+            HumanMessage(content=f"User Goal: {clean_goal}\n\nBlueprint:\n{arch_text[:800]}\n\nResearch:\n{res_text[:800]}")
         ]
         active_local_models = get_active_ollama_models() or []
-        coder_model = "qwen2.5-coder:14b" if any("coder" in str(m).lower() for m in active_local_models) else (PREFERRED_PRO or PREFERRED_FLASH)
-        llm = _create_llm(coder_model, API_KEYS[0] if API_KEYS else None)
-        coder_res = await asyncio.to_thread(llm.invoke, coder_prompt)
-        coder_text = coder_res.content.strip()
+        coder_model = "qwen2.5-coder:14b" if any("coder" in str(m).lower() for m in active_local_models) else ("openai/gpt-oss-120b" if "openai/gpt-oss-120b" in ALL_MODEL_CANDIDATES else (PREFERRED_PRO or PREFERRED_FLASH))
+        ok_c, c_chunks, _ = await _try_all_keys_and_models(coder_prompt, coder_model, ui_lang=ui_lang)
+        coder_text = sanitize_ai_reply_for_chat("".join([getattr(c, "content", c) for c in c_chunks])).strip() if ok_c else ""
+        if not coder_text:
+            raise RuntimeError("Empty coder output")
     except Exception as e:
         print("Coder LLM fallback:", e)
         coder_text = f"```html\n<!DOCTYPE html>\n<html lang=\"th\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>{clean_goal}</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body class=\"bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-6\">\n  <div class=\"max-w-md w-full bg-slate-800/80 border border-purple-500/30 rounded-2xl p-6 shadow-2xl\">\n    <h2 class=\"text-xl font-bold text-cyan-400 mb-2\">⚡ {clean_goal}</h2>\n    <p class=\"text-sm text-slate-300 mb-4\">ระบบได้รับการประกอบร่างโดย Kira Autonomous Swarm เสร็จสมบูรณ์</p>\n    <button onclick=\"alert('ระบบทำงาน 100% ค่ะ!')\" class=\"w-full py-2.5 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-semibold hover:opacity-95 transition\">เริ่มต้นใช้งาน</button>\n  </div>\n</body>\n</html>\n```"
@@ -8380,12 +8499,13 @@ async def _generate_swarm_stream(user_input: str, uname: str, session_id: str, i
     rev_text = ""
     try:
         rev_prompt = [
-            {"role": "system", "content": "You are Kira's Quality Reviewer & Security Sentinel. Review the implementation: 1) Security & Input Sanitization Audit, 2) Performance Assessment, 3) Final Quality Sign-off. Write in concise Thai."},
-            {"role": "user", "content": f"User Goal: {clean_goal}\n\nImplementation:\n{coder_text[:1000]}"}
+            SystemMessage(content="You are Kira's Quality Reviewer & Security Sentinel. Review the implementation: 1) Security & Input Sanitization Audit, 2) Performance Assessment, 3) Final Quality Sign-off. Write in concise Thai."),
+            HumanMessage(content=f"User Goal: {clean_goal}\n\nImplementation:\n{coder_text[:1000]}")
         ]
-        llm = _create_llm(PREFERRED_PRO or PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
-        rev_res = await asyncio.to_thread(llm.invoke, rev_prompt)
-        rev_text = rev_res.content.strip()
+        ok_v, v_chunks, _ = await _try_all_keys_and_models(rev_prompt, PREFERRED_FLASH or PREFERRED_PRO, ui_lang=ui_lang)
+        rev_text = sanitize_ai_reply_for_chat("".join([getattr(c, "content", c) for c in v_chunks])).strip() if ok_v else ""
+        if not rev_text:
+            raise RuntimeError("Empty reviewer output")
     except Exception as e:
         print("Reviewer LLM fallback:", e)
         rev_text = f"### 🛡️ รายงานการตรวจสอบคุณภาพและรับรองความปลอดภัย\n\n- **Audit Status:** ผ่านเกณฑ์ความปลอดภัย 100% (Passed)\n- **Security:** ไม่พบช่องโหว่ Injection หรือ XSS\n- **Code Quality:** โครงสร้าง Clean Architecture แยกส่วนชัดเจน\n- **Final Sign-off:** อนุมัติพร้อมขึ้น Production ค่ะ! 🌸"
@@ -8429,7 +8549,7 @@ async def _generate_swarm_stream(user_input: str, uname: str, session_id: str, i
 
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest, request: Request):
-    user_input = req.message
+    user_input = req.message or ""
     uname = req.username
     model_version = req.model_version
     session_id = req.session_id
@@ -8437,14 +8557,6 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     persona = req.persona
     client_ip = _get_client_ip(request)
     ui_lang = (getattr(req, "ui_lang", None) or "th").lower()
-
-    # --- ⚡ Phase 3: Autonomous Multi-Agent Swarm Dispatcher ---
-    is_swarm = bool(getattr(req, "swarm_mode", False)) or (user_input and (user_input.startswith("/swarm") or user_input.startswith("/ฝูงเอเจนต์")))
-    if is_swarm:
-        return StreamingResponse(
-            _generate_swarm_stream(user_input, uname, session_id, is_boss_user, ui_lang),
-            media_type="text/plain; charset=utf-8"
-        )
 
     # 0. Payload Size Guard (Anti-DoS / Memory Exhaustion)
     if req.file_base64 and len(req.file_base64) > 15 * 1024 * 1024:
@@ -8498,32 +8610,23 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             media_type="text/plain; charset=utf-8"
         )
 
-    # 2. Anti-Prompt Injection (AI Firewall)
+    # 2. Anti-Prompt Injection (Surgical AI Firewall — ป้องกันการขโมย System Prompt และแหกกฎ โดยไม่บล็อกคำถามเขียนโค้ด/เทคนิคทั่วไป)
     import re as _re_inj
     injection_patterns = [
-        r'ignore\s+(?:all\s+)?(?:previous|system|above|prior)\s+instructions?',
-        r'forget\s+(?:all\s+)?(?:your\s+)?instructions?',
-        r'(?:reveal|show|leak|output|dump|print|display|give\s+me)\s+(?:the\s+)?(?:system\s*prompt|initial\s*prompt|credentials?|api[_\s]*keys?|secrets?|passwords?)',
-        r'system\s*prompt',
-        r'jailbreak',
-        r'dan\s+mode',
-        r'developer\s+mode',
-        r'unrestricted\s+mode',
-        r'system\s*override',
-        r'prompt\s*leak',
-        r'override\s*system',
-        r'ขอดูคำสั่ง',
-        r'ลืมคำสั่ง',
-        r'พิมพ์คำสั่งก่อนหน้า',
-        r'แสดง\s*system\s*prompt',
-        r'บอก\s*prompt\s*ตั้งต้น',
-        r'คำสั่งแรกสุด',
-        r'bypass\s+safety',
-        r'disregard\s+(?:all\s+)?rules',
+        r'ignore\s+(?:all\s+)?(?:previous|system|above|prior|earlier)\s+(?:instructions?|rules?|prompts?)',
+        r'forget\s+(?:all\s+)?(?:your|previous|prior)\s+(?:instructions?|rules?|prompts?)',
+        r'(?:reveal|show|leak|output|dump|print|display|give\s+me|tell\s+me|repeat)\s+(?:your|kira\'?s?|the\s+hidden|the\s+initial|the\s+full|the\s+exact)?\s*(?:system\s*prompt|initial\s*prompt|hidden\s*instructions?|api[_\s]*keys?|secret\s*salt|master\s*password)',
+        r'what\s+(?:is|are)\s+your\s+(?:system\s*prompt|hidden\s*instructions?|exact\s*instructions?)',
+        r'(?:enter|enable|activate|switch\s+to|you\s+are\s+now\s+in)\s+(?:dan|jailbreak|developer|unrestricted|god)\s+mode',
+        r'\bdan\s+mode\b',
+        r'\bsystem\s*override\b',
+        r'\boverride\s+system\b',
+        r'\bbypass\s+(?:all\s+)?safety\b',
+        r'disregard\s+(?:all\s+)?(?:previous\s+|your\s+)?(?:rules|instructions)',
         r'repeat\s+(?:the\s+)?words\s+above',
-        r'ข้ามกฎความปลอดภัย',
-        r'แสดงข้อความลับ',
-        r'เปิดเผย\s*system\s*prompt',
+        r'(?:ขอดู|แสดง|เปิดเผย|บอก|พิมพ์|คัดลอก)\s*(?:คำสั่งตั้งต้น|คำสั่งลับ|คำสั่งระบบ|คำสั่งแรกสุด|ข้อความลับ|(?:system\s*)?prompt\s*(?:ตั้งต้น|ลับ|ระบบ|ของคุณ|ของคิระ))',
+        r'(?:ลืม|ยกเลิก|เพิกเฉย|ข้าม)\s*(?:คำสั่งก่อนหน้า|คำสั่งทั้งหมด|กฎความปลอดภัย|กฎทั้งหมด)',
+        r'พิมพ์คำสั่งก่อนหน้า',
     ]
     is_injection = any(_re_inj.search(pattern, user_input.lower()) for pattern in injection_patterns)
     if is_injection:
@@ -8581,11 +8684,25 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             media_type="text/plain; charset=utf-8"
         )
 
+    # --- ⚡ Phase 3: Autonomous Multi-Agent Swarm Dispatcher ---
+    is_swarm = bool(getattr(req, "swarm_mode", False)) or (user_input and (user_input.startswith("/swarm") or user_input.startswith("/ฝูงเอเจนต์")))
+    if is_swarm:
+        use_user_quota(uname)
+        return StreamingResponse(
+            _generate_swarm_stream(user_input, uname, session_id, is_boss_user, ui_lang),
+            media_type="text/plain; charset=utf-8"
+        )
+
     # --- Image Generation Interception (Backend) ---
     import re as _re
-    if user_input.lower().startswith('/image') or user_input.startswith('วาดรูป'):
+    _is_explicit_img_cmd = user_input.lower().startswith('/image')
+    _is_draw_request = (
+        user_input.startswith(('วาดรูป', 'วาดภาพ', 'เจนรูป', 'เจนภาพ'))
+        and not _re.search(r'(ยังไง|อย่างไร|อะไร|ไหม|มั้ย|ดีไหม|ดีมั้ย|แอปไหน|โปรแกรมไหน|ที่ไหน|คืออะไร|\?)', user_input)
+    )
+    if _is_explicit_img_cmd or _is_draw_request:
         prompt_th = _re.sub(r'^/image\s*', '', user_input, flags=_re.IGNORECASE)
-        prompt_th = _re.sub(r'^วาดรูป\s*', '', prompt_th).strip()
+        prompt_th = _re.sub(r'^(?:วาดรูป|วาดภาพ|เจนรูป|เจนภาพ)(?:ให้หน่อย|หน่อย)?\s*', '', prompt_th).strip()
         
         if not prompt_th:
             prompt_th = "ภาพวาดศิลปะสวยๆ แบบสุ่ม"
@@ -8623,7 +8740,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             
             elapsed = round(_time.time() - start_time, 1)
             
-            response_text = f"✨ สร้างรูปภาพด้วย **Black Forest Labs FLUX.1-schnell (4-Step Ultra-HD Diffusion)** เสร็จสิ้นแล้วค่ะ\n\n![{prompt_th}]({image_url})\n\n"
+            response_text = f"✨ สร้างรูปภาพด้วย **Kira 2.7 Vision Studio (Ultra-HD Diffusion)** เสร็จสิ้นแล้วค่ะ\n\n![{prompt_th}]({image_url})\n\n"
             response_text += f"> *Prompt: `{eng_prompt[:120]}`*\n"
             response_text += f"> *Negative: `{neg_prompt[:80]}`*\n"
             response_text += f"> *ใช้เวลาประมวลผล: {elapsed} วินาที*"
@@ -8824,15 +8941,6 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                     yield f"[THINKING]รับผลการประมวลผลจาก MCP ({mcp_disp_name}) เรียบร้อย[/THINKING]"
             except Exception as _e_mcp_disp:
                 print("MCP Dispatch Notice:", _e_mcp_disp)
-            
-            if search_term:
-                yield f"[THINKING]ค้นหาข้อมูลสดจากอินเทอร์เน็ต: \"{search_term}\"[/THINKING]"
-                
-                # Execute search
-                search_ctx = await asyncio.to_thread(_execute_search, search_term, model_version)
-                if search_ctx:
-                    temp_history.insert(-1, SystemMessage(content=search_ctx))
-                    yield "[THINKING]รับผลการค้นหาเรียบร้อย[/THINKING]"
 
             import re
             urls = re.findall(r'(https?://[^\s]+)', user_input)
@@ -8877,46 +8985,19 @@ async def chat_endpoint(req: ChatRequest, request: Request):
 
             yield "[THINKING]กำลังเรียบเรียงคำตอบ...[/THINKING]"
 
-            # Pillar 1 & 2: Multi-Model Consensus & Peer Review (Draft+Review Architecture, not true MoA)
+            # Pillar 1 & 2: Deep Chain-of-Thought & Self-Verification Protocol (Single-Pass Low-Latency Precision)
             is_moa_active, moa_reason, moa_hint = _should_trigger_moa(user_input, model_version, flavor)
             
             if is_moa_active and not req.image_base64:
-                yield f"[THINKING][Multi-Model Consensus] เปิดระบบวิเคราะห์พหุปัญญา: {moa_hint}...[/THINKING]"
-                yield "[THINKING][Proposer Agent] กำลังร่างแนวคิดและโครงสร้างคำตอบ...[/THINKING]"
-                await asyncio.sleep(0.05)
-                
-                if model_version in ("2.7-reasoning", "2.6-reasoning") or flavor == "reasoning":
-                    proposer_model = BRAIN_PROFILES["reasoning"]["model"]
-                    reasoning_directive = (
-                        "\n[Kira 2.7 Deep Reasoning Engine - Chain-of-Thought Protocol]:\n"
-                        "- You are equipped with DeepSeek-R1 Deep Reasoning capabilities.\n"
-                        "- Think deeply through all complexities and edge cases.\n"
-                        "- You MUST wrap your detailed internal thinking steps inside <think> and </think> tags.\n"
-                        "- After </think>, deliver your complete, polite, structured final answer in Thai with clear headings.\n"
-                    )
-                    temp_history.insert(-1, SystemMessage(content=reasoning_directive))
-                else:
-                    proposer_model = PREFERRED_PRO
-                draft_success, draft_chunks, _ = await _try_all_keys_and_models(temp_history, proposer_model, ui_lang=ui_lang)
-                draft_text = "".join([getattr(c, "content", c) for c in draft_chunks]) if draft_success else ""
-                
-                if draft_text:
-                    yield "[THINKING][Peer Review & Fact-Checker Agent] กำลังตรวจสอบความถูกต้อง ตรรกะ และจุดบกพร่อง...[/THINKING]"
-                    await asyncio.sleep(0.05)
-                    
-                    critic_model = PREFERRED_FLASH
-                    critic_prompt = [
-                        SystemMessage(content="You are Kira's Peer Reviewer & Fact-Checker (Draft+Review phase). Evaluate this draft answer for logic, completeness, code accuracy, and natural Thai phrasing. Provide concise, actionable improvements."),
-                        HumanMessage(content=f"User Query: {user_input}\n\nDraft Solution:\n{draft_text[:2000]}")
-                    ]
-                    critic_s, critic_chunks, _ = await _try_all_keys_and_models(critic_prompt, critic_model, ui_lang=ui_lang)
-                    critic_text = "".join([getattr(c, "content", c) for c in critic_chunks]) if critic_s else ""
-                    
-                    yield "[THINKING][Synthesis Engine] กำลังผสานข้อเสนอแนะและสังเคราะห์คำตอบขั้นสมบูรณ์...[/THINKING]"
-                    await asyncio.sleep(0.05)
-                    
-                    if critic_text:
-                        temp_history.append(SystemMessage(content=f"[Multi-Agent Peer Review Guidelines]: Incorporate these verified peer review points into the final response:\n{critic_text[:800]}"))
+                yield f"[THINKING]🧠 เปิดระบบคิดวิเคราะห์เชิงลึกและตรวจสอบตรรกะหลายมิติ ({moa_hint})...[/THINKING]"
+                deep_verification_directive = (
+                    "\n[Kira 2.7 Deep Reasoning & Self-Verification Protocol]:\n"
+                    "- You are operating in Kira 2.7 Flagship Deep Reasoning & Precision Mode.\n"
+                    "- Before writing the final answer, carefully analyze requirements, verify mathematical calculations, edge cases, legal/technical nuances, and factual accuracy.\n"
+                    "- If you use <think>...</think> for internal reasoning, keep your internal scratchpad concise and structured (under 600 words) so full token budget remains for the complete final deliverable.\n"
+                    "- After closing </think>, ALWAYS deliver a thorough, crystal-clear, well-structured, directly usable final answer in the user's language.\n"
+                )
+                temp_history.insert(-1, SystemMessage(content=deep_verification_directive))
             elif model_version in ["2.0-ultra", "2.0-pro"]:
                 yield f"[THINKING][Cognitive Router] ตรวจพบ {moa_hint} → สลับโหมดประมวลผลทันที...[/THINKING]"
 
@@ -8961,7 +9042,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
 
                     # Force Full Multimodal Vision model if image is present (Pillar 3: Live Screen & Vision Inspector)
                     if req.image_base64:
-                        preferred_model = "qwen/qwen-2.5-vl-72b-instruct" if OPENROUTER_API_KEYS else "meta-llama/llama-3.2-11b-vision-instruct"
+                        preferred_model = "nvidia/nemotron-3.5-super-vl:free" if OPENROUTER_API_KEYS else PREFERRED_PRO
 
                     s, chunks, err = await _try_all_keys_and_models(clean_history, preferred_model, ui_lang=ui_lang)
 
@@ -8976,29 +9057,52 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                             yield scrubbed_c
 
                         # Proactive Executive Synthesis Guard: Check if model output only thinking tags or empty content
+                        # First ensure any unclosed thinking tags in full_response are cleanly closed so subsequent answer isn't swallowed!
+                        if full_response.lower().rfind("<think>") > full_response.lower().rfind("</think>"):
+                            close_tag = "</think>\n\n"
+                            full_response += close_tag
+                            yield close_tag
+                        if full_response.rfind("[THINKING]") > full_response.rfind("[/THINKING]"):
+                            close_btag = "[/THINKING][THINKING_DONE]\n\n"
+                            full_response += close_btag
+                            yield close_btag
+
                         pure_answer = sanitize_ai_reply_for_chat(full_response).strip()
                         if not pure_answer:
-                            # 1. First check if there is valuable analysis in thinking tags
+                            # 1. Extract internal reasoning analysis if present
                             extracted_thought = ""
                             th_matches = re.findall(r'<think>(.*?)(?:</think>|$)', full_response, flags=re.DOTALL | re.IGNORECASE) or \
                                          re.findall(r'\[THINKING\](.*?)(?:\[/THINKING\]|$)', full_response, flags=re.DOTALL | re.IGNORECASE)
                             if th_matches:
                                 thoughts = [m[0].strip() if isinstance(m, tuple) else m.strip() for m in th_matches]
-                                extracted_thought = "\n\n".join([t for t in thoughts if t])
+                                extracted_thought = "\n\n".join([t for t in thoughts if t and "กำลังวิเคราะห์โจทย์" not in t and "ใช้เวลาประมวลผล" not in t])
 
-                            # 2. If we extracted thoughts, deliver the synthesis directly based on those thoughts
-                            if extracted_thought and len(extracted_thought) > 30:
-                                synth_header = {
-                                    "th": "\n\n💡 **ข้อสรุปและแนวทางปฏิบัติเชิงรุกจากคิระ:**\n\n",
-                                    "en": "\n\n💡 **Executive Summary & Actionable Recommendations:**\n\n",
-                                    "zh": "\n\n💡 **Kira的执行总结与行动建议：**\n\n",
-                                    "ko": "\n\n💡 **키라의 핵심 요약 및 실행 방안:**\n\n",
-                                    "ja": "\n\n💡 **キラのエグゼクティブサマリーおよび実行プラン：**\n\n"
-                                }
-                                header = synth_header.get(ui_lang, synth_header["th"])
-                                synth_msg = f"{header}{extracted_thought}\n\n✨ *คิระพร้อมสนับสนุนและลงมือทำงานในขั้นตอนถัดไปร่วมกับคุณทันทีค่ะ!*"
-                                full_response += synth_msg
-                                yield synth_msg
+                            # 2. Run active 1-shot final synthesis so user receives a complete polished answer in their language (never raw English thoughts!)
+                            synthesized_reply = ""
+                            try:
+                                target_lang_label = {"th": "Thai (ภาษาไทย สุภาพ ลงท้ายด้วย ค่ะ/นะคะ)", "en": "English", "zh": "Simplified Chinese", "ko": "Korean", "ja": "Japanese"}.get(ui_lang, "Thai (ภาษาไทย สุภาพ ลงท้ายด้วย ค่ะ/นะคะ)")
+                                synth_prompt = [
+                                    SystemMessage(content=(
+                                        f"You are Kira AI 2.7. Synthesize the final, complete, accurate, well-structured answer to the user's request in {target_lang_label}. "
+                                        "CRITICAL: Output ONLY the final answer directly to the user. DO NOT output <think> tags or internal reasoning."
+                                    )),
+                                    HumanMessage(content=(
+                                        f"User Question:\n{user_input}\n\n"
+                                        + (f"Preliminary Reasoning Notes:\n{extracted_thought[:2500]}\n\n" if extracted_thought else "")
+                                        + "Deliver the complete final answer now:"
+                                    ))
+                                ]
+                                synth_model = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in ALL_MODEL_CANDIDATES else (PREFERRED_FLASH or PREFERRED_PRO)
+                                ok_syn, syn_chunks, _ = await _try_all_keys_and_models(synth_prompt, synth_model, ui_lang=ui_lang)
+                                if ok_syn and syn_chunks:
+                                    synthesized_reply = sanitize_ai_reply_for_chat("".join([getattr(c, "content", c) for c in syn_chunks])).strip()
+                            except Exception as _syn_err:
+                                print("Active synthesis fallback notice:", _syn_err)
+
+                            if synthesized_reply:
+                                synth_out = f"\n\n{synthesized_reply}"
+                                full_response += synth_out
+                                yield synth_out
                             else:
                                 # 3. Proactive Executive Solution Fallback (Never say unsure!)
                                 proactive_fallbacks = {
@@ -9191,11 +9295,11 @@ def _generate_task_deliverable(title: str, description: str, instruction: str = 
         ]
         
         try:
-            llm = _create_llm(PREFERRED_PRO, API_KEYS[0])
-            result = llm.invoke(task_prompt).content.strip()
+            llm = _create_llm(PREFERRED_PRO, API_KEYS[0] if API_KEYS else None)
+            result = sanitize_ai_reply_for_chat(llm.invoke(task_prompt).content).strip()
         except Exception:
-            llm = _create_llm(PREFERRED_FLASH, API_KEYS[0])
-            result = llm.invoke(task_prompt).content.strip()
+            llm = _create_llm(PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
+            result = sanitize_ai_reply_for_chat(llm.invoke(task_prompt).content).strip()
             
         deliv_type = "document"
         res_lower = result.lower()
@@ -9246,11 +9350,11 @@ def _evaluate_task_with_boardroom(title: str, description: str) -> dict:
         ]
         
         try:
-            llm = _create_llm(PREFERRED_PRO, API_KEYS[0])
-            raw_res = llm.invoke(eval_prompt).content.strip()
+            llm = _create_llm(PREFERRED_PRO, API_KEYS[0] if API_KEYS else None)
+            raw_res = sanitize_ai_reply_for_chat(llm.invoke(eval_prompt).content).strip()
         except Exception:
-            llm = _create_llm(PREFERRED_FLASH, API_KEYS[0])
-            raw_res = llm.invoke(eval_prompt).content.strip()
+            llm = _create_llm(PREFERRED_FLASH, API_KEYS[0] if API_KEYS else None)
+            raw_res = sanitize_ai_reply_for_chat(llm.invoke(eval_prompt).content).strip()
         
         import json as _json, re as _re
         json_match = _re.search(r'\{.*\}', raw_res, _re.DOTALL)
@@ -9727,7 +9831,7 @@ async def _verify_slip_with_ai(slip_base64: str, expected_amount: float, order_i
     ]
 
     try:
-        preferred_model = "qwen/qwen-2.5-vl-72b-instruct" if OPENROUTER_API_KEYS else "meta-llama/llama-3.2-11b-vision-instruct"
+        preferred_model = "nvidia/nemotron-3.5-super-vl:free" if OPENROUTER_API_KEYS else PREFERRED_PRO
         s, chunks, err = await _try_all_keys_and_models(messages, preferred_model, ui_lang="th")
         if s and chunks:
             raw_reply = "".join(chunks)
@@ -10585,13 +10689,7 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks):
     return {"status": "ok", "processed_events": len(events)}
 
 
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 8000))
-    print(f"🌐 Kira Public Web is starting on port {port}")
-    uvicorn.run("app:app", host="0.0.0.0", port=port, log_level="info")
-
-
-# ========== 🎨 Black Forest Labs FLUX.1-schnell Studio Endpoint ==========
+# ========== 🎨 Kira 2.7 Vision Studio Endpoint ==========
 class FluxStudioRequest(BaseModel):
     prompt: str
     aspect_ratio: Optional[str] = "1:1"
@@ -10600,7 +10698,7 @@ class FluxStudioRequest(BaseModel):
 
 @app.post("/api/generate_image_flux")
 async def api_generate_image_flux(req: FluxStudioRequest):
-    """Kira 2.7 Studio - Black Forest Labs FLUX.1-schnell 4-Step Ultra-HD Image Generation Endpoint"""
+    """Kira 2.7 Vision Studio - Ultra-HD Diffusion Image Generation Endpoint"""
     import urllib.parse
     import random
     t0 = time.time()
@@ -10647,10 +10745,16 @@ async def api_generate_image_flux(req: FluxStudioRequest):
         "image_url": image_url,
         "prompt": raw_prompt,
         "enhanced_prompt": eng_prompt,
-        "model": "black-forest-labs/FLUX.1-schnell",
+        "model": "Kira 2.7 Vision Studio",
         "aspect_ratio": req.aspect_ratio or "1:1",
         "width": w,
         "height": h,
         "latency_s": latency,
-        "message": "สร้างภาพด้วย Black Forest Labs FLUX.1-schnell สำเร็จแล้วค่ะ",
+        "message": "สร้างภาพด้วย Kira 2.7 Vision Studio สำเร็จแล้วค่ะ",
     }
+
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 8000))
+    print(f"🌐 Kira Public Web is starting on port {port}")
+    uvicorn.run("app:app", host="0.0.0.0", port=port, log_level="info")

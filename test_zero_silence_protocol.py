@@ -83,11 +83,11 @@ class TestProactiveProtocol(unittest.TestCase):
         print("  ✅ [Passed] script.js eliminates uncertainty-note and enforces Proactive Executive UI")
 
     def test_4_sw_cache_name(self):
-        """Verify sw.js has cache-busting version for proactive mind"""
+        """Verify sw.js has cache-busting version for Kira v2.7"""
         with open("static/sw.js", "r", encoding="utf-8") as f:
             sw_content = f.read()
-        self.assertIn("kira-ai-cache-v2.7-proactive-mind", sw_content)
-        print("  ✅ [Passed] Service Worker cache-busting synchronized to v2.7-proactive-mind")
+        self.assertIn("kira-ai-cache-v2.7-deep-qa-verified", sw_content)
+        print("  ✅ [Passed] Service Worker cache-busting synchronized to v2.7-deep-qa-verified")
 
 if __name__ == "__main__":
     unittest.main()
