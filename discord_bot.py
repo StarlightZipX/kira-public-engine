@@ -11,8 +11,12 @@ import asyncio
 import re
 from dotenv import load_dotenv
 
-# บังคับใช้ UTF-8
-sys.stdout.reconfigure(encoding='utf-8')
+# บังคับใช้ UTF-8 อย่างปลอดภัย
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
 
 # โหลดค่าคอนฟิกจาก .env
 load_dotenv()
@@ -35,11 +39,9 @@ except Exception as e:
     DIRECT_ENGINE_AVAILABLE = False
     print(f"ℹ️ [Kira Discord] Direct Brain Engine ไม่พบ จะเชื่อมต่อผ่าน HTTP API: {KIRA_API_URL}")
 
-# ตั้งค่า Gateway Intents
+# ตั้งค่า Gateway Intents (ใช้เฉพาะที่จำเป็นต่อการแชตเพื่อความเสถียรสูงสุด)
 intents = discord.Intents.default()
 intents.message_content = True
-intents.members = True
-intents.presences = True
 
 bot = commands.Bot(command_prefix=["!kira ", "/kira "], intents=intents, help_command=None)
 
@@ -154,7 +156,7 @@ async def query_kira_engine(user_query: str, author_name: str, is_dm: bool = Fal
             content = resp.read().decode("utf-8")
             return clean_discord_reply(content)
     except Exception as err:
-        return f"ขออภัยด้วยนะคะ ในจังหวะนี้สัญญาณคิระอาจติดขัดเล็กน้อย ({err}) รบกวนลองใหม่อีกครั้งนะคะ 💜"
+        return "ขออภัยด้วยนะคะ ในจังหวะนี้สัญญาณสมองกลของคิระอาจติดขัดเล็กน้อย รบกวนลองใหม่อีกครั้งนะคะ 🌸💜"
 
 @bot.event
 async def on_ready():
@@ -173,7 +175,7 @@ async def on_ready():
 
 @bot.event
 async def on_message(message: discord.Message):
-    # ไม่ตอบข้อความตัวเอง
+    # ไม่ตอบข้อความตัวเอง หรือข้อความจากบอทตัวอื่น
     if message.author == bot.user or message.author.bot:
         return
 
@@ -198,9 +200,9 @@ async def on_message(message: discord.Message):
         await message.reply("สวัสดีค่ะ! มีเรื่องไหนให้คิระช่วยวิเคราะห์ เขียนโค้ด หรือหาข้อมูล สอบถามหนูได้เลยนะคะ 🌸✨")
         return
 
-    # แสดงไอคอนกำลังพิมพ์ (Kira is typing...)
-    async with message.channel.typing():
-        try:
+    try:
+        # แสดงไอคอนกำลังพิมพ์ (Kira is typing...) อย่างปลอดภัย
+        async with message.channel.typing():
             author_display = message.author.display_name or message.author.name
             raw_reply_text = await query_kira_engine(clean_text, author_display, is_dm=is_dm)
             reply_text = clean_discord_reply(raw_reply_text)
@@ -212,8 +214,13 @@ async def on_message(message: discord.Message):
                     await message.reply(chunk)
                 else:
                     await message.channel.send(chunk)
-        except Exception as e:
-            await message.reply(f"เกิดข้อผิดพลาดในการประมวลผลค่ะ: {e}")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        try:
+            await message.reply("ขออภัยด้วยนะคะบอสและเพื่อนๆ สัญญาณประมวลผลของคิระสะดุดเล็กน้อย รบกวนลองส่งใหม่อีกครั้งได้เลยนะคะ 🌸✨")
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     if not DISCORD_BOT_TOKEN or DISCORD_BOT_TOKEN == "YOUR_DISCORD_BOT_TOKEN_HERE":
