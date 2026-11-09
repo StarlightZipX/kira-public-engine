@@ -155,6 +155,23 @@ else:
 
 app = FastAPI()
 
+# --- Auto-Deploy Discord Bot Daemon on Cloud (Render 24/7) ---
+@app.on_event("startup")
+async def start_cloud_discord_bot():
+    token = os.environ.get("DISCORD_BOT_TOKEN", "").strip()
+    is_render = os.environ.get("RENDER") is not None or os.environ.get("IS_RENDER") == "true"
+    run_cloud = os.environ.get("RUN_DISCORD_BOT_ON_STARTUP", "true").lower() in ("true", "1", "yes")
+    
+    # ถ้าอยู่บน Render และมี Token ให้สตาร์ตบอท Discord อัตโนมัติบน Cloud 24/7
+    if is_render and run_cloud and token and token != "YOUR_DISCORD_BOT_TOKEN_HERE":
+        print("🚀 [Render Cloud] ตรวจพบ DISCORD_BOT_TOKEN กำลังเชื่อมต่อ Kira เข้าสู่ Discord 24/7...")
+        try:
+            import discord_bot
+            asyncio.create_task(discord_bot.bot.start(token))
+            print("🌸 [Render Cloud] สตาร์ต Kira Discord Bot บนเซิร์ฟเวอร์เรียบร้อยแล้วค่ะ!")
+        except Exception as e:
+            print("⚠️ [Render Cloud] สตาร์ตบอท Discord บน Render ล้มเหลว:", e)
+
 # --- Enterprise Cross-Origin Resource Sharing (CORS) Protection ---
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
