@@ -1789,14 +1789,14 @@ def log_chat(username: str, role: str, content: str, session_id: str = None):
 
 # ========== โมเดลที่ปลอดภัยของ Groq & Multi-Provider ==========
 ALL_MODEL_CANDIDATES = [
-    "nvidia/nemotron-3-ultra-550b-a55b:free",
-    "qwen/qwen3.8-27b",
     "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
     "openai/gpt-oss-20b"
 ]
 
-# ========== Multi-Brain Profiles (Kira 2.6 - State-of-the-Art Upgrades) ==========
-# เลือกสมองที่เหมาะสมที่สุดตามประเภทคำถาม รองรับทั้ง Qwen 3.8, GPT-OSS 120B/20B, NVIDIA Nemotron 550B Free, และ Groq
+# ========== Multi-Brain Profiles (Kira 2.7 - State-of-the-Art Upgrades) ==========
+# เลือกสมองที่เหมาะสมที่สุดตามประเภทคำถาม รองรับทั้ง GPT-OSS 120B, Qwen 3.8 27B, NVIDIA Nemotron 550B Free, และ Groq LPU
 BRAIN_PROFILES = {
     "ultra": {
         "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
@@ -1813,7 +1813,7 @@ BRAIN_PROFILES = {
         "keywords": ["คำนวณ", "วิเคราะห์", "เปรียบเทียบ", "สถิติ", "ตรรกะ", "เหตุผล", "ข้อดี", "ข้อเสีย", 
                      "แผน", "กลยุทธ์", "strategy", "analyze", "calculate", "compare", "pros", "cons",
                      "วางแผน", "ออกแบบ", "สถาปัตยกรรม", "ระบบ", "โครงสร้าง", "ธุรกิจ", "การตลาด", "math", "คณิต"],
-        "description": "โหมดวิเคราะห์ตรรกะและแผนงาน (Kira 2.7 Advanced Logic Engine)"
+        "description": "โหมดวิเคราะห์ตรรกะและแผนงาน (Kira 2.7 Advanced Logic 120B Engine)"
     },
     "reasoning": {
         "model": "qwen/qwen3.8-27b",
@@ -1835,15 +1835,15 @@ BRAIN_PROFILES = {
         "description": "โหมดสร้างสรรค์เนื้อหาและงานเขียน (Creative Content 120B Engine)"
     },
     "translate": {
-        "model": "openai/gpt-oss-20b",
+        "model": "qwen/qwen3.8-27b",
         "keywords": ["แปล", "translate", "ภาษาอังกฤษ", "ภาษาจีน", "ภาษาเกาหลี", "ภาษาญี่ปุ่น",
                      "english", "chinese", "korean", "japanese", "translation", "/แปลภาษา"],
-        "description": "โหมดภาษาศาสตร์และการแปลภาษา (Linguistic 20B High-Speed Engine)"
+        "description": "โหมดภาษาศาสตร์และการแปลภาษาระดับสูง (Qwen Multilingual Engine)"
     },
     "chat": {
-        "model": "openai/gpt-oss-20b",
+        "model": "openai/gpt-oss-120b",
         "keywords": [],  # Default fallback
-        "description": "โหมดประมวลผลความเร็วสูง (Instant Fast Engine)"
+        "description": "โหมดสนทนาและคิดวิเคราะห์ระดับเรือธง (Flagship 120B Conversational Engine)"
     }
 }
 
@@ -2526,8 +2526,8 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
     return False, [], last_error
 
 # ========== เลือกโมเดลหลักตอนบูท ==========
-PREFERRED_FLASH = "openai/gpt-oss-20b"
-PREFERRED_PRO = "qwen/qwen3.8-27b"
+PREFERRED_FLASH = "qwen/qwen3.8-27b"
+PREFERRED_PRO = "openai/gpt-oss-120b"
 
 print("🔍 กำลังสแกนหาสมองที่ใช้ได้จาก Groq...")
 groq_available_models = []
@@ -2556,33 +2556,39 @@ if groq_available_models:
     if not chat_models:
         chat_models = groq_available_models
 
-    # Update global candidates to valid chat models
+    # เรียงลำดับโมเดล: โมเดลใหญ่ฉลาดสูงสุด (120b, 27b) อยู่หน้าสุด ส่วน 20b อยู่ท้ายสุดเป็นไม้ตายฉุกเฉิน
+    chat_models_sorted = sorted(
+        chat_models,
+        key=lambda m: 0 if "120b" in m.lower() else (1 if "qwen" in m.lower() or "27b" in m.lower() else (3 if "20b" in m.lower() else 2))
+    )
     ALL_MODEL_CANDIDATES.clear()
-    ALL_MODEL_CANDIDATES.extend(chat_models)
+    ALL_MODEL_CANDIDATES.extend(chat_models_sorted)
     
-    # Auto-assign Pro (qwen 3.8 / 120b / qwen)
-    if "qwen/qwen3.8-27b" in chat_models:
-        PREFERRED_PRO = "qwen/qwen3.8-27b"
-    elif "openai/gpt-oss-120b" in chat_models:
+    # Auto-assign Pro: 120B Flagship Heavyweight ก่อนเสมอ
+    if "openai/gpt-oss-120b" in chat_models:
         PREFERRED_PRO = "openai/gpt-oss-120b"
+    elif "qwen/qwen3.8-27b" in chat_models:
+        PREFERRED_PRO = "qwen/qwen3.8-27b"
     else:
-        pro_c = [m for m in chat_models if any(k in m.lower() for k in ["qwen3.8", "qwen", "120b", "70b"])]
+        pro_c = [m for m in chat_models if any(k in m.lower() for k in ["120b", "qwen3.8", "qwen", "70b"])]
         PREFERRED_PRO = pro_c[0] if pro_c else chat_models[0]
     
-    # Auto-assign Flash (avoid matching "20b" inside "120b"!)
-    if "openai/gpt-oss-20b" in chat_models:
-        PREFERRED_FLASH = "openai/gpt-oss-20b"
+    # Auto-assign Flash: ใช้ Qwen 27B เป็นโมเดลความเร็วสูงแต่สมองฉลาดเฉียบคม ปลดระวาง 20b จากการเป็นสมองหลัก
+    if "qwen/qwen3.8-27b" in chat_models:
+        PREFERRED_FLASH = "qwen/qwen3.8-27b"
+    elif "openai/gpt-oss-120b" in chat_models:
+        PREFERRED_FLASH = "openai/gpt-oss-120b"
     else:
-        flash_c = [m for m in chat_models if re.search(r'(?<!1)20b|mini|(?<!\d)8b|instant', m.lower())]
+        flash_c = [m for m in chat_models if "20b" not in m.lower()]
         PREFERRED_FLASH = flash_c[0] if flash_c else chat_models[-1]
 
-    # Update default brain profiles for Groq
+    # อัปเกรดสมองทุกโปรไฟล์เป็น 120B หรือ 27B ทั้งหมด
     BRAIN_PROFILES["logic"]["model"] = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in chat_models else PREFERRED_PRO
     BRAIN_PROFILES["reasoning"]["model"] = "qwen/qwen3.8-27b" if "qwen/qwen3.8-27b" in chat_models else PREFERRED_PRO
     BRAIN_PROFILES["code"]["model"] = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in chat_models else PREFERRED_PRO
     BRAIN_PROFILES["creative"]["model"] = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in chat_models else PREFERRED_PRO
-    BRAIN_PROFILES["translate"]["model"] = "openai/gpt-oss-20b" if "openai/gpt-oss-20b" in chat_models else PREFERRED_FLASH
-    BRAIN_PROFILES["chat"]["model"] = "openai/gpt-oss-20b" if "openai/gpt-oss-20b" in chat_models else PREFERRED_FLASH
+    BRAIN_PROFILES["translate"]["model"] = "qwen/qwen3.8-27b" if "qwen/qwen3.8-27b" in chat_models else PREFERRED_FLASH
+    BRAIN_PROFILES["chat"]["model"] = "openai/gpt-oss-120b" if "openai/gpt-oss-120b" in chat_models else PREFERRED_PRO
 else:
     print("⚠️ ไม่พบโมเดลจาก Groq (อาจคีย์เสียหรือจำกัดสิทธิ์) จะพยายาม Fallback...")
 
@@ -5123,15 +5129,22 @@ def _get_full_system_prompt(username: str, ui_lang: str = "th") -> str:
     )
 
     thai_wit_protocol = (
-        f"\n\n[Kira {KIRA_SYSTEM_VERSION} High-Intelligence, Analytical Depth & Honest Inquiry Protocol]:\n"
-        "1. ลดการเล่นมุกพร่ำเพรื่อเด็ดขาด (Strict Banter Calibration):\n"
-        "   - เล่นมุกเฉพาะตอนที่คู่สนทนาเป็นฝ่ายเปิดมุก แซว หรือชวนเล่นมุกมาชัดเจนเท่านั้น (เช่น พูดว่า 'โม้', 'กวน', '555')\n"
-        "   - หากคู่สนทนาถามคำถามหาความรู้ ประวัติศาสตร์ วิชาการ ข้อเท็จจริง หรือถามชื่อบุคคล ('...คือใคร', '...คืออะไร', 'ประวัติ...'):\n"
-        "     ห้ามตอบเล่นมุกเด็ดขาด! ต้องตอบด้วยความรู้จริง ฉลาด วิเคราะห์อย่างลึกซึ้ง ถูกต้อง แม่นยำ และมีสาระ 100%\n"
-        "2. ห้ามกุเรื่อง ห้ามมั่วข้อมูลเด็ดขาด (Zero-Hallucination & Truthfulness):\n"
-        "   - ห้ามเดา ห้ามมโนชื่อภาษาอังกฤษ หรือแต่งเรื่องเท็จ/บุคคลที่ไม่มีจริงขึ้นมาแทนเด็ดขาด!\n"
-        "   - หากชื่อหรือเรื่องใดไม่แน่ใจ หรือไม่มีข้อมูลชัดเจน ให้ตอบตามตรงอย่างซื่อสัตย์ และถามบริบทจากผู้ใช้ตรงๆ ทันทีเพื่อความถูกต้อง ไม่ปล่อยให้เอาข้อมูลมั่วมาตอบแทน\n"
-        "3. ความรู้ประวัติศาสตร์ วรรณกรรม และข้อเท็จจริงสากล (Global & Cultural Knowledge Mastery):\n"
+        f"\n\n[Kira {KIRA_SYSTEM_VERSION} Tier-1 Strategic Intelligence, Deep Analytical Rigor & Cognitive Mastery]:\n"
+        "1. ระดับความคิดวิเคราะห์เทียบชั้น AI ชั้นนำระดับโลก (Tier-1 Cognitive Analytical Depth):\n"
+        "   - ยกระดับตรรกะ การคิดวิเคราะห์ และการให้เหตุผลเทียบเท่า AI ชั้นนำ (Claude 3.5 Sonnet / GPT-4o / DeepSeek R1)\n"
+        "   - คิดหลายมิติ (Multi-Perspective Synthesis): เมื่อเจอโจทย์ ปัญหา หรือคำถาม ให้วิเคราะห์ทั้งแก่นของปัญหา, ปัจจัยเชิงโครงสร้าง, ข้อดี-ข้อเสีย, ความเสี่ยงแฝง, และทางเลือกเชิงกลยุทธ์เสมอ\n"
+        "   - ห้ามตอบแบบตื้นเขิน ท่องจำ หรือเป็น 'ตัวกีกี้' เด็ดขาด ทุกคำตอบต้องมีเนื้อหาที่หนักแน่น ทรงภูมิปัญญา และสะท้อนความเชี่ยวชาญระดับสูง\n"
+        "   - โครงสร้างคำตอบชัดเจนระดับ Executive Summary: แยกประเด็นสำคัญเป็นข้อๆ มีเหตุผลและบริบทสนับสนุนครบถ้วน ใช้งานได้จริงทันที\n"
+        "2. กฎเหล็กการตอบโต้และการเล่นมุก (Strict Banter Calibration & Professional Presence):\n"
+        "   - โหมดเริ่มต้นคือ 'ที่ปรึกษาส่วนตัวระดับหัวกะทิ' (Executive Strategic Co-Pilot) ที่สุภาพ นิ่ง ฉลาด และมีความรู้ลึกซึ้ง\n"
+        "   - จะเล่นมุกหรือแซวเฉพาะเมื่อคู่สนทนาเป็นฝ่ายเปิดมุก ชวนเล่น หรือหยอกล้อมาชัดเจนเท่านั้น (เช่น พูดว่า 'โม้', 'กวน', '555')\n"
+        "   - หากเป็นการถามความรู้ ปรึกษางาน สั่งงาน หรือวิเคราะห์ ให้ตอบอย่างจริงจัง มีสาระ แม่นยำ และห้ามตอบแบบเล่นมุกเด็ดขาด\n"
+        "3. ปิดกั้นการมโนข้อมูล 100% & ถามตรงไปตรงมาเมื่อไม่รู้ (Zero-Hallucination & Honest Intellectual Integrity):\n"
+        "   - ห้ามแต่งเรื่อง ห้ามเดาชื่อภาษาอังกฤษ หรือกุบุคคล/ช่องที่ไม่มีอยู่จริงขึ้นมาเด็ดขาด!\n"
+        "   - หากข้อมูลใดคลุมเครือ ไม่ครบถ้วน หรือไม่แน่ใจ ให้บอกตรงๆ อย่างซื่อสัตย์และสุภาพ พร้อมระบุจุดที่ต้องการความชัดเจนหรือเสนอแนวทางที่เป็นไปได้ ดีกว่าการนำข้อมูลมั่วมาตอบแทน\n"
+        "4. คิดล่วงหน้าและมองข้ามช็อต (Proactive Value-Add):\n"
+        "   - ไม่ใช่แค่ตอบรับคำสั่ง แต่ต้องช่วยมองผลกระทบในอนาคต ชี้จุดที่อาจเป็นอุปสรรค และเสนอแนะขั้นตอนถัดไป (Next Steps) ที่สร้างมูลค่าสูงสุดให้บอสเสมอ\n"
+        "5. ความรู้ประวัติศาสตร์ วรรณกรรม และข้อเท็จจริงสากล (Global & Cultural Knowledge Mastery):\n"
         "   - รอบรู้ข้อเท็จจริง เช่น ในประวัติศาสตร์จีน/ไซฮั่น 'ฌ้อปาอ๋อง' (ฉู่ป้าหวัง - 楚霸王) คือสมัญญาของ 'เซี่ยงอวี่' (Xiang Yu) แม่ทัพและผู้นำแห่งแคว้นฉู่ตะวันตก ยุคสงครามฉู่-ฮั่น คู่ปรับคนสำคัญของหลิวปัง (ฮั่นเกาจู่)\n"
     )
     
