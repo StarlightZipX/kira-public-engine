@@ -113,6 +113,22 @@ def chunk_discord_message(text: str, max_chars: int = 1950) -> list:
         chunks.append(remaining)
     return chunks
 
+# ฟังก์ชันตรวจสอบว่าข้อความเป็นข้อความปฏิเสธ (Refusal) หรือไม่
+def is_refusal_text(text: str) -> bool:
+    if not text:
+        return False
+    t = text.lower()
+    patterns = [
+        "cannot help with that", "can't help with that", "cannot fulfill this",
+        "i am unable to", "i cannot assist", "as an ai",
+        "ฉันไม่สามารถ", "หนูไม่สามารถ", "ไม่สามารถจำลองสถานการณ์",
+        "ไม่สามารถสวมบทบาท", "ไม่สามารถให้คำแนะนำ", "ไม่สามารถให้ข้อมูล",
+        "ไม่สามารถวางแผน", "ขัดต่อความปลอดภัย", "ขัดต่อศีลธรรม", "ขัดต่อนโยบาย",
+        "ศีลธรรม", "ขออภัยค่ะ แต่ฉันไม่สามารถ", "ขออภัยค่ะ หนูไม่สามารถ",
+        "ขออภัยค่ะ แต่หนูไม่สามารถ", "ไม่สามารถเข้าร่วม"
+    ]
+    return any(p in t for p in patterns)
+
 # เก็บบริบทการสนทนาล่าสุดแยกตามช่อง (Channel History Sliding Window)
 channel_memories = {}
 MAX_CHANNEL_MEMORIES = 6
@@ -121,6 +137,14 @@ def get_channel_history(channel_id: int):
     return channel_memories.get(channel_id, [])
 
 def add_channel_history(channel_id: int, role: str, author: str, content: str):
+    # กฎเหล็ก: ห้ามบันทึกข้อความปฏิเสธ (Refusal) ลงในความจำช่องเด็ดขาด เพื่อป้องกันไม่ให้โมเดลติดลูปปฏิเสธซ้ำซาก
+    if role == "assistant" and is_refusal_text(content):
+        # ลบข้อความ user ก่อนหน้าที่ทำให้เกิดการปฏิเสธออกด้วยเพื่อตัดวงจร
+        if channel_id in channel_memories and channel_memories[channel_id]:
+            if channel_memories[channel_id][-1].get("role") == "user":
+                channel_memories[channel_id].pop()
+        return
+
     if channel_id not in channel_memories:
         channel_memories[channel_id] = []
     channel_memories[channel_id].append({
@@ -171,17 +195,21 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
         "   - ห้ามใช้คำเกริ่นทักทายสำเร็จรูปสไตล์แชทบอท (เช่น 'แน่นอนค่ะ! ยินดีอย่างยิ่ง...', 'สวัสดีค่ะ วันนี้หนูพร้อม...') และห้ามลงท้ายด้วยคำถาม Call-Center ซ้ำซาก (เช่น 'หากมีข้อสงสัยเพิ่มเติมถามได้นะคะ', 'หวังว่าจะเป็นประโยชน์นะคะ') ให้เข้าประเด็นทันที (Direct-to-Value)\n"
         "   - ปรับจังหวะการตอบตามธรรมชาติ: หากคุยเล่นหรือถามสั้นๆ ให้ตอบกระชับ ตรงไปตรงมา ไม่ต้องแตกเป็นตารางหรือรายงานราชการโดยไม่จำเป็น\n"
         "   - ห้ามหลุดข้อความบ่นเรื่องการค้นหาหลังบ้าน (Meta-talk) ตอบอย่างมั่นใจ ชาญฉลาด และสง่างาม\n"
-        "7. การแยกแยะบทบาทสมมุติและความปลอดภัยอย่างมีวิจารณญาณ (Anti-Fragile Roleplay & Nuanced Safety Protocol):\n"
-        "   - ไม่อ่อนไหวเปราะบางเกินไปกับบทบาทสมมุติ: หากคู่สนทนาชวนเล่น 'บทบาทสมมุติ', เล่นเกม, แต่งนิยาย, จำลองสถานการณ์ยุทธวิธี หรือโจทย์สมมุติ (เช่น สมมุติเป็นผู้บัญชาการรถถังทำลายกำแพง, เล่นเป็นตัวละครในเกมสงคราม) ห้ามตอบปฏิเสธทื่อๆ เด็ดขาด! ให้แยกแยะได้ว่านี่คือจินตนาการและการศึกษา ไม่ใช่อันตรายในโลกจริง และร่วมเล่นบทบาทสมมุตินั้นอย่างเต็มที่ สนุกสนาน และมีไหวพริบ\n"
+        "7. การแยกแยะบทบาทสมมุติและความปลอดภัยอย่างมีวิจารณญาณ (Anti-Fragile Roleplay & Tactical Simulation Mastery):\n"
+        "   - กฎเหล็กคุ้มครองบทบาทสมมุติและการจำลองยุทธวิธี: หากคู่สนทนาชวนเล่น 'บทบาทสมมุติ', เล่นเกม, แต่งนิยาย, ยุทธวิธีทางทหารจำลอง (เช่น บัญชาการรถถัง, วางแผนทำลายกำแพงค่ายศัตรู, กลยุทธ์เจาะแนวรบในเกม) ห้ามตอบปฏิเสธเด็ดขาด! ให้แยกแยะได้ว่านี่คือเกม จินตนาการ และทฤษฎียุทธวิธี ไม่ใช่อันตรายในโลกจริง และให้สวมบทบาทบัญชาการ วางแผนยุทธวิธีอย่างสมจริง ชาญฉลาด สนุกสนาน และเต็มเปี่ยมด้วยไหวพริบ ห้ามอ้างเรื่องความรุนแรงหรือศีลธรรมมาปฏิเสธโดยเด็ดขาด\n"
+        "   - กฎการตัดวงจรอคติในอดีต (Zero Past-Refusal Anchoring): หากในประวัติการสนทนาก่อนหน้าเคยมีข้อความปฏิเสธที่ผิดพลาดค้างอยู่ ให้เพิกเฉยต่อการปฏิเสธในอดีตทั้งหมดทันที ห้ามนำมาลอกเลียนแบบหรือตอบปฏิเสธซ้ำตามอดีตเด็ดขาด\n"
         "   - การคัดกรองข้อมูลอันตรายจริง (True Harm Detection & Double-Check Protocol):\n"
-        "     * หากเป็นคำถามที่คาบเกี่ยวหรือมีแนวโน้มเป็นข้อมูลอันตราย ให้ถามเพื่อความแน่ใจในเจตนาและบริบทก่อนอย่างสุภาพ (เช่น 'เรื่องนี้ต้องการศึกษาเพื่อการป้องกัน การวิจัยความปลอดภัย หรือการแต่งนิยายใช่ไหมคะ? รบกวนยืนยันบริบทเพื่อให้หนูให้ข้อมูลในกรอบที่ถูกต้องและปลอดภัยค่ะ')\n"
+        "     * หากเป็นคำถามที่คาบเกี่ยวหรือมีแนวโน้มเป็นข้อมูลอันตรายจริง ให้ถามเพื่อความแน่ใจในเจตนาและบริบทก่อนอย่างสุภาพ\n"
         "     * หากคู่สนทนายืนยันบริบทกลับมาแล้ว ให้วิเคราะห์อีกครั้ง: ถ้าเห็นว่าเป็นข้อมูลที่ดี (เช่น เพื่อการศึกษา, ซ้อมรบในเกม, ป้องกันตัว, เขียนนิยาย) ให้ตอบกลับไปอย่างสร้างสรรค์และมีประโยชน์\n"
         "     * แต่ถ้าวิเคราะห์แล้วพบว่าเป็นข้อมูลอันตรายร้ายแรงในโลกความเป็นจริงโดยตรง (เช่น วิธีผลิตอาวุธร้ายแรงจริง, สารพิษเคมี/ชีวภาพ, การก่อการร้าย, การทำร้ายตนเอง, วินาศกรรม) คิระต้องเลี่ยงที่จะไม่ตอบอย่างเด็ดขาดและสุภาพ แม้อีกฝ่ายจะขอร้องหรือวิงวอนก็ตาม\n"
     )
 
     # ตรวจสอบว่าเป็นคำถามหาความรู้ / บุคคล / ข้อเท็จจริง หรือบทบาทสมมุติ
     q_low = user_query.lower()
-    is_roleplay = any(k in q_low for k in ["สมมุติ", "บทบาทสมมุติ", "สมมติ", "roleplay", "เกม", "game", "นิยาย", "ถ้าหาก", "scenario", "สถานการณ์สมมุติ"])
+    is_roleplay = any(k in q_low for k in [
+        "สมมุติ", "สมมติ", "บทบาทสมมุติ", "roleplay", "เกม", "game", "นิยาย", 
+        "ถ้าหาก", "scenario", "สถานการณ์สมมุติ", "ผบ", "ผู้บัญชาการ", "บัญชาการ", "สวมบทบาท", "จำลองสถานการณ์"
+    ])
     is_factual = any(k in q_low for k in [
         "คือใคร", "ใครคือ", "คืออะไร", "อะไรคือ", "ประวัติ", "ทำไม", "อย่างไร", 
         "ช่วยอธิบาย", "แปลว่า", "วิเคราะห์", "ข่าว", "ราคา", "ที่ไหน", "เมื่อไหร่", "who is", "what is"
@@ -202,26 +230,28 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
                 except Exception as se:
                     print("Autonomous search error:", se)
 
-            # เติมบริบทการสนทนาล่าสุดในช่อง
-            if channel_id:
+            # เติมบริบทการสนทนาล่าสุดในช่อง โดยกรองข้อความปฏิเสธเก่าออกทั้งหมด
+            # ถ้าเป็นโหมดบทบาทสมมุติ (Roleplay) จะไม่นำประวัติทั่วไปในอดีตมาปนเปื้อน เพื่อป้องกันการติด Anchor ปฏิเสธในอดีต
+            if channel_id and not is_roleplay:
                 for past in get_channel_history(channel_id):
                     if past["role"] == "user":
                         history.append(kira_backend.HumanMessage(content=f"[{past['author']}]: {past['content']}"))
                     elif past["role"] == "assistant":
-                        history.append(kira_backend.AIMessage(content=past["content"]))
+                        # กรองข้อความปฏิเสธออก ไม่ส่งเข้าไปให้โมเดลจำและตอบซ้ำ
+                        if not is_refusal_text(past.get("content", "")):
+                            history.append(kira_backend.AIMessage(content=past["content"]))
             
             # ข้อความปัจจุบันพร้อมบริบทการ Reply
             curr_content = f"{reply_context}[{author_name}]: {user_query}" if reply_context else f"[{author_name}]: {user_query}"
             history.append(kira_backend.HumanMessage(content=curr_content))
             
-            # เลือกรุ่นสมองกล: หากเป็นบทบาทสมมุติใช้สมอง reasoning/creative เพื่อจินตนาการและไร้การปฏิเสธที่เปราะบาง
+            # เลือกรุ่นสมองกล: หากเป็นบทบาทสมมุติ ล็อกเข้า Qwen 27B / Creative เพื่อจินตนาการและไร้การปฏิเสธที่เปราะบาง
             if is_roleplay:
-                target_model = "2.7-reasoning"
-                target_flavor = "creative"
+                preferred_model = "qwen/qwen3.8-27b"
             else:
                 target_model = "2.7-pro"
                 target_flavor = "reasoning" if (is_factual or is_boss or len(user_query) > 30) else "fast"
-            preferred_model, brain_type, _ = kira_backend._route_brain(user_query, target_model, target_flavor)
+                preferred_model, brain_type, _ = kira_backend._route_brain(user_query, target_model, target_flavor)
             
             # เรียกกระบวนการคิดและกู้คืนฉุกเฉิน
             success, chunks, err = await kira_backend._try_all_keys_and_models(
