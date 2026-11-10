@@ -220,7 +220,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.8.4"
+KIRA_SYSTEM_VERSION = "2.8.5"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
