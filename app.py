@@ -232,26 +232,26 @@ KIRA_RELEASE_DATA = {
     "release_name": "Kira Enterprise Live Interactive Artifacts & Next-Gen Code Playground Edition",
     "badge_text": f"v{KIRA_SYSTEM_VERSION} Live Update",
     "title": f"✨ อัปเกรดระบบ Kira AI v{KIRA_SYSTEM_VERSION} เรียบร้อยแล้วค่ะ!",
-    "description": "คิระได้รับการอัปเกรดขุมพลังสมองกลยักษ์ 550B ฟรี พร้อมเกราะความซื่อสัตย์ Zero-Silence และสถาปัตยกรรมระดับ Enterprise ไร้ข้อผิดพลาดค่ะ",
-    "quote": "ตอนนี้ระบบพร้อมให้คุณและบอสสัมผัสความเร็วแสง ขุมพลัง 550B Free และความฉลาดแบบไร้ที่ติแล้วค่ะ ข้อมูลและประวัติแชตทั้งหมดยังคงปลอดภัย 100% ค่ะ 🌸",
+    "description": "คิระได้รับการยกระดับสถาปัตยกรรมระดับองค์กร (Enterprise Flagship Core) เพื่อความฉลาด การคิดวิเคราะห์เชิงลึก และความเสถียรสูงสุดในทุกมิติค่ะ",
+    "quote": "ตอนนี้ระบบพร้อมให้คุณและบอสสัมผัสความเร็วแสงและการวิเคราะห์ระดับเรือธงแล้วค่ะ ข้อมูลและประวัติการทำงานทั้งหมดยังคงปลอดภัย 100% ค่ะ 🌸",
     "highlights": [
         {
             "icon": "fa-crown",
             "color": "text-emerald",
-            "tag": "สมองกลยักษ์ 550B ฟรี",
-            "text": "ปลดล็อก Kira 2.7 Ultra (NVIDIA Nemotron 3 Ultra 550B Free Cloud Engine) แม่นยำ ฉลาดลึก ฟรี 100%"
+            "tag": "Flagship Executive Core",
+            "text": "ปลดล็อกขุมพลังการคิดวิเคราะห์ขั้นสูง Kira 2.9 Ultra สังเคราะห์ข้อมูลเชิงลึก แม่นยำ ฉลาดรอบด้าน"
         },
         {
             "icon": "fa-shield-halved",
             "color": "text-amber",
-            "tag": "Zero-Silence",
+            "tag": "Zero-Silence Guard",
             "text": "ขจัดความเงียบหายด้วย Zero-Silence & Honest Uncertainty Protocol รายงานสถานะอย่างซื่อสัตย์ระดับมืออาชีพ"
         },
         {
             "icon": "fa-brain",
             "color": "text-violet",
             "tag": "Multi-Brain Swarm",
-            "text": "สถาปัตยกรรมสลับโมเดลอัตโนมัติ Ultra 550B, Deep Reasoning 27B, Logic 120B และ Instant Flash"
+            "text": "สถาปัตยกรรมกระจายศูนย์ สลับประมวลผลอัตโนมัติระหว่าง Deep Reasoning, Creative Code และ Instant Flash"
         },
         {
             "icon": "fa-code",
@@ -279,7 +279,7 @@ KIRA_RELEASE_DATA = {
             "quote": "The system is fully updated and ready for you! All your chats, data, and workspace stay 100% secure. 🌸",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} Live Update",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "Next-Gen AI", "text": "Upgraded to Llama 3.3 70B & 3.1 8B with Dynamic Auto-Scanning"},
+                {"icon": "fa-brain", "color": "text-violet", "tag": "Flagship AI", "text": "Upgraded to Enterprise Multi-Brain Architecture with Autonomous Consensus Routing"},
                 {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDF Engine", "text": "Modern pypdf integration for flawless document & academic analysis"},
                 {"icon": "fa-globe", "color": "text-emerald", "tag": "Deep Search", "text": "Direct DDGS Autonomous Surfer for real-time web intelligence"},
                 {"icon": "fa-shield-halved", "color": "text-amber", "tag": "Security", "text": "Web Cryptography API (crypto.randomUUID) for secure sessions"},
@@ -292,7 +292,7 @@ KIRA_RELEASE_DATA = {
             "quote": "新版本已就绪！您的所有对话历史和数据依然 100% 安全保存。🌸",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 在线更新",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "新一代模型", "text": "全面升级至 Llama 3.3 70B 与 3.1 8B，具备动态多模型路由"},
+                {"icon": "fa-brain", "color": "text-violet", "tag": "旗舰智脑", "text": "全面升级至企业级多脑协同架构，具备自主共识路由与深度分析"},
                 {"icon": "fa-file-lines", "color": "text-cyan", "tag": "文档解析", "text": "升级现代 pypdf 引擎，精准秒级解析 PDF 与学术课件"},
                 {"icon": "fa-globe", "color": "text-emerald", "tag": "实时搜索", "text": "集成 Direct DDGS 智能引擎，实时抓取全网最新资讯"},
                 {"icon": "fa-shield-halved", "color": "text-amber", "tag": "加密安全", "text": "全面接入 Web Cryptography API (crypto.randomUUID) 会话防篡改"},
@@ -305,7 +305,7 @@ KIRA_RELEASE_DATA = {
             "quote": "지금 바로 새로워진 Kira를 경험해보세요! 대화 내용과 데이터는 100% 안전하게 유지됩니다. 🌸",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 라이브 업데이트",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "차세대 AI", "text": "Llama 3.3 70B & 3.1 8B 탑재 및 동적 모델 자동 탐색"},
+                {"icon": "fa-brain", "color": "text-violet", "tag": "플래그십 AI", "text": "엔터프라이즈 멀티 브레인 인텔리전스 엔진 탑재 및 자율 합의 라우팅 지원"},
                 {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDF 엔진", "text": "최신 pypdf 엔진 도입으로 정확하고 빠른 학술 문서 분석"},
                 {"icon": "fa-globe", "color": "text-emerald", "tag": "실시간 검색", "text": "Direct DDGS 서퍼 엔진으로 실시간 웹 검색 안정성 강화"},
                 {"icon": "fa-shield-halved", "color": "text-amber", "tag": "보안 강화", "text": "Web Cryptography API (crypto.randomUUID) 기반 고보안 세션"},
@@ -318,7 +318,7 @@ KIRA_RELEASE_DATA = {
             "quote": "新バージョンがいつでもご利用いただけます！会話履歴とデータは100%安全に保護されています。🌸",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 最新アップデート",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "次世代AI", "text": "Llama 3.3 70B & 3.1 8B への移行と動的モデル自動検知"},
+                {"icon": "fa-brain", "color": "text-violet", "tag": "旗艦AI", "text": "エンタープライズマルチブレイン協調アーキテクチャへの進化と自律コンセンサスルーティング"},
                 {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDFエンジン", "text": "最新の pypdf 採用で学術論文やスライドを高精度解析"},
                 {"icon": "fa-globe", "color": "text-emerald", "tag": "リアルタイム検索", "text": "Direct DDGS エンジンで最新のウェブ情報を高速取得"},
                 {"icon": "fa-shield-halved", "color": "text-amber", "tag": "高セキュリティ", "text": "Web Cryptography API (crypto.randomUUID) による安全なセッション管理"},
@@ -1848,6 +1848,8 @@ BRAIN_PROFILES = {
 }
 
 def _should_trigger_moa(user_input: str, model_version: str, flavor: str) -> tuple:
+    if model_version:
+        model_version = model_version.replace("2.9-", "2.7-")
     """Kira 2.1 Multi-Model Consensus & Peer Review:
     วิเคราะห์ระดับความซับซ้อนของโจทย์เพื่อเปิดกระบวนการ Draft+Review (ร่างคำตอบด้วย LLM ตัวหนึ่ง
     แล้วตรวจทานด้วย LLM อีกตัว) เพื่อกลั่นกรองคำตอบคุณภาพสูงอย่างคุ้มค่า
@@ -1896,6 +1898,8 @@ def _route_brain(user_input: str = "", model_version: str = "2.6-reasoning", fla
     """Multi-Brain Router: เลือกสถาปัตยกรรมที่เหมาะสมที่สุดตามโมเดลและคำถาม
     Returns: (model_name, brain_type, description)
     """
+    if model_version:
+        model_version = model_version.replace("2.9-", "2.7-")
     # If the user passed model_version as first arg for convenience
     if user_input in BRAIN_PROFILES or user_input in ("2.7-ultra", "2.7-reasoning", "2.7-pro", "2.7-flash", "2.7-vision", "2.6-ultra", "2.6-reasoning", "2.6-pro", "2.6-flash", "2.6-vision", "2.0-vision", "2.0-flash", "2.1-reasoning", "2.1-pro", "2.0-pro", "2.0-ultra"):
         if model_version in ("2.7-ultra", "2.7-reasoning", "2.6-ultra", "2.6-reasoning", "2.1-reasoning") and not flavor:
@@ -8719,7 +8723,7 @@ async def _generate_swarm_stream(user_input: str, uname: str, session_id: str, i
 async def chat_endpoint(req: ChatRequest, request: Request):
     user_input = req.message or ""
     uname = req.username
-    model_version = req.model_version
+    model_version = (req.model_version or "2.9-reasoning").replace("2.9-", "2.7-")
     session_id = req.session_id
     flavor = req.flavor
     persona = req.persona
@@ -8814,7 +8818,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             return StreamingResponse(
                 iter([
                     "### ✨ สิทธิ์ทดลองใช้งานด่วนครบ 5 ข้อความแล้วค่ะ!\n\n"
-                    "คุณได้สัมผัสความเร็วและความฉลาดของ **คิระ (Kira AI 2.7)** ครบ 5 ข้อความแล้วนะคะ 💖\n\n"
+                    "คุณได้สัมผัสความเร็วและความฉลาดของ **คิระ (Kira AI 2.9 Flagship)** ครบ 5 ข้อความแล้วนะคะ 💖\n\n"
                     "เพื่อใช้งานต่อได้แบบฟรีๆ **150 ข้อความต่อวัน** พร้อมบันทึกประวัติการแชตอัตโนมัติ และฟังก์ชันผู้ช่วยครบวงจร "
                     "คุณสามารถคลิกปุ่ม **'สมัครสมาชิกใหม่'** บนแถบเมนู เพื่อเปิดบัญชีใช้งานต่อได้ทันทีภายใน 10 วินาทีค่ะ!"
                 ]),
@@ -8824,7 +8828,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             iter([
                 "### ข้อความแจ้งเตือนโควตาการใช้งาน\n\n"
                 "**โควตาข้อความฟรีประจำวันของคุณครบ 15 ข้อความแล้วค่ะ**\n\n"
-                "หากคุณต้องการใช้งานต่อเนื่องแบบไม่จำกัด พร้อมเข้าถึงฟีเจอร์ระดับพรีเมียม (Kira 2.7 Boardroom สภาผู้บริหาร, การร่างชิ้นงานจริงอัตโนมัติ และสิทธิ์เข้าถึงโมเดล Reasoning เต็มประสิทธิภาพ) "
+                "หากคุณต้องการใช้งานต่อเนื่องแบบไม่จำกัด พร้อมเข้าถึงฟีเจอร์ระดับพรีเมียม (Kira 2.9 Boardroom สภาผู้บริหาร, การร่างชิ้นงานจริงอัตโนมัติ และสิทธิ์เข้าถึงโมเดล Reasoning เต็มประสิทธิภาพ) "
                 "สามารถคลิกปุ่ม **'อัปเกรด Pro'** ที่แถบเมนูด้านบน เพื่อเลือกแพ็กเกจที่เหมาะกับคุณได้ทันทีค่ะ"
             ]),
             media_type="text/plain; charset=utf-8"
@@ -8841,7 +8845,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
                 return StreamingResponse(
                     iter([
                         "### สิทธิพิเศษเฉพาะสมาชิก Kira Pro\n\n"
-                        "**Kira 2.7 Virtual Boardroom (สภา 4 ผู้บริหารเสมือน)** เป็นฟังก์ชันวิเคราะห์ยุทธศาสตร์เชิงลึกสำหรับสมาชิก Pro และ Founder Pass ค่ะ\n\n"
+                        "**Kira 2.9 Virtual Boardroom (สภา 4 ผู้บริหารเสมือน)** เป็นฟังก์ชันวิเคราะห์ยุทธศาสตร์เชิงลึกสำหรับสมาชิก Pro และ Founder Pass ค่ะ\n\n"
                         "สมาชิกสามารถเปิดประชุม ถกเถียง และวิเคราะห์โจทย์ธุรกิจกับ CEO, CFO, CPO และ CTO ได้อย่างรอบด้าน\n\n"
                         "คุณสามารถคลิกปุ่ม **'อัปเกรด Pro'** ที่แถบเมนูด้านบน เพื่อเริ่มใช้งานได้ทันทีค่ะ"
                     ]),
@@ -8908,7 +8912,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             
             elapsed = round(_time.time() - start_time, 1)
             
-            response_text = f"✨ สร้างรูปภาพด้วย **Kira 2.7 Vision Studio (Ultra-HD Diffusion)** เสร็จสิ้นแล้วค่ะ\n\n![{prompt_th}]({image_url})\n\n"
+            response_text = f"✨ สร้างรูปภาพด้วย **Kira 2.9 Vision Studio (Ultra-HD Diffusion)** เสร็จสิ้นแล้วค่ะ\n\n![{prompt_th}]({image_url})\n\n"
             response_text += f"> *Prompt: `{eng_prompt[:120]}`*\n"
             response_text += f"> *Negative: `{neg_prompt[:80]}`*\n"
             response_text += f"> *ใช้เวลาประมวลผล: {elapsed} วินาที*"
@@ -10857,7 +10861,7 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks):
     return {"status": "ok", "processed_events": len(events)}
 
 
-# ========== 🎨 Kira 2.7 Vision Studio Endpoint ==========
+# ========== 🎨 Kira 2.9 Vision Studio Endpoint ==========
 class FluxStudioRequest(BaseModel):
     prompt: str
     aspect_ratio: Optional[str] = "1:1"
@@ -10866,7 +10870,7 @@ class FluxStudioRequest(BaseModel):
 
 @app.post("/api/generate_image_flux")
 async def api_generate_image_flux(req: FluxStudioRequest):
-    """Kira 2.7 Vision Studio - Ultra-HD Diffusion Image Generation Endpoint"""
+    """Kira 2.9 Vision Studio - Ultra-HD Diffusion Image Generation Endpoint"""
     import urllib.parse
     import random
     t0 = time.time()
@@ -10913,12 +10917,12 @@ async def api_generate_image_flux(req: FluxStudioRequest):
         "image_url": image_url,
         "prompt": raw_prompt,
         "enhanced_prompt": eng_prompt,
-        "model": "Kira 2.7 Vision Studio",
+        "model": "Kira 2.9 Vision Studio",
         "aspect_ratio": req.aspect_ratio or "1:1",
         "width": w,
         "height": h,
         "latency_s": latency,
-        "message": "สร้างภาพด้วย Kira 2.7 Vision Studio สำเร็จแล้วค่ะ",
+        "message": "สร้างภาพด้วย Kira 2.9 Vision Studio สำเร็จแล้วค่ะ",
     }
 
 

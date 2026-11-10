@@ -5042,12 +5042,10 @@ body.oled-mode textarea#user-input {
 
 /* Settings Modal Container & Glass Panel */
 .settings-card {
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
-    border: 1px solid rgba(168, 85, 247, 0.35);
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65), 0 0 35px rgba(168, 85, 247, 0.2);
-    border-radius: 22px;
+    background: #0d0f15;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    border-radius: 20px;
     width: 95%;
     max-width: 900px;
     height: 86vh;
@@ -5075,8 +5073,8 @@ body.oled-mode textarea#user-input {
     justify-content: space-between;
     align-items: center;
     padding: 18px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(15, 23, 42, 0.65);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: #090b10;
 }
 
 .settings-title-group {
@@ -5086,16 +5084,16 @@ body.oled-mode textarea#user-input {
 }
 
 .settings-icon-bubble {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #a855f7, #6366f1);
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    font-size: 1.25rem;
-    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.4);
+    color: #38bdf8;
+    font-size: 1.15rem;
 }
 
 .settings-modal-title {
@@ -5112,10 +5110,10 @@ body.oled-mode textarea#user-input {
     font-size: 0.72rem;
     font-weight: 600;
     padding: 2px 8px;
-    border-radius: 10px;
-    background: rgba(168, 85, 247, 0.2);
-    border: 1px solid rgba(168, 85, 247, 0.4);
-    color: #c084fc;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
     letter-spacing: 0.04em;
     text-transform: uppercase;
 }
@@ -5160,8 +5158,8 @@ body.oled-mode textarea#user-input {
 .settings-nav {
     width: 235px;
     min-width: 235px;
-    background: rgba(11, 17, 32, 0.75);
-    border-right: 1px solid rgba(255, 255, 255, 0.07);
+    background: #090b10;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
     padding: 16px 12px;
     display: flex;
     flex-direction: column;
@@ -5175,29 +5173,28 @@ body.oled-mode textarea#user-input {
     gap: 12px;
     width: 100%;
     padding: 11px 14px;
-    border-radius: 12px;
+    border-radius: 10px;
     border: 1px solid transparent;
     background: transparent;
     color: #94a3b8;
     font-size: 0.88rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.18s ease;
     text-align: left;
 }
 
 .settings-tab-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04);
     color: #f1f5f9;
-    transform: translateX(2px);
 }
 
 .settings-tab-btn.active {
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(99, 102, 241, 0.15));
-    border-color: rgba(168, 85, 247, 0.45);
-    color: #d8b4fe;
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
     font-weight: 600;
-    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.16);
+    box-shadow: none;
 }
 
 .settings-tab-btn i {
@@ -5209,7 +5206,7 @@ body.oled-mode textarea#user-input {
 }
 
 .settings-tab-btn.active i {
-    color: #a855f7;
+    color: #38bdf8;
 }
 
 /* Right Content Pane */
@@ -5218,7 +5215,7 @@ body.oled-mode textarea#user-input {
     min-width: 0;
     padding: 24px 30px;
     overflow-y: auto;
-    background: rgba(15, 23, 42, 0.35);
+    background: #0d0f15;
 }
 
 .settings-panel {
@@ -5823,8 +5820,8 @@ body.oled-mode textarea#user-input {
     justify-content: space-between;
     align-items: center;
     padding: 14px 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(15, 23, 42, 0.65);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: #090b10;
 }
 
 .settings-footer-status {
@@ -5850,7 +5847,7 @@ body.oled-mode textarea#user-input {
     border: 1px solid rgba(255, 255, 255, 0.12);
     color: #94a3b8;
     padding: 8px 18px;
-    border-radius: 10px;
+    border-radius: 8px;
     font-size: 0.88rem;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -5862,15 +5859,15 @@ body.oled-mode textarea#user-input {
 }
 
 .settings-btn-save {
-    background: linear-gradient(135deg, #a855f7, #6366f1);
-    border: none;
-    color: #fff;
+    background: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #0b0c10;
     padding: 8px 22px;
-    border-radius: 10px;
+    border-radius: 8px;
     font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.35);
+    box-shadow: 0 4px 14px rgba(255, 255, 255, 0.08);
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
@@ -5878,9 +5875,9 @@ body.oled-mode textarea#user-input {
 }
 
 .settings-btn-save:hover {
-    background: linear-gradient(135deg, #b56ff9, #7579f3);
+    background: #e2e8f0;
     transform: translateY(-1px);
-    box-shadow: 0 6px 22px rgba(168, 85, 247, 0.5);
+    box-shadow: 0 6px 18px rgba(255, 255, 255, 0.16);
 }
 
 /* Settings Mobile Responsive */

@@ -94,7 +94,7 @@ function initWebSearchController() {
 // 🚀 Kira AI v2.7.0 Client State & Cache Synchronizer (Auto-Purge Legacy)
 // ====================================================================
 (function() {
-    const KIRA_CURRENT_VERSION = '2.7.0';
+    const KIRA_CURRENT_VERSION = '2.9.3';
     try {
         const lastVersion = localStorage.getItem('kira_app_version');
         if (lastVersion !== KIRA_CURRENT_VERSION) {
@@ -103,7 +103,7 @@ function initWebSearchController() {
             
             const currentModel = localStorage.getItem('kira_model');
             if (!currentModel || currentModel.includes('2.1') || currentModel.includes('2.0') || currentModel.includes('1.')) {
-                localStorage.setItem('kira_model', '2.7-reasoning');
+                localStorage.setItem('kira_model', '2.9-reasoning');
             }
             
             if ('serviceWorker' in navigator) {
@@ -469,16 +469,16 @@ async function checkEngineStatus() {
                 unifiedPill.classList.add('local-edge-active');
             }
         } else {
-            if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Engine 2.7</span>`;
-            if (unifiedText) unifiedText.textContent = 'Cloud Engine 2.7';
+            if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Kira Executive Engine 2.9</span>`;
+            if (unifiedText) unifiedText.textContent = 'Kira Executive Engine 2.9';
             if (unifiedPill) {
                 unifiedPill.title = 'ระบบพร้อมใช้งาน 100% | Cloud Multi-Brain Engine พร้อมทำงาน (Anti-Fragile Standby)';
                 unifiedPill.classList.remove('local-edge-active');
             }
         }
     } catch (e) {
-        if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Cloud Engine 2.7</span>`;
-        if (unifiedText) unifiedText.textContent = 'Cloud Engine 2.7';
+        if (badge) badge.innerHTML = `<span class="pulse-dot cloud"></span><span class="engine-text">Kira Executive Engine 2.9</span>`;
+        if (unifiedText) unifiedText.textContent = 'Kira Executive Engine 2.9';
         if (unifiedPill) unifiedPill.classList.remove('local-edge-active');
     }
 }
@@ -1542,7 +1542,7 @@ function initProactiveHeartbeat() {
                 if (userInput) {
                     userInput.focus();
                     if (!userInput.value) {
-                        userInput.placeholder = "พิมพ์ข้อความหรือคำถามถึง Kira 2.7...";
+                        userInput.placeholder = "พิมพ์ข้อความหรือคำถามถึง Kira AI...";
                     }
                 }
             }
@@ -1850,7 +1850,7 @@ function formatExecutiveDeliverable(text) {
     const thaiDate = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     
     let header = `# 📋 รายงานสรุปงานสำหรับผู้บริหาร (Executive Deliverable)\n`;
-    header += `**ระบบ:** Kira AI System 2.7 Pro | **ผู้จัดทำ:** ${currentUser || 'ท่านประธาน'} | **วันที่:** ${thaiDate}\n`;
+    header += `**ระบบ:** Kira AI System 2.9 Flagship | **ผู้จัดทำ:** ${currentUser || 'ท่านประธาน'} | **วันที่:** ${thaiDate}\n`;
     header += `**สถานะ:** ผ่านการกลั่นกรองและตรวจสอบความถูกต้องสมบูรณ์ (Verified)\n\n---\n\n`;
     
     return header + clean + `\n\n---\n*จัดทำโดย Kira AI System — ระบบผู้ช่วยอัจฉริยะระดับผู้บริหาร*`;
@@ -2331,7 +2331,7 @@ async function sendMessage() {
     if (imgInput) imgInput.value = '';
 
     try {
-        const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.7-reasoning";
+        const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.9-reasoning";
         const flavor = document.querySelector('input[name="sub-model-flavor"]:checked') ? document.querySelector('input[name="sub-model-flavor"]:checked').value : "fast";
         const persona = document.getElementById('persona-select') ? document.getElementById('persona-select').value : "default";
         const isBoardroomActive = (localStorage.getItem('kira_boardroom_active') === 'true') || (modelVersion === 'boardroom');
@@ -2749,8 +2749,8 @@ if (modelSelect) {
         if (hasOption) {
             modelSelect.value = savedModel;
         } else {
-            localStorage.setItem('kira_model', '2.7-reasoning');
-            modelSelect.value = '2.7-reasoning';
+            localStorage.setItem('kira_model', '2.9-reasoning');
+            modelSelect.value = '2.9-reasoning';
         }
     }
 
@@ -5005,7 +5005,7 @@ function showNodeDetails(node) {
     if (node.group === 'user') {
         info = `โหนดศูนย์กลางผู้ใช้งาน: <strong>${node.label}</strong>`;
     } else if (node.group === 'ai') {
-        info = `โหนดปัญญาประดิษฐ์: <strong>Kira AI System 2.7</strong>`;
+        info = `โหนดปัญญาประดิษฐ์: <strong>Kira AI System 2.9 Flagship</strong>`;
     } else if (node.full_fact) {
         info = `ข้อเท็จจริงที่จดจำ: "${node.full_fact}"`;
     } else {
@@ -5979,7 +5979,7 @@ async function exportChatJson() {
             return;
         }
         const exportData = {
-            app: "Kira AI System 2.7 Next-Gen",
+            app: "Kira AI System 2.9 Flagship Next-Gen",
             exported_at: new Date().toISOString(),
             user: currentUser,
             messages_count: data.history.length,
@@ -12025,7 +12025,7 @@ function initLiveVoiceAssistant() {
             };
             whisperRecorder.start(220);
             setCardVisualState('listening');
-            if (statusText) statusText.textContent = "☁️ พร้อมรับฟังผ่าน Whisper Turbo Cloud... พูดได้เลยค่ะ";
+            if (statusText) statusText.textContent = "☁️ พร้อมรับฟังผ่าน Kira Neural Voice... พูดได้เลยค่ะ";
         } catch (recErr) {
             console.warn('[Kira Live Voice] MediaRecorder init notice:', recErr);
         }
@@ -12080,7 +12080,7 @@ function initLiveVoiceAssistant() {
         }
 
         setCardVisualState('thinking');
-        if (statusText) statusText.textContent = "☁️ กำลังถอดความเสียงด้วย Whisper Turbo Cloud...";
+        if (statusText) statusText.textContent = "☁️ กำลังประมวลผลเสียงพูดด้วย Kira Neural Audio...";
 
         try {
             const b64 = await blobToBase64Async(audioBlob);
@@ -12402,7 +12402,7 @@ function initLiveVoiceAssistant() {
                 ? currentUser
                 : (localStorage.getItem('kira_username') || 'guest');
             const authToken = localStorage.getItem('kira_auth_token') || '';
-            const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.7-flash";
+            const modelVersion = document.getElementById('model-select') ? document.getElementById('model-select').value : "2.9-flash";
             const persona = document.getElementById('persona-select') ? document.getElementById('persona-select').value : "default";
 
             const res = await fetch('/api/chat', {
@@ -14077,7 +14077,7 @@ const KIRA_I18N = {
         settings_title: "ตั้งค่าระบบ (Settings)",
         upgrade_pro_title: "อัปเกรดเป็น Kira Pro / Founder Pass",
         pwa_install_btn: "ติดตั้งแอป",
-        engine_cloud: "Cloud Engine 2.7",
+        engine_cloud: "Kira Executive Engine 2.9",
         header_boardroom: "สภา",
         header_task_matrix: "งาน",
 
@@ -14108,7 +14108,7 @@ const KIRA_I18N = {
         chip_study_hub: "ห้องติวสอบ ✨",
 
         // Input & Actions
-        input_placeholder: "พิมพ์ข้อความหรือคำถามถึง Kira 2.7... (Shift+Enter ขึ้นบรรทัดใหม่, Ctrl+V วางรูป)",
+        input_placeholder: "พิมพ์ข้อความหรือคำถามถึง Kira AI... (Shift+Enter ขึ้นบรรทัดใหม่, Ctrl+V วางรูป)",
         silver_voice_label: "แตะที่นี่เพื่อพูดคุยกับคิระ (ไม่ต้องพิมพ์คีย์บอร์ดนะคะ)",
         attach_image: "รูปภาพ",
         attach_doc: "ไฟล์เอกสาร",
@@ -14175,7 +14175,7 @@ const KIRA_I18N = {
 
         // Settings Modal
         settings_header_title: "การตั้งค่าระบบ",
-        settings_header_subtitle: "ปรับแต่งประสบการณ์ใช้งาน Kira AI 2.7 ตามสไตล์ของคุณ",
+        settings_header_subtitle: "ปรับแต่งประสบการณ์ใช้งาน Kira AI 2.9 ตามสไตล์ของคุณ",
         settings_tab_general: "ทั่วไป & การแสดงผล",
         settings_tab_account: "บัญชี & ความปลอดภัย",
         settings_tab_ai: "โมเดล & คำสั่งกำหนดเอง",
@@ -14422,9 +14422,9 @@ const KIRA_I18N = {
         thinking_opt_alwaysopen: "เปิดค้างไว้เสมอ (ดูทุกขั้นตอนทันที)",
         resilience_title: "เกราะส่งต่ออัจฉริยะ (Circuit Breaker & Fallback)",
         resilience_desc: "เมื่อโมเดลหลักขัดข้องหรือโควต้าหมด ระบบจะสลับไปยังโหนดสำรองทันทีอย่างไร้รอยต่อ",
-        chip_groq: "Groq Llama 3.3 (ความเร็วระดับสายฟ้า)",
-        chip_openrouter: "OpenRouter (เครือข่ายสำรองระดับโลก)",
-        chip_gemini: "Gemini 2.5 Flash (ขุมพลังวิเคราะห์หลัก)",
+        chip_groq: "Primary Cloud Engine (ประมวลผลความเร็วแสง)",
+        chip_openrouter: "Global Redundant Mesh (เครือข่ายสำรองระดับโลก)",
+        chip_gemini: "Deep Cognitive Backbone (ขุมพลังวิเคราะห์เชิงลึก)",
         chip_circuit: "Iron Citadel Circuit Breaker (เปิดใช้งาน)",
         custom_instructions_title: "คำสั่งพิเศษประจำตัว (Custom Instructions)",
         custom_instructions_desc: "ให้ Kira รู้จักคุณดีขึ้นและตอบตรงใจคุณในทุกการสนทนาโดยไม่ต้องบอกซ้ำ",
@@ -14562,7 +14562,7 @@ const KIRA_I18N = {
         settings_title: "System Settings",
         upgrade_pro_title: "Upgrade to Kira Pro / Founder Pass",
         pwa_install_btn: "Install App",
-        engine_cloud: "Cloud Engine 2.7",
+        engine_cloud: "Kira Executive Engine 2.9",
         header_boardroom: "Boardroom",
         header_task_matrix: "Tasks",
 
@@ -14660,7 +14660,7 @@ const KIRA_I18N = {
 
         // Settings Modal
         settings_header_title: "System Settings",
-        settings_header_subtitle: "Customize your Kira AI 2.7 experience",
+        settings_header_subtitle: "Customize your Kira AI 2.9 experience",
         settings_tab_general: "General & Appearance",
         settings_tab_account: "Account & Security",
         settings_tab_ai: "Models & Customization",
@@ -14908,9 +14908,9 @@ const KIRA_I18N = {
         thinking_opt_alwaysopen: "Always expanded (View all steps immediately)",
         resilience_title: "Smart Resilience & Fallback Engine",
         resilience_desc: "When the primary model experiences rate limits, Kira seamlessly fails over to backup nodes",
-        chip_groq: "Groq Llama 3.3 (Ultra-low latency)",
-        chip_openrouter: "OpenRouter (Global redundancy network)",
-        chip_gemini: "Gemini 2.5 Flash (Primary reasoning powerhouse)",
+        chip_groq: "Primary Cloud Engine (Ultra-low latency)",
+        chip_openrouter: "Global Redundant Mesh (Worldwide failover)",
+        chip_gemini: "Deep Cognitive Backbone (Advanced reasoning)",
         chip_circuit: "Iron Citadel Circuit Breaker (Active)",
         custom_instructions_title: "Custom Instructions",
         custom_instructions_desc: "Help Kira understand you better and tailor every response without repeating yourself",
@@ -15048,7 +15048,7 @@ const KIRA_I18N = {
         settings_title: "系统设置",
         upgrade_pro_title: "升级为 Kira Pro / Founder Pass",
         pwa_install_btn: "安装应用",
-        engine_cloud: "Cloud Engine 2.7",
+        engine_cloud: "Kira Executive Engine 2.9",
         header_boardroom: "董事会",
         header_task_matrix: "任务",
 
@@ -15146,7 +15146,7 @@ const KIRA_I18N = {
 
         // Settings Modal
         settings_header_title: "系统设置",
-        settings_header_subtitle: "个性化定制您的 Kira AI 2.7 体验",
+        settings_header_subtitle: "个性化定制您的 Kira AI 2.9 体验",
         settings_tab_general: "常规与外观",
         settings_tab_account: "账户与安全",
         settings_tab_ai: "模型与自定义指令",
@@ -15393,9 +15393,9 @@ const KIRA_I18N = {
         thinking_opt_alwaysopen: "始终展开（实时查看完整步骤）",
         resilience_title: "智能容灾与熔断保护 (Circuit Breaker)",
         resilience_desc: "当主模型遇到频控或故障时，Kira 会无缝自动切换至备用节点",
-        chip_groq: "Groq Llama 3.3（极速响应）",
-        chip_openrouter: "OpenRouter（全球冗余备份网）",
-        chip_gemini: "Gemini 2.5 Flash（核心深度分析主力）",
+        chip_groq: "主算力引擎（极速响应）",
+        chip_openrouter: "全球冗余网（跨区域高可用备援）",
+        chip_gemini: "认知核心中枢（深度逻辑分析）",
         chip_circuit: "Iron Citadel 智能熔断防线（已启用）",
         custom_instructions_title: "自定义指令 (Custom Instructions)",
         custom_instructions_desc: "让 Kira 更好地了解您，并在每次对话中定制回答，无需重复说明",
@@ -15533,7 +15533,7 @@ const KIRA_I18N = {
         settings_title: "시스템 설정",
         upgrade_pro_title: "Kira Pro / Founder Pass 업그레이드",
         pwa_install_btn: "앱 설치",
-        engine_cloud: "Cloud Engine 2.7",
+        engine_cloud: "Kira Executive Engine 2.9",
         header_boardroom: "이사회",
         header_task_matrix: "업무",
 
@@ -15631,7 +15631,7 @@ const KIRA_I18N = {
 
         // Settings Modal
         settings_header_title: "시스템 설정",
-        settings_header_subtitle: "맞춤형 Kira AI 2.7 환경 설정",
+        settings_header_subtitle: "맞춤형 Kira AI 2.9 환경 설정",
         settings_tab_general: "일반 및 디스플레이",
         settings_tab_account: "계정 및 보안",
         settings_tab_ai: "모델 및 맞춤 설정",
@@ -15879,9 +15879,9 @@ const KIRA_I18N = {
         thinking_opt_alwaysopen: "항상 펼치기 (모든 단계를 즉시 확인)",
         resilience_title: "스마트 복원력 & 폴백 엔진",
         resilience_desc: "기본 모델 제한 또는 장애 발생 시 백업 노드로 원활하게 자동 전환됩니다",
-        chip_groq: "Groq Llama 3.3 (초고속 지연시간)",
-        chip_openrouter: "OpenRouter (글로벌 이중화 백업)",
-        chip_gemini: "Gemini 2.5 Flash (주력 분석 엔진)",
+        chip_groq: "주력 클라우드 엔진 (초고속 지연시간)",
+        chip_openrouter: "글로벌 이중화 메시 (무중단 페일오버)",
+        chip_gemini: "인지 핵심 백본 (심층 추론 엔진)",
         chip_circuit: "Iron Citadel 서킷 브레이커 (활성화됨)",
         custom_instructions_title: "사용자 맞춤 지침 (Custom Instructions)",
         custom_instructions_desc: "Kira가 귀하를 더 잘 이해하고 반복 없이 맞춤형 답변을 제공하도록 설정하세요",
@@ -16019,7 +16019,7 @@ const KIRA_I18N = {
         settings_title: "システム設定",
         upgrade_pro_title: "Kira Pro / Founder Pass にアップグレード",
         pwa_install_btn: "アプリをインストール",
-        engine_cloud: "Cloud Engine 2.7",
+        engine_cloud: "Kira Executive Engine 2.9",
         header_boardroom: "役員会",
         header_task_matrix: "タスク",
 
@@ -16117,7 +16117,7 @@ const KIRA_I18N = {
 
         // Settings Modal
         settings_header_title: "システム設定",
-        settings_header_subtitle: "Kira AI 2.7 をお好みに合わせてカスタマイズ",
+        settings_header_subtitle: "Kira AI 2.9 をお好みに合わせてカスタマイズ",
         settings_tab_general: "一般＆外観",
         settings_tab_account: "アカウント＆セキュリティ",
         settings_tab_ai: "モデル＆カスタム指示",
@@ -16365,9 +16365,9 @@ const KIRA_I18N = {
         thinking_opt_alwaysopen: "常に展開（全ステップをリアルタイム表示）",
         resilience_title: "スマート耐障害性・フェイルオーバー",
         resilience_desc: "メインモデルに障害や制限が発生した場合、予備ノードへシームレスに自動切り替えします",
-        chip_groq: "Groq Llama 3.3（超高速レスポンス）",
-        chip_openrouter: "OpenRouter（グローバル冗余バックアップ）",
-        chip_gemini: "Gemini 2.5 Flash（コア推论・主力分析エンジン）",
+        chip_groq: "メインクラウドエンジン（超高速レスポンス）",
+        chip_openrouter: "グローバル冗長メッシュ（高可用性フェイルオーバー）",
+        chip_gemini: "認知コアバックボーン（高度な論理推論）",
         chip_circuit: "Iron Citadel サーキットブレーカー（常時稼働）",
         custom_instructions_title: "カスタム指示 (Custom Instructions)",
         custom_instructions_desc: "Kiraがあなたをより深く理解し、繰り返すことなく最適な回答を提供できるようにします",
@@ -18568,7 +18568,7 @@ function initRMBGController() {
 }
 
 // ====================================================================
-// 🚀 Kira 2.7 Flagship 1-Click Interactive Action Trigger
+// 🚀 Kira 2.9 Flagship 1-Click Interactive Action Trigger
 // ====================================================================
 window.triggerQuickAction = function(action) {
     if (action === 'transcribe') {
@@ -18605,7 +18605,7 @@ window.triggerQuickAction = function(action) {
     } else if (action === 'reasoning') {
         const modelSelect = document.getElementById('model-select');
         if (modelSelect) {
-            modelSelect.value = '2.7-reasoning';
+            modelSelect.value = '2.9-reasoning';
             modelSelect.dispatchEvent(new Event('change'));
         }
         const input = document.getElementById('user-input');
@@ -19165,7 +19165,7 @@ function initTranscribeController() {
                     </div>
 
                     <div class="footer">
-                        จัดทำโดย Kira 2.7 Flagship Neural Engine • ถอดเทปด้วยความเร็วสูง Whisper Large-v3-turbo
+                        จัดทำโดย Kira 2.9 Flagship Neural Audio Studio
                     </div>
 
                     <script>
