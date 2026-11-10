@@ -39,7 +39,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=20261110_artisan_29">
+    <link rel="stylesheet" href="/static/style.css?v=20261110_artisan_auth_29">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -98,33 +98,50 @@
         </div>
     </div>
 
-    <!-- Auth Modal / Minimalist Global Split-Screen Portal (v2.8.4) -->
+    <!-- Auth Modal / Artisan Minimalist Executive Portal (v2.9.0) -->
     <div id="auth-modal" class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-form-heading">
-        <!-- Ambient Glowing Background Spheres -->
-        <div class="auth-ambient-glow glow-1"></div>
-        <div class="auth-ambient-glow glow-2"></div>
-
         <div class="auth-box auth-portal-card auth-split-shell" id="auth-box">
 
-            <!-- Left Column: Clean Minimalist Brand Identity, Live Status & Instant Guest Trial -->
+            <!-- Left Column: Artisan Executive Identity, Pillars & Instant Guest Access -->
             <div class="auth-showcase-panel">
                 <div class="auth-brand-header">
-                    <div class="kira-orbital-avatar">
-                        <div class="orbital-ring orbital-ring-1"></div>
-                        <div class="orbital-ring orbital-ring-2"></div>
-                        <div class="orbital-core">
-                            <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo" class="kira-brand-logo">
-                        </div>
+                    <div class="kira-artisan-emblem">
+                        <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo" class="kira-brand-logo">
                     </div>
                     <div class="auth-brand-text-col">
-                        <h1 class="auth-brand-title">Kira AI <span class="brand-version-badge">2.7</span></h1>
-                        <p class="auth-brand-subtitle" data-i18n="auth_brand_subtitle">Enterprise Multi-Brain Cloud Intelligence</p>
+                        <h1 class="auth-brand-title">Kira AI <span class="brand-version-badge">2.9</span></h1>
+                        <p class="auth-brand-subtitle" data-i18n="auth_brand_subtitle">Executive Intelligence Workspace</p>
                     </div>
                 </div>
 
                 <div class="auth-live-badge">
                     <span class="live-dot-pulse"></span>
-                    <span data-i18n="cloud_free_quota">Cloud Engine 2.7 Active • ใช้งานฟรี 150 ข้อความ/วัน</span>
+                    <span data-i18n="cloud_free_quota">Kira 2.9 Flagship • ใช้งานฟรี 150 ข้อความ/วัน</span>
+                </div>
+
+                <!-- Executive Architecture Pillars -->
+                <div class="auth-feature-list">
+                    <div class="auth-feature-item">
+                        <div class="auth-feat-icon-box"><i class="fa-solid fa-bolt-lightning"></i></div>
+                        <div class="auth-feat-text">
+                            <strong>Multi-Brain Autonomous Engine</strong>
+                            <span>120B Pro & 550B Ultra Co-Architect</span>
+                        </div>
+                    </div>
+                    <div class="auth-feature-item">
+                        <div class="auth-feat-icon-box"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div class="auth-feat-text">
+                            <strong>Iron Citadel Zero-Leakage Vault</strong>
+                            <span>Client-Side Encryption & Equal Access</span>
+                        </div>
+                    </div>
+                    <div class="auth-feature-item">
+                        <div class="auth-feat-icon-box"><i class="fa-solid fa-feather-pointed"></i></div>
+                        <div class="auth-feat-text">
+                            <strong>Artisan Quiet Luxury Workspace</strong>
+                            <span>Zero AI Slop • Ultra-Fast Execution</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ✨ Zero-Friction Instant Guest Trial Action -->
@@ -133,7 +150,7 @@
                         <span class="guest-trial-btn-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
                         <span class="guest-trial-btn-text">
                             <strong data-i18n="auth_guest_btn_title">ทดลองคุยกับคิระทันที (ไม่ต้องสมัครสมาชิก)</strong>
-                            <small><i class="fa-solid fa-shield-heart"></i> <span data-i18n="auth_guest_btn_desc">ลองถาม-ตอบได้ฟรี 5 ข้อความ ไม่ต้องผูกบัญชี ไม่ต้องจำรหัสผ่าน</span></small>
+                            <small><span data-i18n="auth_guest_btn_desc">ลองถาม-ตอบได้ฟรี 5 ข้อความ ไม่ต้องผูกบัญชี ไม่ต้องจำรหัสผ่าน</span></small>
                         </span>
                         <i class="fa-solid fa-arrow-right guest-trial-arrow"></i>
                     </button>
@@ -241,7 +258,7 @@
                                 <input type="text" id="reg-username" name="username" data-i18n-placeholder="reg_username_placeholder" placeholder="ชื่อผู้ใช้ (3-30 ตัวอักษร)" autocomplete="username" spellcheck="false" autocapitalize="none">
                             </div>
                             <div class="auth-input-group">
-                                <i class="fa-solid fa-heart auth-input-icon" style="color: #ec4899;"></i>
+                                <i class="fa-solid fa-heart auth-input-icon"></i>
                                 <input type="text" id="reg-nickname" name="nickname" data-i18n-placeholder="reg_nickname_placeholder" placeholder="ชื่อเล่นที่ให้คิระเรียก" autocomplete="nickname">
                             </div>
                         </div>
@@ -4273,6 +4290,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=20261110_artisan_29"></script>
+    <script src="/static/script.js?v=20261110_artisan_auth_29"></script>
 </body>
 </html>
