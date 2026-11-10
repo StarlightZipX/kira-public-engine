@@ -4,30 +4,32 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 10 พฤศจิกายน 2026 (Kira 2.7 Flagship - Phase 22: Clean Source Attribution & Link Sanitization Protocol)
+### 🕒 อัปเดตล่าสุด: 10 พฤศจิกายน 2026 (Kira 2.7 Flagship - Phase 23: The Great Anti-AI-Slop & Artisan Naturalism Overhaul)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **ยกเลิกการแนบลิงก์และ URL รกตาตามคำสั่งบอส ปรับให้แจ้งเฉพาะชื่อแหล่งที่มาสั้นๆ พอ:**
-  1. **🎯 คำสั่งบอส (Directive):**
-     - "ข้อมูลอ้างอิงไม่ต้องแนบมาเป็นลิงค์ถ้าอีกฝ่ายไม่ถามหา แค่บอกที่มาของข้อมูลเฉยๆ พอ"
-     - ไม่ต้องแปะ URL ยาวเฟื้อย (เช่น Google News tracking URLs)
-     - ไม่ต้องใส่เชิงอรรถ [1], [2], [1][2][3][4][5] ให้รกสายตา
-     - ห้ามใส่ข้อความหมายเหตุบ่นเรื่องแหล่งข้อมูลไม่มีผลลัพธ์
+* **กวาดล้างพฤติกรรม "AI Slop" ทั้งระบบ ยกระดับคิระสู่ความเป็นธรรมชาติและงานคราฟต์ระดับพรีเมียม (Artisan AI):**
+  1. **🎯 จุดบกพร่องของ AI Slop ที่บอสเคาะให้ล้างบาง:**
+     - เงินเฟ้ออีโมจิ (Emoji Inflation) โปรย `🌸✨💜🎉` เลอะเทอะท้ายทุกประโยค
+     - คำทักทายและคำลงท้ายสำเร็จรูปสไตล์ Call Center ("แน่นอนค่ะ! ยินดีอย่างยิ่ง...", "หากมีข้อสงสัยเพิ่มเติมถามได้เสมอนะคะ")
+     - บ้าจัดระเบียบเกินเหตุ (Over-formatting) แม้ถามสั้นๆ หรือคุยเล่นก็งัดตารางและหัวข้อมาตอบ
+     - อาการหลุดบ่นเรื่องระบบค้นหาหลังบ้าน (Meta-talk)
   2. **🛠️ การปรับปรุงสถาปัตยกรรม (Implementation Details):**
-     - **`app.py` (`_perform_autonomous_deep_search`):** ปรับแก้ Dossier Prompt:
-       - ตัด URL ยาวออกจากสารบัญแหล่งข้อมูลใน Prompt เหลือเพียง `ชื่อเรื่อง (ที่มา: domain)`
-       - กำหนดกฎเหล็ก Source Attribution: ห้ามส่งลิงก์ URL ลงในคำตอบ เว้นแต่ผู้ใช้พิมพ์สั่งขอลิงก์ชัดเจน
-       - กำหนดให้ระบุเฉพาะชื่อแหล่งข้อมูลอย่างกระชับ (เช่น `(อ้างอิงจาก: วิกิพีเดีย / สำนักข่าว...)`)
-       - สั่งห้ามใส่ตัวเลขเชิงอรรถ [1][2] และห้ามบ่นเรื่องผลการค้นหา
-     - **`app.py` (`_get_full_system_prompt`):** เพิ่มกฎ `Clean Source Attribution` ในสมองหลัก
+     - **`app.py` (`system_prompt` & `system_prompt_boss`):**
+       - ยกเลิกกฎบังคับแตกหัวข้อหากข้อความยาวเกิน 3 บรรทัด เปลี่ยนเป็น **Adaptive Conversational Flow** ปรับตามจังหวะคู่สนทนา
+       - เพิ่มกฎ **Anti-AI Slop & Artisan Naturalism**: แบนการโปรยอีโมจิ (จำกัด 0-1 ตัวหรือไม่ใส่เลย), แบนคำเกริ่นและคำลงท้ายสำเร็จรูป, เข้าประเด็นทันที (Direct-to-Value)
+       - ลบคำสั่งขอคะแนน Like/Dislike (Feedback Request) ออกถาวร
+       - เพิ่มข้อ 7 ใน Directive: กฎกำจัด AI Slop สู่ความคราฟต์ระดับหัวกะทิ
      - **`discord_bot.py` (`clean_discord_reply` & `system_instruction`):**
-       - เพิ่มกฎ Clean Source Attribution ในระบบ Discord Bot
-       - ติดตั้งตัวกรองอัจฉริยะใน `clean_discord_reply`: ตัดบล็อกรายการลิงก์ท้ายข้อความ (`--- 📚 แหล่งข้อมูลอ้างอิงสด:`), ตัดข้อความหมายเหตุประจานการค้นหา, ตัด footnote [1][2], และตัด URL ขยะยาวๆ หากผู้ใช้ไม่ได้สั่งขอลิงก์
-  3. **🧪 ผลการทดสอบ (Verification):**
-     - ทดสอบทำความสะอาดข้อความเคสตัวอย่างในรูปภาพของบอส (เรื่องมุดใต้ท้องรถถังพร้อมระเบิด): ข้อความถูกตัด URL รกตา, หมายเหตุบ่นเรื่อง [1]-[5], และเลขเชิงอรรถออก 100% เหลือเพียงเนื้อหาและแหล่งอ้างอิงที่สละสลวย สะอาดตา และน่าอ่าน
+       - ติดตั้ง Regex Sanitizer กวาดล้างประโยคปิดท้ายสไตล์ Call Center อัตโนมัติ
+       - ลดการโปรยอีโมจิซ้อน (`🌸✨💜`) เหลือไม่เกิน 1 ตัว
+       - แก้ไข Fallback Greeting เริ่มต้นให้เป็นธรรมชาติ ไม่ประดิษฐ์
+       - เพิ่มกฎ Anti-AI Slop ใน System Prompt ของ Discord Bot
+  3. **🧪 ผลการทดสอบสด (Verified):**
+     - **ทดสอบคุยเล่นสั้นๆ ("หวัดดีคิระ วันนี้เหนื่อยจัง"):** คิระตอบสั้น นุ่มนวล เป็นธรรมชาติ ไร้ตาราง ไร้หัวข้อย่อย และไร้อีโมจิรกรุงรัง
+     - **ทดสอบวิชาการ/ฟิสิกส์ ("ทำไมเครื่องยนต์เจ็ทถึงทำงานได้ดีกว่าใบพัดที่ความสูงมากๆ"):** ตอบด้วยสมอง 120B แน่นปึ้ก มีเนื้อหาเข้มข้น อ้างอิงแหล่งที่มาเป็นชื่อสะอาดตา ปราศจาก URL ขยะและไม่มีประโยคคอลเซ็นเตอร์ปิดท้าย
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `fix(ux): eliminate unnecessary links and footnotes, clean source attribution to names only`
+* **Git Commit ล่าสุด:** `feat(ux): eliminate AI Slop, enforce artisan naturalism, remove canned closers and emoji inflation`
 * **สถานะบน Render:** ซิงค์ขึ้น GitHub Repository `main` เรียบร้อยแล้ว (Render Auto-Deploy)
 
 #### 3. 🏆 สรุปสถานะระบบ Kira 2.7 Flagship:
@@ -35,4 +37,4 @@
 * ✅ 2. Autonomous Cloud Discord Daemon Built-in (`app.py`)
 * ✅ 3. Tier-1 Cognitive Architecture (120B Pro / 27B Flash / 550B Ultra Active)
 * ✅ 4. Clean Source Attribution (No Ugly URLs, No [1][2] Clutter)
-* ✅ 5. Strict Banter Calibration & Zero-Hallucination Active
+* ✅ 5. Anti-AI Slop & Artisan Naturalism Active (Zero Fluff, Zero Canned Scripts)
