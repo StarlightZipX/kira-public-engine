@@ -4,33 +4,35 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 10 พฤศจิกายน 2026 (Kira 2.7 Flagship - Phase 21: Tier-1 Cognitive Architecture & 120B/27B Flagship Engine Upgrade)
+### 🕒 อัปเดตล่าสุด: 10 พฤศจิกายน 2026 (Kira 2.7 Flagship - Phase 22: Clean Source Attribution & Link Sanitization Protocol)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **ผ่าตัดสมองคิระ ปลดระวางโมเดล 20B จากการเป็นตัวกีกี้ สู่สมองกลระดับหัวกะทิ 120B / 27B / 550B:**
-  1. **🚨 ค้นพบสาเหตุที่แท้จริงว่าทำไมตอนทดสอบทำงานดี แต่ลงสนามจริงกลายเป็นตัวกีกี้:**
-     - ในอดีตระบบตั้งค่าเริ่มต้น `PREFERRED_FLASH = "openai/gpt-oss-20b"` และทั้งเว็บและ Discord ถูกตั้งค่า Default ให้วิ่งเข้า 20B
-     - โมเดล 20B พารามิเตอร์เล็กเกินไป ตรรกะตื้นเขิน มโนข้อมูล (Hallucination) และโดนคำสั่งเล่นมุกกลืนจนกลายเป็นตัวตลก
-     - ในขณะที่ระบบมี Groq API ที่รองรับ `openai/gpt-oss-120b` (120 พันล้านพารามิเตอร์) และ `qwen/qwen3.8-27b` ซึ่งตอบเร็วระดับแสง (~1.1 - 1.3 วินาที) กลับไม่ได้ถูกดึงมาใช้เป็นสมองเริ่มต้น
-  2. **🧠 ปลดระวาง 20B & สถาปัตยกรรมโมเดลใหม่ (Tier-1 Cognitive Stack):**
-     - **PREFERRED_PRO:** ตั้งเป็น `openai/gpt-oss-120b` (120B Heavyweight Flagship)
-     - **PREFERRED_FLASH:** ตั้งเป็น `qwen/qwen3.8-27b` (27B High-IQ Lightning Multilingual Engine)
-     - **PREFERRED_ULTRA:** ตั้งเป็น `nvidia/nemotron-3-ultra-550b-a55b:free` (550B Titan)
-     - ย้าย `openai/gpt-oss-20b` ไปอยู่ท้ายสุดของรายการ候補 ทำหน้าที่เฉพาะเป็น Last-Resort Emergency Fallback เท่านั้น
-  3. **🎯 ปรับจูน Cognitive Architecture & Analytical Rigor ในทุกช่องทาง:**
-     - อัปเกรด System Prompt ทั้งใน `app.py` และ `discord_bot.py` สู่ระดับ **Tier-1 Strategic Intelligence** (วิเคราะห์หลายมิติ, Multi-Perspective, ตารางเปรียบเทียบเชิงลึก, DDD, TCO, สรุปสไตล์ Executive Summary)
-     - ล็อคห้ามตอบแบบตื้นเขิน กีกี้ หรือมโนข้อมูลเด็ดขาด
-     - Discord Bot ถูกล็อคให้ใช้โมเดล Pro (`openai/gpt-oss-120b` / `qwen/qwen3.8-27b`) เป็นมาตรฐานหลักทุกข้อความ
-  4. **🧪 ผลการทดสอบสดระดับผู้บริหาร:**
-     - ทดสอบโจทย์วิเคราะห์สถาปัตยกรรมระบบสำหรับผู้บริหาร: คิระตอบด้วย `openai/gpt-oss-120b` ภายในไม่กี่วินาที ครอบคลุมทั้งตารางสถาปัตยกรรม, TCO, ความเสี่ยง, DevOps, และ Strangler Fig migration pattern สมบูรณ์แบบ 100%
+* **ยกเลิกการแนบลิงก์และ URL รกตาตามคำสั่งบอส ปรับให้แจ้งเฉพาะชื่อแหล่งที่มาสั้นๆ พอ:**
+  1. **🎯 คำสั่งบอส (Directive):**
+     - "ข้อมูลอ้างอิงไม่ต้องแนบมาเป็นลิงค์ถ้าอีกฝ่ายไม่ถามหา แค่บอกที่มาของข้อมูลเฉยๆ พอ"
+     - ไม่ต้องแปะ URL ยาวเฟื้อย (เช่น Google News tracking URLs)
+     - ไม่ต้องใส่เชิงอรรถ [1], [2], [1][2][3][4][5] ให้รกสายตา
+     - ห้ามใส่ข้อความหมายเหตุบ่นเรื่องแหล่งข้อมูลไม่มีผลลัพธ์
+  2. **🛠️ การปรับปรุงสถาปัตยกรรม (Implementation Details):**
+     - **`app.py` (`_perform_autonomous_deep_search`):** ปรับแก้ Dossier Prompt:
+       - ตัด URL ยาวออกจากสารบัญแหล่งข้อมูลใน Prompt เหลือเพียง `ชื่อเรื่อง (ที่มา: domain)`
+       - กำหนดกฎเหล็ก Source Attribution: ห้ามส่งลิงก์ URL ลงในคำตอบ เว้นแต่ผู้ใช้พิมพ์สั่งขอลิงก์ชัดเจน
+       - กำหนดให้ระบุเฉพาะชื่อแหล่งข้อมูลอย่างกระชับ (เช่น `(อ้างอิงจาก: วิกิพีเดีย / สำนักข่าว...)`)
+       - สั่งห้ามใส่ตัวเลขเชิงอรรถ [1][2] และห้ามบ่นเรื่องผลการค้นหา
+     - **`app.py` (`_get_full_system_prompt`):** เพิ่มกฎ `Clean Source Attribution` ในสมองหลัก
+     - **`discord_bot.py` (`clean_discord_reply` & `system_instruction`):**
+       - เพิ่มกฎ Clean Source Attribution ในระบบ Discord Bot
+       - ติดตั้งตัวกรองอัจฉริยะใน `clean_discord_reply`: ตัดบล็อกรายการลิงก์ท้ายข้อความ (`--- 📚 แหล่งข้อมูลอ้างอิงสด:`), ตัดข้อความหมายเหตุประจานการค้นหา, ตัด footnote [1][2], และตัด URL ขยะยาวๆ หากผู้ใช้ไม่ได้สั่งขอลิงก์
+  3. **🧪 ผลการทดสอบ (Verification):**
+     - ทดสอบทำความสะอาดข้อความเคสตัวอย่างในรูปภาพของบอส (เรื่องมุดใต้ท้องรถถังพร้อมระเบิด): ข้อความถูกตัด URL รกตา, หมายเหตุบ่นเรื่อง [1]-[5], และเลขเชิงอรรถออก 100% เหลือเพียงเนื้อหาและแหล่งอ้างอิงที่สละสลวย สะอาดตา และน่าอ่าน
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `feat(ai): upgrade cognitive architecture to Tier-1 120B/27B flagship engines and eliminate 20B minion defaults`
-* **สถานะบน Render:** กำลังเตรียม Git Push สู่ GitHub Repository `main` เพื่อให้ Render Auto-Deploy ทันที
+* **Git Commit ล่าสุด:** `fix(ux): eliminate unnecessary links and footnotes, clean source attribution to names only`
+* **สถานะบน Render:** ซิงค์ขึ้น GitHub Repository `main` เรียบร้อยแล้ว (Render Auto-Deploy)
 
 #### 3. 🏆 สรุปสถานะระบบ Kira 2.7 Flagship:
 * ✅ 1. UptimeRobot Keep-Alive 5-min Active (Render Never Sleeps)
 * ✅ 2. Autonomous Cloud Discord Daemon Built-in (`app.py`)
 * ✅ 3. Tier-1 Cognitive Architecture (120B Pro / 27B Flash / 550B Ultra Active)
-* ✅ 4. Strict Banter Calibration & Analytical Depth Active
-* ✅ 5. Zero-Hallucination & Honest Inquiry Protocol Active
+* ✅ 4. Clean Source Attribution (No Ugly URLs, No [1][2] Clutter)
+* ✅ 5. Strict Banter Calibration & Zero-Hallucination Active

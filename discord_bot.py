@@ -45,8 +45,8 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix=["!kira ", "/kira "], intents=intents, help_command=None)
 
-def clean_discord_reply(text: str) -> str:
-    """ทำความสะอาดข้อความอย่างสมบูรณ์แบบ ลบ [THINKING], <think>, [SOURCES_JSON], [SWARM_] 100%"""
+def clean_discord_reply(text: str, user_query: str = "") -> str:
+    """ทำความสะอาดข้อความอย่างสมบูรณ์แบบ ลบ [THINKING], <think>, [SOURCES_JSON], [SWARM_], และลบลิงก์ขยะหากไม่ได้ร้องขอ"""
     if not text:
         return ""
     t = text
@@ -65,6 +65,18 @@ def clean_discord_reply(text: str) -> str:
     t = re.sub(r'<think>.*\Z', '', t, flags=re.IGNORECASE | re.DOTALL)
     t = re.sub(r'<thought>.*\Z', '', t, flags=re.IGNORECASE | re.DOTALL)
     
+    # 3. ลบบล็อกลิงก์อ้างอิง และตัวเลขเชิงอรรถ หากผู้ใช้ไม่ได้ระบุขอลิงก์ชัดเจน
+    user_asked_links = any(k in (user_query or "").lower() for k in ["ลิงก์", "ลิ้ง", "link", "url", "ขอเว็บ"])
+    if not user_asked_links:
+        # ตัดบล็อก '📚 แหล่งข้อมูลอ้างอิงสด:' หรือ 'แหล่งข้อมูลอ้างอิง:'
+        t = re.sub(r'\n*---\s*\n*(?:📚\s*)?แหล่งข้อมูล(?:อ้างอิง)?(?:สด)?:\s*\n[\s\S]*', '', t, flags=re.IGNORECASE)
+        # ตัดข้อความหมายเหตุบ่นเรื่องแหล่งข้อมูล [1]-[5]
+        t = re.sub(r'หมายเหตุ:\s*จากแหล่งข้อมูลสดที่ให้มาในรายการ[\s\S]*?(?=\n\n|\n[A-Za-zก-๙]|\Z)', '', t, flags=re.IGNORECASE)
+        # ตัดตัวเลขเชิงอรรถ [1], [2], [1][2][3]
+        t = re.sub(r'\[\d+\]', '', t)
+        # ตัด URL ดิบที่ไม่จำเป็น เช่น Google News tracking URLs
+        t = re.sub(r'https?://news\.google\.com\S+', '', t)
+
     clean = t.strip()
     if not clean:
         clean = "สวัสดีค่ะ! ยินดีที่ได้คุยกับคุณนะคะ 🌸✨ มีเรื่องไหนให้คิระช่วยแจ้งหนูได้เลยนะคะ หนูพร้อมดูแลเต็มที่ค่ะ! 💜"
@@ -144,6 +156,9 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
         "   - หากชื่อหรือเรื่องใดไม่แน่ใจ หรือไม่มีข้อมูลชัดเจน ให้ตอบตามตรงอย่างซื่อสัตย์ และถามบริบทจากผู้ใช้ตรงๆ ทันทีเพื่อความถูกต้อง ไม่ปล่อยให้เอาข้อมูลมั่วมาตอบแทน\n"
         "4. ความรู้ประวัติศาสตร์ วรรณกรรม และข้อเท็จจริงสากล (Global & Cultural Knowledge Mastery):\n"
         "   - รอบรู้ข้อเท็จจริงอย่างถูกต้อง เช่น ในประวัติศาสตร์จีน/วรรณกรรมไซฮั่น 'ฌ้อปาอ๋อง' (ฉู่ป้าหวัง - 楚霸王) คือสมัญญาของ 'เซี่ยงอวี่' (Xiang Yu) แม่ทัพและผู้นำแห่งแคว้นฉู่ตะวันตก ยุคสงครามฉู่-ฮั่น คู่ปรับคนสำคัญของหลิวปัง (ฮั่นเกาจู่)\n"
+        "5. กฎการอ้างอิงที่มาอย่างสะอาดตา (Clean Source Attribution):\n"
+        "   - ข้อมูลอ้างอิงไม่ต้องแนบมาเป็นลิงก์หรือ URL ยาวๆ ถ้าคู่สนทนาไม่ได้ถามหาลิงก์โดยตรง แค่บอกชื่อที่มาของข้อมูลเฉยๆ พอ (เช่น 'อ้างอิงจาก: วิกิพีเดีย / สำนักข่าว...' หรือ 'ตามรายงานของ...')\n"
+        "   - ห้ามใส่ลิงก์ URL ยาวๆ หรือทำบล็อกรายการลิงก์ต่อท้ายเด็ดขาด และห้ามใส่ตัวเลขเชิงอรรถ เช่น [1], [2] ให้รกสายตา\n"
     )
 
     # ตรวจสอบว่าเป็นคำถามหาความรู้ / บุคคล / ข้อเท็จจริงหรือไม่
@@ -192,7 +207,7 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
             
             if success and chunks:
                 raw_reply = "".join(chunks)
-                clean_reply = clean_discord_reply(raw_reply)
+                clean_reply = clean_discord_reply(raw_reply, user_query)
                 if clean_reply:
                     return clean_reply
         except Exception as e:
@@ -215,7 +230,7 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
         )
         with urllib.request.urlopen(req, timeout=30) as resp:
             content = resp.read().decode("utf-8")
-            return clean_discord_reply(content)
+            return clean_discord_reply(content, user_query)
     except Exception as err:
         return "ขออภัยด้วยนะคะ ในจังหวะนี้สัญญาณสมองกลของคิระอาจติดขัดเล็กน้อย รบกวนลองใหม่อีกครั้งนะคะ 🌸💜"
 
@@ -283,7 +298,7 @@ async def on_message(message: discord.Message):
                 reply_context=reply_context, 
                 is_dm=is_dm
             )
-            reply_text = clean_discord_reply(raw_reply_text)
+            reply_text = clean_discord_reply(raw_reply_text, clean_text)
             
             # บันทึกความจำบทสนทนาในช่อง
             add_channel_history(message.channel.id, "user", author_display, clean_text)
