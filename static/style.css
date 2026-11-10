@@ -19644,3 +19644,427 @@ body.light-mode .study-chip.hub-trigger {
         font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 }
+
+
+/* ==========================================================================
+   🏛️ KIRA AI - ARTISAN MINIMALIST EXECUTIVE UI DESIGN SYSTEM (v2.9)
+   Eliminates all AI Slop: Neon Glows, Cluttered Modals, Spinning Keyframes,
+   and replaces them with Deep Obsidian Canvas, Razor-thin Borders,
+   and Quiet Luxury Typography inspired by Apple, Linear, and Claude.
+   ========================================================================== */
+
+/* 1. Global Zen Canvas & Resetting Color Palette */
+:root {
+    --bg-color: #0b0c10 !important;
+    --sidebar-bg: #101116 !important;
+    --card-bg: #13141b !important;
+    --border-color: rgba(255, 255, 255, 0.07) !important;
+    --text-primary: #f8fafc !important;
+    --text-secondary: #94a3b8 !important;
+    --text-muted: #64748b !important;
+    --accent-color: #6366f1 !important;
+    --accent-hover: #4f46e5 !important;
+    --user-msg-bg: #181920 !important;
+    --ai-msg-bg: transparent !important;
+    --input-bg: #14151c !important;
+}
+
+body {
+    background-color: #0b0c10 !important;
+    color: #f8fafc !important;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11" !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+.app-container {
+    background-color: #0b0c10 !important;
+}
+
+/* 2. Elimination of All Neon Animations & Radioactive Glows */
+.pulse-glow, .rotateOrbital, .rotateOrbitalReverse, .breathingCore, .floatGlow, .livePulse,
+.pro-sparkle-dot, .heartbeat-pulse-dot, .pulse-dot, .thinking-glow {
+    animation: none !important;
+    box-shadow: none !important;
+}
+
+/* De-noise Box-Shadows Across Entire App */
+.welcome-hero-card, .welcome-pill, .flagship-action-card, .header-action-btn, 
+.mode-pill-btn, .new-chat-btn, .unified-status-pill, .model-select-wrapper select, 
+.tools-trigger-btn {
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+/* 3. Sleek Zen Header */
+.chat-header.zen-header {
+    background: rgba(11, 12, 16, 0.85) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding: 0 1.25rem !important;
+    height: 56px !important;
+}
+
+.header-branding .brand-title {
+    font-weight: 600 !important;
+    font-size: 1.05rem !important;
+    letter-spacing: -0.01em !important;
+    color: #f8fafc !important;
+}
+
+.unified-status-pill {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 9999px !important;
+    padding: 3px 10px !important;
+}
+
+.status-live-dot {
+    width: 6px !important;
+    height: 6px !important;
+    background-color: #10b981 !important;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.4) !important;
+}
+
+.status-live-label {
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    color: #94a3b8 !important;
+}
+
+.header-action-btn {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    color: #94a3b8 !important;
+    border-radius: 8px !important;
+    transition: all 0.15s ease !important;
+}
+
+.header-action-btn:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f8fafc !important;
+}
+
+.user-mode-pill-group {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 10px !important;
+    padding: 3px !important;
+}
+
+.mode-pill-btn {
+    background: transparent !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    padding: 4px 12px !important;
+    border-radius: 7px !important;
+}
+
+.mode-pill-btn.active {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+}
+
+.model-select {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    color: #f8fafc !important;
+    border-radius: 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    padding: 5px 28px 5px 10px !important;
+}
+
+/* 4. Sleek Sidebar */
+.sidebar {
+    background-color: #0f1015 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.new-chat-btn {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+    border-radius: 10px !important;
+    font-weight: 500 !important;
+    font-size: 0.88rem !important;
+    transition: all 0.15s ease !important;
+}
+
+.new-chat-btn:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+/* 5. The Artisan Welcome Canvas (Clean, Centered, Focused) */
+.welcome-hero-card.artisan-welcome-canvas,
+.welcome-hero-card {
+    max-width: 820px !important;
+    margin: 1.5rem auto 1rem !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+}
+
+.welcome-meta-bar {
+    display: none !important; /* Hide redundant time/heartbeat tags */
+}
+
+.artisan-hero-header {
+    text-align: center !important;
+    margin-bottom: 1.75rem !important;
+}
+
+.artisan-avatar-ring {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.artisan-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 18px;
+}
+
+.artisan-greeting-title {
+    font-size: 1.75rem !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.025em !important;
+    color: #f8fafc !important;
+    margin-bottom: 6px !important;
+}
+
+.artisan-greeting-sub {
+    font-size: 0.92rem !important;
+    color: #94a3b8 !important;
+    max-width: 560px !important;
+    margin: 0 auto !important;
+    line-height: 1.5 !important;
+}
+
+/* Minimal Studio Toolbar Strip */
+.artisan-studio-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0 auto 1.5rem;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 9999px;
+    max-width: fit-content;
+}
+
+.artisan-studio-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+.artisan-studio-pills {
+    display: inline-flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.artisan-pill {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.artisan-pill:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+}
+
+/* 4 Clean Prompt Cards (2x2 Grid) */
+.welcome-grid.artisan-action-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    max-width: 800px !important;
+    margin: 0 auto !important;
+}
+
+.welcome-category-bar {
+    display: none !important; /* Hide redundant category filter row */
+}
+
+.artisan-prompt-card, .welcome-pill {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 12px !important;
+    padding: 14px 16px !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    min-height: 82px !important;
+    box-shadow: none !important;
+}
+
+.artisan-prompt-card:hover, .welcome-pill:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    transform: translateY(-1px) !important;
+}
+
+.artisan-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.artisan-card-icon {
+    font-size: 0.85rem;
+    color: #818cf8;
+}
+
+.artisan-card-title, .welcome-pill-title {
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    color: #f1f5f9 !important;
+    letter-spacing: -0.01em !important;
+}
+
+.artisan-card-desc, .welcome-pill-desc {
+    font-size: 0.76rem !important;
+    color: #64748b !important;
+    line-height: 1.4 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+}
+
+/* 6. Sleek Floating Input Dock */
+.chat-input-wrapper,
+.chat-input-container {
+    max-width: 800px !important;
+    margin: 0 auto 1.25rem !important;
+    background: rgba(19, 20, 26, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5) !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.chat-input-wrapper:focus-within,
+.chat-input-container:focus-within {
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 14px 40px -5px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+#chat-input {
+    background: transparent !important;
+    color: #f8fafc !important;
+    font-family: inherit !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+    border: none !important;
+    outline: none !important;
+    padding: 12px 14px !important;
+}
+
+#chat-input::placeholder {
+    color: #64748b !important;
+}
+
+#btn-send {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border-radius: 10px !important;
+    width: 34px !important;
+    height: 34px !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+}
+
+#btn-send:hover {
+    background: #ffffff !important;
+    transform: scale(1.04) !important;
+}
+
+#btn-send:disabled {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.3) !important;
+    transform: none !important;
+}
+
+/* 7. Message Stream Refinement */
+.message-bubble.user-message {
+    background: #181920 !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 14px 14px 4px 14px !important;
+    color: #f1f5f9 !important;
+    box-shadow: none !important;
+    padding: 10px 16px !important;
+}
+
+.message-bubble.bot-message {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 8px 0 !important;
+    color: #f1f5f9 !important;
+    line-height: 1.65 !important;
+}
+
+/* Clean Markdown Code Blocks */
+pre, .code-block-wrapper {
+    background: #101116 !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 10px !important;
+}
+
+/* Clean Modal Overlays */
+.modal, .unified-modal {
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    background: rgba(0, 0, 0, 0.72) !important;
+}
+
+.modal-content, .unified-modal-content {
+    background: #121319 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+    border-radius: 16px !important;
+}

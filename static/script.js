@@ -1301,70 +1301,29 @@ async function renderWelcomeHub() {
     const currentLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
     const wDict = WELCOME_I18N[currentLang] || WELCOME_I18N['th'];
 
-        const isEn = currentLang === 'en';
+    const isEn = currentLang === 'en';
     const flagshipHubHtml = `
-        <div class="flagship-quick-hub" id="flagship-quick-hub">
-            <div class="flagship-hub-title-row">
-                <span class="flagship-hub-badge"><i class="fa-solid fa-wand-magic-sparkles text-cyan"></i> ${isEn ? 'Featured 1-Click Actions' : 'ฟีเจอร์เด่น แตะเพื่อเริ่มใช้งานทันที'}</span>
-                <span class="flagship-hub-sub">${isEn ? 'Try flagship tools in 1 click' : 'เครื่องมือยอดนิยม ไม่ต้องรอพิมพ์คำสั่ง'}</span>
-            </div>
-            <div class="flagship-actions-grid">
-                <div class="flagship-action-card action-flux" onclick="triggerQuickAction('flux')" title="${isEn ? 'Generate 8K Image' : 'เปิดสตูดิโอสร้างภาพ 8K'}">
-                    <div class="flagship-card-icon icon-flux"><i class="fa-solid fa-palette"></i></div>
-                    <div class="flagship-card-info">
-                        <span class="flagship-card-title">${isEn ? 'AI Image Studio' : 'วาดภาพด้วย AI'}</span>
-                        <span class="flagship-card-desc">${isEn ? 'Ultra-HD 8K Diffusion art' : 'สร้างภาพคมชัดสูงตามสั่ง'}</span>
-                    </div>
-                    <span class="flagship-card-pill text-amber"><i class="fa-solid fa-bolt"></i> ${isEn ? 'Studio' : 'สตูดิโอ'}</span>
-                </div>
-                <div class="flagship-action-card action-rmbg" onclick="triggerQuickAction('rmbg')" title="${isEn ? 'Remove Image Background' : 'ตัดพื้นหลังรูปภาพอัตโนมัติ'}">
-                    <div class="flagship-card-icon icon-rmbg"><i class="fa-solid fa-scissors"></i></div>
-                    <div class="flagship-card-info">
-                        <span class="flagship-card-title">${isEn ? 'Instant Cutout' : 'ไดคัทตัดพื้นหลัง'}</span>
-                        <span class="flagship-card-desc">${isEn ? 'In-browser background removal' : 'ลบพื้นหลังสินค้า/บุคคลในคลิกเดียว'}</span>
-                    </div>
-                    <span class="flagship-card-pill text-teal"><i class="fa-solid fa-wand-magic"></i> ${isEn ? 'Free' : 'ฟรี 100%'}</span>
-                </div>
-                <div class="flagship-action-card action-eraser" onclick="triggerQuickAction('eraser')" title="${isEn ? 'Erase Objects or People' : 'ลบสิ่งของหรือคนส่วนเกินในภาพ'}">
-                    <div class="flagship-card-icon icon-eraser"><i class="fa-solid fa-eraser"></i></div>
-                    <div class="flagship-card-info">
-                        <span class="flagship-card-title">${isEn ? 'Magic Eraser' : 'ลบคน / วัตถุในภาพ'}</span>
-                        <span class="flagship-card-desc">${isEn ? 'Brush & seamless inpainting' : 'ป้ายสีแดงลบส่วนเกินเนียนกริบ'}</span>
-                    </div>
-                    <span class="flagship-card-pill text-orange"><i class="fa-solid fa-sparkles"></i> ${isEn ? 'Magic' : 'เนียนตา'}</span>
-                </div>
-                <div class="flagship-action-card action-rag" onclick="triggerQuickAction('rag')" title="${isEn ? 'PDF & Document Research' : 'ถามตอบและสรุปไฟล์เอกสาร PDF'}">
-                    <div class="flagship-card-icon icon-rag"><i class="fa-solid fa-folder-open"></i></div>
-                    <div class="flagship-card-info">
-                        <span class="flagship-card-title">${isEn ? 'Document Vault' : 'สรุปเนื้อหาเอกสาร'}</span>
-                        <span class="flagship-card-desc">${isEn ? 'Deep semantic RAG search' : 'ค้นคว้าจากไฟล์ PDF และสัญญา'}</span>
-                    </div>
-                    <span class="flagship-card-pill text-emerald"><i class="fa-solid fa-book-open"></i> ${isEn ? 'RAG' : 'คลังเอกสาร'}</span>
-                </div>
-                <div class="flagship-action-card action-reasoning" onclick="triggerQuickAction('reasoning')" title="${isEn ? 'Step-by-Step Logic Analysis' : 'คิดแก้โจทย์ซับซ้อนทีละขั้นตอน'}">
-                    <div class="flagship-card-icon icon-reasoning"><i class="fa-solid fa-brain"></i></div>
-                    <div class="flagship-card-info">
-                        <span class="flagship-card-title">${isEn ? 'Deep Reasoning' : 'คิดวิเคราะห์เป็นขั้นตอน'}</span>
-                        <span class="flagship-card-desc">${isEn ? 'Complex logic & math breakdown' : 'แก้โจทย์คณิตและตรรกะซับซ้อน'}</span>
-                    </div>
-                    <span class="flagship-card-pill text-purple"><i class="fa-solid fa-lightbulb"></i> ${isEn ? 'Thinking' : 'คิดลึก'}</span>
-                </div>
-                <div class="flagship-action-card action-transcribe" onclick="triggerQuickAction('transcribe')" title="${isEn ? 'Meeting Audio Transcriber' : 'ถอดเทปเสียงประชุมและสรุปรายงาน'}">
-                    <div class="flagship-card-icon icon-transcribe"><i class="fa-solid fa-microphone-lines"></i></div>
-                    <div class="flagship-card-info">
-                        <span class="flagship-card-title">${isEn ? 'Voice Transcriber' : 'ถอดเทปเสียงประชุม'}</span>
-                        <span class="flagship-card-desc">${isEn ? 'Whisper Turbo & meeting notes' : 'แปลงเสียงพูด & สรุปมติอัตโนมัติ'}</span>
-                    </div>
-                    <span class="flagship-card-pill text-purple"><i class="fa-solid fa-bolt"></i> ${isEn ? 'Whisper' : 'รวดเร็ว'}</span>
-                </div>
-                <div class="flagship-action-card action-code" onclick="triggerQuickAction('code')" title="${isEn ? 'Code Assistant & Debugger' : 'ช่วยเขียนและตรวจโค้ด'}">
-                    <div class="flagship-card-icon icon-code"><i class="fa-solid fa-code"></i></div>
-                    <div class="flagship-card-info">
-                        <span class="flagship-card-title">${isEn ? 'Code Assistant' : 'ผู้ช่วยเขียนโปรแกรม'}</span>
-                        <span class="flagship-card-desc">${isEn ? 'Debug code & architecture' : 'แนะนำโค้ดและตรวจหาบั๊ก'}</span>
-                    </div>
-                    <span class="flagship-card-pill text-blue"><i class="fa-solid fa-terminal"></i> ${isEn ? 'Coder' : 'เซียนโค้ด'}</span>
-                </div>
+        <div class="artisan-studio-bar" id="flagship-quick-hub">
+            <span class="artisan-studio-label">${isEn ? 'Studios' : 'สตูดิโอ'}:</span>
+            <div class="artisan-studio-pills">
+                <button type="button" class="artisan-pill" onclick="triggerQuickAction('flux')" title="${isEn ? 'Generate 8K Image' : 'สตูดิโอสร้างภาพ 8K'}">
+                    <i class="fa-solid fa-palette text-amber"></i> ${isEn ? 'Image Studio' : 'สร้างภาพ'}
+                </button>
+                <button type="button" class="artisan-pill" onclick="triggerQuickAction('rmbg')" title="${isEn ? 'Cutout Image Background' : 'ตัดพื้นหลังรูปภาพ'}">
+                    <i class="fa-solid fa-scissors text-emerald"></i> ${isEn ? 'Cutout' : 'ไดคัท'}
+                </button>
+                <button type="button" class="artisan-pill" onclick="triggerQuickAction('eraser')" title="${isEn ? 'Erase Objects or People' : 'ลบคน/วัตถุในภาพ'}">
+                    <i class="fa-solid fa-wand-magic-sparkles text-rose"></i> ${isEn ? 'Magic Eraser' : 'ลบวัตถุ'}
+                </button>
+                <button type="button" class="artisan-pill" onclick="triggerQuickAction('transcribe')" title="${isEn ? 'Voice Transcriber' : 'ถอดเทปเสียงประชุม'}">
+                    <i class="fa-solid fa-microphone-lines text-cyan"></i> ${isEn ? 'Transcribe' : 'ถอดเสียง'}
+                </button>
+                <button type="button" class="artisan-pill" onclick="triggerQuickAction('rag')" title="${isEn ? 'PDF & Document Research' : 'ค้นคว้าเอกสาร PDF'}">
+                    <i class="fa-solid fa-folder-open text-blue"></i> ${isEn ? 'Vault' : 'คลังเอกสาร'}
+                </button>
+                <button type="button" class="artisan-pill" onclick="triggerQuickAction('code')" title="${isEn ? 'Live Canvas & Code Studio' : 'Live Canvas & โค้ด'}">
+                    <i class="fa-solid fa-laptop-code text-indigo"></i> Canvas
+                </button>
             </div>
         </div>
     `;
@@ -1455,52 +1414,33 @@ async function renderWelcomeHub() {
         return wDict['badge_' + cat] || wDict.badge_default;
     }
 
-    const suggestionsHtml = suggestions.map(s => {
+    const suggestionsHtml = suggestions.slice(0, 4).map(s => {
         const safePrompt = escapeHtml(s.prompt).replace(/'/g, "\\'");
         const cat = s.category || 'advisor';
         return `
-            <div class="welcome-pill" data-category="${escapeHtml(cat)}" onclick="sendQuickPrompt('${safePrompt}')">
-                <div class="welcome-pill-top">
-                    ${s.tag ? `<span class="welcome-pill-badge">${escapeHtml(s.tag)}</span>` : ''}
-                    <span class="welcome-pill-category-badge">${getCatBadge(cat)}</span>
+            <div class="welcome-pill artisan-prompt-card" data-category="${escapeHtml(cat)}" onclick="sendQuickPrompt('${safePrompt}')">
+                <div class="artisan-card-header">
+                    <span class="artisan-card-icon"><i class="${s.icon || 'fa-solid fa-compass'}"></i></span>
+                    <span class="artisan-card-title">${escapeHtml(s.title)}</span>
                 </div>
-                <span class="welcome-pill-title"><i class="${s.icon || 'fa-solid fa-bolt'}"></i> ${escapeHtml(s.title)}</span>
-                <span class="welcome-pill-desc">${escapeHtml(s.desc)}</span>
+                <span class="artisan-card-desc">${escapeHtml(s.desc)}</span>
             </div>
         `;
     }).join('');
 
-    const bossBadge = data.is_boss ? `<span class="welcome-boss-tag">${wDict.boss_badge}</span>` : '';
-    const dateFormatted = data.date_thai || '';
-    const timeTag = `<span class="welcome-time-tag"><i class="fa-regular fa-clock"></i> ${escapeHtml(dateFormatted)} • ${escapeHtml(data.time_str || '')}</span>`;
-    const heartbeatTag = `<span class="welcome-time-tag" style="border-color: rgba(56,189,248,0.3); color:#7dd3fc;">${wDict.ai_online}</span>`;
-
     chatBox.innerHTML = `
-        <div class="welcome-hero-card">
-            <div class="welcome-meta-bar">
-                ${bossBadge}
-                ${timeTag}
-                ${heartbeatTag}
-            </div>
-            <div class="welcome-header">
-                <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo">
-                <div style="flex: 1;">
-                    <h3 class="welcome-title">${escapeHtml(data.greeting_title)}</h3>
-                    <p class="welcome-subtitle">${escapeHtml(data.greeting_subtitle)}</p>
+        <div class="welcome-hero-card artisan-welcome-canvas">
+            <div class="artisan-hero-header">
+                <div class="artisan-avatar-ring">
+                    <img src="/static/images/kira_logo.png?v=6" alt="Kira" class="artisan-avatar-img">
                 </div>
+                <h1 class="artisan-greeting-title">${escapeHtml(data.greeting_title)}</h1>
+                <p class="artisan-greeting-sub">${escapeHtml(data.greeting_subtitle)}</p>
             </div>
             ${continueHtml}
             ${memoryHtml}
             ${flagshipHubHtml}
-            <div class="welcome-category-bar">
-                <button type="button" class="welcome-cat-btn active" onclick="filterWelcomeCategory('all', this)">${wDict.cat_all}</button>
-                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('advisor', this)">${wDict.cat_advisor}</button>
-                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('draft', this)">${wDict.cat_draft}</button>
-                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('review', this)">${wDict.cat_review}</button>
-                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('learning', this)">${wDict.cat_learning}</button>
-                <button type="button" class="welcome-cat-btn" onclick="filterWelcomeCategory('tech', this)">${wDict.cat_tech}</button>
-            </div>
-            <div class="welcome-grid">
+            <div class="welcome-grid artisan-action-grid">
                 ${suggestionsHtml}
             </div>
         </div>
