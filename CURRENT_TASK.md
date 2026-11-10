@@ -4,36 +4,30 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 10 พฤศจิกายน 2026 (Kira 2.9.2 Flagship - Phase 29.1: Strict Marketing Secrecy Sanitation & Clean Enterprise Value Pillars)
+### 🕒 อัปเดตล่าสุด: 10 พฤศจิกายน 2026 (Kira 2.9.3 Flagship - Phase 29.2: Artisan Register Value Perks & Zero-Slop Conversion Architecture)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **กวาดล้างข้อมูลความลับทางการตลาดและสเปกโมเดลภายในออกจาก Public UI (Strict Marketing Secrecy):**
-  1. **🎯 ปัญหาที่บอสพบและสั่งการตักเตือนทันที:**
-     - บอสตรวจพบบนหน้าต่าง Login สาธารณะ มีการเผลอระบุสเปกโมเดลหลังบ้าน (120B Pro & 550B Ultra) และคำศัพท์สแลงภายใน ("Zero AI Slop")
-     - บอสได้สั่งการเตือนกฎเหล็กว่า: **"ความลับทางการตลาดห้ามนำมาบอกที่สาธารณะอย่างเด็ดขาด"**
-  2. **🛠️ การปรับปรุงสถาปัตยกรรม UI/UX & Secrecy Sanitation:**
-     - **`templates/index.html`:**
-       - ถอดสเปกโมเดล 120B/550B และคำสแลงภายในออกจากหน้าสาธารณะ 100%
-       - ปรับข้อความ 3 เสาหลักสู่ **Clean Enterprise Value Pillars**:
-         1. **Autonomous Multi-Brain Engine:** *ระบบประมวลผลความคิดระดับสูง ตอบสนองแม่นยำและรวดเร็ว*
-         2. **Enterprise Security Architecture:** *ความปลอดภัยระดับองค์กร ปกป้องความเป็นส่วนตัวสูงสุด*
-         3. **Artisan Executive Workspace:** *พื้นที่ทำงานสมาธิสูง เรียบหรู คล่องตัว ไร้สิ่งรบกวน*
-       - เชื่อมโยง `data-i18n` ครบถ้วน เพื่อให้เปลี่ยนภาษาได้ลื่นไหล
-       - อัปเดต Cache-Busting Version: `v20261110_artisan_auth_29_clean`
-     - **`static/script.js` & `static/sw.js`:**
-       - เพิ่มคีย์แปลภาษา `auth_feat_1_title`, `auth_feat_1_desc`, `auth_feat_2_title`, `auth_feat_2_desc`, `auth_feat_3_title`, `auth_feat_3_desc` ครบทั้ง 5 ภาษา (TH, EN, ZH, KO, JA) โดยไร้การหลุดสเปกโมเดล
-       - อัปเกรด PWA Cache Name: `kira-ai-cache-v2.9-artisan-auth-v2`
+* **ยกระดับหน้า "สมัครสมาชิกใหม่" (Register View) ให้มีบริบทความคุ้มค่า ไร้ AI Slop (Zero-Slop High-Conversion Design):**
+  1. **🎯 ปัญหาและข้อสังเกตของบอส:**
+     - บอสสังเกตว่าหน้าต่างสมัครสมาชิกใหม่มีข้อมูลดูน้อยเกินไป และขอความเห็นว่าเหมาะสมแล้วหรือยัง หรือควรเพิ่มข้อมูลอะไรเพื่อไม่ให้ดูเหมือน AI Slop
+  2. **🛠️ การปรับปรุงสถาปัตยกรรม UI/UX (Implementation Details):**
+     - **ไม่เพิ่มช่องกรอกข้อมูลที่ไม่จำเป็น (Anti-Slop Conversion Principle):** คงไว้เฉพาะ Username, ชื่อเล่น, วัตถุประสงค์, และ Password เพื่อป้องกันไม่ให้เกิด Friction หรือภาระแก่ผู้ใช้งาน
+     - **เพิ่มแถบคุณค่าสิทธิประโยชน์สมาชิก (Member Privileges Strip):** ติดตั้งการ์ด 3 เสาหลักความคุ้มค่าใต้หัวข้อสมัครสมาชิก:
+       1. 🎁 **ฟรี 150 ข้อความ/วัน:** *ใช้งานสมองกล AI ได้เต็มอิ่มทุกวัน* (Daily Generous Quota)
+       2. ☁️ **Cloud Vault Sync:** *บันทึกประวัติและเอกสารข้ามอุปกรณ์* (Persistent Cross-device Workspace)
+       3. 🪄 **ปลดล็อกทุกสตูดิโอ:** *เข้าถึง Study Co-Pilot และ Mind Map* (Full Suite Unlocked)
+     - **รองรับ 5 ภาษา (TH, EN, ZH, KO, JA):** ซิงค์คีย์ `reg_perk_1_title` ถึง `reg_perk_3_desc` ครบทุกภาษา
+     - **Cache-Busting & PWA:** อัปเดต Version เป็น `v20261110_artisan_reg_perks` และ SW Cache `kira-ai-cache-v2.9-artisan-reg-perks`
   3. **🧪 ผลการทดสอบสดผ่านเบราว์เซอร์จริง (Proof of Work):**
-     - แคปเจอร์ภาพหน้างานจริงหลังการแก้ไข สะอาดตา ปลอดภัย ไร้การรั่วไหลของความลับทางการค้า
-     - ขนาดภาพ `auth_login_after.png` ยังคงเบา คมชัด หรูหรา (80 KB)
-     - รันชุดทดสอบความปลอดภัยและการยืนยันตัวตน `test_auth_suite.py` ผ่าน 100% (14/14 Tests Pass)
+     - บันทึกภาพ Screenshot `auth_register_after.png` (112 KB) ยืนยันหน้าสมัครสมาชิกใหม่สมดุล หรูหรา ชัดเจนในคุณค่า และปราศจาก AI Slop
+     - รันชุดทดสอบความปลอดภัย `test_auth_suite.py` ผ่านฉลุย 14/14 Tests Pass (100%)
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `fix(security): purge internal model specs from public UI and enforce strict marketing secrecy (v2.9.2)`
+* **Git Commit ล่าสุด:** `feat(auth): add member privilege perks to register modal with zero-slop architecture (v2.9.3)`
 * **สถานะบน Render:** ซิงค์ขึ้น GitHub Repository `main` และ Render Auto-Deploy ออนไลน์สมบูรณ์แล้ว 100%
 * **สถานะบอท Discord 24/7:** ออนไลน์บน Render Cloud 24 ชั่วโมงพร้อมรับคำสั่งตลอดเวลา
 
-#### 3. 🏆 สรุปสถานะระบบ Kira 2.9.2 Flagship:
+#### 3. 🏆 สรุปสถานะระบบ Kira 2.9.3 Flagship:
 * ✅ 1. UptimeRobot Keep-Alive 5-min Active (Render Never Sleeps)
 * ✅ 2. Autonomous Cloud Discord Daemon Built-in (`app.py`)
 * ✅ 3. Strict Marketing Secrecy Enforced (Zero Internal Spec Leaks on Public UI)

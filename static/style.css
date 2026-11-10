@@ -1313,6 +1313,49 @@ textarea::placeholder {
     width: 100%;
 }
 
+/* Member Privileges Value Strip in Register Modal */
+.auth-register-perks {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 9px 12px;
+    background: #090a0f;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    margin-bottom: 0.1rem;
+}
+
+.perk-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.perk-icon {
+    font-size: 0.82rem;
+    color: #38bdf8;
+    flex-shrink: 0;
+}
+
+.perk-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.perk-text strong {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #f4f4f5;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+}
+
+.perk-text span {
+    font-size: 0.67rem;
+    color: #71717a;
+    line-height: 1.25;
+}
+
 .auth-semantic-form {
     display: flex;
     flex-direction: column;
@@ -1688,6 +1731,12 @@ textarea::placeholder {
 
     .auth-form-heading {
         font-size: 1.15rem;
+    }
+
+    .auth-register-perks {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        padding: 8px 10px;
     }
 }
 

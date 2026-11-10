@@ -39,7 +39,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=20261110_artisan_auth_29_clean">
+    <link rel="stylesheet" href="/static/style.css?v=20261110_artisan_reg_perks">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -248,6 +248,31 @@
 
                 <!-- Register Form View -->
                 <div id="register-view" class="auth-view-content" style="display: none;">
+                    <!-- 🎁 Member Privileges Value Strip -->
+                    <div class="auth-register-perks">
+                        <div class="perk-item">
+                            <i class="fa-solid fa-gift perk-icon"></i>
+                            <div class="perk-text">
+                                <strong data-i18n="reg_perk_1_title">ฟรี 150 ข้อความ/วัน</strong>
+                                <span data-i18n="reg_perk_1_desc">ใช้งานสมองกล AI ได้เต็มอิ่มทุกวัน</span>
+                            </div>
+                        </div>
+                        <div class="perk-item">
+                            <i class="fa-solid fa-cloud-arrow-up perk-icon"></i>
+                            <div class="perk-text">
+                                <strong data-i18n="reg_perk_2_title">Cloud Vault Sync</strong>
+                                <span data-i18n="reg_perk_2_desc">บันทึกประวัติและเอกสารข้ามอุปกรณ์</span>
+                            </div>
+                        </div>
+                        <div class="perk-item">
+                            <i class="fa-solid fa-wand-magic-sparkles perk-icon"></i>
+                            <div class="perk-text">
+                                <strong data-i18n="reg_perk_3_title">ปลดล็อกทุกสตูดิโอ</strong>
+                                <span data-i18n="reg_perk_3_desc">เข้าถึง Study Co-Pilot และ Mind Map</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <form id="register-form" class="auth-semantic-form" onsubmit="return false;" novalidate>
                         <div id="register-error" class="auth-error" role="alert" aria-live="polite"></div>
 
@@ -4290,6 +4315,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=20261110_artisan_auth_29_clean"></script>
+    <script src="/static/script.js?v=20261110_artisan_reg_perks"></script>
 </body>
 </html>

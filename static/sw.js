@@ -2,7 +2,7 @@
 // 🚀 Kira AI Progressive Web App - Service Worker (v2.7.0-Synchronized)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.9-artisan-auth-v2';
+const CACHE_NAME = 'kira-ai-cache-v2.9-artisan-reg-perks';
 const STATIC_ASSETS = [
     '/',
     '/static/style.css?v=20261107_2900',
