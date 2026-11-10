@@ -32,8 +32,9 @@
      - ไร้ข้อผิดพลาดของสคริปต์หน้าบ้าน ทุกฟังก์ชัน (Modals, Studios, Chat Input) ยังคงทำงานได้สมบูรณ์ 100%
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `feat(ui): launch Artisan Minimalist Executive UI Design System (v2.9.0)`
-* **สถานะบน Render:** กำลังผลักโค้ดขึ้น GitHub Repository `main` เพื่อทริกเกอร์ Render Auto-Deploy
+* **Git Commit ล่าสุด:** `83a3f44` (`feat(ui): launch Artisan Minimalist Executive UI Design System (v2.9.0)`)
+* **สถานะบน Render:** ซิงค์ขึ้น GitHub Repository `main` และ Render Auto-Deploy ออนไลน์สมบูรณ์แล้ว 100% (Build ID: `kira-v2.9.0_1794288103`, Status: healthy)
+* **สถานะบอท Discord 24/7:** ออนไลน์บน Render Cloud 24 ชั่วโมงพร้อมรับคำสั่งตลอดเวลา
 
 #### 3. 🏆 สรุปสถานะระบบ Kira 2.9.0 Flagship:
 * ✅ 1. UptimeRobot Keep-Alive 5-min Active (Render Never Sleeps)
