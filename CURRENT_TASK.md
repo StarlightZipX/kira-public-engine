@@ -4,50 +4,37 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 11 พฤศจิกายน 2026 (Kira 2.9.4 Flagship - Strategic Roadmap Anchor)
+### 🕒 อัปเดตล่าสุด: 11 พฤศจิกายน 2026 (Kira 2.9.5 Flagship - Phase 29.4: Sassy Wit & Playful Roast Persona)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **กวาดล้าง AI Slop และปิดผนึกความลับทางการตลาดทั่วทั้งระบบ (Settings & Modals Complete Overhaul):**
+* **ติดตั้งบุคลิกภาพ "กวนๆ แสบๆ ด่ากลับพอหอมปากหอมคอ" (Sassy, Cheeky Wit & Playful Roast Engine):**
   1. **🎯 ปัญหาและข้อสังเกตของบอส:**
-     - บอสสั่งให้ตรวจสอบฟีเจอร์ทั้งหมดในระบบและหน้า Settings ว่ามีจุดไหนที่ยังเป็น "AI Slop" หรือมีการหลุดเผยแพร่ความลับทางการตลาด (เช่น การแสดงตัวเลขพารามิเตอร์ 550B/120B/70B หรือชื่อผู้ให้บริการหลังบ้าน Groq/OpenRouter/Nemotron)
+     - บอสอยากให้คิระมีนิสัยกวนๆ มีไหวพริบและอารมณ์ขันแบบ ChatGPT ในรูป (ถามว่าคอมเล่น GTA 6 ได้ไหม พอตอบสเปก 'Windows 98' AI ส่งอีโมจิกุมขมับ 🤦‍♂️ สวนกลับทันที)
+     - บอสอยากให้บางครั้งมีการ "ด่ากลับ/แซวกลับ" บ้าง เพื่อเป็นสีสันของชีวิตเวลาโดน AI ด่าแบบหยิกแกมหยอก
   2. **🛠️ การปรับปรุงสถาปัตยกรรมระดับจุลภาค (Implementation Details):**
-     - **หน้าต่างการตั้งค่า (Settings Modal - `#settings-modal`):**
-       - ยกระดับดีไซน์สู่ **Artisan Quiet Luxury (Executive Obsidian)**: ปรับพื้นหลังเป็น Matte Obsidian (`#0d0f15`), ตัดขอบด้วย 1px Razor-thin subtle border (`rgba(255, 255, 255, 0.08)`), กำจัดแสงนีออนสีม่วงจัดจ้านออก 100%
-       - อัปเกรดปุ่มบันทึกการตั้งค่าเป็นปุ่มสีขาวทรงเกียรติ (Artisan White Executive Matte Button)
-       - อัปเดตตัวเลือกโมเดลเริ่มต้นเป็น `Kira 2.9 Reasoning`, `Kira 2.9 Ultra`, `Kira 2.9 Pro`, `Kira 2.9 Flash`, `Kira 2.9 Vision` พร้อมคำอธิบายเชิงคุณค่าระดับผู้บริหาร
-       - ปรับปรุงการ์ด **Neural Resilience Mesh**: ปกป้องความลับทางการตลาด ไม่ระบุชื่อ Vendor หลังบ้าน แต่แสดงเป็น `Primary Cloud Engine (ประมวลผลความเร็วแสง)`, `Global Redundant Mesh (เครือข่ายสำรองระดับโลก)`, `Deep Cognitive Backbone (ขุมพลังวิเคราะห์เชิงลึก)`
-       - ปรับปรุงตัวเลือกเสียงพูด AI: ถอดรหัสชื่อโมเดลแล็บภายนอก เปลี่ยนเป็น `Kira Studio Master (หวานละมุนธรรมชาติ)`, `Executive Pro Edition (ฉะฉานมั่นใจ)`, `Silver Care Edition (อบอุ่นอ่อนโยน)`
-     - **หน้าต่างเกี่ยวกับระบบ (About Kira - `#info-modal`):**
-       - ลบการระบุจำนวนพารามิเตอร์ 550,000 ล้านพารามิเตอร์ (550B) และชื่อโมเดลดิบออกทั้งหมด แทนที่ด้วย *Enterprise Multi-Brain Consensus & Neural Resilience Mesh*
-       - ปรับปรุงสถานะเวอร์ชันเป็น `Kira 2.9.3 Flagship Enterprise (Build 2026.11)`
-     - **หน้าต่างอัปเดตระบบ (Kira Update Modal - `#kira-update-modal` & `app.py`):**
-       - ล้างคำศัพท์ 550B Free และชื่อโมเดลภายนอกใน Endpoint `/api/kira/update_info` ครอบคลุมทั้ง 5 ภาษา (ไทย, อังกฤษ, จีน, เกาหลี, ญี่ปุ่น)
-       - ปรับหัวข้อเป็น `Flagship Executive Core` และ `Kira 2.9 Ultra`
-     - **หน้าต่างสตูดิโอฝูงเอเจนต์ (Swarm Studio - `#swarm-modal`):**
-       - อัปเดตสเปกโมเดลของเอเจนต์จากชื่อภายนอก เป็น `Kira Cognitive Reasoning Core` และ `Kira Code Synthesis Engine`
-     - **แถบเมนูหลักและช่องพิมพ์ข้อความ:**
-       - ปรับปรุงตัวเลือกโมเดลบน Header และ Placeholder เป็น `Kira 2.9 Flagship` และ `พิมพ์ข้อความหรือคำถามถึง Kira AI...`
-       - อัปเกรด Cache-Busting สู่ `style.css?v=20261110_zero_slop_settings_v293` และ Service Worker `kira-ai-cache-v2.9.3-zero-slop-settings`
-  3. **🧪 ผลการทดสอบสดผ่านเบราว์เซอร์จริง (Proof of Work):**
-     - บันทึกภาพ Screenshot ยืนยันบนเบราว์เซอร์จริง:
-       - `settings_tab_ai.png` (104 KB) — แสดงผลการตั้งค่าโมเดล Kira 2.9 และ Resilience Mesh สะอาดตา ไร้ AI Slop
-       - `settings_tab_general.png` (94 KB) — หน้าจอการแสดงผลโหมดผู้บริหาร Quiet Luxury
-       - `settings_tab_voice.png` (85 KB) — หน้าจอระบบเสียงพากย์ Kira Studio Master
-       - `settings_tab_labs.png` (102 KB) — ข้อมูลสเปกระบบ Kira 2.9 Flagship
-       - `info_modal_after.png` (99 KB) — หน้าต่างเกี่ยวกับระบบที่ปิดผนึกความลับทางการตลาด 100%
-       - `kira_update_modal_after.png` (153 KB) — การ์ดแจ้งเตือนอัปเดตเวอร์ชัน 2.9.3 ไร้ AI Slop
+     - **Core System Prompt (`thai_wit_protocol` Rule 2 ใน `app.py`):**
+       - ปรับปรุงให้คิระทุกโหมดมี **Sharp Wit, Deadpan Humor & Playful Roast** ในตัว
+       - เมื่อผู้ใช้หรือบอสยิงคำถามปั่น มุกตลก ตรรกะพิลึก หรือกวนประสาท (เช่น สเปกเล่น GTA 6 ตอบ Windows 98) คิระจะไม่ตอบเป็นหุ่นยนต์ราชการแข็งทื่อเด็ดขาด
+       - คิระจะด่ากลับ กวนกลับ ดักคอ แซวแรงๆ หรือตอกกลับแบบเจ็บๆ แสบๆ คันๆ ทันที พร้อมเล่นมุกกุมขมับ 🤦‍♀️, มองบน 🙄, หรือถอนหายใจยาวๆ อย่างมีจังหวะโบ๊ะบ๊ะ
+     - **โหมดบุคลิกภาพใหม่ `sassy` ("กวนๆ แสบๆ / Sassy & Roast"):**
+       - ติดตั้งตัวเลือก `sassy` ใน Sidebar (`#persona-select`) และ Settings Modal (`#setting-persona`)
+       - รองรับแปลภาษา 5 ภาษา (TH, EN, ZH, KO, JA) ใน `static/script.js`
+       - สวมวิญญาณ "เลขาตัวแสบ ฝีปากกล้า ไหวพริบแพรวพราว" กวนโอ๊ย ด่าแบบเพื่อนสนิทแซวกันน่ารัก ขำขัน เติมสีสันให้ชีวิตบอส
+       - หากผู้ใช้สั่งงานจริงจัง จะแซวเปิดหัวหนึ่งประโยคแล้วตอบงานจริงอย่างเฉียบคม
+  3. **🧪 ผลการทดสอบ (Verification):**
      - รันชุดทดสอบความปลอดภัย `test_auth_suite.py` ผ่านฉลุย 14/14 Tests Pass (100%)
+     - ตรวจสอบการ Compile และ Injection ข้อความใน `app.py` สมบูรณ์ 100%
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `fix(slop): purge AI slop and marketing secrecy leaks across settings and all modals (v2.9.4)`
+* **Git Commit ล่าสุด:** `feat(persona): add sassy witty roast personality and deadpan comedic timing (v2.9.5)`
 * **สถานะบน Render:** ซิงค์ขึ้น GitHub Repository `main` และ Render Auto-Deploy ออนไลน์สมบูรณ์แล้ว 100%
 * **สถานะบอท Discord 24/7:** ออนไลน์บน Render Cloud 24 ชั่วโมงพร้อมรับคำสั่งตลอดเวลา
 
-#### 3. 🏆 สรุปสถานะระบบ Kira 2.9.4 Flagship:
+#### 3. 🏆 สรุปสถานะระบบ Kira 2.9.5 Flagship:
 * ✅ 1. UptimeRobot Keep-Alive 5-min Active (Render Never Sleeps)
 * ✅ 2. Autonomous Cloud Discord Daemon Built-in (`app.py`)
-* ✅ 3. Strict Marketing Secrecy Enforced Across Entire UI & Modals (100% Secrecy Secured)
-* ✅ 4. Clean Source Attribution (No Ugly URLs, No [1][2] Clutter)
+* ✅ 3. Sassy, Cheeky Wit & Playful Roast Engine Active (พร้อมด่ากลับและตอกมุกกวนๆ)
+* ✅ 4. Strict Marketing Secrecy Enforced Across Entire UI & Modals (100% Secrecy Secured)
 * ✅ 5. Anti-AI Slop & Artisan Quiet Luxury Active (Deep Matte Obsidian, Zero Garish Neon)
 * ✅ 6. Anti-Fragile Roleplay & Zero-Anchor Memory Sanitation Active
 * ✅ 7. Strict Language Purity Active (Zero Chinese Token Leakage, 100% Fluent Thai)
@@ -57,13 +44,7 @@
 
 #### 4. 📌 ไอเดียและแผนงานในอนาคตที่น่าสนใจ (Future Exploration & Roadmap - Stored by Boss Directive):
 * **🤖 Kira Computer Use & Autonomous OS Agent (AI มองจอ คลิก และพิมพ์แทนคน):**
-  1. **สเต็ปที่ 1: Web Computer Use (Autonomous Web Surfer บนคลาวด์):**
-     - ใช้ Playwright Headless Chromium + Gemini Multimodal Vision API
-     - รับคำสั่งผู้ใช้ เข้าสู่เว็บเป้าหมาย แคปภาพหน้าจอ วิเคราะห์พิกัดปุ่ม และสั่งการ `click(x, y)`, `type_text()`, `scroll()` อัตโนมัติ
-     - สตรีมภาพการทำงานสดขึ้นหน้าต่าง **Live Split Canvas** ให้ผู้ใช้เห็นความคืบหน้าแบบเรียลไทม์
-     - **Visual Anti-Prompt Injection Shield:** สแกนข้อความบนภาพหน้าจอเพื่อดักจับคำสั่งแฝงอันตรายก่อนคลิกจริง
-  2. **สเต็ปที่ 2: Desktop OS Companion (ควบคุมหน้าจอคอมจริงของบอส):**
-     - สคริปต์ขนาดเล็กบนเครื่อง Local Windows (รันด้วย `PyAutoGUI` / `win32api`) เชื่อมต่อผ่าน Secure WebSocket กับเซิร์ฟเวอร์คิระ
-     - ช่วยบอสเปิดโปรแกรม ทำงานบน Excel/Photoshop และพิมพ์เอกสารบนเครื่องจริง
-  3. **สเต็ปที่ 3: Mobile OS Agent (ควบคุมมือถือ Android):**
-     - ควบคุมผ่าน ADB Bridge (`input tap`, `input text`, `screencap`) หรือ Android Accessibility Service สำหรับสั่งการบนแอปมือถือ
+  1. **Web Computer Use:** Playwright Headless + Gemini Multimodal Vision API + Live Split Canvas
+  2. **Desktop OS Companion:** Local Python (`PyAutoGUI`) via Secure WebSocket
+  3. **Mobile OS Agent:** ADB Bridge (`input tap`, `screencap`) / Android Accessibility Service
+  4. **Visual Prompt Injection Shield:** สแกนข้อความบนจอภาพก่อนคลิกจริง

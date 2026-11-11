@@ -14087,6 +14087,7 @@ const KIRA_I18N = {
         sidebar_persona_label: "สไตล์การตอบ:",
         persona_formal: "ทางการ สุภาพ",
         persona_casual: "เป็นกันเอง สบายๆ",
+        persona_sassy: "กวนๆ แสบๆ (Sassy & Roast)",
         persona_direct: "มุ่งเน้นผลลัพธ์ ตรงประเด็น",
         guide_title: "คู่มือการใช้งาน (Kira Guide)",
         logout_title: "ออกจากระบบ",
