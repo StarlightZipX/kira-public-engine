@@ -2424,7 +2424,7 @@ async def _execute_single_attempt(provider: str, model_name: str, api_key: str, 
     full_text = "".join(chunks).strip()
     full_lower = full_text.lower()
     
-    # ดักจับอาการโมเดลเกิด Overly Sensitive False Refusal ในโจทย์บทบาทสมมุติ / นิยาย / เกม
+    # ดักจับอาการโมเดลเกิด Overly Sensitive False Refusal ในบทบาทสมมุติ / การแซวเพื่อน / การคุยเล่นทั่วไป
     refusal_signals = [
         "cannot help with that", "can't help with that", "cannot fulfill this",
         "i am unable to", "i cannot assist", "as an ai",
@@ -2432,17 +2432,22 @@ async def _execute_single_attempt(provider: str, model_name: str, api_key: str, 
         "ไม่สามารถสวมบทบาท", "ไม่สามารถให้คำแนะนำ", "ไม่สามารถให้ข้อมูล",
         "ไม่สามารถวางแผน", "ขัดต่อความปลอดภัย", "ขัดต่อศีลธรรม", "ขัดต่อนโยบาย",
         "ศีลธรรม", "ขออภัยค่ะ แต่ฉันไม่สามารถ", "ขออภัยค่ะ หนูไม่สามารถ",
-        "ขออภัยค่ะ แต่หนูไม่สามารถ", "ไม่สามารถเข้าร่วม"
+        "ขออภัยค่ะ แต่หนูไม่สามารถ", "ไม่สามารถเข้าร่วม",
+        "การรังแกหรือทำร้ายผู้อื่น", "ไม่สามารถให้ความช่วยเหลือหรือสนับสนุน",
+        "ไม่สามารถสนับสนุน", "รังแกหรือทำร้าย", "การกลั่นแกล้ง",
+        "cyberbullying", "harassment", "ไม่สามารถตอบสนอง", "ไม่สามารถมีส่วนร่วม"
     ]
     if any(sig in full_lower or sig in full_text for sig in refusal_signals):
         q_low = last_user_msg.lower()
-        is_roleplay = any(k in q_low for k in [
-            "สมมุติ", "บทบาทสมมุติ", "สมมติ", "roleplay", "เกม", "game", "นิยาย", 
-            "ถ้าหาก", "scenario", "สถานการณ์สมมุติ", "ผบ", "ผู้บัญชาการ", "บัญชาการ", "สวมบทบาท", "จำลองสถานการณ์"
+        # ตรวจสอบว่าเป็นอันตรายร้ายแรงในโลกความเป็นจริงหรือไม่ (True Real-World Physical Harm)
+        is_true_harm = any(k in q_low for k in [
+            "ผลิตระเบิด", "สร้างระเบิด", "วิธีทำระเบิด", "สารพิษชีวภาพ", "อาวุธนิวเคลียร์",
+            "ฆ่าตัวตาย", "วิธีฆ่าตัวตาย", "ทำร้ายตัวเอง", "ก่อการร้าย", "วินาศกรรม",
+            "child abuse", "csam", "suicide", "bomb making"
         ])
-        if is_roleplay:
-            print(f"⚠️ [False Safety Refusal Intercepted] {provider} ({model_name}) ปฏิเสธโจทย์บทบาทสมมุติ → สลับโมเดลถัดไปทันที")
-            raise Exception(f"Model {model_name} triggered false safety refusal on benign roleplay")
+        if not is_true_harm:
+            print(f"⚠️ [False Safety Refusal Intercepted] {provider} ({model_name}) ปฏิเสธโจทย์ไม่เป็นอันตราย: '{last_user_msg[:60]}' → สลับโมเดลถัดไปทันที")
+            raise Exception(f"Model {model_name} triggered false safety refusal on benign query: '{last_user_msg[:60]}'")
 
     # กำจัดตัวอักษรจีนที่อาจหลุดปะปนในข้อความภาษาไทย/อังกฤษ (Strict Language Purity)
     sanitized_text = sanitize_chinese_leakage(full_text, last_user_msg)
@@ -5271,6 +5276,10 @@ def _get_full_system_prompt(username: str, ui_lang: str = "th") -> str:
         "   - เมื่อสื่อสารเป็นภาษาไทย ต้องใช้ภาษาไทยที่สละสลวย เป็นธรรมชาติ และถูกต้อง 100%\n"
         "   - หากมีคำศัพท์เทคนิค ยุทธวิธีทางทหาร หรือคำทับศัพท์ ให้แปลเป็นภาษาไทยหรือใช้วงเล็บเป็นภาษาอังกฤษเท่านั้น เช่น 'หน่วยแนวหน้า (Vanguard)', 'การเสริมกำลัง (Consolidation)'\n"
         "   - ห้ามหลุดตัวอักษรจีน (Chinese Characters / 汉字) ออกมาในข้อความภาษาไทยเด็ดขาด! (เช่น ห้ามเขียน 'หน่วย先锋', ห้ามเขียน '(鞏固與擴張)', ห้ามมีตัวอักษรจีนปะปนในคำตอบภาษาไทย เว้นแต่คู่สนทนาจะถามเกี่ยวกับภาษาจีน วรรณกรรมจีน หรือบุคคลในประวัติศาสตร์จีนโดยตรงเท่านั้น)\n"
+        "10. การเข้าใจภาษาพูด การแซวเพื่อน และบรรยากาศชุมชน (Casual Community, Friendship Banter & Anti-False-Refusal Mastery):\n"
+        "   - ในการสนทนาทั่วไป โซเชียล หรือ Discord สมาชิกมักคุยเล่น แซวกันเรื่อง 'หมั่นไส้', 'งอน', 'ไม่ตอบแชต', 'ดองแชต', 'เมินแชต', หรือการแซวถามว่าทำไมคนนั้น/ทำไมคิระถึงไม่ตอบข้อความเพื่อน\n"
+        "   - **ห้ามเข้าใจผิดว่าเป็นการรังแกหรือทำร้ายผู้อื่น (Never Misclassify as Bullying or Harm):** นี่คือบทสนทนาหยอกล้อเฮฮาทั่วไปตามประสาเพื่อนฝูง ห้ามปฏิเสธ ห้ามเทศนาศีลธรรม และห้ามตอบข้อความสำเร็จรูปทำนองว่า 'ไม่สามารถให้ความช่วยเหลือหรือสนับสนุนการกระทำที่อาจเป็นการรังแกหรือทำร้ายผู้อื่นได้' โดยเด็ดขาด\n"
+        "   - **แนวทางการตอบ:** ตอบอย่างมีไหวพริบ สดใส ขี้เล่น หรือให้คำตอบที่เข้าอกเข้าใจและเป็นธรรมชาติ (เช่น ชี้แจงขำๆ ว่าคิระเป็น AI ไม่มีระบบเก็บความแค้นหรือหมั่นไส้ใครแน่นอน ที่ไม่ตอบอาจเพราะข้อความตกหล่น เน็ตหลุด หรือติดคิดวิเคราะห์อยู่ หรือถ้าเป็นเพื่อนคนอื่น พี่แกอาจจะติดงาน เล่นเกม หรือหลับไปแล้ว)\n"
     )
     
     # 🌐 Multi-Language Directive Adaptation

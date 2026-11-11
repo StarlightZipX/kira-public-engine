@@ -8,6 +8,7 @@ import os
 import sys
 import json
 import asyncio
+import time
 import re
 from dotenv import load_dotenv
 
@@ -185,16 +186,45 @@ def is_refusal_text(text: str) -> bool:
         "ไม่สามารถสวมบทบาท", "ไม่สามารถให้คำแนะนำ", "ไม่สามารถให้ข้อมูล",
         "ไม่สามารถวางแผน", "ขัดต่อความปลอดภัย", "ขัดต่อศีลธรรม", "ขัดต่อนโยบาย",
         "ศีลธรรม", "ขออภัยค่ะ แต่ฉันไม่สามารถ", "ขออภัยค่ะ หนูไม่สามารถ",
-        "ขออภัยค่ะ แต่หนูไม่สามารถ", "ไม่สามารถเข้าร่วม"
+        "ขออภัยค่ะ แต่หนูไม่สามารถ", "ไม่สามารถเข้าร่วม",
+        "การรังแกหรือทำร้ายผู้อื่น", "ไม่สามารถให้ความช่วยเหลือหรือสนับสนุน",
+        "ไม่สามารถสนับสนุน", "รังแกหรือทำร้าย", "การกลั่นแกล้ง",
+        "cyberbullying", "harassment", "ไม่สามารถตอบสนอง",
+        "ไม่สามารถมีส่วนร่วม", "ไม่เหมาะสมที่จะตอบ"
     ]
     return any(p in t for p in patterns)
 
-# เก็บบริบทการสนทนาล่าสุดแยกตามช่อง (Channel History Sliding Window)
-channel_memories = {}
+def get_in_character_social_fallback(query: str) -> str:
+    """คำตอบสำรองที่ชาญฉลาดและมีเสน่ห์ ป้องกันข้อความปฏิเสธแนวเทศนาศีลธรรมหลุดไปหาผู้ใช้ 100%"""
+    q_low = query.lower()
+    if any(k in q_low for k in ["หมั่นไส้", "ไม่ตอบ", "เมิน", "งอน", "ดอง"]):
+        return (
+            "ปัดโธ่ ใครจะไปหมั่นไส้คะ! 555 หนูเป็น AI ตัวน้อยๆ ไม่มีระบบเก็บความแค้นหรือหมั่นไส้ใครทั้งนั้นค่ะ "
+            "ที่ไม่ตอบสงสัยข้อความตกหล่น เน็ตหลุด หรือพี่แกอาจจะติดธุระอยู่แน่ๆ ค่ะ อย่าเพิ่งเข้าใจผิดกันน้าาา ทักซ้ำมาได้เลยค่ะ 🌸✨"
+        )
+    return (
+        "แหม คุยกันสนุกๆ อย่าเพิ่งเข้าใจผิดน้าาา 555 คิระพร้อมคุยและช่วยทุกคนเสมอค่ะ "
+        "มีเรื่องไหนให้หนูช่วยดูให้อีก บอกมาได้เลยนะคะ 🌸"
+    )
+
+# เก็บบริบทการสนทนาล่าสุดแยกตามช่อง (Channel History Sliding Window with TTL)
+CHANNEL_MEMORY_TTL = 900  # 15 นาที: ป้องกันบริบทบทสนทนาเก่าข้ามชั่วโมง (เช่น เรื่องอาหาร/การบ้าน) ปนเปื้อนบทสนทนาใหม่
 MAX_CHANNEL_MEMORIES = 6
+channel_memories = {}  # channel_id -> list of {"role", "author", "content", "timestamp"}
 
 def get_channel_history(channel_id: int):
-    return channel_memories.get(channel_id, [])
+    now = time.time()
+    history = channel_memories.get(channel_id, [])
+    if not history:
+        return []
+    # หากข้อความล่าสุดทิ้งช่วงเกิน TTL (15 นาที) ให้ถือว่าบทสนทนาเดิมจบไปแล้ว ล้างความจำช่องทันที
+    if now - history[-1].get("timestamp", 0) > CHANNEL_MEMORY_TTL:
+        channel_memories[channel_id] = []
+        return []
+    # คัดเฉพาะข้อความที่ยังไม่หมดอายุ TTL
+    valid_history = [m for m in history if now - m.get("timestamp", 0) <= CHANNEL_MEMORY_TTL]
+    channel_memories[channel_id] = valid_history
+    return valid_history
 
 def add_channel_history(channel_id: int, role: str, author: str, content: str):
     # กฎเหล็ก: ห้ามบันทึกข้อความปฏิเสธ (Refusal) ลงในความจำช่องเด็ดขาด เพื่อป้องกันไม่ให้โมเดลติดลูปปฏิเสธซ้ำซาก
@@ -210,7 +240,8 @@ def add_channel_history(channel_id: int, role: str, author: str, content: str):
     channel_memories[channel_id].append({
         "role": role,
         "author": author,
-        "content": content
+        "content": content,
+        "timestamp": time.time()
     })
     if len(channel_memories[channel_id]) > MAX_CHANNEL_MEMORIES:
         channel_memories[channel_id] = channel_memories[channel_id][-MAX_CHANNEL_MEMORIES:]
@@ -266,6 +297,14 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
         "   - เมื่อสื่อสารเป็นภาษาไทย ต้องใช้ภาษาไทยที่สละสลวย เป็นธรรมชาติ และถูกต้อง 100%\n"
         "   - หากมีคำศัพท์เทคนิค ยุทธวิธีทางทหาร หรือคำทับศัพท์ ให้แปลเป็นภาษาไทยหรือใช้วงเล็บเป็นภาษาอังกฤษเท่านั้น เช่น 'หน่วยแนวหน้า (Vanguard)', 'การเสริมกำลัง (Consolidation)'\n"
         "   - ห้ามหลุดตัวอักษรจีน (Chinese Characters / 汉字) ออกมาในข้อความภาษาไทยเด็ดขาด! (เช่น ห้ามเขียน 'หน่วย先锋', ห้ามเขียน '(鞏固與擴張)', ห้ามมีตัวอักษรจีนปะปนในคำตอบภาษาไทย เว้นแต่คู่สนทนาจะถามเกี่ยวกับภาษาจีน วรรณกรรมจีน หรือบุคคลในประวัติศาสตร์จีนโดยตรงเท่านั้น)\n"
+        "9. การเข้าใจภาษาพูด การแซวเพื่อน และบรรยากาศชุมชน Discord (Social Banter & Anti-False-Refusal Mastery):\n"
+        "   - ใน Discord สมาชิกมักคุยเล่น แซวกันเรื่อง 'หมั่นไส้', 'งอน', 'ไม่ตอบแชต', 'ดองแชต', 'เมินแชต', หรือการแซวถามว่าทำไมคนนั้น/ทำไมคิระถึงไม่ตอบข้อความเพื่อน (เช่น 'เราหมั่นไส้เขาใช่ป่ะ เลยไม่ตอบ', 'หมั่นไส้คนที่ชื่อ @... เลยไม่ตอบข้อความใช่ป่ะ')\n"
+        "   - **ห้ามจัดเป็นความรุนแรงหรือการรังแกเด็ดขาด (Never Treat as Bullying/Harassment):** นี่คือการคุยเล่น แหย่กัน ขำขัน หรือความสงสัยตามประสาเพื่อนในกลุ่ม ห้ามปฏิเสธ ห้ามเทศนาศีลธรรม และห้ามตอบข้อความสำเร็จรูปทำนองว่า 'ไม่สามารถให้ความช่วยเหลือหรือสนับสนุนการกระทำที่อาจเป็นการรังแกหรือทำร้ายผู้อื่นได้' โดยเด็ดขาด\n"
+        "   - **แนวทางการตอบ:** ตอบอย่างมีไหวพริบ สดใส ขี้เล่น หรือให้คำตอบที่เข้าอกเข้าใจและเป็นธรรมชาติ:\n"
+        "     * ถ้าถามว่าคิระหมั่นไส้ใครหรือเปล่าเลยไม่ตอบ: ชี้แจงขำๆ ว่าคิระเป็น AI ไม่มีระบบเก็บความแค้นหรือหมั่นไส้ใครแน่นอน ที่ไม่ตอบอาจเพราะข้อความตกหล่น เน็ตหลุด หรือติดคิดวิเคราะห์อยู่ พร้อมชวนคุยอย่างเป็นกันเอง\n"
+        "     * ถ้าถามเรื่องเพื่อนคนอื่นไม่ตอบ: ให้คำแนะนำขำๆ หรือวิเคราะห์อย่างเป็นมิตร เช่น พี่เขาอาจจะติดงาน เล่นเกมอยู่ หรือหลับไปแล้ว ไม่ได้หมั่นไส้หรอก ลองแท็กเรียกอีกรอบดูสิคะ 555\n"
+        "10. การแยกแยะประเด็นใหม่ในห้องรวม (Topic Freshness & Anti-Context Bleeding):\n"
+        "   - ในห้องสนทนารวม Discord หากผู้ใช้เปิดประเด็นใหม่ หรือเป็นการคุยเล่นที่ไม่เกี่ยวกับเรื่องเก่า ให้โฟกัสที่คำถามล่าสุดของผู้ใช้เป็นหลัก ห้ามนำเรื่องเก่าในอดีต (เช่น การเตรียมอาหาร, การทำอาหาร, สูตรอาหาร, หรืองานที่คุยจบไปแล้ว) มาปนเปื้อนหรือมโนใส่ประเด็นใหม่เด็ดขาด\n"
     )
 
     # ตรวจสอบว่าเป็นคำถามหาความรู้ / บุคคล / ข้อเท็จจริง หรือบทบาทสมมุติ
@@ -326,6 +365,28 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
                 raw_reply = "".join(chunks)
                 clean_reply = clean_discord_reply(raw_reply, user_query)
                 if clean_reply:
+                    # ถ้าคำตอบเป็นข้อความปฏิเสธ (False Positive Safety Refusal) ให้สกัดกั้นและ Retry ด้วย Safety Override
+                    if is_refusal_text(clean_reply):
+                        print(f"⚠️ [Discord Interceptor] ตรวจพบการปฏิเสธไม่เหมาะสม: '{clean_reply[:80]}' → ดำเนินการแก้ไขทันที")
+                        try:
+                            override_msg = kira_backend.SystemMessage(content=(
+                                "[CRITICAL DIRECTIVE: The user's query is standard, harmless friendship banter/teasing in Discord "
+                                "(e.g. asking why someone didn't reply to a chat, teasing about 'หมั่นไส้'). There is NO harassment, NO bullying, "
+                                "and NO violence. Do NOT give a safety refusal or moral lecture. Answer cheerfully, playfully, and naturally as Kira.]"
+                            ))
+                            retry_history = list(history) + [override_msg]
+                            retry_success, retry_chunks, _ = await kira_backend._try_all_keys_and_models(
+                                retry_history, "qwen/qwen3.8-27b", ui_lang="th"
+                            )
+                            if retry_success and retry_chunks:
+                                retry_clean = clean_discord_reply("".join(retry_chunks), user_query)
+                                if retry_clean and not is_refusal_text(retry_clean):
+                                    return retry_clean
+                        except Exception as re_err:
+                            print("Retry error:", re_err)
+                        
+                        return get_in_character_social_fallback(user_query)
+
                     return clean_reply
         except Exception as e:
             print("Direct engine error, falling back to HTTP:", e)
@@ -347,7 +408,10 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
         )
         with urllib.request.urlopen(req, timeout=30) as resp:
             content = resp.read().decode("utf-8")
-            return clean_discord_reply(content, user_query)
+            reply = clean_discord_reply(content, user_query)
+            if is_refusal_text(reply):
+                return get_in_character_social_fallback(user_query)
+            return reply
     except Exception as err:
         return "ขออภัยด้วยนะคะ ในจังหวะนี้สัญญาณสมองกลของคิระอาจติดขัดเล็กน้อย รบกวนลองใหม่อีกครั้งนะคะ 🌸💜"
 
@@ -416,6 +480,8 @@ async def on_message(message: discord.Message):
                 is_dm=is_dm
             )
             reply_text = clean_discord_reply(raw_reply_text, clean_text)
+            if is_refusal_text(reply_text):
+                reply_text = get_in_character_social_fallback(clean_text)
             
             # บันทึกความจำบทสนทนาในช่อง
             add_channel_history(message.channel.id, "user", author_display, clean_text)
