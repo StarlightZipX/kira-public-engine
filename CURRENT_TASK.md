@@ -4,7 +4,7 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 10 พฤศจิกายน 2026 (Kira 2.9.4 Flagship - Phase 29.3: System-Wide AI Slop & Marketing Secrecy Purge)
+### 🕒 อัปเดตล่าสุด: 11 พฤศจิกายน 2026 (Kira 2.9.4 Flagship - Strategic Roadmap Anchor)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
 * **กวาดล้าง AI Slop และปิดผนึกความลับทางการตลาดทั่วทั้งระบบ (Settings & Modals Complete Overhaul):**
@@ -52,3 +52,18 @@
 * ✅ 6. Anti-Fragile Roleplay & Zero-Anchor Memory Sanitation Active
 * ✅ 7. Strict Language Purity Active (Zero Chinese Token Leakage, 100% Fluent Thai)
 * ✅ 8. Settings Modal & All Feature Modals Synchronized to Kira 2.9 Flagship
+
+---
+
+#### 4. 📌 ไอเดียและแผนงานในอนาคตที่น่าสนใจ (Future Exploration & Roadmap - Stored by Boss Directive):
+* **🤖 Kira Computer Use & Autonomous OS Agent (AI มองจอ คลิก และพิมพ์แทนคน):**
+  1. **สเต็ปที่ 1: Web Computer Use (Autonomous Web Surfer บนคลาวด์):**
+     - ใช้ Playwright Headless Chromium + Gemini Multimodal Vision API
+     - รับคำสั่งผู้ใช้ เข้าสู่เว็บเป้าหมาย แคปภาพหน้าจอ วิเคราะห์พิกัดปุ่ม และสั่งการ `click(x, y)`, `type_text()`, `scroll()` อัตโนมัติ
+     - สตรีมภาพการทำงานสดขึ้นหน้าต่าง **Live Split Canvas** ให้ผู้ใช้เห็นความคืบหน้าแบบเรียลไทม์
+     - **Visual Anti-Prompt Injection Shield:** สแกนข้อความบนภาพหน้าจอเพื่อดักจับคำสั่งแฝงอันตรายก่อนคลิกจริง
+  2. **สเต็ปที่ 2: Desktop OS Companion (ควบคุมหน้าจอคอมจริงของบอส):**
+     - สคริปต์ขนาดเล็กบนเครื่อง Local Windows (รันด้วย `PyAutoGUI` / `win32api`) เชื่อมต่อผ่าน Secure WebSocket กับเซิร์ฟเวอร์คิระ
+     - ช่วยบอสเปิดโปรแกรม ทำงานบน Excel/Photoshop และพิมพ์เอกสารบนเครื่องจริง
+  3. **สเต็ปที่ 3: Mobile OS Agent (ควบคุมมือถือ Android):**
+     - ควบคุมผ่าน ADB Bridge (`input tap`, `input text`, `screencap`) หรือ Android Accessibility Service สำหรับสั่งการบนแอปมือถือ
