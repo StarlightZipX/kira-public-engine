@@ -246,8 +246,8 @@ def add_channel_history(channel_id: int, role: str, author: str, content: str):
     if len(channel_memories[channel_id]) > MAX_CHANNEL_MEMORIES:
         channel_memories[channel_id] = channel_memories[channel_id][-MAX_CHANNEL_MEMORIES:]
 
-async def query_kira_engine(user_query: str, author_name: str, channel_id: int = 0, reply_context: str = "", is_dm: bool = False) -> str:
-    """ส่งคำถามเข้าสู่สมองกล Kira AI ระดับ Tier-1 Flagship (120B/27B) พร้อมการคิดวิเคราะห์ลึกซึ้ง และการค้นหาข้อเท็จจริงอัตโนมัติ"""
+async def query_kira_engine(user_query: str, author_name: str, channel_id: int = 0, reply_context: str = "", is_dm: bool = False, image_urls: list = None) -> str:
+    """ส่งคำถามเข้าสู่สมองกล Kira AI ระดับ Tier-1 Flagship (120B/27B/Vision) พร้อมการคิดวิเคราะห์ลึกซึ้ง และการอ่านรูปภาพอัตโนมัติ"""
     is_boss = any(b in author_name.lower() for b in ["boss", "ศิวัช", "starlight", "owner", "admin"])
     
     if is_boss:
@@ -344,17 +344,25 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
                         if not is_refusal_text(past.get("content", "")):
                             history.append(kira_backend.AIMessage(content=past["content"]))
             
-            # ข้อความปัจจุบันพร้อมบริบทการ Reply
+            # ข้อความปัจจุบันพร้อมบริบทการ Reply และรูปภาพ (Multimodal Vision)
             curr_content = f"{reply_context}[{author_name}]: {user_query}" if reply_context else f"[{author_name}]: {user_query}"
-            history.append(kira_backend.HumanMessage(content=curr_content))
             
-            # เลือกรุ่นสมองกล: หากเป็นบทบาทสมมุติ ล็อกเข้า Qwen 27B / Creative เพื่อจินตนาการและไร้การปฏิเสธที่เปราะบาง
-            if is_roleplay:
-                preferred_model = "qwen/qwen3.8-27b"
+            if image_urls:
+                # สร้าง HumanMessage แบบ Multimodal พร้อมลิงก์รูปภาพ
+                content_payload = [{"type": "text", "text": curr_content}]
+                for img_url in image_urls[:3]:  # รองรับสูงสุด 3 รูปต่อคำสั่ง
+                    content_payload.append({"type": "image_url", "image_url": {"url": img_url}})
+                history.append(kira_backend.HumanMessage(content=content_payload))
+                preferred_model = "dots-studio/dots-3-note-preview:free"
             else:
-                target_model = "2.7-pro"
-                target_flavor = "reasoning" if (is_factual or is_boss or len(user_query) > 30) else "fast"
-                preferred_model, brain_type, _ = kira_backend._route_brain(user_query, target_model, target_flavor)
+                history.append(kira_backend.HumanMessage(content=curr_content))
+                # เลือกรุ่นสมองกล: หากเป็นบทบาทสมมุติ ล็อกเข้า Qwen 27B / Creative เพื่อจินตนาการและไร้การปฏิเสธที่เปราะบาง
+                if is_roleplay:
+                    preferred_model = "qwen/qwen3.8-27b"
+                else:
+                    target_model = "2.7-pro"
+                    target_flavor = "reasoning" if (is_factual or is_boss or len(user_query) > 30) else "fast"
+                    preferred_model, brain_type, _ = kira_backend._route_brain(user_query, target_model, target_flavor)
             
             # เรียกกระบวนการคิดและกู้คืนฉุกเฉิน
             success, chunks, err = await kira_backend._try_all_keys_and_models(
@@ -489,7 +497,34 @@ async def handle_kira_message(message: discord.Message, recovered: bool = False)
 
     late_prefix = "ขอโทษที่ตอบช้านะคะ เมื่อกี้สัญญาณสมองกลของหนูอาจติดขัดไปนิดนึง 😅\n\n" if recovered else ""
 
-    if not clean_text:
+    # ดึงรูปภาพที่แนบมากับข้อความ (Discord Attachments)
+    image_urls = []
+    if message.attachments:
+        for att in message.attachments:
+            c_type = getattr(att, "content_type", "") or ""
+            fname = getattr(att, "filename", "") or ""
+            if c_type.startswith("image/") or any(fname.lower().endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"]):
+                if att.url:
+                    image_urls.append(att.url)
+
+    # หากผู้ใช้ Reply ข้อความที่มีรูปภาพ ให้ดึงรูปจากข้อความต้นทางมาวิเคราะห์ด้วย
+    if not image_urls and message.reference and message.reference.message_id:
+        try:
+            ref_msg = await message.channel.fetch_message(message.reference.message_id)
+            if ref_msg and ref_msg.attachments:
+                for att in ref_msg.attachments:
+                    c_type = getattr(att, "content_type", "") or ""
+                    fname = getattr(att, "filename", "") or ""
+                    if c_type.startswith("image/") or any(fname.lower().endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"]):
+                        if att.url:
+                            image_urls.append(att.url)
+        except Exception:
+            pass
+
+    # หากส่งรูปมาอย่างเดียวโดยไม่มีข้อความ ให้ตั้งโจทย์วิเคราะห์ภาพอัตโนมัติ
+    if not clean_text and image_urls:
+        clean_text = "ช่วยดูและวิเคราะห์รูปภาพนี้ให้หน่อยค่ะ ว่าคือภาพอะไร มีรายละเอียด ข้อความ หรือจุดสำคัญอะไรบ้าง"
+    elif not clean_text:
         await message.reply(late_prefix + "เรียกหนูเหรอคะ? อยู่ตรงนี้ค่ะ มีอะไรให้คิระช่วย บอกมาได้เลยนะคะ 🌸✨")
         BOT_RUNTIME["last_reply_at"] = time.time()
         BOT_RUNTIME["replies_sent"] += 1
@@ -516,7 +551,8 @@ async def handle_kira_message(message: discord.Message, recovered: bool = False)
                         author_display,
                         channel_id=message.channel.id,
                         reply_context=reply_context,
-                        is_dm=is_dm
+                        is_dm=is_dm,
+                        image_urls=image_urls
                     ),
                     timeout=QUERY_TIMEOUT_SECONDS
                 )
