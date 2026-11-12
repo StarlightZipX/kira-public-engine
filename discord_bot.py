@@ -415,46 +415,84 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
     except Exception as err:
         return "ขออภัยด้วยนะคะ ในจังหวะนี้สัญญาณสมองกลของคิระอาจติดขัดเล็กน้อย รบกวนลองใหม่อีกครั้งนะคะ 🌸💜"
 
-@bot.event
-async def on_ready():
-    print("=" * 60)
-    print(f"🌸 [KIRA AI DISCORD BOT IS ONLINE!]")
-    print(f"🤖 เข้าสู่ระบบสำเร็จในชื่อ: {bot.user.name}#{bot.user.discriminator} (ID: {bot.user.id})")
-    print(f"🌐 ประจำการอยู่ในเซิร์ฟเวอร์: {len(bot.guilds)} เซิร์ฟเวอร์")
-    print("=" * 60)
-    
-    # ตั้งสถานะ Activity ใน Discord
-    activity = discord.Activity(
-        type=discord.ActivityType.watching,
-        name=f"ดูแลเพื่อนๆ ของบอส 💜 | @{bot.user.name}"
-    )
-    await bot.change_presence(status=discord.Status.online, activity=activity)
+# ==================== Runtime Status & Reliability Guards ====================
+# สถานะการทำงานของบอท (แสดงผลผ่าน /api/health เพื่อให้ตรวจสอบได้ว่าบอทยังมีชีวิตอยู่จริง)
+BOT_RUNTIME = {
+    "ready_at": None,
+    "last_message_at": None,
+    "last_reply_at": None,
+    "last_error": None,
+    "replies_sent": 0,
+    "recovered_mentions": 0,
+}
 
-@bot.event
-async def on_message(message: discord.Message):
-    # ไม่ตอบข้อความตัวเอง หรือข้อความจากบอทตัวอื่น
-    if message.author == bot.user or message.author.bot:
-        return
+# จำกัดเวลาประมวลผลต่อข้อความ: ถ้าสมองกลค้างนานเกินนี้ ต้องตอบกลับผู้ใช้ทันที ห้ามเงียบหาย
+QUERY_TIMEOUT_SECONDS = 70
+# ช่วงเวลาย้อนหลังที่ใช้ตามตอบข้อความที่พลาดไปตอนเซิร์ฟเวอร์รีสตาร์ต/หลับ
+MISSED_MENTION_WINDOW_SECONDS = 30 * 60
+MAX_RECOVERIES_PER_CHANNEL = 3
 
-    # ตรวจสอบเงื่อนไขว่าข้อความนี้ส่งถึงคิระหรือไม่
+_handled_message_ids = set()
+_recovery_lock = asyncio.Lock()
+
+KIRA_CHANNEL_KEYWORDS = ["kira", "คิระ", "คุยกับบอท", "คุยกับบอต", "bot-chat"]
+
+
+def _is_kira_channel(channel) -> bool:
+    name = getattr(channel, "name", None)
+    return bool(name) and any(k in name.lower() for k in KIRA_CHANNEL_KEYWORDS)
+
+
+def _is_addressed_to_kira(message: discord.Message) -> bool:
+    if message.author.bot or (bot.user and message.author.id == bot.user.id):
+        return False
     is_dm = isinstance(message.channel, discord.DMChannel)
-    is_mentioned = bot.user in message.mentions
-    is_kira_channel = any(k in message.channel.name.lower() for k in ["kira", "คิระ", "คุยกับบอท", "bot-chat"]) if hasattr(message.channel, "name") else False
-    is_prefix = message.content.startswith("!kira") or message.content.startswith("/kira")
+    is_mentioned = bot.user is not None and bot.user in message.mentions
+    is_prefix = message.content.startswith(("!kira", "/kira", "!คิระ", "/คิระ"))
+    
+    # ดักจับการพิมพ์เรียกชื่อคิระโดยตรง (เช่น @🤖Kira, @Kira, คิระ อยู่มั้ย, น้องคิระ, เอไอหลับ)
+    # เพื่อรองรับกรณีที่ผู้ใช้ก๊อปปี้ข้อความมา หรือพิมพ์เองโดยไม่ได้คลิกแท็ก Mention ใน Discord UI
+    content_lower = message.content.lower()
+    text_call = any(k in content_lower for k in [
+        "@kira", "@🤖kira", "@คิระ", "คิระ", "น้องคิระ", "เอไอหลับ", "aiหลับ"
+    ])
+    
+    return is_dm or is_mentioned or is_prefix or text_call or _is_kira_channel(message.channel)
 
-    # ถ้าไม่ใช่ข้อความที่เรียกหาคิระ ให้ข้ามไป
-    if not (is_dm or is_mentioned or is_kira_channel or is_prefix):
-        await bot.process_commands(message)
+
+def _mark_handled(message_id: int) -> bool:
+    """คืนค่า False ถ้าข้อความนี้ถูกตอบไปแล้ว (กันตอบซ้ำระหว่าง on_message กับระบบตามตอบย้อนหลัง)"""
+    if message_id in _handled_message_ids:
+        return False
+    _handled_message_ids.add(message_id)
+    if len(_handled_message_ids) > 5000:
+        # เก็บไว้เฉพาะ ID ล่าสุด (Snowflake เรียงตามเวลา)
+        for old_id in sorted(_handled_message_ids)[:2500]:
+            _handled_message_ids.discard(old_id)
+    return True
+
+
+async def handle_kira_message(message: discord.Message, recovered: bool = False):
+    """ประมวลผลและตอบกลับข้อความที่ส่งถึงคิระ — ใช้ร่วมกันทั้งข้อความสดและข้อความที่ตามตอบย้อนหลัง"""
+    if not _mark_handled(message.id):
         return
+    BOT_RUNTIME["last_message_at"] = time.time()
+    is_dm = isinstance(message.channel, discord.DMChannel)
 
     # ล้างข้อความ ดึงเฉพาะเนื้อหาคำถาม
     clean_text = message.content
     if bot.user:
         clean_text = clean_text.replace(f"<@{bot.user.id}>", "").replace(f"<@!{bot.user.id}>", "")
-    clean_text = re.sub(r'^[!/]kira\s*', '', clean_text, flags=re.IGNORECASE).strip()
+    # ลบการเรียกชื่อคิระ/อีโมจิบอท/prefix ด้านหน้าข้อความออกอย่างหมดจด
+    clean_text = re.sub(r'^[!/](?:kira|คิระ)\s*', '', clean_text, flags=re.IGNORECASE)
+    clean_text = re.sub(r'^[@\s]*(?:🤖\s*)?(?:kira|คิระ|น้องคิระ)\s*', '', clean_text, flags=re.IGNORECASE).strip()
+
+    late_prefix = "ขอโทษที่ตอบช้านะคะ เมื่อกี้สัญญาณสมองกลของหนูอาจติดขัดไปนิดนึง 😅\n\n" if recovered else ""
 
     if not clean_text:
-        await message.reply("สวัสดีค่ะ! มีเรื่องไหนให้คิระช่วยวิเคราะห์ เขียนโค้ด หรือชวนคุยเล่น สอบถามหนูได้เลยนะคะ 🌸✨")
+        await message.reply(late_prefix + "เรียกหนูเหรอคะ? อยู่ตรงนี้ค่ะ มีอะไรให้คิระช่วย บอกมาได้เลยนะคะ 🌸✨")
+        BOT_RUNTIME["last_reply_at"] = time.time()
+        BOT_RUNTIME["replies_sent"] += 1
         return
 
     try:
@@ -469,24 +507,36 @@ async def on_message(message: discord.Message):
             except Exception:
                 pass
 
-        # แสดงไอคอนกำลังพิมพ์ (Kira is typing...) อย่างปลอดภัย
+        author_display = message.author.display_name or message.author.name
         async with message.channel.typing():
-            author_display = message.author.display_name or message.author.name
-            raw_reply_text = await query_kira_engine(
-                clean_text, 
-                author_display, 
-                channel_id=message.channel.id, 
-                reply_context=reply_context, 
-                is_dm=is_dm
-            )
+            try:
+                raw_reply_text = await asyncio.wait_for(
+                    query_kira_engine(
+                        clean_text,
+                        author_display,
+                        channel_id=message.channel.id,
+                        reply_context=reply_context,
+                        is_dm=is_dm
+                    ),
+                    timeout=QUERY_TIMEOUT_SECONDS
+                )
+            except asyncio.TimeoutError:
+                print(f"⏱️ [Kira Discord] ประมวลผลเกิน {QUERY_TIMEOUT_SECONDS} วินาที → ตอบกลับแบบสำรองทันที")
+                BOT_RUNTIME["last_error"] = f"query timeout ({QUERY_TIMEOUT_SECONDS}s)"
+                raw_reply_text = (
+                    "ตอนนี้สมองหนูประมวลผลช้ากว่าปกตินิดนึงค่ะ 😵‍💫 "
+                    "ไม่ได้เมินใครแน่นอน รบกวนพิมพ์ถามซ้ำอีกรอบได้เลยนะคะ"
+                )
+
             reply_text = clean_discord_reply(raw_reply_text, clean_text)
             if is_refusal_text(reply_text):
                 reply_text = get_in_character_social_fallback(clean_text)
-            
+            reply_text = late_prefix + reply_text
+
             # บันทึกความจำบทสนทนาในช่อง
             add_channel_history(message.channel.id, "user", author_display, clean_text)
             add_channel_history(message.channel.id, "assistant", "Kira", reply_text)
-            
+
             # ตัดข้อความถ้าเกิน 2000 ตัวอักษร
             chunks = chunk_discord_message(reply_text)
             for i, chunk in enumerate(chunks):
@@ -494,13 +544,129 @@ async def on_message(message: discord.Message):
                     await message.reply(chunk)
                 else:
                     await message.channel.send(chunk)
+            BOT_RUNTIME["last_reply_at"] = time.time()
+            BOT_RUNTIME["replies_sent"] += 1
     except Exception as e:
         import traceback
         traceback.print_exc()
+        BOT_RUNTIME["last_error"] = f"{type(e).__name__}: {str(e)[:150]}"
         try:
-            await message.reply("ขออภัยด้วยนะคะบอสและเพื่อนๆ สัญญาณประมวลผลของคิระสะดุดเล็กน้อย รบกวนลองส่งใหม่อีกครั้งได้เลยนะคะ 🌸✨")
+            await message.reply("ขออภัยนะคะ สัญญาณประมวลผลของคิระสะดุดเล็กน้อย รบกวนลองส่งใหม่อีกครั้งได้เลยนะคะ")
         except Exception:
             pass
+
+
+async def recover_missed_mentions():
+    """ตามตอบข้อความที่เรียกหาคิระในช่วงที่บอทออฟไลน์ (เซิร์ฟเวอร์รีสตาร์ต/Deploy/หลับ)
+    Discord ไม่ส่งข้อความย้อนหลังให้บอทที่ต่อเข้ามาใหม่ จึงต้องไล่อ่านประวัติเองแบบจำกัดขอบเขต"""
+    if _recovery_lock.locked():
+        return
+    async with _recovery_lock:
+        now = discord.utils.utcnow()
+        cutoff = now - __import__("datetime").timedelta(seconds=MISSED_MENTION_WINDOW_SECONDS)
+        total = 0
+        for guild in bot.guilds:
+            me = guild.me
+            for channel in guild.text_channels:
+                try:
+                    # คัดกรองแบบไม่ต้องยิง API: ข้ามช่องที่ไม่มีข้อความใหม่ในช่วงเวลาที่กำหนด
+                    if not channel.last_message_id:
+                        continue
+                    if discord.utils.snowflake_time(channel.last_message_id) < cutoff:
+                        continue
+                    perms = channel.permissions_for(me)
+                    if not (perms.read_messages and perms.read_message_history and perms.send_messages):
+                        continue
+
+                    history = [m async for m in channel.history(limit=50, after=cutoff, oldest_first=True)]
+                    # ข้อความที่คิระตอบไปแล้ว (ดูจาก reference ของข้อความที่คิระส่ง)
+                    answered_ids = {
+                        m.reference.message_id for m in history
+                        if bot.user and m.author.id == bot.user.id and m.reference and m.reference.message_id
+                    }
+                    pending = [
+                        m for m in history
+                        if m.id not in answered_ids
+                        and m.id not in _handled_message_ids
+                        and _is_addressed_to_kira(m)
+                        # ตามตอบเฉพาะข้อความที่แท็กหรือเรียกหาคิระตรงๆ เพื่อไม่ให้ตอบรัวทุกข้อความ
+                        and (
+                            (bot.user and bot.user in m.mentions)
+                            or m.content.startswith(("!kira", "/kira", "!คิระ", "/คิระ"))
+                            or any(k in m.content.lower() for k in ["@kira", "@🤖kira", "@คิระ", "คิระ", "น้องคิระ"])
+                        )
+                    ]
+                    for m in pending[-MAX_RECOVERIES_PER_CHANNEL:]:
+                        print(f"📬 [Kira Discord] ตามตอบข้อความที่พลาดไป #{channel.name}: {m.content[:60]}")
+                        await handle_kira_message(m, recovered=True)
+                        total += 1
+                        BOT_RUNTIME["recovered_mentions"] += 1
+                except discord.Forbidden:
+                    continue
+                except Exception as e:
+                    print(f"⚠️ [Kira Discord] ตามตอบย้อนหลังใน #{getattr(channel, 'name', '?')} ล้มเหลว: {e}")
+        if total:
+            print(f"✅ [Kira Discord] ตามตอบข้อความที่พลาดไปแล้ว {total} ข้อความ")
+
+
+def get_bot_status() -> dict:
+    """สรุปสถานะบอทสำหรับ /api/health (ไม่มีข้อมูลลับ)"""
+    def _ago(ts):
+        return None if ts is None else round(time.time() - ts, 1)
+    try:
+        ready = bot.is_ready() and not bot.is_closed()
+        latency = bot.latency
+        latency_ms = round(latency * 1000) if latency == latency and latency != float("inf") else None
+    except Exception:
+        ready, latency_ms = False, None
+    return {
+        "online": ready,
+        "latency_ms": latency_ms,
+        "guilds": len(bot.guilds) if ready else 0,
+        "ready_seconds_ago": _ago(BOT_RUNTIME["ready_at"]),
+        "last_message_seconds_ago": _ago(BOT_RUNTIME["last_message_at"]),
+        "last_reply_seconds_ago": _ago(BOT_RUNTIME["last_reply_at"]),
+        "replies_sent": BOT_RUNTIME["replies_sent"],
+        "recovered_mentions": BOT_RUNTIME["recovered_mentions"],
+        "last_error": BOT_RUNTIME["last_error"],
+    }
+
+
+@bot.event
+async def on_ready():
+    BOT_RUNTIME["ready_at"] = time.time()
+    print("=" * 60)
+    print(f"🌸 [KIRA AI DISCORD BOT IS ONLINE!]")
+    print(f"🤖 เข้าสู่ระบบสำเร็จในชื่อ: {bot.user.name}#{bot.user.discriminator} (ID: {bot.user.id})")
+    print(f"🌐 ประจำการอยู่ในเซิร์ฟเวอร์: {len(bot.guilds)} เซิร์ฟเวอร์")
+    print("=" * 60)
+
+    # ตั้งสถานะ Activity ใน Discord
+    activity = discord.Activity(
+        type=discord.ActivityType.watching,
+        name=f"ดูแลเพื่อนๆ ของบอส 💜 | @{bot.user.name}"
+    )
+    try:
+        await bot.change_presence(status=discord.Status.online, activity=activity)
+    except Exception as e:
+        print("⚠️ [Kira Discord] ตั้งสถานะไม่สำเร็จ:", e)
+
+    # ตามตอบข้อความที่พลาดไปตอนออฟไลน์ (ทำงานเบื้องหลัง ไม่บล็อกการรับข้อความใหม่)
+    asyncio.create_task(recover_missed_mentions())
+
+
+@bot.event
+async def on_message(message: discord.Message):
+    # ไม่ตอบข้อความตัวเอง หรือข้อความจากบอทตัวอื่น
+    if message.author == bot.user or message.author.bot:
+        return
+
+    # ถ้าไม่ใช่ข้อความที่เรียกหาคิระ ให้ข้ามไป
+    if not _is_addressed_to_kira(message):
+        await bot.process_commands(message)
+        return
+
+    await handle_kira_message(message)
 
 if __name__ == "__main__":
     if not DISCORD_BOT_TOKEN or DISCORD_BOT_TOKEN == "YOUR_DISCORD_BOT_TOKEN_HERE":

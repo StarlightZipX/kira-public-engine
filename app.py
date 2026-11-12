@@ -155,22 +155,39 @@ else:
 
 app = FastAPI()
 
-# --- Auto-Deploy Discord Bot Daemon on Cloud (Render 24/7) ---
+# --- Auto-Deploy Discord Bot Daemon on Cloud (Render 24/7 with Autonomous Supervisor) ---
+async def _run_discord_bot_supervisor(token: str):
+    """Kira 24/7 Autonomous Discord Bot Supervisor
+    คอยดูแลและรีสตาร์ตบอทอัตโนมัติหาก Discord Gateway หลุดการเชื่อมต่อ, Session Invalidated, หรือเน็ตสะดุด
+    """
+    import discord_bot
+    backoff = 5
+    while True:
+        try:
+            print("🚀 [Render Cloud] เชื่อมต่อ Kira Discord Gateway 24/7...")
+            await discord_bot.bot.start(token)
+        except asyncio.CancelledError:
+            print("🛑 [Render Cloud] ปิดการทำงาน Discord Bot Daemon")
+            break
+        except Exception as e:
+            print(f"⚠️ [Render Cloud] Discord Bot ขัดข้อง ({e}) กำลัง Reconnect ใน {backoff} วินาที...")
+            await asyncio.sleep(backoff)
+            backoff = min(backoff * 2, 60)
+        else:
+            print("ℹ️ [Render Cloud] Discord Bot จบการทำงานปกติ กำลัง Reconnect ใน 5 วินาที...")
+            await asyncio.sleep(5)
+            backoff = 5
+
 @app.on_event("startup")
 async def start_cloud_discord_bot():
     token = os.environ.get("DISCORD_BOT_TOKEN", "").strip()
     is_render = os.environ.get("RENDER") is not None or os.environ.get("IS_RENDER") == "true"
     run_cloud = os.environ.get("RUN_DISCORD_BOT_ON_STARTUP", "true").lower() in ("true", "1", "yes")
     
-    # ถ้าอยู่บน Render และมี Token ให้สตาร์ตบอท Discord อัตโนมัติบน Cloud 24/7
+    # ถ้าอยู่บน Render และมี Token ให้สตาร์ตบอท Discord ผ่าน Supervisor 24/7 อัตโนมัติ
     if is_render and run_cloud and token and token != "YOUR_DISCORD_BOT_TOKEN_HERE":
-        print("🚀 [Render Cloud] ตรวจพบ DISCORD_BOT_TOKEN กำลังเชื่อมต่อ Kira เข้าสู่ Discord 24/7...")
-        try:
-            import discord_bot
-            asyncio.create_task(discord_bot.bot.start(token))
-            print("🌸 [Render Cloud] สตาร์ต Kira Discord Bot บนเซิร์ฟเวอร์เรียบร้อยแล้วค่ะ!")
-        except Exception as e:
-            print("⚠️ [Render Cloud] สตาร์ตบอท Discord บน Render ล้มเหลว:", e)
+        print("🚀 [Render Cloud] ตรวจพบ DISCORD_BOT_TOKEN เริ่มต้น Kira Discord 24/7 Autonomous Supervisor...")
+        asyncio.create_task(_run_discord_bot_supervisor(token))
 
 # --- Enterprise Cross-Origin Resource Sharing (CORS) Protection ---
 from fastapi.middleware.cors import CORSMiddleware
@@ -381,6 +398,13 @@ async def health_check():
     uptime_sec = None
     if isinstance(APP_START_TIME, (int, float)):
         uptime_sec = round(time.time() - APP_START_TIME, 1)
+
+    discord_info = {"online": False}
+    try:
+        import discord_bot
+        discord_info = discord_bot.get_bot_status()
+    except Exception as e:
+        discord_info = {"online": False, "error": str(e)}
     
     return JSONResponse({
         "status": "healthy" if db_ok else "degraded",
@@ -395,6 +419,7 @@ async def health_check():
             "gemini_keys": len(GEMINI_API_KEYS),
             "ollama_enabled": globals().get("ENABLE_OLLAMA", False)
         },
+        "discord_bot": discord_info,
         "study_copilot": "ready"
     }, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
 

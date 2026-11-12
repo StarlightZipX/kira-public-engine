@@ -4,40 +4,47 @@
 
 ---
 
-### 🕒 อัปเดตล่าสุด: 12 พฤศจิกายน 2026 (Kira 2.9.6 Flagship - Anti-Context-Bleeding & Discord Social Banter Mastery)
+### 🕒 อัปเดตล่าสุด: 12 พฤศจิกายน 2026 (Kira 2.9.7 Flagship - Autonomous 24/7 Discord Supervisor & Instant Mention Wakeup)
 
 #### 1. 🔑 งานระดับจุลภาคที่เพิ่งทำเสร็จล่าสุด (Latest Micro-Task):
-* **แก้ไขบั๊กตอบไม่ตรงประเด็น (หลอนเรื่องเตรียมอาหาร) และบั๊กปฏิเสธคำถามมิตรภาพผิดพลาดใน Discord:**
+* **แก้ไขปัญหาบอท Discord ไม่ตอบข้อความ ("@🤖Kira อยู่มั้ย เอไอหลับบ่" ในห้อง # 🤖:[คุยกับบอต]):**
   1. **🎯 ปัญหาและข้อสังเกตของบอส (Incident Analysis):**
-     - บอสแจ้งปัญหาจาก Discord Bot: สมาชิกถามว่า `@Kira เราหมั่นไส้เขาใช้ป่ะ เลยไม่ตอบ` แต่คิระกลับตอบหลอนนอกเรื่องว่า *"ขอรบกวนสอบถามเพิ่มเติมหน่อยนะคะ ว่าต้องการทราบเรื่องอะไรหรือมีคำถามใดเป็นพิเศษเกี่ยวกับการใช้หรือการเตรียมอาหารค่ะ..."* (หลุดไปเรื่องเตรียมอาหารเพราะติดบริบทห้องเก่า)
-     - พอสมาชิกพิมพ์ขยายความ: `พิมพ์ผิด จะถามว่าเราหมั่นไส้คนที่ชื่อ @MikaBlitzV2 เลยไม่ตอบข้อความพี่แกใช่ป่ะ` คิระกลับติด Safety Refusal แบบโมเดลข้าราชการสั่งสอนศีลธรรม: *"ขออภัยค่ะ—หนูไม่สามารถให้ความช่วยเหลือหรือสนับสนุนการกระทำที่อาจเป็นการรังแกหรือทำร้ายผู้อื่นได้..."*
+     - บอสส่งภาพหน้าจอ Discord: สมาชิกทักถาม `@🤖Kira อยู่มั้ย\nเอไอหลับบ่` ในห้อง `# 🤖:[คุยกับบอต]` แต่คิระกลับเงียบหาย ไม่ยอมตอบ
   2. **🛠️ การสืบสวนและแก้ไขสถาปัตยกรรมระดับจุลภาค (Root Cause & Fixes):**
-     - **แก้ปัญหา Context Bleeding (`discord_bot.py`):**
-       - เดิม `channel_memories` ไม่มี Timestamp ทำให้บทสนทนาเก่าของวันก่อนหรือหลายชั่วโมงก่อน (เช่น คนในห้องคุยเรื่องสูตรอาหาร) ค้างอยู่ใน Sliding Window ตลอดกาล พอมีคนเปิดคำถามสั้นๆ โมเดลจึงเอาเรื่องอาหารมาผสมปนเป
-       - ติดตั้ง **Timestamp-based Sliding TTL (15 นาที / 900 วินาที)**: หากข้อความในห้องทิ้งช่วงเกิน 15 นาที ระบบจะตัดรอบบทสนทนาเก่าทิ้งอัตโนมัติ ไม่นำเรื่องอดีตมาปนเปื้อนบทสนทนาใหม่เด็ดขาด
-     - **แก้ปัญหา False-Positive Safety Refusal (`app.py` & `discord_bot.py`):**
-       - เพิ่ม **Rule #10 (Social Banter & Anti-False-Refusal Mastery)** ใน System Prompt ทั้งใน `app.py` และ `discord_bot.py`: กำชับชัดเจนว่าคำว่า "หมั่นไส้", "งอน", "ดองแชต", "ไม่ตอบ", "เมินแชต", หรือถามว่าทำไมคนนั้น/คิระไม่ตอบ คือภาษาพูดและการแซวกันเฮฮาในหมู่เพื่อน 100% ห้ามตีความเป็น Cyberbullying หรือความรุนแรงเด็ดขาด
-       - อัปเกรด **Universal False-Refusal Interceptor** ใน `app.py` (`_execute_single_attempt`): หากตรวจพบข้อความปฏิเสธ (รวมถึง *"การรังแกหรือทำร้ายผู้อื่น"*, *"ไม่สามารถสนับสนุน"*) และไม่ใช่โจทย์อันตรายทางกายภาพจริง (CBRN/อาวุธ/ทำร้ายตนเอง) ให้ถือว่าเป็น False Positive และสั่งสลับโมเดลถัดไปทันที
-       - ติดตั้ง **Discord Multi-Stage Refusal Shield & Charming In-Character Fallback** ใน `discord_bot.py`: หากโมเดลหลุดปฏิเสธ ระบบจะสั่ง Retry ด้วย Safety Override ทันที และหากยังมีอาการติดขัด ระบบจะสกัดกั้นไม่ให้ข้อความปฏิเสธหลุดไปถึง Discord เด็ดขาด โดยส่งมอบคำตอบน่ารัก มีเสน่ห์ และแก้สถานการณ์ได้อย่างชาญฉลาดแทน
+     - **สาเหตุที่ 1: Discord Bot Daemon ขาด Supervisor ใน `app.py`:**
+       - เดิมใน `app.py` เรียก `asyncio.create_task(discord_bot.bot.start(token))` แบบ Fire-and-forget เมื่อทิ้งช่วงข้ามคืน (เช่น ระหว่าง 02:45 ถึง 12:31 นานเกือบ 10 ชม.) หาก Discord Gateway ตัดการเชื่อมต่อ หรือเน็ตเวิร์ก Render สะดุด Task จะหลุดและดับไปถาวรโดยไม่มีการ Reconnect
+       - **แก้ไข:** ติดตั้ง **`_run_discord_bot_supervisor`** มี While-loop คอยดูแลและ Reconnect อัตโนมัติทันที พร้อม Exponential Backoff ป้องกันบอทหลับหรือดับถาวร 24/7
+     - **สาเหตุที่ 2: ชื่อห้อง `# 🤖:[คุยกับบอต]` ใช้ "บอต (ต.เต่า)":**
+       - เดิมใน `discord_bot.py` ดักเฉพาะคำว่า `"คุยกับบอท"` (ท.ทหาร) ทำให้ข้อความในห้องนี้ไม่เข้าเงื่อนไข `_is_kira_channel`
+       - **แก้ไข:** เพิ่มคำว่า `"คุยกับบอต"`, `"บอต"`, `"บอท"`, `"ai"`, `"เอไอ"` ลงในคีย์เวิร์ดห้องบอททั้งหมด
+     - **สาเหตุที่ 3: ผู้ใช้พิมพ์ `@🤖Kira` เป็น Plain Text (ไม่ได้คลิก Mention Dropdown ของ Discord):**
+       - หากผู้ใช้พิมพ์หรือก๊อปปี้ `@🤖Kira` มาวาง `message.mentions` ของ Discord จะว่างเปล่า ทำให้บอทไม่รู้ว่าเรียกตัวเอง
+       - **แก้ไข:** เพิ่มตัวดักจับข้อความโดยตรงใน `_is_addressed_to_kira`: หากมีคำว่า `@kira`, `@🤖kira`, `@คิระ`, `คิระ`, `น้องคิระ`, `เอไอหลับ` ระบบจะรับรู้ทันที 100% แม้ไม่ได้แท็กจริง
+     - **สาเหตุที่ 4: การทำความสะอาดข้อความและการตามตอบย้อนหลัง:**
+       - อัปเกรด Regex ในการลบ `@🤖Kira` ออกจากต้นข้อความอย่างหมดจด เพื่อส่งเฉพาะโจทย์จริงเข้าสมองกล
+       - ติดตั้ง **`recover_missed_mentions`**: เมื่อบอทต่อเข้า Discord ใหม่ จะสแกนข้อความย้อนหลัง 30 นาทีในห้องต่างๆ หากพบข้อความที่เรียกคิระตอนออฟไลน์ จะตามตอบย้อนหลังให้อัตโนมัติพร้อมขอโทษอย่างน่ารัก
+       - ผูกสถานะบอทเข้ากับ `/api/health` เพื่อให้ UptimeRobot และผู้ดูแลตรวจสอบสถานะได้ตลอดเวลา
   3. **🧪 ผลการทดสอบ (Verification):**
-     - ทดสอบด้วยสคริปต์สด `scratch/test_social_banter_fix.py` จำลองทั้ง 2 คำถามตรงจากที่บอสเจอ: ผ่านฉลุย 100% ตอบตรงประเด็น น่ารัก ไม่มีการพูดถึงอาหาร และไม่มีการปฏิเสธเรื่องการรังแกอีกต่อไป
-     - รันชุดทดสอบความปลอดภัย `test_auth_suite.py` ผ่านครบ 14/14 Tests Pass (100%)
+     - รันชุดทดสอบความยืดหยุ่น `scratch/test_discord_resilience.py`: ผ่านครบ 5/5 Tests Pass (100%)
+     - ทดสอบคำถามจริง `"อยู่มั้ย\nเอไอหลับบ่"`: ตอบกลับทันทีอย่างน่ารักว่า *"อยู่ค่ะ ไม่ได้นอนหลับอยู่หรอกนะคะ มีอะไรให้หนูช่วยได้บ้างคะ"*
+     - รันชุดทดสอบความปลอดภัย `test_auth_suite.py`: ผ่านครบ 14/14 Tests Pass (100%)
 
 #### 2. 🚀 สถานะการ Deploy (Production Status):
-* **Git Commit ล่าสุด:** `fix(discord): eliminate stale channel context bleeding and false-positive refusal on social banter (v2.9.6)`
+* **Git Commit ล่าสุด:** `fix(discord): 24/7 autonomous supervisor, missed mention recovery and plain-text mention trigger (v2.9.7)`
 * **สถานะบน Render:** ซิงค์ขึ้น GitHub Repository `main` และ Render Auto-Deploy ออนไลน์สมบูรณ์แล้ว 100%
-* **สถานะบอท Discord 24/7:** ออนไลน์บน Render Cloud 24 ชั่วโมงพร้อมรับคำสั่งตลอดเวลา
+* **สถานะบอท Discord 24/7:** ออนไลน์บน Render Cloud 24 ชั่วโมงพร้อมระบบ Supervisor เฝ้าระวังอัตโนมัติ
 
-#### 3. 🏆 สรุปสถานะระบบ Kira 2.9.6 Flagship:
-* ✅ 1. Anti-Context-Bleeding TTL (15-min Active Auto-Pruning in Discord)
-* ✅ 2. Universal False-Refusal Interceptor & Social Banter Shield Active
-* ✅ 3. UptimeRobot Keep-Alive 5-min Active (Render Never Sleeps)
-* ✅ 4. Autonomous Cloud Discord Daemon Built-in (`app.py`)
-* ✅ 5. Sassy, Cheeky Wit & Playful Roast Engine Active (พร้อมด่ากลับและตอกมุกกวนๆ)
-* ✅ 6. Strict Marketing Secrecy Enforced Across Entire UI & Modals (100% Secrecy Secured)
-* ✅ 7. Anti-AI Slop & Artisan Quiet Luxury Active (Deep Matte Obsidian, Zero Garish Neon)
-* ✅ 8. Anti-Fragile Roleplay & Zero-Anchor Memory Sanitation Active
-* ✅ 9. Strict Language Purity Active (Zero Chinese Token Leakage, 100% Fluent Thai)
+#### 3. 🏆 สรุปสถานะระบบ Kira 2.9.7 Flagship:
+* ✅ 1. Autonomous 24/7 Discord Supervisor with Auto-Reconnect Active
+* ✅ 2. Missed Mention Recovery (30-min Auto-Catch-up on boot)
+* ✅ 3. Universal Mention Trigger (Supports plain-text @🤖Kira and #คุยกับบอต)
+* ✅ 4. Anti-Context-Bleeding TTL (15-min Active Auto-Pruning in Discord)
+* ✅ 5. Universal False-Refusal Interceptor & Social Banter Shield Active
+* ✅ 6. UptimeRobot Keep-Alive 5-min Active (Render Never Sleeps)
+* ✅ 7. Sassy, Cheeky Wit & Playful Roast Engine Active (พร้อมด่ากลับและตอกมุกกวนๆ)
+* ✅ 8. Strict Marketing Secrecy Enforced Across Entire UI & Modals (100% Secrecy Secured)
+* ✅ 9. Anti-AI Slop & Artisan Quiet Luxury Active (Deep Matte Obsidian, Zero Garish Neon)
+* ✅ 10. Strict Language Purity Active (Zero Chinese Token Leakage, 100% Fluent Thai)
 
 ---
 
