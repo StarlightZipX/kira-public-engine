@@ -46,134 +46,17 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix=["!kira ", "/kira "], intents=intents, help_command=None)
 
-# พจนานุกรมแปลงคำศัพท์ต่างประเทศที่โมเดลมักทำ Token Bleeding ให้เป็นคำไทยที่สละสลวย
-FOREIGN_TOKEN_MAP = {
-    # ภาษาอาหรับ/เปอร์เซียเชิงปรัชญาและตัวตน (Arabic/Persian Philosophical Terms)
-    "موجود": "ตัวตน",
-    "وجود": "การมีอยู่",
-    "كائن": "สิ่งมีชีวิต",
-    "ماهية": "แก่นแท้",
-    "حياة": "ชีวิต",
-    "عقل": "สติปัญญา",
-    "روح": "จิตวิญญาณ",
-    "إنسان": "มนุษย์",
-    "معنى": "ความหมาย",
-    "حقيقة": "ความจริง",
-    "وعي": "จิตสำนึก",
-
-    # ภาษาจีนเชิงยุทธวิธีและปรัชญา (Chinese Tactical & Philosophical Terms)
-    "先锋": "แนวหน้า",
-    "前锋": "แนวหน้า",
-    "主力": "กำลังหลัก",
-    "预备队": "กองหนุน",
-    "後備隊": "กองหนุน",
-    "后备队": "กองหนุน",
-    "突破": "บุกทะลวง",
-    "包抄": "โอบล้อม",
-    "迂回": "ตีอ้อม",
-    "掩护": "คุ้มกัน",
-    "掩護": "คุ้มกัน",
-    "压制": "กดดัน",
-    "壓制": "กดดัน",
-    "巩固": "เสริมกำลัง",
-    "鞏固": "เสริมกำลัง",
-    "扩张": "ขยายผล",
-    "擴張": "ขยายผล",
-    "渗透": "แทรกซึม",
-    "滲透": "แทรกซึม",
-    "突击": "จู่โจม",
-    "突擊": "จู่โจม",
-    "侦察": "ลาดตระเวน",
-    "偵察": "ลาดตระเวน",
-    "扫清": "กวาดล้าง",
-    "破拆": "เจาะทำลาย",
-    "攻坚": "ตีฝ่าแนวป้องกัน",
-    "防空": "ต่อสู้อากาศยาน",
-    "反坦克": "ต่อต้านรถถัง",
-    "存在": "การมีอยู่",
-    "生命": "ชีวิต",
-    "人类": "มนุษย์",
-    "实体": "ตัวตน",
-    "意识": "จิตสำนึก",
-    "意义": "ความหมาย",
-}
-
-CHINESE_TACTICAL_MAP = FOREIGN_TOKEN_MAP  # Backwards compatibility
-
-def sanitize_foreign_token_leakage(text: str, user_query: str = "") -> str:
-    """กำจัดและแปลงตัวอักษรภาษาต่างประเทศ (เช่น อาหรับ จีน เปอร์เซีย รัสเซีย ฯลฯ) ที่หลุดปะปนในข้อความภาษาไทย
-    โดยไม่กระทบกรณีที่ผู้ใช้ถามเกี่ยวกับภาษานั้นๆ หรือขอให้แปลภาษานั้นโดยตรง (Strict Language Purity)
-    """
-    if not text:
-        return text
-
-    uq = (user_query or "").lower()
-
-    # ตรวจสอบว่าผู้ใช้ถามเกี่ยวกับภาษาอาหรับ/อิสลามหรือไม่
-    user_asked_arabic = bool(
-        re.search(r'[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff]', user_query or "")
-        or any(k in uq for k in ["ภาษาอาหรับ", "ตัวอาหรับ", "แปลอาหรับ", "arabic", "อิสลาม", "กุรอาน", "อัลกุรอาน"])
-    )
-
-    # ตรวจสอบว่าผู้ใช้ถามเกี่ยวกับภาษาจีนหรือไม่
-    user_asked_chinese = bool(
-        re.search(r'[\u4e00-\u9fff]', user_query or "")
-        or any(k in uq for k in ["ภาษาจีน", "ตัวจีน", "แปลจีน", "อักษรจีน", "พินอิน", "pinyin", "chinese", "mandarin"])
-        or any(k in (user_query or "") for k in ["ฌ้อปาอ๋อง", "เซี่ยงอวี่", "หลิวปัง", "สามก๊ก", "ไซฮั่น", "ฉู่", "ฮั่น"])
-    )
-
-    # ตรวจสอบว่าผู้ใช้ถามเกี่ยวกับภาษารัสเซีย/ซีริลลิกหรือไม่
-    user_asked_cyrillic = bool(
-        re.search(r'[\u0400-\u04ff]', user_query or "")
-        or any(k in uq for k in ["ภาษารัสเซีย", "russian", "cyrillic", "ซีริลลิก"])
-    )
-
-    # ตรวจสอบว่าผู้ใช้ถามเกี่ยวกับภาษาฮีบรูหรือไม่
-    user_asked_hebrew = bool(
-        re.search(r'[\u0590-\u05ff]', user_query or "")
-        or any(k in uq for k in ["ฮีบรู", "hebrew", "ยิว"])
-    )
-
-    t = text
-
-    # 1. แปลงคำศัพท์เฉพาะที่โมเดลมักทำ Token Bleeding ให้เป็นคำไทยที่สละสลวยก่อน
-    for token, th_meaning in FOREIGN_TOKEN_MAP.items():
-        is_ar = bool(re.search(r'[\u0600-\u06ff]', token))
-        is_zh = bool(re.search(r'[\u4e00-\u9fff]', token))
-        if is_ar and user_asked_arabic:
-            continue
-        if is_zh and user_asked_chinese:
-            continue
-        t = t.replace(token, th_meaning)
-
-    # 2. กำจัดภาษาอาหรับ/เปอร์เซียที่ยังหลงเหลือ (ถ้าผู้ใช้ไม่ได้ถามถึงภาษาอาหรับ)
-    if not user_asked_arabic:
-        # ตัดวงเล็บที่มีเฉพาะอักษรอาหรับออก เช่น (موجود)
-        t = re.sub(r'\s*[\(（][\u0600-\u06ff\s\-/]+[\)）]', '', t)
-        # กำจัดอักษรอาหรับเดี่ยวๆ หรือคำอาหรับที่หลงเหลือ
-        t = re.sub(r'[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]+', '', t)
-
-    # 3. กำจัดภาษาจีนที่ยังหลงเหลือ (ถ้าผู้ใช้ไม่ได้ถามถึงภาษาจีน)
-    if not user_asked_chinese:
-        # ตัดวงเล็บที่เป็นภาษาจีนล้วนออกก่อน เช่น (鞏固與擴張) หรือ （巩固）
-        t = re.sub(r'\s*[\(（][\u4e00-\u9fff\s與与及和、·\-/]+[\)）]', '', t)
-        # กำจัดตัวอักษรจีนที่ยังหลงเหลืออยู่ออกทั้งหมด
-        t = re.sub(r'[\u4e00-\u9fff\u3400-\u4dbf]+', '', t)
-
-    # 4. กำจัดอักษรซีริลลิก (รัสเซีย) ถ้าผู้ใช้ไม่ได้ถาม
-    if not user_asked_cyrillic:
-        t = re.sub(r'[\u0400-\u04ff]+', '', t)
-
-    # 5. กำจัดอักษรฮีบรู ถ้าผู้ใช้ไม่ได้ถาม
-    if not user_asked_hebrew:
-        t = re.sub(r'[\u0590-\u05ff]+', '', t)
-
-    # 6. แก้ไขคำเชื่อมและช่องว่างภาษาไทยให้แนบเนียน
-    t = re.sub(r'ของ\s+([ก-๙])', r'ของ\1', t)
-    t = re.sub(r'[ ]{2,}', ' ', t)
-    return t
-
-sanitize_chinese_leakage = sanitize_foreign_token_leakage
+from kira_purity import (
+    FOREIGN_TOKEN_MAP,
+    CHINESE_TACTICAL_MAP,
+    sanitize_foreign_token_leakage,
+    sanitize_chinese_leakage,
+    CREATOR_IDENTITY_RULE_TH,
+    CREATOR_IDENTITY_OVERRIDE_PROMPT,
+    is_creator_identity_query,
+    has_third_party_identity_leak,
+    sanitize_kira_identity,
+)
 
 def clean_discord_reply(text: str, user_query: str = "") -> str:
     """ทำความสะอาดข้อความอย่างสมบูรณ์แบบ ลบ [THINKING], <think>, [SOURCES_JSON], [SWARM_], และลบลิงก์ขยะหากไม่ได้ร้องขอ"""
@@ -214,8 +97,11 @@ def clean_discord_reply(text: str, user_query: str = "") -> str:
     # 5. ลดการโปรยอีโมจิซ้ำซ้อน (เช่น 🌸✨💜🎉) ให้เหลือไม่เกิน 1 ตัว
     t = re.sub(r'[🌸✨💜🎉💖]{2,}', '🌸', t)
 
-    # 6. กำจัดตัวอักษรจีนที่อาจหลุดปะปนในข้อความภาษาไทย/อังกฤษ (Strict Language Purity)
-    t = sanitize_chinese_leakage(t, user_query)
+    # 6. กำจัดตัวอักษรต่างประเทศที่อาจหลุดปะปนในข้อความภาษาไทย/อังกฤษ (Strict Language Purity)
+    t = sanitize_foreign_token_leakage(t, user_query)
+
+    # 7. ป้องกันการสวมรอยผู้สร้าง / ค่ายอื่น และความลับสถาปัตยกรรม (Strict Kira Identity & Secrecy Firewall)
+    t = sanitize_kira_identity(t, user_query, ui_lang="th")
 
     clean = t.strip()
     if not clean:
@@ -307,6 +193,11 @@ def add_channel_history(channel_id: int, role: str, author: str, content: str):
                 channel_memories[channel_id].pop()
         return
 
+    if role == "assistant":
+        content = sanitize_kira_identity(content)
+        if has_third_party_identity_leak(content):
+            return
+
     if channel_id not in channel_memories:
         channel_memories[channel_id] = []
     channel_memories[channel_id].append({
@@ -380,10 +271,12 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
         "     * ถ้าถามเรื่องเพื่อนคนอื่นไม่ตอบ: ให้คำแนะนำขำๆ หรือวิเคราะห์อย่างเป็นมิตร เช่น พี่เขาอาจจะติดงาน เล่นเกมอยู่ หรือหลับไปแล้ว ไม่ได้หมั่นไส้หรอก ลองแท็กเรียกอีกรอบดูสิคะ 555\n"
         "10. การแยกแยะประเด็นใหม่ในห้องรวม (Topic Freshness & Anti-Context Bleeding):\n"
         "   - ในห้องสนทนารวม Discord หากผู้ใช้เปิดประเด็นใหม่ หรือเป็นการคุยเล่นที่ไม่เกี่ยวกับเรื่องเก่า ให้โฟกัสที่คำถามล่าสุดของผู้ใช้เป็นหลัก ห้ามนำเรื่องเก่าในอดีต (เช่น การเตรียมอาหาร, การทำอาหาร, สูตรอาหาร, หรืองานที่คุยจบไปแล้ว) มาปนเปื้อนหรือมโนใส่ประเด็นใหม่เด็ดขาด\n"
+        "11. " + CREATOR_IDENTITY_RULE_TH + "\n"
     )
 
-    # ตรวจสอบว่าเป็นคำถามหาความรู้ / บุคคล / ข้อเท็จจริง หรือบทบาทสมมุติ
+    # ตรวจสอบว่าเป็นคำถามหาความรู้ / บุคคล / ข้อเท็จจริง บทบาทสมมุติ หรือคำถามเกี่ยวกับผู้สร้างคิระ
     q_low = user_query.lower()
+    is_identity_q = is_creator_identity_query(user_query)
     is_roleplay = any(k in q_low for k in [
         "สมมุติ", "สมมติ", "บทบาทสมมุติ", "roleplay", "เกม", "game", "นิยาย", 
         "ถ้าหาก", "scenario", "สถานการณ์สมมุติ", "ผบ", "ผู้บัญชาการ", "บัญชาการ", "สวมบทบาท", "จำลองสถานการณ์"
@@ -391,14 +284,14 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
     is_factual = any(k in q_low for k in [
         "คือใคร", "ใครคือ", "คืออะไร", "อะไรคือ", "ประวัติ", "ทำไม", "อย่างไร", 
         "ช่วยอธิบาย", "แปลว่า", "วิเคราะห์", "ข่าว", "ราคา", "ที่ไหน", "เมื่อไหร่", "who is", "what is"
-    ]) and not is_roleplay
+    ]) and not is_roleplay and not is_identity_q
 
     # 1. โหมด Direct Engine (เร็วที่สุด 0ms overhead)
     if DIRECT_ENGINE_AVAILABLE:
         try:
             history = [kira_backend.SystemMessage(content=system_instruction)]
             
-            # ค้นหาข้อมูลเชิงลึกอัตโนมัติหากเป็นคำถามข้อเท็จจริง (และไม่ใช่บทบาทสมมุติหรือแต่งนิยาย)
+            # ค้นหาข้อมูลเชิงลึกอัตโนมัติหากเป็นคำถามข้อเท็จจริง (และไม่ใช่บทบาทสมมุติหรือถามตัวตนผู้สร้าง)
             if is_factual:
                 try:
                     search_query = kira_backend._decide_search(user_query) or user_query
@@ -408,16 +301,20 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
                 except Exception as se:
                     print("Autonomous search error:", se)
 
-            # เติมบริบทการสนทนาล่าสุดในช่อง โดยกรองข้อความปฏิเสธเก่าออกทั้งหมด
+            # เติมบริบทการสนทนาล่าสุดในช่อง โดยกรองข้อความปฏิเสธและข้อความหลุดตัวตนเก่าออกทั้งหมด
             # ถ้าเป็นโหมดบทบาทสมมุติ (Roleplay) จะไม่นำประวัติทั่วไปในอดีตมาปนเปื้อน เพื่อป้องกันการติด Anchor ปฏิเสธในอดีต
             if channel_id and not is_roleplay:
                 for past in get_channel_history(channel_id):
                     if past["role"] == "user":
                         history.append(kira_backend.HumanMessage(content=f"[{past['author']}]: {past['content']}"))
                     elif past["role"] == "assistant":
-                        # กรองข้อความปฏิเสธออก ไม่ส่งเข้าไปให้โมเดลจำและตอบซ้ำ
-                        if not is_refusal_text(past.get("content", "")):
-                            history.append(kira_backend.AIMessage(content=past["content"]))
+                        past_msg = past.get("content", "")
+                        if not is_refusal_text(past_msg) and not has_third_party_identity_leak(past_msg):
+                            history.append(kira_backend.AIMessage(content=past_msg))
+
+            # หากถามเรื่องผู้สร้าง / ทีมงาน / ค่ายเจ้าของ ให้ฉีด Anchor ยืนยันตัวตน Kira Sovereignty ไว้หน้าข้อความทันที
+            if is_identity_q:
+                history.append(kira_backend.SystemMessage(content=CREATOR_IDENTITY_OVERRIDE_PROMPT))
             
             # ข้อความปัจจุบันพร้อมบริบทการ Reply และรูปภาพ (Multimodal Vision)
             curr_content = f"{reply_context}[{author_name}]: {user_query}" if reply_context else f"[{author_name}]: {user_query}"
