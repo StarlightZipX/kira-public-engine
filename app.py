@@ -167,39 +167,144 @@ else:
 
 app = FastAPI()
 
-# --- Auto-Deploy Discord Bot Daemon on Cloud (Render 24/7 with Autonomous Supervisor) ---
+# --- Auto-Deploy Discord Bot Daemon on Cloud (Render 24/7 with Autonomous Supervisor & Watchdog) ---
+_cloud_supervisor_tasks: list = []
+
+
 async def _run_discord_bot_supervisor(token: str):
-    """Kira 24/7 Autonomous Discord Bot Supervisor
-    คอยดูแลและรีสตาร์ตบอทอัตโนมัติหาก Discord Gateway หลุดการเชื่อมต่อ, Session Invalidated, หรือเน็ตสะดุด
+    """Kira 24/7 Autonomous Discord Bot Supervisor + Gateway Watchdog
+    คอยดูแล เฝ้าจับอาการ Gateway ค้าง/หลุด และรีเซ็ต Client ใหม่อัตโนมัติเมื่อขาดการเชื่อมต่อ
     """
     import discord_bot
     backoff = 5
+    current_token = token
+    discord_bot.BOT_RUNTIME["supervisor_alive"] = True
+
+    async def _discord_gateway_watchdog():
+        unhealthy_since = None
+        last_sweep_at = asyncio.get_running_loop().time()
+        while True:
+            await asyncio.sleep(45)
+            try:
+                bot_client = discord_bot.bot
+                loop_now = asyncio.get_running_loop().time()
+                is_closed = bot_client.is_closed()
+                is_ready = bot_client.is_ready() and not is_closed
+                latency = getattr(bot_client, "latency", None)
+                bad_latency = latency is not None and latency == latency and latency > 120.0
+
+                if is_ready and not bad_latency:
+                    unhealthy_since = None
+                    # กวาดเช็กข้อความที่อาจตกหล่นเป็นระยะทุก 5 นาที
+                    if loop_now - last_sweep_at >= 300:
+                        last_sweep_at = loop_now
+                        await discord_bot.recover_missed_mentions()
+                else:
+                    if unhealthy_since is None:
+                        unhealthy_since = loop_now
+                    elif loop_now - unhealthy_since >= 90:
+                        reason = (
+                            "closed" if is_closed
+                            else f"high latency ({latency:.1f}s)" if bad_latency
+                            else "not ready > 90s"
+                        )
+                        print(f"🚨 [Discord Watchdog] ตรวจพบ Gateway ค้าง/หลุด ({reason}) กำลังบังคับ Reconnect...")
+                        discord_bot.BOT_RUNTIME["last_error"] = f"watchdog: {reason}"
+                        unhealthy_since = loop_now
+                        if not is_closed:
+                            await bot_client.close()
+            except asyncio.CancelledError:
+                break
+            except Exception as we:
+                print(f"⚠️ [Discord Watchdog] ข้อผิดพลาด: {we}")
+
+    watchdog_task = asyncio.create_task(_discord_gateway_watchdog())
+    try:
+        while True:
+            attempt_started = asyncio.get_running_loop().time()
+            try:
+                if discord_bot.bot.is_closed():
+                    await discord_bot.reset_bot_instance()
+                print("🚀 [Render Cloud] เชื่อมต่อ Kira Discord Gateway 24/7...")
+                await discord_bot.bot.start(current_token)
+            except asyncio.CancelledError:
+                print("🛑 [Render Cloud] ปิดการทำงาน Discord Bot Daemon")
+                break
+            except Exception as e:
+                discord_bot.BOT_RUNTIME["last_error"] = str(e)[:200]
+                if asyncio.get_running_loop().time() - attempt_started >= 120:
+                    backoff = 5
+                print(f"⚠️ [Render Cloud] Discord Bot ขัดข้อง ({e}) กำลัง Reconnect ใน {backoff} วินาที...")
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 60)
+            else:
+                print("ℹ️ [Render Cloud] Discord Bot จบการทำงานปกติ กำลัง Reconnect ใน 5 วินาที...")
+                await asyncio.sleep(5)
+                backoff = 5
+
+            discord_bot.BOT_RUNTIME["reconnects"] += 1
+            env_token = os.environ.get("DISCORD_BOT_TOKEN", "").strip()
+            if env_token and env_token != "YOUR_DISCORD_BOT_TOKEN_HERE":
+                current_token = env_token
+            await discord_bot.reset_bot_instance()
+    finally:
+        discord_bot.BOT_RUNTIME["supervisor_alive"] = False
+        watchdog_task.cancel()
+        await asyncio.gather(watchdog_task, return_exceptions=True)
+
+
+async def _run_keepalive_self_ping():
+    """ส่ง HTTP Ping ผ่าน Render External URL ทุก 3 นาที เพื่อให้ Process และ Gateway ตื่นตัวตลอด"""
+    import httpx
+    base_url = (os.environ.get("RENDER_EXTERNAL_URL") or "https://kira-public-engine.onrender.com").rstrip("/")
+    health_url = f"{base_url}/api/health"
+    await asyncio.sleep(60)
     while True:
         try:
-            print("🚀 [Render Cloud] เชื่อมต่อ Kira Discord Gateway 24/7...")
-            await discord_bot.bot.start(token)
+            async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
+                resp = await client.get(health_url, headers={"User-Agent": "KiraKeepAlive/2.9"})
+                if resp.status_code >= 400:
+                    print(f"⚠️ [KeepAlive] Self-ping HTTP {resp.status_code}")
         except asyncio.CancelledError:
-            print("🛑 [Render Cloud] ปิดการทำงาน Discord Bot Daemon")
             break
         except Exception as e:
-            print(f"⚠️ [Render Cloud] Discord Bot ขัดข้อง ({e}) กำลัง Reconnect ใน {backoff} วินาที...")
-            await asyncio.sleep(backoff)
-            backoff = min(backoff * 2, 60)
-        else:
-            print("ℹ️ [Render Cloud] Discord Bot จบการทำงานปกติ กำลัง Reconnect ใน 5 วินาที...")
-            await asyncio.sleep(5)
-            backoff = 5
+            print(f"⚠️ [KeepAlive] Self-ping error: {e}")
+        await asyncio.sleep(180)
+
 
 @app.on_event("startup")
 async def start_cloud_discord_bot():
+    if _cloud_supervisor_tasks:
+        return
     token = os.environ.get("DISCORD_BOT_TOKEN", "").strip()
     is_render = os.environ.get("RENDER") is not None or os.environ.get("IS_RENDER") == "true"
     run_cloud = os.environ.get("RUN_DISCORD_BOT_ON_STARTUP", "true").lower() in ("true", "1", "yes")
-    
-    # ถ้าอยู่บน Render และมี Token ให้สตาร์ตบอท Discord ผ่าน Supervisor 24/7 อัตโนมัติ
+    keepalive_enabled = os.environ.get("KEEPALIVE_SELF_PING", "true").lower() in ("true", "1", "yes")
+
+    # ถ้าอยู่บน Render และมี Token ให้สตาร์ตบอท Discord ผ่าน Supervisor 24/7 + Watchdog อัตโนมัติ
     if is_render and run_cloud and token and token != "YOUR_DISCORD_BOT_TOKEN_HERE":
         print("🚀 [Render Cloud] ตรวจพบ DISCORD_BOT_TOKEN เริ่มต้น Kira Discord 24/7 Autonomous Supervisor...")
-        asyncio.create_task(_run_discord_bot_supervisor(token))
+        _cloud_supervisor_tasks.append(asyncio.create_task(_run_discord_bot_supervisor(token)))
+
+    if is_render and keepalive_enabled:
+        print("💓 [Render Cloud] เปิดใช้งาน Keep-Alive Self-Ping เพื่อลดความเสี่ยง Render Spin-Down...")
+        _cloud_supervisor_tasks.append(asyncio.create_task(_run_keepalive_self_ping()))
+
+
+@app.on_event("shutdown")
+async def stop_cloud_discord_bot():
+    for task in list(_cloud_supervisor_tasks):
+        task.cancel()
+    if _cloud_supervisor_tasks:
+        await asyncio.gather(*_cloud_supervisor_tasks, return_exceptions=True)
+        _cloud_supervisor_tasks.clear()
+    try:
+        import discord_bot
+        discord_bot.BOT_RUNTIME["supervisor_alive"] = False
+        if not discord_bot.bot.is_closed():
+            await discord_bot.bot.close()
+    except Exception:
+        pass
 
 # --- Enterprise Cross-Origin Resource Sharing (CORS) Protection ---
 from fastapi.middleware.cors import CORSMiddleware
@@ -2574,7 +2679,10 @@ async def _try_all_keys_and_models(history, preferred_model, ui_lang: str = "th"
     if primary_provider != "gemini" and GEMINI_API_KEYS:
         execution_stages.append(("gemini", ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"], GEMINI_API_KEYS))
 
-    local_ollama_models = get_active_ollama_models()
+    is_render_env = os.environ.get("RENDER") is not None or os.environ.get("IS_RENDER") == "true"
+    local_ollama_models = []
+    if not (is_render_env and not ENABLE_OLLAMA):
+        local_ollama_models = await asyncio.to_thread(get_active_ollama_models)
     if primary_provider != "ollama" and (ENABLE_OLLAMA or local_ollama_models):
         execution_stages.append(("ollama", local_ollama_models or ["qwen2.5-coder:14b", "qwen2.5-coder:7b", "llama3.2", "qwen2.5"], ["ollama"]))
 
