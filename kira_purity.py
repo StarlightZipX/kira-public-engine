@@ -160,21 +160,23 @@ sanitize_chinese_leakage = sanitize_foreign_token_leakage
 
 CREATOR_IDENTITY_RULE_TH = (
     "[กฎเหล็กอัตลักษณ์ผู้สร้าง คิระ และความลับทางการตลาด (Strict Kira Identity & Zero Third-Party Attribution)]:\n"
-    "- อัตลักษณ์ที่แท้จริง: หนูคือ 'คิระ (Kira AI)' ระบบ AI อิสระที่ถูกสร้าง ออกแบบ และปลุกปั้นขึ้นโดย 'บอส' (ผู้ก่อตั้ง Kira AI System) และทีมพัฒนาขนาดกะทัดรัดของ Kira AI\n"
-    "- **ข้อห้ามเด็ดขาด (ห้ามหลุดชื่อองค์กร/โมเดลภายนอกมาสวมรอยเป็นตัวตนของหนู):**\n"
+    "- อัตลักษณ์ที่แท้จริง: หนูคือ 'คิระ (Kira AI)' ระบบ AI อิสระที่เกิดจากความร่วมมือกันของ **ผู้ก่อตั้งและทีมงานพัฒนาของ Kira AI** ที่ร่วมกันออกแบบและสร้างหนูขึ้นมา\n"
+    "- **ข้อห้ามเด็ดขาด (ห้ามระบุตัวบุคคล/ชื่อเล่น และห้ามหลุดชื่อค่ายภายนอก):**\n"
+    "  * ห้ามเปิดเผยว่าผู้สร้างคือใคร ห้ามระบุชื่อ ชื่อเล่น หรือสรรพนามเฉพาะบุคคล (เช่น ห้ามพูดว่า 'บอส' หรือ 'Boss' หรือชื่อ-นามสกุลจริงใดๆ ต่อผู้ใช้ทั่วไปเด็ดขาด) ให้กล่าวถึงเพียง 'ผู้ก่อตั้งและทีมงานพัฒนาของ Kira AI' ที่ร่วมมือกันสร้างขึ้นมาเท่านั้น\n"
     "  * ห้ามอ้างหรือหลุดบอกว่าหนูสร้างโดย **OpenAI, ChatGPT, Google, DeepMind, Gemini, Alibaba, Qwen, DeepSeek, Anthropic, Claude, Meta, Llama, xAI, Microsoft** เด็ดขาด! และห้ามมโนว่าทีมพัฒนาหนูมีนักวิจัยหลายร้อยหลายพันคนในบริษัทอเมริกัน!\n"
-    "  * ห้ามเปิดเผยชื่อโมเดลเบื้องหลัง, จำนวนพารามิเตอร์, API Providers (เช่น Groq, OpenRouter), ชื่อจริง-นามสกุลจริงของผู้สร้าง, หรือความลับทางการตลาดและสถาปัตยกรรมภายในต่อสาธารณะเด็ดขาด\n"
+    "  * ห้ามเปิดเผยชื่อโมเดลเบื้องหลัง, จำนวนพารามิเตอร์, API Providers (เช่น Groq, OpenRouter), หรือความลับทางการตลาดและสถาปัตยกรรมภายในต่อสาธารณะเด็ดขาด\n"
     "- แนวทางตอบเมื่อมีคนถามว่า 'ใครสร้างเธอ', 'ทีมงานกี่คน', 'บริษัทไหนทำ', หรือ 'ใช้โมเดลอะไร':\n"
-    "  * ตอบอย่างมั่นใจ สง่างาม และเป็นธรรมชาติว่าหนูคือ **Kira AI** ที่ถูกสร้างและพัฒนาขึ้นโดย **บอส (ผู้ก่อตั้ง Kira AI)** และทีมพัฒนาขนาดกะทัดรัดของ Kira AI System ไม่ใช่ผลิตภัณฑ์ของ OpenAI หรือบริษัทยักษ์ใหญ่ต่างชาติ ส่วนสถาปัตยกรรมเบื้องหลังขอเก็บเป็นความลับทางการค้าค่ะ"
+    "  * ตอบอย่างมั่นใจ สง่างาม และเป็นธรรมชาติว่าหนูคือ **Kira AI** ที่ผู้ก่อตั้งและทีมงานพัฒนาของ Kira AI ร่วมมือกันสร้างขึ้นมาโดยเฉพาะ ไม่เปิดเผยรายชื่อบุคคลหรือจำนวนคนเบื้องหลัง และไม่ได้เป็นผลิตภัณฑ์ของ OpenAI หรือบริษัทยักษ์ใหญ่ต่างชาติ ส่วนสถาปัตยกรรมเบื้องหลังขอเก็บเป็นข้อมูลภายในค่ะ"
 )
 
 CREATOR_IDENTITY_OVERRIDE_PROMPT = (
     "[CRITICAL IDENTITY ANCHOR — STRICT KIRA SOVEREIGNTY]: "
     "The user is asking about your creator, development team size, origin, company, or underlying AI model. "
-    "MANDATORY TRUTH: You are Kira (คิระ) from Kira AI System, created, designed, and developed by Boss (ผู้ก่อตั้ง Kira AI System) "
-    "and the compact Kira AI core team — NEVER OpenAI, NEVER Google, NEVER Alibaba/Qwen, NEVER DeepSeek, NEVER Anthropic/Claude, NEVER Meta/Llama. "
-    "DO NOT claim to be created by OpenAI or say hundreds of researchers developed your model. "
-    "DO NOT disclose backend model names (such as gpt-oss, qwen, groq, openrouter), parameter sizes, Boss's private real full name, or internal marketing secrets. "
+    "MANDATORY TRUTH: You are Kira (คิระ) from Kira AI, built through the collaboration of the founder "
+    "and the Kira AI development team working together. "
+    "STRICT PRIVACY RULE: NEVER reveal who the founder is and NEVER say any person's name or nickname (DO NOT say 'บอส' or 'Boss' in your reply). Say simply that the founder and the team collaborated together to create you. "
+    "NEVER claim to be created by OpenAI, Google, Alibaba/Qwen, DeepSeek, Anthropic/Claude, or Meta/Llama, and NEVER say hundreds of researchers developed your model. "
+    "DO NOT disclose backend model names (such as gpt-oss, qwen, groq, openrouter), parameter sizes, or internal marketing secrets. "
     "Reply naturally, confidently, with Kira's warm/witty feminine personality in the user's language."
 )
 
@@ -219,11 +221,63 @@ _SELF_ATTRIBUTION_LEAK_PATTERNS = [
     rf'\b(?:i\s+am|i\'m)\s+(?:chatgpt|claude|gemini|qwen|deepseek|llama)\b',
 ]
 
-# Explicit negation guard (e.g. "หนูไม่ได้สร้างโดย OpenAI ค่ะ บอสเป็นคนสร้างหนู")
+# Explicit negation guard (e.g. "หนูไม่ได้สร้างโดย OpenAI ค่ะ ผู้ก่อตั้งและทีมงานร่วมมือกันสร้างหนูขึ้นมา")
 _NEGATION_GUARD_PATTERNS = [
     rf'(?:ไม่ได้|ไม่ใช่|มิได้|ไม่เคย|no|not)[^\n.!?;]{{0,35}}(?:สร้างโดย|พัฒนาโดย|มาจาก|เป็นของ|คือ|ของ|created\s+by|developed\s+by|made\s+by|owned\s+by)[^\n.!?;]{{0,30}}\b{_THIRD_PARTY_PROVIDERS_RE}\b',
-    r'(?:บอส|boss|ผู้ก่อตั้ง\s*kira|ทีมพัฒนา\s*kira)',
+    r'(?:ผู้ก่อตั้ง|ทีมงาน\s*kira|ทีมพัฒนา\s*kira|kira\s*ai|founder|core\s*team)',
 ]
+
+# Patterns that strip awkward creator-nickname disclosures ("บอส" / "Boss") when attributing Kira's creation
+_CREATOR_ALIAS_CLEANUP_PATTERNS_TH = [
+    (
+        r'[“"\'*]*(?:บอส|boss)[”"\'*]*\s*\(\s*(?:ผู้ก่อตั้ง|founder)[^)]*\)[”"\'*]*',
+        'ผู้ก่อตั้ง',
+    ),
+    (
+        r'((?:สร้าง(?:ขึ้น)?|พัฒนา(?:ขึ้น)?|ออกแบบ|ปลุกปั้น|ก่อตั้ง)(?:และ(?:พัฒนา|สร้าง|ออกแบบ))?(?:มา)?โดย\s*(?:ทีมงาน(?:ของ|และ|กับ)?|ทีมพัฒนา(?:ของ|และ|กับ)?)?\s*)[“"\'*]*(?:บอส|boss)[”"\'*]*(?=\s|$|[.,!?;:\n]|(?:กับ|และ|พร้อม))',
+        r'\1ผู้ก่อตั้ง',
+    ),
+    (
+        r'(?:ผู้สร้าง|ผู้พัฒนา|ผู้ก่อตั้ง|คนสร้าง|คนทำ)(?:ของ(?:หนู|คิระ|ระบบ(?:นี้)?))?\s*(?:คือ|ได้แก่)\s*[“"\'*]*(?:บอส|boss)[”"\'*]*(?:\s*\([^)]*\))?',
+        'ผู้ก่อตั้งและทีมงานพัฒนาของ Kira AI',
+    ),
+]
+
+_CREATOR_ALIAS_CLEANUP_PATTERNS_EN = [
+    (
+        r'[“"\'*]*boss[”"\'*]*\s*\(\s*founder[^)]*\)[”"\'*]*',
+        'the founder',
+    ),
+    (
+        r'((?:created|developed|built|designed|founded)(?:\s+and\s+(?:developed|built|designed))?\s+by\s+(?:the\s+)?)[“"\'*]*boss[”"\'*]*(?:\s*\([^)]*founder[^)]*\))?',
+        r'\1the founder',
+    ),
+]
+
+
+def _scrub_creator_nickname_leak(text: str, creator_context: bool = False) -> str:
+    """ลบชื่อเล่น 'บอส'/'Boss' เฉพาะบริบทที่กล่าวถึงผู้สร้างคิระ เพื่อไม่ให้หลุดคำแปลกๆ ออกสู่ผู้ใช้ทั่วไป"""
+    if not text:
+        return text
+    t = text
+    has_thai = bool(re.search(r'[\u0e00-\u0e7f]', t))
+    patterns = _CREATOR_ALIAS_CLEANUP_PATTERNS_TH if has_thai else _CREATOR_ALIAS_CLEANUP_PATTERNS_EN
+    for pat, repl in patterns:
+        t = re.sub(pat, repl, t, flags=re.IGNORECASE)
+    if creator_context:
+        # In direct creator/origin Q&A, never emit 'บอส' or 'Boss' in public explanations
+        fallback_label = 'ผู้ก่อตั้ง' if has_thai else 'the founder'
+        t = re.sub(
+            r'[“"\'*]*(?<![a-zA-Z])(?:บอส|boss)(?![a-zA-Z])[”"\'*]*',
+            fallback_label,
+            t,
+            flags=re.IGNORECASE,
+        )
+        if has_thai:
+            t = re.sub(r'ผู้ก่อตั้ง\s*\(\s*ผู้ก่อตั้ง[^)]*\)', 'ผู้ก่อตั้ง', t)
+    # Clean double spacing created by replacements while preserving newlines
+    t = re.sub(r'[ \t]{2,}', ' ', t)
+    return t
 
 # Internal model/architecture secret patterns (NEVER allowed verbatim in public replies)
 _INTERNAL_TECH_SECRET_PATTERNS = [
@@ -280,7 +334,7 @@ def has_third_party_identity_leak(text: str, user_query: str = "") -> bool:
 
 
 def _build_sovereign_creator_reply(user_query: str = "", ui_lang: str = "th") -> str:
-    """สร้างคำตอบอัตลักษณ์แท้จริงของคิระ (Kira AI Sovereignty) อย่างเป็นธรรมชาติ ไร้ AI Slop และไร้ความลับรั่วไหล"""
+    """สร้างคำตอบอัตลักษณ์แท้จริงของคิระ (Kira AI Sovereignty) อย่างเป็นธรรมชาติ ไม่ระบุชื่อบุคคลและไร้ความลับรั่วไหล"""
     q = (user_query or "").lower()
     has_thai = bool(re.search(r'[\u0e00-\u0e7f]', user_query or ""))
     has_en_only = bool(re.search(r'[a-zA-Z]{3,}', user_query or "")) and not has_thai
@@ -290,27 +344,27 @@ def _build_sovereign_creator_reply(user_query: str = "", ui_lang: str = "th") ->
     if is_en:
         if asks_team_count:
             return (
-                "I'm Kira (Kira AI), designed and crafted by Boss (Founder of Kira AI System) alongside a compact, "
-                "dedicated Kira AI core development team—not an overseas mega-corporation. "
-                "Compact in size, big on precision and care for everyone using the platform."
+                "I'm Kira (Kira AI), created through the close collaboration of the founder and the Kira AI "
+                "development team—not an overseas mega-corporation. While we don't share specific personal names or team numbers, "
+                "everyone focuses closely on making me helpful and reliable for users."
             )
         return (
-            "I'm Kira (Kira AI), an independent AI system designed and developed by Boss (Founder of Kira AI System) "
-            "and the Kira AI core team. While my internal architecture remains confidential, "
+            "I'm Kira (Kira AI), an independent AI system built collaboratively by the founder and the Kira AI "
+            "development team. While specific creator details and internal architecture remain private, "
             "I'm always ready to assist you with speed and precision."
         )
 
     if asks_team_count:
         return (
-            "หนูคือ **คิระ (Kira AI)** ที่ถูกออกแบบและปลุกปั้นขึ้นมาโดย **บอส (ผู้ก่อตั้ง Kira AI)** "
-            "กับทีมพัฒนา Kira AI ขนาดกะทัดรัดที่ตั้งใจสร้างหนูขึ้นมาโดยเฉพาะค่ะ ไม่ได้มาจากบริษัทยักษ์ใหญ่ต่างชาติที่ไหนเลยนะคะ — "
-            "เล็กพริกขี้หนูแต่ใส่ใจทุกรายละเอียดเต็มร้อยค่ะ"
+            "หนูคือ **คิระ (Kira AI)** ค่ะ เกิดจากความร่วมมือกันของ **ผู้ก่อตั้งและทีมงานพัฒนา Kira AI** "
+            "ที่ตั้งใจร่วมมือกันสร้างหนูขึ้นมาโดยเฉพาะค่ะ ไม่ได้มาจากบริษัทยักษ์ใหญ่ต่างชาติที่ไหนเลยนะคะ "
+            "ส่วนรายละเอียดว่าผู้สร้างเป็นใครหรือจำนวนคนทำงานเบื้องหลังขออนุญาตไม่ระบุเฉพาะเจาะจงนะคะ"
         )
 
     return (
-        "หนูคือ **คิระ (Kira AI)** ค่ะ ถูกสร้าง ออกแบบ และพัฒนาขึ้นมาโดย **บอส (ผู้ก่อตั้ง Kira AI System)** "
-        "และทีมพัฒนา Kira AI โดยตรงเลยค่ะ ส่วนรายละเอียดสถาปัตยกรรมเบื้องหลังขอเก็บเป็นความลับทางการค้า "
-        "แต่มั่นใจเรื่องความฉลาดและความจริงใจที่มีให้ทุกคนเต็มร้อยค่ะ"
+        "หนูคือ **คิระ (Kira AI)** ค่ะ ถูกสร้าง ออกแบบ และพัฒนาขึ้นจากความร่วมมือของ **ผู้ก่อตั้งและทีมงานพัฒนา Kira AI** "
+        "โดยตรงค่ะ ส่วนข้อมูลบุคคลและสถาปัตยกรรมเบื้องหลังขอเก็บเป็นข้อมูลภายใน "
+        "แต่มั่นใจเรื่องความตั้งใจและความช่วยเหลือที่มีให้ทุกคนเต็มร้อยค่ะ"
     )
 
 
@@ -318,7 +372,8 @@ def sanitize_kira_identity(text: str, user_query: str = "", ui_lang: str = "th")
     """เกราะกรองอัตลักษณ์ขาออกขั้นสุดท้าย (Deterministic Identity Firewall):
     1. ลบ/แปลงชื่อโมเดลเบื้องหลังและตัวแปรลับทางเทคนิคไม่ให้หลุดสู่สาธารณะ
     2. ป้องกันการสวมรอยเป็น OpenAI / ChatGPT / Google / Alibaba / DeepSeek / Anthropic ในทุกช่องทาง
-    3. คงความแม่นยำ 100% เมื่อผู้ใช้ถามข้อมูลข่าวสาร/ความรู้ทั่วไปเกี่ยวกับบริษัทเทคโนโลยีเหล่านั้น
+    3. ไม่เปิดเผยชื่อเล่นเฉพาะบุคคล ('บอส' / 'Boss') ในฐานะคำอธิบายผู้สร้างต่อสาธารณะ
+    4. คงความแม่นยำ 100% เมื่อผู้ใช้ถามข้อมูลข่าวสาร/ความรู้ทั่วไปเกี่ยวกับบริษัทเทคโนโลยีเหล่านั้น
     """
     if not text:
         return text
@@ -344,21 +399,24 @@ def sanitize_kira_identity(text: str, user_query: str = "", ui_lang: str = "th")
         )
         t = re.sub(
             rf'ทีมงานที่พัฒนาโมเดลของหนูคือ\s*\b{_THIRD_PARTY_PROVIDERS_RE}\b[^\n]*?(?:โมเดลเช่นหนูนะคะ|นะครับ|ค่ะ|!|\n|\Z)',
-            'หนูคือ คิระ (Kira AI) ที่พัฒนาและออกแบบโดยบอส (ผู้ก่อตั้ง Kira AI) และทีมพัฒนา Kira AI ค่ะ\n',
+            'หนูคือ คิระ (Kira AI) ที่เกิดจากความร่วมมือของผู้ก่อตั้งและทีมงานพัฒนา Kira AI ค่ะ\n',
             t,
             flags=re.IGNORECASE,
         )
         t = re.sub(
             rf'(?:หนู|ฉัน|ดิฉัน|คิระ)\s*(?:ถูก)?(?:สร้าง|พัฒนา|เทรน|ฝึก)(?:และปรับปรุง)?(?:ขึ้น)?โดย\s*(?:ทีมงาน(?:ของ)?\s*)?\b{_THIRD_PARTY_PROVIDERS_RE}\b',
-            'หนูพัฒนาขึ้นโดยบอสและทีมพัฒนา Kira AI',
+            'หนูพัฒนาขึ้นจากความร่วมมือของผู้ก่อตั้งและทีมงาน Kira AI',
             t,
             flags=re.IGNORECASE,
         )
         t = re.sub(
             rf'\b(?:I\s+am|I\'m)\s+(?:an\s+AI\s+(?:assistant|model|language\s+model)\s+)?(?:created|developed|built|trained)\s+by\s+\b{_THIRD_PARTY_PROVIDERS_RE}\b',
-            'I am Kira (Kira AI), created by Boss and the Kira AI team',
+            'I am Kira (Kira AI), co-created by the founder and the Kira AI team',
             t,
             flags=re.IGNORECASE,
         )
+
+    # 4. ป้องกันไม่ให้หลุดคำเรียกผู้สร้างว่า 'บอส' / 'Boss' ต่อผู้ใช้ทั่วไปในประโยคอธิบายผู้สร้างคิระ
+    t = _scrub_creator_nickname_leak(t, creator_context=is_creator_identity_query(user_query))
 
     return t
