@@ -1,12 +1,12 @@
 // ====================================================================
-// Kira AI Progressive Web App - Service Worker (v2.9.4)
+// Kira AI Progressive Web App - Service Worker (v2.9.5)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.9.4-zero-slop-web';
+const CACHE_NAME = 'kira-ai-cache-v2.9.5-phase1-pwa-utilities';
 const STATIC_ASSETS = [
     '/',
-    '/static/style.css?v=20261113_zero_slop_web_v294',
-    '/static/script.js?v=20261113_zero_slop_web_v294',
+    '/static/style.css?v=20261114_phase1_v295',
+    '/static/script.js?v=20261114_phase1_v295',
     '/manifest.json',
     '/static/manifest.json',
     '/static/images/kira_logo.png?v=6',

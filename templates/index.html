@@ -39,14 +39,14 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=20261113_zero_slop_web_v294">
+    <link rel="stylesheet" href="/static/style.css?v=20261114_phase1_v295">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0b0c10">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kira AI">
-    <meta name="kira-build-id" content="{{ build_id or 'kira-v2.9.4' }}">
+    <meta name="kira-build-id" content="{{ build_id or 'kira-v2.9.5' }}">
     <meta name="kira-app-version" content="{{ app_version or '2.9.0' }}">
     <link rel="apple-touch-icon" href="/static/images/kira_logo.png?v=6">
     <link rel="icon" type="image/png" href="/static/images/kira_logo.png?v=6">
@@ -608,6 +608,13 @@
                                         <span class="tool-item-desc" data-i18n="tools_study_hub_desc">สรุปชีทสไลด์ 3 เลเวล, เก็งข้อสอบ, Flashcards, แก้โจทย์</span>
                                     </div>
                                 </button>
+                                <button class="tools-menu-item" id="btn-tools-receipt-helper" type="button" onclick="if (typeof openReceiptHelperModal === 'function') openReceiptHelperModal();" data-i18n-title="chip_receipt_tooltip" title="สแกนสลิป ใบเสร็จ และจดบันทึกรายรับ-รายจ่ายอัตโนมัติ">
+                                    <span class="tool-item-icon icon-emerald"><i class="fa-solid fa-receipt"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title" data-i18n="tools_receipt_title">ผู้ช่วยจดรายจ่าย & สแกนสลิป</span>
+                                        <span class="tool-item-desc" data-i18n="tools_receipt_desc">อ่านสลิป ใบเสร็จ ลงบัญชีส่วนตัว และส่งออก CSV</span>
+                                    </div>
+                                </button>
                             </div>
 
                             <div class="tools-dropdown-divider"></div>
@@ -916,6 +923,9 @@
                     </button>
                     <button type="button" class="study-chip hub-trigger" id="btn-open-study-hub-chip" title="เปิดห้องติวเข้มเต็มรูปแบบ">
                         <i class="fa-solid fa-graduation-cap text-rose"></i> <span data-i18n="chip_study_hub">ห้องติวสอบ</span>
+                    </button>
+                    <button type="button" class="study-chip hub-trigger" id="btn-open-receipt-helper-chip" onclick="if (typeof openReceiptHelperModal === 'function') openReceiptHelperModal();" data-i18n-title="chip_receipt_tooltip" title="สแกนสลิป ใบเสร็จ และจดบันทึกรายรับ-รายจ่ายอัตโนมัติ">
+                        <i class="fa-solid fa-receipt text-emerald"></i> <span data-i18n="chip_receipt_helper">สแกนสลิป / จดรายจ่าย</span>
                     </button>
                 </div>
 
@@ -1771,7 +1781,7 @@
                     </ul>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px;">
-                    <span>เวอร์ชัน: <strong>Kira 2.9.4 Enterprise (Build 2026.11)</strong></span>
+                    <span>เวอร์ชัน: <strong>Kira 2.9.5 Enterprise (Build 2026.11)</strong></span>
                     <span>ผู้พัฒนา: <strong>Kira AI System Team</strong></span>
                 </div>
             </div>
@@ -3976,15 +3986,15 @@
                 <div class="kira-update-badge">
                     <span class="pulse-indicator"></span>
                     <span>อัปเดตระบบ</span>
-                    <span class="kira-version-tag" id="kira-new-version-tag">v2.9.4</span>
+                    <span class="kira-version-tag" id="kira-new-version-tag">v2.9.5</span>
                 </div>
             </div>
 
             <!-- Title & Kira Dialogue -->
             <div class="kira-update-content">
-                <h3 class="kira-update-title" id="kira-update-title">อัปเดต Kira AI v2.9.4 พร้อมใช้งานแล้วค่ะ</h3>
+                <h3 class="kira-update-title" id="kira-update-title">อัปเดต Kira AI v2.9.5 พร้อมใช้งานแล้วค่ะ</h3>
                 <p class="kira-update-desc" id="kira-update-desc">
-                    ปรับปรุงความสม่ำเสมอของหน้าจอแพ็กเกจ ขั้นตอนชำระเงิน PromptPay และความเสถียรโดยรวมเรียบร้อยค่ะ
+                    เพิ่มผู้ช่วยสแกนสลิป & จดรายจ่าย, 1-Click Study Pack + นำเข้า PDF/DOCX และทางลัด PWA บนมือถือเรียบร้อยค่ะ
                 </p>
                 <div class="kira-update-quote-box">
                     <i class="fa-solid fa-quote-left quote-icon"></i>
@@ -4126,6 +4136,9 @@
                 <button type="button" class="study-tab-btn" data-tab="problem_solver">
                     <i class="fa-solid fa-calculator"></i> <span data-i18n="study_tab_problem">แก้โจทย์ทีละสเต็ป</span>
                 </button>
+                <button type="button" class="study-tab-btn" data-tab="study_pack">
+                    <i class="fa-solid fa-box-open"></i> <span data-i18n="study_tab_pack">ชุดติวครบจบใน 1 คลิก</span>
+                </button>
             </div>
 
             <!-- Modal Body -->
@@ -4139,7 +4152,11 @@
                     <div class="study-form-group">
                         <div class="study-label-row">
                             <label for="study-content-input"><i class="fa-solid fa-align-left text-cyan"></i> เนื้อหาบทเรียน / ข้อความสไลด์ / โจทย์:</label>
-                            <button type="button" class="study-paste-hint" id="btn-paste-study-content"><i class="fa-regular fa-clipboard"></i> <span data-i18n="study_btn_paste">วางข้อความ</span></button>
+                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                <input type="file" id="study-file-input" accept=".pdf,.docx,.txt,.md,.csv,.json" style="display: none;">
+                                <button type="button" class="study-paste-hint" id="btn-upload-study-file" data-i18n-title="study_upload_tooltip" title="อัปโหลดไฟล์ PDF, DOCX หรือ TXT เพื่อดึงข้อความมาสร้าง Study Pack"><i class="fa-solid fa-file-arrow-up"></i> <span data-i18n="study_btn_upload_file">แนบ PDF / DOCX</span></button>
+                                <button type="button" class="study-paste-hint" id="btn-paste-study-content"><i class="fa-regular fa-clipboard"></i> <span data-i18n="study_btn_paste">วางข้อความ</span></button>
+                            </div>
                         </div>
                         <textarea id="study-content-input" class="study-textarea" rows="8" placeholder="วางเนื้อหาจากสไลด์ PDF, ข้อความเลกเชอร์, การบ้าน หรือโจทย์ที่ต้องการให้คิระช่วยวิเคราะห์..."></textarea>
                     </div>
@@ -4174,12 +4191,127 @@
                             <button type="button" class="study-action-btn" id="btn-study-to-mindmap" data-i18n-title="study_mindmap_tooltip" title="แปลงเป็นผังความคิด Living Mind Map">
                                 <i class="fa-solid fa-diagram-project text-purple"></i> <span data-i18n="study_btn_mindmap">สร้าง Mind Map</span>
                             </button>
+                            <button type="button" class="study-action-btn" id="btn-study-share-link" data-i18n-title="study_share_tooltip" title="สร้างลิงก์สาธารณะแบบอ่านอย่างเดียวเพื่อแชร์ชุดติวนี้">
+                                <i class="fa-solid fa-share-nodes text-emerald"></i> <span data-i18n="study_btn_share_link">แชร์ลิงก์สรุป</span>
+                            </button>
                         </div>
                     </div>
                     <div class="study-result-container" id="study-result-container">
                         <div class="study-placeholder">
                             <i class="fa-solid fa-book-open-reader study-empty-icon"></i>
                             <p class="study-empty-text" data-i18n="study_empty_placeholder">เลือกโหมดที่ต้องการ แล้ววางเนื้อหาบทเรียนเพื่อเริ่มติวเข้มกับคิระได้ทันทีค่ะ 🌸</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🧾 Phase 1.2: 1-Click Slip Scanner & Personal Expense Ledger Modal (Quiet Obsidian) -->
+    <div id="receipt-helper-modal" class="kira-modal-overlay receipt-helper-overlay" style="display: none;">
+        <div class="receipt-helper-card">
+            <div class="receipt-helper-header">
+                <div class="receipt-header-title-wrap">
+                    <div class="receipt-header-icon"><i class="fa-solid fa-receipt"></i></div>
+                    <div>
+                        <h3 data-i18n="receipt_modal_title">ผู้ช่วยสแกนสลิป & สมุดบัญชีส่วนตัว</h3>
+                        <p data-i18n="receipt_modal_subtitle">โยนสลิปโอนเงิน ใบเสร็จ หรือพิมพ์รายการสั้นๆ ให้คิระลงบัญชีรายรับ-รายจ่ายและส่งออก CSV ได้ทันที</p>
+                    </div>
+                </div>
+                <button type="button" class="receipt-close-btn" id="btn-close-receipt-helper" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="receipt-helper-body">
+                <div class="receipt-telemetry-strip">
+                    <div class="receipt-stat-card">
+                        <span class="receipt-stat-label" data-i18n="receipt_stat_today">รายจ่ายวันนี้</span>
+                        <span class="receipt-stat-val negative" id="receipt-stat-today-val">฿0.00</span>
+                    </div>
+                    <div class="receipt-stat-card">
+                        <span class="receipt-stat-label" data-i18n="receipt_stat_month_exp">รายจ่ายเดือนนี้</span>
+                        <span class="receipt-stat-val" id="receipt-stat-month-exp-val">฿0.00</span>
+                    </div>
+                    <div class="receipt-stat-card">
+                        <span class="receipt-stat-label" data-i18n="receipt_stat_month_net">คงเหลือสุทธิเดือนนี้</span>
+                        <span class="receipt-stat-val positive" id="receipt-stat-month-net-val">฿0.00</span>
+                    </div>
+                </div>
+
+                <div class="receipt-workspace-grid">
+                    <div class="receipt-input-col">
+                        <div class="receipt-dropzone" id="receipt-dropzone">
+                            <input type="file" id="receipt-file-input" accept="image/png,image/jpeg,image/webp" style="display: none;">
+                            <div class="receipt-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                            <p class="receipt-dropzone-title" data-i18n="receipt_dropzone_title">แตะเพื่อเลือกภาพสลิป / ใบเสร็จ หรือวางข้อความด้านล่าง</p>
+                            <p class="receipt-dropzone-hint" data-i18n="receipt_dropzone_hint">รองรับสลิป PromptPay / ธนาคาร / ใบเสร็จร้านค้า (JPG, PNG, WEBP สูงสุด 8 MB)</p>
+                            <div class="receipt-preview-wrap" id="receipt-preview-wrap" style="display: none;">
+                                <img id="receipt-preview-img" src="" alt="Slip preview">
+                                <button type="button" class="receipt-clear-img-btn" id="btn-clear-receipt-img" data-i18n="receipt_btn_clear_img">ล้างภาพ</button>
+                            </div>
+                        </div>
+
+                        <div class="receipt-field">
+                            <label for="receipt-note-input" data-i18n="receipt_note_label">ข้อความรายการ / บันทึกเพิ่มเติม</label>
+                            <textarea id="receipt-note-input" rows="2" data-i18n-placeholder="receipt_note_placeholder" placeholder="เช่น กาแฟ Cafe Amazon 85 บาท, ค่ารถไฟฟ้า 47 บาท หรือวางข้อความ SMS ธนาคาร..."></textarea>
+                        </div>
+
+                        <div class="receipt-form-row">
+                            <div class="receipt-field">
+                                <label for="receipt-type-select" data-i18n="receipt_type_label">ประเภท</label>
+                                <select id="receipt-type-select">
+                                    <option value="auto" data-i18n="receipt_type_auto">วิเคราะห์อัตโนมัติ</option>
+                                    <option value="expense" data-i18n="receipt_type_expense">รายจ่าย</option>
+                                    <option value="income" data-i18n="receipt_type_income">รายรับ</option>
+                                </select>
+                            </div>
+                            <div class="receipt-field">
+                                <label for="receipt-amount-input" data-i18n="receipt_amount_label">ยอดเงิน (บาท)</label>
+                                <input type="number" step="0.01" min="0" id="receipt-amount-input" placeholder="0.00">
+                            </div>
+                        </div>
+
+                        <div class="receipt-form-row">
+                            <div class="receipt-field">
+                                <label for="receipt-merchant-input" data-i18n="receipt_merchant_label">ร้านค้า / ผู้รับ-ผู้โอน</label>
+                                <input type="text" id="receipt-merchant-input" data-i18n-placeholder="receipt_merchant_placeholder" placeholder="ระบุชื่อร้านหรือเว้นว่างให้คิระอ่านอัตโนมัติ">
+                            </div>
+                            <div class="receipt-field">
+                                <label for="receipt-cat-input" data-i18n="receipt_cat_label">หมวดหมู่</label>
+                                <select id="receipt-cat-input">
+                                    <option value="" data-i18n="receipt_type_auto">วิเคราะห์อัตโนมัติ</option>
+                                    <option value="อาหารและเครื่องดื่ม">อาหารและเครื่องดื่ม</option>
+                                    <option value="เดินทาง">เดินทาง</option>
+                                    <option value="บิลและสาธารณูปโภค">บิลและสาธารณูปโภค</option>
+                                    <option value="ช้อปปิ้ง">ช้อปปิ้ง</option>
+                                    <option value="สุขภาพ">สุขภาพ</option>
+                                    <option value="รายรับ">รายรับ</option>
+                                    <option value="โอนเงิน/ทั่วไป">โอนเงิน/ทั่วไป</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="button" class="receipt-submit-btn" id="btn-scan-save-receipt">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span data-i18n="receipt_btn_scan">อ่านสลิป & บันทึกลงบัญชี</span>
+                        </button>
+                    </div>
+
+                    <div class="receipt-ledger-col">
+                        <div class="receipt-ledger-head">
+                            <h4 data-i18n="receipt_ledger_title">สมุดบัญชีรายการล่าสุด</h4>
+                            <div class="receipt-ledger-actions">
+                                <button type="button" class="receipt-secondary-btn" id="btn-receipt-to-canvas">
+                                    <i class="fa-solid fa-table-columns"></i>
+                                    <span data-i18n="receipt_btn_canvas">ตาราง Canvas</span>
+                                </button>
+                                <button type="button" class="receipt-secondary-btn" id="btn-receipt-export-csv">
+                                    <i class="fa-solid fa-file-csv"></i>
+                                    <span data-i18n="receipt_btn_csv">ส่งออก CSV</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="receipt-ledger-list" id="receipt-ledger-list">
+                            <div class="receipt-empty-box" data-i18n="receipt_empty_state">ยังไม่มีรายการบัญชี ลองอัปโหลดสลิปหรือจดรายการแรกด้านซ้ายได้เลยค่ะ</div>
                         </div>
                     </div>
                 </div>
@@ -4332,6 +4464,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=20261113_zero_slop_web_v294"></script>
+    <script src="/static/script.js?v=20261114_phase1_v295"></script>
 </body>
 </html>

@@ -354,7 +354,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.9.4"
+KIRA_SYSTEM_VERSION = "2.9.5"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -363,17 +363,29 @@ KIRA_RELEASE_DATA = {
     "version": KIRA_SYSTEM_VERSION,
     "build_id": APP_BUILD_ID,
     "timestamp": APP_START_TIME,
-    "release_name": "Kira AI Workspace - Refined Obsidian UI & PromptPay Checkout",
-    "badge_text": f"v{KIRA_SYSTEM_VERSION} อัปเดต",
+    "release_name": "Kira AI Phase 1 - Everyday PWA, 1-Click Slip Helper & Study Pack",
+    "badge_text": f"v{KIRA_SYSTEM_VERSION} อัปเดต Phase 1",
     "title": f"อัปเดต Kira AI v{KIRA_SYSTEM_VERSION} พร้อมใช้งานแล้วค่ะ",
-    "description": "ปรับปรุงหน้าจอแพ็กเกจสมาชิก ขั้นตอนชำระเงิน PromptPay และความสม่ำเสมอของหน้าต่างใช้งานทั้งหมดให้เรียบง่ายและอ่านสบายตาขึ้นค่ะ",
-    "quote": "ระบบเวอร์ชันล่าสุดพร้อมใช้งานแล้วค่ะ ข้อมูล บทสนทนา และความจำส่วนตัวทั้งหมดของคุณยังคงอยู่ครบถ้วนเหมือนเดิมนะคะ",
+    "description": "เพิ่มผู้ช่วยจดรายจ่าย & สแกนสลิปใน 1 คลิก, ชุดติว Study Pack + นำเข้า PDF/DOCX พร้อมแชร์ลิงก์สรุป และทางลัด PWA บนมือถือค่ะ",
+    "quote": "คิระพร้อมช่วยงานประจำวันของบอสแล้วค่ะ ทั้งสแกนสลิปลงบัญชี ส่งออก CSV และสรุปเอกสารสำคัญในคลิกเดียว",
     "highlights": [
         {
-            "icon": "fa-layer-group",
+            "icon": "fa-receipt",
             "color": "text-emerald",
-            "tag": "Package & Checkout",
-            "text": "ปรับปรุงหน้าเลือกแพ็กเกจและ PromptPay Checkout ให้ชัดเจน พร้อมปุ่มคัดลอกรหัส PromptPay และยอดโอน"
+            "tag": "1-Click Slip & Ledger",
+            "text": "สแกนสลิปโอนเงินหรือพิมพ์รายรับ-รายจ่าย ให้คิระลงบัญชีอัตโนมัติ พร้อมตาราง Canvas และส่งออกไฟล์ CSV"
+        },
+        {
+            "icon": "fa-box-open",
+            "color": "text-cyan",
+            "tag": "1-Click Study Pack",
+            "text": "อัปโหลด PDF / DOCX สร้างชุดสรุป-ข้อสอบ-Flashcards ครบ 5 ส่วนในคลิกเดียว พร้อมสร้างลิงก์แชร์"
+        },
+        {
+            "icon": "fa-mobile-screen-button",
+            "color": "text-violet",
+            "tag": "Mobile PWA Ready",
+            "text": "รองรับทางลัดจากหน้าจอมือถือ (Deep-Link Shortcuts) และรับข้อความ/ลิงก์จากแอปอื่นผ่าน Share Target"
         },
         {
             "icon": "fa-shield-halved",
@@ -382,22 +394,10 @@ KIRA_RELEASE_DATA = {
             "text": "ตรวจสอบและรายงานสถานะการทำงานอย่างตรงไปตรงมา พร้อมระบบสำรองเมื่อโมเดลหลักไม่ตอบสนอง"
         },
         {
-            "icon": "fa-brain",
-            "color": "text-violet",
-            "tag": "Multi-Model Routing",
-            "text": "เลือกใช้งานได้ทั้ง Deep Reasoning, Creative Code และ Fast Chat พร้อมบริบทที่ต่อเนื่อง"
-        },
-        {
             "icon": "fa-code",
             "color": "text-cyan",
             "tag": "Live Code Canvas",
             "text": "พรีวิวหน้าเว็บ HTML/CSS/JS และผังความคิด Living Mind Map พร้อมแชร์ลิงก์อ่านอย่างเดียว"
-        },
-        {
-            "icon": "fa-microphone-lines",
-            "color": "text-pink",
-            "tag": "Voice Suite",
-            "text": "รองรับการสนทนาด้วยเสียงสองทิศทางและการถอดเสียงภาษาไทยและอีกหลายภาษา"
         },
         {
             "icon": "fa-book-atlas",
@@ -409,52 +409,52 @@ KIRA_RELEASE_DATA = {
     "i18n": {
         "en": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} Update Available",
-            "description": "Updated subscription plans, PromptPay checkout layout, and consistent monochrome obsidian dialogs.",
-            "quote": "The latest workspace update is ready. Your conversation history, saved memory, and files remain intact.",
+            "description": "Added 1-Click Slip & Expense Ledger, 1-Click Study Pack with PDF/DOCX upload, and Mobile PWA deep-links & Share Target.",
+            "quote": "Your everyday personal assistant tools are ready with slip scanning, CSV expense ledger export, and Study Pack creation.",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} Update",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "Workspace UI", "text": "Unified Obsidian dialog styling across onboarding, packages, checkout, and study tools"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDF Engine", "text": "Accurate document parsing via pypdf for academic notes and structured summaries"},
-                {"icon": "fa-globe", "color": "text-emerald", "tag": "Web Search", "text": "Direct web search grounding with source citations when enabled"},
+                {"icon": "fa-receipt", "color": "text-emerald", "tag": "1-Click Slip Ledger", "text": "Scan payment slips or log expenses to your personal ledger with Canvas table and CSV export"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "Study Pack & PDF", "text": "Upload PDF/DOCX files, generate complete 5-part Study Packs, and create read-only share links"},
+                {"icon": "fa-mobile-screen-button", "color": "text-violet", "tag": "Mobile PWA", "text": "Home-screen deep-link shortcuts and Web Share Target support"},
                 {"icon": "fa-shield-halved", "color": "text-amber", "tag": "Security", "text": "Web Cryptography API session handling and per-user data isolation"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "5 Languages", "text": "Consistent localization across TH, EN, ZH, KO, and JA interfaces"}
             ]
         },
         "zh": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} 更新已就绪",
-            "description": "优化了会员方案、PromptPay 付款流程页面与整体深色工作台界面一致性。",
-            "quote": "最新版本已准备就绪。您的全部对话记录与个人记忆均安全保留。",
+            "description": "新增一键账单识别与收支记账本、一键 Study Pack（支持 PDF/DOCX 导入及只读分享链接）与移动端 PWA 快捷入口。",
+            "quote": "日常个人助手功能已就绪，支持账单识别记账、CSV 导出与一键学习资料生成。",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 更新",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "工作台界面", "text": "统一深色极简弹窗风格与多模型任务切换体验"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "文档解析", "text": "使用 pypdf 解析 PDF 文献与学习资料"},
-                {"icon": "fa-globe", "color": "text-emerald", "tag": "实时检索", "text": "按需开启实时网页检索与来源标注"},
+                {"icon": "fa-receipt", "color": "text-emerald", "tag": "一键记账本", "text": "扫描转账凭证或输入收支，自动入账并支持 Canvas 表格与 CSV 导出"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "一键学习包", "text": "支持上传 PDF/DOCX 提取文本，一键生成五合一学习包与分享链接"},
+                {"icon": "fa-mobile-screen-button", "color": "text-violet", "tag": "PWA 快捷方式", "text": "支持桌面直达快捷方式与系统分享目标 (Share Target)"},
                 {"icon": "fa-shield-halved", "color": "text-amber", "tag": "会话安全", "text": "使用 Web Cryptography API 进行会话隔离保护"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "五国语言", "text": "同步支持中文、泰语、英语、韩语与日语界面"}
             ]
         },
         "ko": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} 업데이트 안내",
-            "description": "구독 플랜, PromptPay 결제 화면 및 모달 UI 전반의 일관성과 가독성을 개선했습니다.",
-            "quote": "최신 버전이 준비되었습니다. 대화 기록과 저장된 메모리는 안전하게 유지됩니다.",
+            "description": "원클릭 영수증·이체 내역 가계부, PDF/DOCX 업로드 지원 Study Pack 및 공유 링크, 모바일 PWA 바로가기 기능을 추가했습니다.",
+            "quote": "영수증 스캔 가계부와 CSV 내보내기, 원클릭 학습 팩 기능을 바로 이용하실 수 있습니다.",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 업데이트",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "워크스페이스 UI", "text": "모달, 온보딩 및 결제 화면을 차분한 모노크롬 스타일로 통합"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "문서 분석", "text": "pypdf 기반 PDF 및 학습 자료 구조화 요약"},
-                {"icon": "fa-globe", "color": "text-emerald", "tag": "웹 검색", "text": "필요 시 실시간 웹 검색 및 출처 표기 지원"},
+                {"icon": "fa-receipt", "color": "text-emerald", "tag": "원클릭 가계부", "text": "이체 내역·영수증을 자동 분류하여 저장하고 Canvas 표 및 CSV로 내보내기"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "Study Pack", "text": "PDF/DOCX 문서 추출, 5단 구성 학습 팩 생성 및 읽기 전용 링크 공유"},
+                {"icon": "fa-mobile-screen-button", "color": "text-violet", "tag": "모바일 PWA", "text": "홈 화면 딥링크 바로가기 및 웹 Share Target 지원"},
                 {"icon": "fa-shield-halved", "color": "text-amber", "tag": "세션 보안", "text": "Web Cryptography API 기반 사용자별 데이터 분리"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "5개 국어", "text": "한국어, 태국어, 영어, 중국어, 일본어 인터페이스 지원"}
             ]
         },
         "ja": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} アップデートのお知らせ",
-            "description": "プラン選択、PromptPay 決済画面、および各モーダルの視認性と一貫性を改善しました。",
-            "quote": "最新バージョンをご利用いただけます。会話履歴と保存済みメモリはそのまま保持されます。",
+            "description": "ワンクリック伝票・支出家計簿、PDF/DOCX 対応の Study Pack・共有リンク生成、モバイル PWA ショートカットに対応しました。",
+            "quote": "伝票スキャン家計簿や CSV 出力、ワンクリック学習パックをすぐにご利用いただけます。",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 更新",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "UI改善", "text": "各種ダイアログと課金画面を落ち着いたモノクローム基調に統一"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDF解析", "text": "pypdf による資料・論文の構造化サマリーに対応"},
-                {"icon": "fa-globe", "color": "text-emerald", "tag": "Web検索", "text": "必要に応じたリアルタイム検索と出典表示に対応"},
+                {"icon": "fa-receipt", "color": "text-emerald", "tag": "家計簿ヘルパー", "text": "送金明細やレシートを自動仕訳して保存し、Canvas 表・CSV で書き出し"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "Study Pack", "text": "PDF/DOCX 読み込み、5部構成の学習パック作成、閲覧専用リンク共有"},
+                {"icon": "fa-mobile-screen-button", "color": "text-violet", "tag": "モバイル PWA", "text": "ホーム画面ディープリンクと Web Share Target に対応"},
                 {"icon": "fa-shield-halved", "color": "text-amber", "tag": "セキュリティ", "text": "Web Cryptography API によるセッション分離保護"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "5カ国語", "text": "日本語・タイ語・英語・中国語・韓国語 UI に対応"}
             ]
@@ -542,7 +542,7 @@ async def health_check():
 
 # --- Academic & Study Co-Pilot AI Engine ---
 class StudyRequest(BaseModel):
-    action: str  # "summarize", "exam_prep", "flashcards", "polish_report", "problem_solver"
+    action: str  # "summarize", "exam_prep", "flashcards", "polish_report", "problem_solver", "study_pack"
     content: str
     difficulty: Optional[str] = "intermediate"
     subject: Optional[str] = "ทั่วไป"
@@ -608,6 +608,22 @@ async def generate_study_material(payload: StudyRequest, request: Request):
 - **Step 3: วิธีทำและการคำนวณทีละบรรทัด (Step-by-Step Calculation / Code)**
 - **Step 4: สรุปคำตอบและการตรวจสอบความถูกต้อง (Final Answer & Verification)**
 ระดับความยาก: {diff} | หมวดวิชา: {subject}"""
+    elif action == "study_pack":
+        system_instruction = f"""คุณคือ "คิระ (Kira) 📦 Complete 1-Click Study Pack Architect" ผู้สร้างชุดติวสอบและสรุปเอกสารครบวงจรในคลิกเดียว
+กรุณาแปลงเนื้อหาที่ได้รับ ให้เป็น **1-Click Study Pack ครบ 5 ส่วนในครั้งเดียว**:
+# 📦 1-Click Study Pack: {subject}
+## 1. ⚡ Executive Summary (สรุปใจความสำคัญ 30 วินาที)
+- สรุปแก่นสำคัญ 3-5 ประเด็นหลัก
+## 2. 📚 Core Concepts & Key Definitions (แก่นทฤษฎี นิยาม และสูตรสำคัญ)
+- อธิบายโครงสร้างหลัก ความเชื่อมโยง และข้อยกเว้นที่พบบ่อย
+## 3. 🎯 Mini Quiz & Answer Key (แนวข้อสอบพร้อมเฉลย 3 ข้อ)
+- ข้อ 1-2 ปรนัย (ก-ง) และข้อ 3 อัตนัยวิเคราะห์ พร้อมเฉลยเหตุผลชัดเจน
+## 4. 🗂️ Quick Flashcards (ตารางการ์ดทบทวน 4 คู่)
+| No. | ด้านหน้า: คำถาม / คำสำคัญ | ด้านหลัง: คำตอบ / สาระสำคัญ |
+## 5. 📅 7-Day Review Checklist (แผนทบทวนก่อนสอบ)
+- ลิสต์หัวข้อทบทวนและจุดหลอกที่มักออกสอบ
+ระดับความยาก: {diff} | หมวดวิชา: {subject}
+ตอบในรูปแบบ Markdown ที่เป็นระเบียบ อ่านง่าย และนำไปใช้ติวได้ทันที"""
     else:
         system_instruction = "คุณคือคิระ ผู้ช่วยการศึกษา กรุณาวิเคราะห์และให้คำแนะนำอย่างเชี่ยวชาญ"
 
@@ -685,6 +701,33 @@ async def generate_study_material(payload: StudyRequest, request: Request):
 - **Step 2 (ทฤษฎีและสูตรที่เกี่ยวข้อง):** กำหนดนิยามและสมการหลักที่ต้องใช้ในการคำนวณหรือแก้ปัญหา
 - **Step 3 (วิธีทำทีละขั้น):** ดำเนินการแทนค่าและแปลงรูปสมการตามลำดับขั้นตอนเพื่อป้องกันความผิดพลาด
 - **Step 4 (สรุปคำตอบ):** คำตอบที่ได้สอดคล้องกับทฤษฎีและเงื่อนไขของโจทย์ทุกประการ"""
+        elif action == "study_pack":
+            excerpt = text[:320].strip()
+            res_content = f"""# 📦 1-Click Study Pack: {subject}
+
+## 1. ⚡ Executive Summary (สรุปใจความสำคัญ 30 วินาที)
+- {excerpt[:140]}
+
+## 2. 📚 Core Concepts & Key Definitions (แก่นทฤษฎีและนิยาม)
+{excerpt}
+
+## 3. 🎯 Mini Quiz & Answer Key (แนวข้อสอบพร้อมเฉลย)
+1. **(ปรนัย)** ข้อใดสะท้อนสาระสำคัญของ `{subject}` ได้ตรงที่สุด?
+   - ก) {excerpt[:80]}
+   - ข) ไม่จำเป็นต้องอ้างอิงบริบทหรือเงื่อนไข
+   - **เฉลย:** ก) เพราะตรงกับข้อมูลหลักในเอกสารต้นฉบับ
+2. **(วิเคราะห์)** จงอธิบายแนวทางการประยุกต์ใช้สาระสำคัญจากบทเรียนนี้ในการแก้โจทย์จริง
+
+## 4. 🗂️ Quick Flashcards (การ์ดทบทวน)
+| No. | ด้านหน้า: คำถาม / คำสำคัญ | ด้านหลัง: คำตอบ / สาระสำคัญ |
+| :---: | :--- | :--- |
+| 1 | แก่นหลักของ {subject} | {excerpt[:110]} |
+| 2 | จุดที่ต้องระวังในการสอบ | ตรวจสอบนิยาม หน่วย และข้อยกเว้นให้แม่นยำ |
+
+## 5. 📅 7-Day Review Checklist (แผนทบทวนก่อนสอบ)
+- วันที่ 1–2: อ่าน Executive Summary และทำ Flashcards ให้คล่อง
+- วันที่ 3–5: ฝึกทำ Mini Quiz และลองขยายผลใน Living Mind Map
+- วันที่ 6–7: ทบทวนจุดหลอกและเปิดทบทวนซ้ำผ่าน Interactive Canvas"""
         else: # summarize
             res_content = f"""### ⚡ Level 1: Executive 1-Minute TL;DR (สรุปแก่นใน 1 นาที)
 - {text[:150].strip()}
@@ -742,6 +785,489 @@ async def get_study_history(username: Optional[str] = "student"):
         return {"status": "success", "history": history}
     except Exception as e:
         return {"status": "error", "message": str(e), "history": []}
+
+
+@app.post("/api/study/extract-file")
+async def extract_study_file(request: Request, file: UploadFile = File(...)):
+    """สกัดข้อความจากไฟล์เอกสาร (.pdf, .docx, .txt, .md, .csv) เพื่อนำเข้าสู่ Study Co-Pilot"""
+    client_ip = _get_client_ip(request)
+    if is_rate_limited(client_ip):
+        return JSONResponse({"status": "error", "message": "คำขอบ่อยเกินไป กรุณารอสักครู่ค่ะ"}, status_code=429)
+
+    filename = os.path.basename((file.filename or "document.txt").strip())
+    ext = os.path.splitext(filename)[1].lower()
+    allowed_exts = {".pdf", ".docx", ".txt", ".md", ".csv", ".json", ".log"}
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"ไม่รองรับไฟล์สกุล '{ext or 'unknown'}' ค่ะ (รองรับ .pdf, .docx, .txt, .md, .csv)"
+        )
+
+    raw_bytes = await file.read()
+    if not raw_bytes:
+        raise HTTPException(status_code=400, detail="ไฟล์ที่อัปโหลดไม่มีข้อมูลค่ะ")
+    if len(raw_bytes) > 8 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="ไฟล์มีขนาดใหญ่เกิน 8 MB ค่ะ")
+
+    b64_payload = base64.b64encode(raw_bytes).decode("ascii")
+    extracted = _parse_document(b64_payload, filename)
+    if not extracted or extracted.startswith("[PDF parser"):
+        raise HTTPException(
+            status_code=422,
+            detail="ไม่สามารถอ่านข้อความจากไฟล์นี้ได้ (หากเป็นไฟล์สแกนภาพ กรุณาวางข้อความหรือคัดลอกสไลด์แทนนะคะ)"
+        )
+
+    max_chars = 28000
+    truncated = len(extracted) > max_chars
+    final_text = extracted[:max_chars]
+    return {
+        "status": "success",
+        "filename": filename,
+        "char_count": len(extracted),
+        "truncated": truncated,
+        "text": final_text
+    }
+
+
+# ====================================================================
+# 🧾 Kira Phase 1.2: 1-Click Slip, Receipt & Expense Ledger Engine
+# ====================================================================
+class ReceiptScanRequest(BaseModel):
+    username: Optional[str] = "guest"
+    image_base64: Optional[str] = ""
+    note_text: Optional[str] = ""
+    entry_type: Optional[str] = "auto"  # "auto", "expense", "income"
+    manual_amount: Optional[float] = None
+    manual_merchant: Optional[str] = ""
+    manual_category: Optional[str] = ""
+    tx_date: Optional[str] = ""
+    tx_time: Optional[str] = ""
+    ref_no: Optional[str] = ""
+    save_entry: Optional[bool] = True
+    ui_lang: Optional[str] = "th"
+
+
+_RECEIPT_CATEGORY_RULES = [
+    ("รายรับ", ("รายรับ", "เงินเดือน", "โอนเข้า", "ได้รับเงิน", "คอมมิชชั่น", "คืนเงิน", "ปันผล", "salary", "income", "refund", "deposit", "payout")),
+    ("อาหารและเครื่องดื่ม", ("อาหาร", "ข้าว", "กาแฟ", "ชา", "น้ำ", "เครื่องดื่ม", "ขนม", "คาเฟ่", "cafe", "coffee", "amazon", "starbucks", "kfc", "mcdonald", "7-eleven", "เซเว่น", "grabfood", "lineman", "foodpanda", "robinhood", "meal", "lunch", "dinner", "breakfast", "restaurant")),
+    ("เดินทาง", ("เดินทาง", "รถ", "น้ำมัน", "bts", "mrt", "แท็กซี่", "แกร็บ", "grab", "bolt", "ทางด่วน", "ที่จอดรถ", "เครื่องบิน", "รถไฟ", "ptt", "bangchak", "shell", "taxi", "fuel", "gas", "transport", "flight", "parking")),
+    ("บิลและสาธารณูปโภค", ("ค่าไฟ", "ค่าน้ำ", "ค่าเน็ต", "อินเทอร์เน็ต", "มือถือ", "โทรศัพท์", "ค่าเช่า", "บิล", "ais", "true", "dtac", "mea", "pea", "electric", "water", "internet", "rent", "utility", "bill")),
+    ("สุขภาพ", ("ยา", "โรงพยาบาล", "คลินิก", "หมอ", "ทันตกรรม", "ฟิตเนส", "pharmacy", "hospital", "clinic", "doctor", "medical", "health", "boots", "watsons")),
+    ("ช้อปปิ้ง", ("ช้อปปิ้ง", "ซื้อของ", "เสื้อผ้า", "ของใช้", "shopee", "lazada", "tiktok", "central", "lotus", "bigc", "makro", "ikea", "shopping", "store", "mall")),
+]
+
+
+def _sanitize_csv_cell(val: Any) -> str:
+    s = str(val if val is not None else "")
+    if s and s[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + s
+    return s
+
+
+def _classify_receipt_text(text_blob: str, entry_type_pref: str = "auto") -> tuple:
+    low = (text_blob or "").lower()
+    income_kw = _RECEIPT_CATEGORY_RULES[0][1]
+    inferred_type = "income" if any(k in low for k in income_kw) else "expense"
+    if entry_type_pref in ("expense", "income"):
+        inferred_type = entry_type_pref
+
+    for cat_name, keywords in _RECEIPT_CATEGORY_RULES:
+        if cat_name == "รายรับ" and inferred_type != "income":
+            continue
+        if any(k in low for k in keywords):
+            return inferred_type, cat_name
+
+    if inferred_type == "income":
+        return "income", "รายรับ"
+    return "expense", "โอนเงิน/ทั่วไป"
+
+
+def _heuristic_parse_receipt(note_text: str, entry_type_pref: str = "auto", now_dt: Optional[datetime] = None) -> dict:
+    tz = timezone(timedelta(hours=7))
+    now_dt = now_dt or datetime.now(tz)
+    raw = (note_text or "").strip()
+
+    # Extract transaction amount, prioritizing currency-tagged amounts over long account/ref digits
+    amount = 0.0
+    tagged_matches = re.findall(
+        r"(?:฿|thb|บาท|จำนวน|ยอด(?:โอน|ชำระ|เงิน)?|รวม|total|amount)\s*[:=]?\s*([0-9]{1,7}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)|([0-9]{1,7}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)\s*(?:บาท|thb|฿)",
+        raw,
+        flags=re.IGNORECASE
+    )
+    for g1, g2 in tagged_matches:
+        token = (g1 or g2 or "").replace(",", "").strip()
+        if token:
+            try:
+                val = float(token)
+                if 0 < val < 100_000_000:
+                    amount = val
+                    break
+            except ValueError:
+                pass
+
+    if amount <= 0 and raw:
+        plain_nums = re.findall(r"(?<![0-9\-])([0-9]{1,6}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)(?![0-9])", raw)
+        for p in plain_nums:
+            cleaned = p.replace(",", "")
+            if len(cleaned.split(".")[0]) >= 7 and "." not in cleaned:
+                continue  # Likely phone number or date/ref ID
+            try:
+                val = float(cleaned)
+                if 0 < val <= 10_000_000:
+                    amount = val
+                    break
+            except ValueError:
+                pass
+
+    ref_match = re.search(r"(?:ref|reference|เลขที่อ้างอิง|อ้างอิง)\s*[:#.]?\s*([A-Za-z0-9\-]{4,32})", raw, flags=re.IGNORECASE)
+    ref_no = ref_match.group(1) if ref_match else ""
+
+    date_match = re.search(r"\b(20[2-9][0-9]-[01][0-9]-[0-3][0-9])\b", raw)
+    tx_date = date_match.group(1) if date_match else now_dt.strftime("%Y-%m-%d")
+
+    time_match = re.search(r"\b([0-2]?[0-9]:[0-5][0-9])\b", raw)
+    tx_time = time_match.group(1).zfill(5) if time_match else now_dt.strftime("%H:%M")
+
+    inferred_type, category = _classify_receipt_text(raw, entry_type_pref)
+
+    # Clean merchant/title candidate by removing currency words & amount digits
+    merchant_clean = re.sub(r"(?:฿|thb|บาท|จำนวน|ยอดเงิน|ยอดโอน)", " ", raw, flags=re.IGNORECASE)
+    merchant_clean = re.sub(r"\b[0-9]{1,7}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?\b", " ", merchant_clean)
+    merchant_clean = re.sub(r"\s+", " ", merchant_clean).strip(" -:|,")
+    merchant = merchant_clean[:60] if merchant_clean else ("รายรับจากการโอน" if inferred_type == "income" else "รายการสลิป/ใบเสร็จ")
+
+    return {
+        "entry_type": inferred_type,
+        "amount": round(amount, 2),
+        "merchant": merchant,
+        "category": category,
+        "tx_date": tx_date,
+        "tx_time": tx_time,
+        "ref_no": ref_no,
+        "summary": f"{merchant} ({category}) — {amount:,.2f} บาท"
+    }
+
+
+def _parse_receipt_ai_json(raw_text: str) -> dict:
+    if not raw_text:
+        return {}
+    cleaned = raw_text.strip()
+    fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", cleaned, flags=re.DOTALL | re.IGNORECASE)
+    if fence:
+        cleaned = fence.group(1)
+    else:
+        brace = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
+        if brace:
+            cleaned = brace.group(0)
+    try:
+        obj = json.loads(cleaned)
+        return obj if isinstance(obj, dict) else {}
+    except Exception:
+        return {}
+
+
+def _get_user_expense_summary(username: str) -> dict:
+    tz = timezone(timedelta(hours=7))
+    now_dt = datetime.now(tz)
+    today_str = now_dt.strftime("%Y-%m-%d")
+    month_prefix = now_dt.strftime("%Y-%m")
+
+    rows = execute_query(
+        "SELECT entry_type, amount, category, tx_date, created_at FROM user_expense_logs WHERE username = ?",
+        (username,),
+        fetch="all"
+    ) or []
+
+    today_expense = 0.0
+    month_expense = 0.0
+    month_income = 0.0
+    cat_totals: Dict[str, float] = {}
+
+    for r in rows:
+        e_type = (r[0] or "expense").lower()
+        try:
+            amt = float(r[1] or 0.0)
+        except (TypeError, ValueError):
+            amt = 0.0
+        cat = (r[2] or "โอนเงิน/ทั่วไป").strip()
+        d_str = (r[3] or (r[4][:10] if r[4] else "")).strip()
+
+        if e_type == "expense":
+            if d_str == today_str:
+                today_expense += amt
+            if d_str.startswith(month_prefix):
+                month_expense += amt
+                cat_totals[cat] = cat_totals.get(cat, 0.0) + amt
+        elif e_type == "income":
+            if d_str.startswith(month_prefix):
+                month_income += amt
+
+    breakdown = [
+        {"category": k, "total": round(v, 2)}
+        for k, v in sorted(cat_totals.items(), key=lambda x: x[1], reverse=True)[:6]
+    ]
+    return {
+        "today_expense": round(today_expense, 2),
+        "month_expense": round(month_expense, 2),
+        "month_income": round(month_income, 2),
+        "month_net": round(month_income - month_expense, 2),
+        "entry_count": len(rows),
+        "month_label": month_prefix,
+        "category_breakdown": breakdown,
+    }
+
+
+@app.post("/api/receipts/scan")
+async def scan_and_save_receipt(payload: ReceiptScanRequest, request: Request):
+    """สแกนสลิป/ใบเสร็จหรือข้อความค่าใช้จ่ายด้วย AI Vision พร้อมลงบัญชีรายรับ-รายจ่ายส่วนตัวอัตโนมัติ"""
+    client_ip = _get_client_ip(request)
+    if is_rate_limited(client_ip):
+        return JSONResponse({"status": "error", "message": "คำขอบ่อยเกินไป กรุณารอสักครู่ค่ะ"}, status_code=429)
+
+    clean_user = (payload.username or "guest").strip() or "guest"
+    img_raw = (payload.image_base64 or "").strip()
+    note_text = (payload.note_text or "").strip()[:4000]
+    has_manual = payload.manual_amount is not None and float(payload.manual_amount) > 0
+
+    if not img_raw and not note_text and not has_manual:
+        raise HTTPException(status_code=400, detail="กรุณาแนบภาพสลิป/ใบเสร็จ หรือพิมพ์รายการค่าใช้จ่ายก่อนนะคะ")
+
+    if img_raw:
+        b64_part = img_raw.split(",", 1)[1] if "," in img_raw else img_raw
+        if len(b64_part) > 10_500_000:
+            raise HTTPException(status_code=413, detail="ภาพสลิปมีขนาดใหญ่เกิน 8 MB ค่ะ")
+        if not img_raw.startswith("data:"):
+            img_raw = f"data:image/jpeg;base64,{img_raw}"
+
+    tz = timezone(timedelta(hours=7))
+    now_dt = datetime.now(tz)
+    now_str = now_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    parsed = _heuristic_parse_receipt(note_text, payload.entry_type or "auto", now_dt)
+    ai_used = False
+
+    has_any_key = bool(globals().get("OPENROUTER_API_KEYS") or globals().get("GROQ_API_KEYS") or globals().get("GEMINI_API_KEYS"))
+    should_call_ai = has_any_key and (bool(img_raw) or (bool(note_text) and parsed["amount"] <= 0 and not has_manual))
+
+    if should_call_ai:
+        prompt_text = (
+            "คุณคือผู้ช่วยอ่านสลิปและใบเสร็จสำหรับทำบัญชีรายรับ-รายจ่ายส่วนบุคคล\n"
+            "วิเคราะห์ข้อมูลที่แนบมา แล้วตอบกลับเป็น JSON Object เพียงก้อนเดียว (ห้ามมีข้อความอื่นนอก JSON):\n"
+            "{\n"
+            '  "entry_type": "expense" หรือ "income",\n'
+            '  "amount": ตัวเลขจำนวนเงินทศนิยม เช่น 145.00,\n'
+            '  "merchant": "ชื่อร้านค้า หรือผู้รับโอน/ผู้โอน",\n'
+            '  "category": "อาหารและเครื่องดื่ม | เดินทาง | บิลและสาธารณูปโภค | ช้อปปิ้ง | สุขภาพ | รายรับ | โอนเงิน/ทั่วไป",\n'
+            '  "tx_date": "YYYY-MM-DD (ถ้าไม่พบให้ใช้ ' + now_dt.strftime("%Y-%m-%d") + ')",\n'
+            '  "tx_time": "HH:MM",\n'
+            '  "ref_no": "เลขที่อ้างอิงถ้ามี หรือว่างไว้",\n'
+            '  "summary": "สรุปสั้น 1 บรรทัด"\n'
+            "}\n"
+            + (f"\nบันทึกเพิ่มเติมจากผู้ใช้: {note_text}" if note_text else "")
+        )
+        try:
+            if img_raw:
+                msg_content: Any = [
+                    {"type": "text", "text": prompt_text},
+                    {"type": "image_url", "image_url": {"url": img_raw}}
+                ]
+                active_model = globals().get("PREFERRED_VISION") or globals().get("PREFERRED_PRO") or "qwen/qwen2.5-vl-72b-instruct"
+            else:
+                msg_content = prompt_text
+                active_model = globals().get("PREFERRED_FLASH") or globals().get("PREFERRED_PRO") or "openai/gpt-oss-120b"
+
+            ok_ai, chunks, _ = await asyncio.wait_for(
+                _try_all_keys_and_models([HumanMessage(content=msg_content)], active_model, ui_lang=(payload.ui_lang or "th").lower()),
+                timeout=16.0
+            )
+            if ok_ai and chunks:
+                raw_ai = "".join([getattr(c, "content", c) for c in chunks])
+                ai_json = _parse_receipt_ai_json(raw_ai)
+                if ai_json:
+                    ai_used = True
+                    try:
+                        ai_amt = float(str(ai_json.get("amount", 0)).replace(",", ""))
+                        if ai_amt > 0:
+                            parsed["amount"] = round(ai_amt, 2)
+                    except (TypeError, ValueError):
+                        pass
+                    if ai_json.get("entry_type") in ("expense", "income") and payload.entry_type not in ("expense", "income"):
+                        parsed["entry_type"] = ai_json["entry_type"]
+                    if ai_json.get("merchant"):
+                        parsed["merchant"] = str(ai_json["merchant"]).strip()[:80]
+                    if ai_json.get("category"):
+                        parsed["category"] = str(ai_json["category"]).strip()[:40]
+                    if ai_json.get("tx_date") and re.match(r"^\d{4}-\d{2}-\d{2}$", str(ai_json["tx_date"]).strip()):
+                        parsed["tx_date"] = str(ai_json["tx_date"]).strip()
+                    if ai_json.get("tx_time") and re.match(r"^\d{1,2}:\d{2}$", str(ai_json["tx_time"]).strip()):
+                        parsed["tx_time"] = str(ai_json["tx_time"]).strip().zfill(5)
+                    if ai_json.get("ref_no"):
+                        parsed["ref_no"] = str(ai_json["ref_no"]).strip()[:40]
+                    if ai_json.get("summary"):
+                        parsed["summary"] = str(ai_json["summary"]).strip()[:140]
+        except Exception as _e_rcpt:
+            print(f"Receipt AI fallback notice: {_e_rcpt}")
+
+    # Apply explicit manual overrides if provided by user
+    if payload.entry_type in ("expense", "income"):
+        parsed["entry_type"] = payload.entry_type
+    if payload.manual_amount is not None and float(payload.manual_amount) >= 0:
+        parsed["amount"] = round(float(payload.manual_amount), 2)
+    if (payload.manual_merchant or "").strip():
+        parsed["merchant"] = payload.manual_merchant.strip()[:80]
+    if (payload.manual_category or "").strip():
+        parsed["category"] = payload.manual_category.strip()[:40]
+    if (payload.tx_date or "").strip():
+        parsed["tx_date"] = payload.tx_date.strip()[:16]
+    if (payload.tx_time or "").strip():
+        parsed["tx_time"] = payload.tx_time.strip()[:10]
+    if (payload.ref_no or "").strip():
+        parsed["ref_no"] = payload.ref_no.strip()[:40]
+
+    if parsed["entry_type"] == "income" and parsed["category"] == "โอนเงิน/ทั่วไป":
+        parsed["category"] = "รายรับ"
+
+    parsed["summary"] = f"{parsed['merchant']} ({parsed['category']}) — {parsed['amount']:,.2f} บาท"
+
+    saved_id = None
+    if payload.save_entry is not False:
+        execute_query(
+            """INSERT INTO user_expense_logs
+               (username, entry_type, amount, merchant, category, tx_date, tx_time, ref_no, raw_note, ai_summary, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                clean_user,
+                parsed["entry_type"],
+                float(parsed["amount"]),
+                parsed["merchant"],
+                parsed["category"],
+                parsed["tx_date"],
+                parsed["tx_time"],
+                parsed["ref_no"],
+                note_text[:500],
+                parsed["summary"],
+                now_str,
+            )
+        )
+        row_id = execute_query(
+            "SELECT id FROM user_expense_logs WHERE username = ? ORDER BY id DESC LIMIT 1",
+            (clean_user,),
+            fetch="one"
+        )
+        saved_id = row_id[0] if row_id else None
+
+    summary = _get_user_expense_summary(clean_user)
+    return {
+        "status": "success",
+        "saved_id": saved_id,
+        "ai_used": ai_used,
+        "parsed": parsed,
+        "summary": summary
+    }
+
+
+@app.get("/api/receipts/history")
+async def get_receipts_history(username: Optional[str] = "guest", limit: int = 50):
+    """ดึงประวัติรายการสลิปและสมุดบัญชีรายรับ-รายจ่ายส่วนตัว"""
+    clean_user = (username or "guest").strip() or "guest"
+    safe_limit = max(1, min(int(limit or 50), 200))
+    rows = execute_query(
+        """SELECT id, username, entry_type, amount, merchant, category, tx_date, tx_time, ref_no, raw_note, ai_summary, created_at
+           FROM user_expense_logs
+           WHERE username = ?
+           ORDER BY tx_date DESC, id DESC
+           LIMIT ?""",
+        (clean_user, safe_limit),
+        fetch="all"
+    ) or []
+
+    entries = [
+        {
+            "id": r[0],
+            "username": r[1],
+            "entry_type": r[2] or "expense",
+            "amount": round(float(r[3] or 0.0), 2),
+            "merchant": r[4] or "",
+            "category": r[5] or "โอนเงิน/ทั่วไป",
+            "tx_date": r[6] or "",
+            "tx_time": r[7] or "",
+            "ref_no": r[8] or "",
+            "raw_note": r[9] or "",
+            "ai_summary": r[10] or "",
+            "created_at": r[11] or "",
+        }
+        for r in rows
+    ]
+    return {
+        "status": "success",
+        "entries": entries,
+        "summary": _get_user_expense_summary(clean_user)
+    }
+
+
+@app.delete("/api/receipts/{entry_id}")
+async def delete_receipt_entry(entry_id: int, username: Optional[str] = "guest"):
+    """ลบรายการบัญชีรายรับ-รายจ่ายของผู้ใช้ (ตรวจสอบความเป็นเจ้าของ)"""
+    clean_user = (username or "guest").strip() or "guest"
+    existing = execute_query(
+        "SELECT id FROM user_expense_logs WHERE id = ? AND username = ?",
+        (entry_id, clean_user),
+        fetch="one"
+    )
+    if not existing:
+        raise HTTPException(status_code=404, detail="ไม่พบรายการนี้หรือไม่มีสิทธิ์ลบค่ะ")
+
+    execute_query(
+        "DELETE FROM user_expense_logs WHERE id = ? AND username = ?",
+        (entry_id, clean_user)
+    )
+    return {
+        "status": "success",
+        "deleted_id": entry_id,
+        "summary": _get_user_expense_summary(clean_user)
+    }
+
+
+@app.get("/api/receipts/export-csv")
+async def export_receipts_csv(username: Optional[str] = "guest"):
+    """ส่งออกสมุดบัญชีรายรับ-รายจ่ายเป็นไฟล์ CSV (UTF-8 BOM รองรับ Excel ภาษาไทย 100%)"""
+    import csv
+
+    clean_user = (username or "guest").strip() or "guest"
+    rows = execute_query(
+        """SELECT id, tx_date, tx_time, entry_type, category, merchant, amount, ref_no, raw_note, created_at
+           FROM user_expense_logs
+           WHERE username = ?
+           ORDER BY tx_date DESC, id DESC""",
+        (clean_user,),
+        fetch="all"
+    ) or []
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["ID", "Date", "Time", "Type", "Category", "Merchant", "Amount (THB)", "Reference No", "Note", "Logged At"])
+    for r in rows:
+        writer.writerow([
+            r[0],
+            _sanitize_csv_cell(r[1]),
+            _sanitize_csv_cell(r[2]),
+            _sanitize_csv_cell(r[3]),
+            _sanitize_csv_cell(r[4]),
+            _sanitize_csv_cell(r[5]),
+            f"{float(r[6] or 0.0):.2f}",
+            _sanitize_csv_cell(r[7]),
+            _sanitize_csv_cell(r[8]),
+            _sanitize_csv_cell(r[9]),
+        ])
+
+    safe_slug = re.sub(r"[^A-Za-z0-9_\-]", "_", clean_user)[:32] or "guest"
+    csv_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")
+    return Response(
+        content=csv_bytes,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="kira_expenses_{safe_slug}.csv"'}
+    )
+
 
 # --- Interactive Visual Mind Map AI Structuring API ---
 class MindMapRequest(BaseModel):
@@ -1842,6 +2368,21 @@ def init_db():
                       updated_at TEXT)''')
         execute_query('''CREATE INDEX IF NOT EXISTS idx_tasks_username ON tasks (username)''')
         execute_query('''CREATE INDEX IF NOT EXISTS idx_tasks_task_id ON tasks (task_id)''')
+
+        execute_query('''CREATE TABLE IF NOT EXISTS user_expense_logs
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      username TEXT,
+                      entry_type TEXT DEFAULT 'expense',
+                      amount REAL DEFAULT 0,
+                      merchant TEXT,
+                      category TEXT,
+                      tx_date TEXT,
+                      tx_time TEXT,
+                      ref_no TEXT,
+                      raw_note TEXT,
+                      ai_summary TEXT,
+                      created_at TEXT)''')
+        execute_query('''CREATE INDEX IF NOT EXISTS idx_expense_username ON user_expense_logs (username, created_at)''')
         
         # Synchronize default prompts to current architecture (Auto-Upgrade legacy, Zero-Silence & Strict Kira Identity v2)
         check_p1 = execute_query("SELECT value FROM system_settings WHERE key_name='prompt_1.0'", fetch='one')

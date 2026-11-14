@@ -1,7 +1,7 @@
 {
   "name": "Kira AI - Public & Executive AI Assistant",
   "short_name": "Kira AI",
-  "description": "ระบบปัญญาประดิษฐ์อัจฉริยะภาษาไทย รองรับสภาบอร์ดรูมผู้บริหาร โหมดทั่วไป และโหมดวัยเก๋าอุ่นใจสั่งด้วยเสียง 100%",
+  "description": "ผู้ช่วยและตัวแทนส่วนตัวอัจฉริยะของคนไทย — จดรายรับรายจ่าย สแกนสลิป ติวสอบ สรุปเอกสาร และประชุมผู้บริหารครบในแอปเดียว",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -36,20 +36,44 @@
   "categories": ["productivity", "utilities", "business", "lifestyle"],
   "shortcuts": [
     {
-      "name": "คลังนิรภัยออฟไลน์ (Offline Vault)",
-      "short_name": "Vault",
-      "description": "เข้าถึงเอกสารและบันทึกคำสั่งออฟไลน์",
-      "url": "/?open=vault",
+      "name": "สแกนสลิป & จดรายจ่าย (1-Click Receipt)",
+      "short_name": "จดรายจ่าย",
+      "description": "อัปโหลดสลิปหรือใบเสร็จให้คิระสรุปยอดและลงบัญชีทันที",
+      "url": "/?open=receipt",
       "icons": [{ "src": "/static/images/kira_logo.png?v=6", "sizes": "192x192" }]
     },
     {
-      "name": "สภาผู้บริหาร (Boardroom)",
-      "short_name": "Boardroom",
-      "description": "เปิดประชุมและจำลองดีเบต 4 ผู้บริหาร",
-      "url": "/?open=boardroom",
+      "name": "ห้องติวสอบ & Study Pack",
+      "short_name": "Study Hub",
+      "description": "สรุปชีท PDF/สไลด์ เก็งข้อสอบ และทำ Flashcards ในคลิกเดียว",
+      "url": "/?open=study",
+      "icons": [{ "src": "/static/images/kira_logo.png?v=6", "sizes": "192x192" }]
+    },
+    {
+      "name": "คิวงานและแจ้งเตือน (Task Queue)",
+      "short_name": "Tasks",
+      "description": "จัดการตารางงานและคำสั่งส่วนตัว",
+      "url": "/?open=tasks",
+      "icons": [{ "src": "/static/images/kira_logo.png?v=6", "sizes": "192x192" }]
+    },
+    {
+      "name": "คลังนิรภัยเอกสาร (Knowledge Vault)",
+      "short_name": "Vault",
+      "description": "เข้าถึงเอกสารและบันทึกส่วนตัว",
+      "url": "/?open=vault",
       "icons": [{ "src": "/static/images/kira_logo.png?v=6", "sizes": "192x192" }]
     }
   ],
+  "share_target": {
+    "action": "/?share_target=1",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
   "lang": "th",
   "dir": "ltr"
 }

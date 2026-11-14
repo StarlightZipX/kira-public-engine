@@ -9450,10 +9450,12 @@ function initKiraUpdateController() {
         });
     }
 
-    // Listen for Service Worker Controller Change
+    // Listen for Service Worker Controller Change (skip first-time SW claim reload)
     let refreshing = false;
+    const hadControllerAtBoot = Boolean('serviceWorker' in navigator && navigator.serviceWorker.controller);
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!hadControllerAtBoot) return;
             if (!refreshing) {
                 refreshing = true;
                 sessionStorage.setItem('kira_just_updated', '1');
@@ -9603,6 +9605,9 @@ function initPWAController() {
         });
     }
 
+    // Process PWA Deep-Link (?open=...) & Web Share Target before standalone early-return
+    handlePWADeepLinksAndShareTarget();
+
     // 2. Check if already installed in standalone mode
     const isStandalone = (window.matchMedia && typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches) || (typeof navigator !== 'undefined' && navigator && navigator.standalone === true);
     if (isStandalone) {
@@ -9718,6 +9723,90 @@ function initPWAController() {
         }
     });
 }
+
+function handlePWADeepLinksAndShareTarget() {
+    if (window.__kiraDeepLinkHandled) return;
+    let params;
+    try {
+        params = new URLSearchParams(window.location.search || '');
+    } catch (e) {
+        return;
+    }
+
+    const openTarget = (params.get('open') || '').trim().toLowerCase();
+    const isShareTarget = params.get('share_target') === '1' || params.get('share_target') === 'true';
+    const sharedTitle = (params.get('title') || '').trim();
+    const sharedText = (params.get('text') || '').trim();
+    const sharedUrl = (params.get('url') || '').trim();
+    const hasSharedPayload = isShareTarget || Boolean(sharedText || sharedUrl);
+
+    if (!openTarget && !hasSharedPayload) return;
+    window.__kiraDeepLinkHandled = true;
+
+    if (openTarget) {
+        setTimeout(() => {
+            if (openTarget === 'receipt') {
+                if (typeof window.openReceiptHelperModal === 'function') {
+                    window.openReceiptHelperModal();
+                } else {
+                    const chip = document.getElementById('btn-open-receipt-helper-chip');
+                    if (chip) chip.click();
+                }
+            } else if (openTarget === 'study') {
+                const targetTab = (params.get('tab') || 'study_pack').trim();
+                if (typeof window.openStudyHub === 'function') {
+                    window.openStudyHub(targetTab);
+                } else {
+                    const chip = document.getElementById('btn-open-study-hub-chip');
+                    if (chip) chip.click();
+                }
+            } else if (openTarget === 'tasks') {
+                const btnTasks = document.getElementById('btn-task-matrix-toggle');
+                if (btnTasks) btnTasks.click();
+            } else if (openTarget === 'vault') {
+                if (window.KiraRAGVault && typeof window.KiraRAGVault.open === 'function') {
+                    window.KiraRAGVault.open();
+                } else if (typeof openOfflineVaultModal === 'function') {
+                    openOfflineVaultModal('catalog');
+                }
+            } else if (openTarget === 'boardroom') {
+                const btnBoardroom = document.getElementById('btn-boardroom-toggle');
+                if (btnBoardroom) btnBoardroom.click();
+            }
+        }, 180);
+    }
+
+    if (hasSharedPayload) {
+        const parts = [];
+        if (sharedTitle) parts.push(sharedTitle);
+        if (sharedText && sharedText !== sharedTitle) parts.push(sharedText);
+        if (sharedUrl && !parts.some(p => p.includes(sharedUrl))) parts.push(sharedUrl);
+        const combinedShare = parts.join('\n').trim();
+        if (combinedShare) {
+            setTimeout(() => {
+                const inputEl = document.getElementById('user-input');
+                if (inputEl) {
+                    inputEl.value = combinedShare;
+                    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                    inputEl.focus();
+                }
+                if (typeof showToast === 'function') {
+                    const lang = localStorage.getItem('kira_ui_lang') || 'th';
+                    const dict = (typeof KIRA_I18N !== 'undefined' && KIRA_I18N[lang]) ? KIRA_I18N[lang] : {};
+                    showToast(dict.pwa_share_received || 'รับข้อมูลที่แชร์เข้าสู่คิระเรียบร้อยแล้วค่ะ', 'info');
+                }
+            }, 220);
+        }
+    }
+
+    try {
+        if (window.history && typeof window.history.replaceState === 'function') {
+            window.history.replaceState({}, document.title, window.location.pathname + (window.location.hash || ''));
+        }
+    } catch (e) { /* no-op */ }
+}
+
+window.handlePWADeepLinksAndShareTarget = handlePWADeepLinksAndShareTarget;
 window.initPWAController = initPWAController;
 
 // ====================================================================
@@ -14590,7 +14679,40 @@ const KIRA_I18N = {
         memory_hub_settings_title: "ศูนย์จัดการความจำ & Brain Studio (Memory Hub)",
         memory_hub_settings_desc: "จัดการข้อเท็จจริง ค้นหา กรองหมวดหมู่ แก้ไข และลบความจำส่วนบุคคลได้อย่างอิสระ",
         memory_hub_settings_btn: "จัดการความจำ",
-        bank_account_masked_hint: "แสดงเลขบัญชีแบบย่อเพื่อความปลอดภัย สามารถสแกน QR หรือคัดลอกรหัส PromptPay ด้านบนได้เลยค่ะ"
+        bank_account_masked_hint: "แสดงเลขบัญชีแบบย่อเพื่อความปลอดภัย สามารถสแกน QR หรือคัดลอกรหัส PromptPay ด้านบนได้เลยค่ะ",
+        tools_receipt_title: "ผู้ช่วยจดรายจ่าย & สแกนสลิป",
+        tools_receipt_desc: "อ่านสลิป ใบเสร็จ ลงบัญชีส่วนตัว และส่งออก CSV",
+        chip_receipt_helper: "สแกนสลิป / จดรายจ่าย",
+        chip_receipt_tooltip: "สแกนสลิป ใบเสร็จ และจดบันทึกรายรับ-รายจ่ายอัตโนมัติ",
+        study_tab_pack: "ชุดติวครบจบใน 1 คลิก",
+        study_btn_upload_file: "แนบ PDF / DOCX",
+        study_upload_tooltip: "อัปโหลดไฟล์ PDF, DOCX หรือ TXT เพื่อดึงข้อความมาสร้าง Study Pack",
+        study_btn_share_link: "แชร์ลิงก์สรุป",
+        study_share_tooltip: "สร้างลิงก์สาธารณะแบบอ่านอย่างเดียวเพื่อแชร์ชุดติวนี้",
+        receipt_modal_title: "ผู้ช่วยสแกนสลิป & สมุดบัญชีส่วนตัว",
+        receipt_modal_subtitle: "โยนสลิปโอนเงิน ใบเสร็จ หรือพิมพ์รายการสั้นๆ ให้คิระลงบัญชีรายรับ-รายจ่ายและส่งออก CSV ได้ทันที",
+        receipt_stat_today: "รายจ่ายวันนี้",
+        receipt_stat_month_exp: "รายจ่ายเดือนนี้",
+        receipt_stat_month_net: "คงเหลือสุทธิเดือนนี้",
+        receipt_dropzone_title: "แตะเพื่อเลือกภาพสลิป / ใบเสร็จ หรือวางข้อความด้านล่าง",
+        receipt_dropzone_hint: "รองรับสลิป PromptPay / ธนาคาร / ใบเสร็จร้านค้า (JPG, PNG, WEBP สูงสุด 8 MB)",
+        receipt_btn_clear_img: "ล้างภาพ",
+        receipt_type_label: "ประเภท",
+        receipt_type_auto: "วิเคราะห์อัตโนมัติ",
+        receipt_type_expense: "รายจ่าย",
+        receipt_type_income: "รายรับ",
+        receipt_note_label: "ข้อความรายการ / บันทึกเพิ่มเติม",
+        receipt_note_placeholder: "เช่น กาแฟ Cafe Amazon 85 บาท, ค่ารถไฟฟ้า 47 บาท หรือวางข้อความ SMS ธนาคาร...",
+        receipt_amount_label: "ยอดเงิน (บาท)",
+        receipt_merchant_label: "ร้านค้า / ผู้รับ-ผู้โอน",
+        receipt_merchant_placeholder: "ระบุชื่อร้านหรือเว้นว่างให้คิระอ่านอัตโนมัติ",
+        receipt_cat_label: "หมวดหมู่",
+        receipt_btn_scan: "อ่านสลิป & บันทึกลงบัญชี",
+        receipt_ledger_title: "สมุดบัญชีรายการล่าสุด",
+        receipt_btn_canvas: "ตาราง Canvas",
+        receipt_btn_csv: "ส่งออก CSV",
+        receipt_empty_state: "ยังไม่มีรายการบัญชี ลองอัปโหลดสลิปหรือจดรายการแรกด้านซ้ายได้เลยค่ะ",
+        pwa_share_received: "รับข้อมูลที่แชร์เข้าสู่คิระเรียบร้อยแล้วค่ะ"
     },
 
     en: {
@@ -15097,7 +15219,40 @@ const KIRA_I18N = {
         memory_hub_settings_title: "Memory Hub & Brain Studio",
         memory_hub_settings_desc: "Manage, search, filter, edit, and delete personal memories freely",
         memory_hub_settings_btn: "Manage Memory",
-        bank_account_masked_hint: "Account number masked for privacy; scan QR or copy PromptPay ID above."
+        bank_account_masked_hint: "Account number masked for privacy; scan QR or copy PromptPay ID above.",
+        tools_receipt_title: "1-Click Slip & Expense Helper",
+        tools_receipt_desc: "Scan slips or receipts, log personal ledger, and export CSV",
+        chip_receipt_helper: "Scan Slip / Expense",
+        chip_receipt_tooltip: "Scan payment slips, receipts, and auto-log income or expenses",
+        study_tab_pack: "1-Click Study Pack",
+        study_btn_upload_file: "Upload PDF / DOCX",
+        study_upload_tooltip: "Upload PDF, DOCX, or TXT files to extract text for your Study Pack",
+        study_btn_share_link: "Share Study Link",
+        study_share_tooltip: "Create a read-only public snapshot link to share this Study Pack",
+        receipt_modal_title: "1-Click Slip Scanner & Personal Ledger",
+        receipt_modal_subtitle: "Drop a transfer slip, receipt photo, or short note to log income/expenses and export CSV",
+        receipt_stat_today: "Today's Expense",
+        receipt_stat_month_exp: "Monthly Expense",
+        receipt_stat_month_net: "Monthly Net",
+        receipt_dropzone_title: "Tap to select a slip / receipt image or enter note below",
+        receipt_dropzone_hint: "Supports bank slips and store receipts (JPG, PNG, WEBP up to 8 MB)",
+        receipt_btn_clear_img: "Clear Image",
+        receipt_type_label: "Type",
+        receipt_type_auto: "Auto Detect",
+        receipt_type_expense: "Expense",
+        receipt_type_income: "Income",
+        receipt_note_label: "Item Note / Bank SMS Text",
+        receipt_note_placeholder: "e.g., Cafe Amazon coffee 85 THB, BTS train 47 THB, or paste bank SMS...",
+        receipt_amount_label: "Amount (THB)",
+        receipt_merchant_label: "Merchant / Payee",
+        receipt_merchant_placeholder: "Optional: override detected merchant name",
+        receipt_cat_label: "Category",
+        receipt_btn_scan: "Scan Slip & Save Entry",
+        receipt_ledger_title: "Recent Personal Ledger",
+        receipt_btn_canvas: "Open Canvas Table",
+        receipt_btn_csv: "Export CSV",
+        receipt_empty_state: "No ledger entries yet. Upload a slip or log your first item on the left.",
+        pwa_share_received: "Shared content loaded into Kira input box."
     },
 
     zh: {
@@ -15603,7 +15758,40 @@ const KIRA_I18N = {
         memory_hub_settings_title: "记忆中心与大脑工作室",
         memory_hub_settings_desc: "自由查看、筛选、编辑或删除个人事实记忆",
         memory_hub_settings_btn: "管理记忆",
-        bank_account_masked_hint: "为保障隐私已隐藏部分账号，可扫描上方二维码或复制 PromptPay 号码。"
+        bank_account_masked_hint: "为保障隐私已隐藏部分账号，可扫描上方二维码或复制 PromptPay 号码。",
+        tools_receipt_title: "一键记账与账单扫描",
+        tools_receipt_desc: "识别付款凭证与小票，自动记录收支并导出 CSV",
+        chip_receipt_helper: "扫描账单 / 记账",
+        chip_receipt_tooltip: "扫描付款凭证与小票并自动登记个人收支",
+        study_tab_pack: "一键全套学习包",
+        study_btn_upload_file: "导入 PDF / DOCX",
+        study_upload_tooltip: "上传 PDF、DOCX 或文本文件自动提取内容生成学习包",
+        study_btn_share_link: "分享只读链接",
+        study_share_tooltip: "创建只读公开快照链接用于分享本学习包",
+        receipt_modal_title: "一键账单识别与个人收支本",
+        receipt_modal_subtitle: "上传转账凭证、消费小票或输入简短备注，即可自动入账并导出 CSV",
+        receipt_stat_today: "今日支出",
+        receipt_stat_month_exp: "本月支出",
+        receipt_stat_month_net: "本月净结余",
+        receipt_dropzone_title: "点击选择账单图片，或在下方输入记账文本",
+        receipt_dropzone_hint: "支持转账凭证与商户小票（JPG、PNG、WEBP，最大 8 MB）",
+        receipt_btn_clear_img: "清除图片",
+        receipt_type_label: "类型",
+        receipt_type_auto: "自动识别",
+        receipt_type_expense: "支出",
+        receipt_type_income: "收入",
+        receipt_note_label: "账单描述 / 银行短信内容",
+        receipt_note_placeholder: "例如：咖啡 85 泰铢、地铁 47 泰铢，或粘贴银行交易通知...",
+        receipt_amount_label: "金额 (泰铢)",
+        receipt_merchant_label: "商户 / 收付款方",
+        receipt_merchant_placeholder: "选填：手动指定商户名称，留空则自动识别",
+        receipt_cat_label: "分类",
+        receipt_btn_scan: "识别并保存到账本",
+        receipt_ledger_title: "最近收支记录",
+        receipt_btn_canvas: "在 Canvas 打开表格",
+        receipt_btn_csv: "导出 CSV",
+        receipt_empty_state: "暂无记录，请在左侧上传账单或输入第一笔收支。",
+        pwa_share_received: "已将系统分享的内容导入 Kira 输入框。"
     },
 
     ko: {
@@ -16110,7 +16298,40 @@ const KIRA_I18N = {
         memory_hub_settings_title: "메모리 허브 & 브레인 스튜디오",
         memory_hub_settings_desc: "개인 기억을 자유롭게 검색, 분류, 편집 및 삭제하세요",
         memory_hub_settings_btn: "메모리 관리",
-        bank_account_masked_hint: "개인정보 보호를 위해 계좌 일부가 가려져 있습니다. 상단 QR 스캔 또는 PromptPay 번호를 복사해 주세요."
+        bank_account_masked_hint: "개인정보 보호를 위해 계좌 일부가 가려져 있습니다. 상단 QR 스캔 또는 PromptPay 번호를 복사해 주세요.",
+        tools_receipt_title: "원클릭 영수증 & 가계부",
+        tools_receipt_desc: "이체 내역·영수증 자동 분류 저장 및 CSV 내보내기",
+        chip_receipt_helper: "영수증 스캔 / 가계부",
+        chip_receipt_tooltip: "결제 영수증과 이체 내역을 스캔해 수입·지출을 자동 기록합니다",
+        study_tab_pack: "원클릭 학습 팩",
+        study_btn_upload_file: "PDF / DOCX 첨부",
+        study_upload_tooltip: "PDF, DOCX 또는 텍스트 파일을 업로드해 Study Pack 본문으로 불러옵니다",
+        study_btn_share_link: "공유 링크 만들기",
+        study_share_tooltip: "이 Study Pack을 공유할 수 있는 읽기 전용 공개 링크를 생성합니다",
+        receipt_modal_title: "원클릭 영수증 스캐너 & 개인 가계부",
+        receipt_modal_subtitle: "이체 내역서, 영수증 이미지 또는 메모를 입력하면 자동으로 가계부에 기록하고 CSV로 내보냅니다",
+        receipt_stat_today: "오늘 지출",
+        receipt_stat_month_exp: "이번 달 지출",
+        receipt_stat_month_net: "이번 달 순잔액",
+        receipt_dropzone_title: "탭하여 영수증/이체 이미지를 선택하거나 아래에 내용을 입력하세요",
+        receipt_dropzone_hint: "은행 이체 내역서 및 매장 영수증 지원 (JPG, PNG, WEBP 최대 8 MB)",
+        receipt_btn_clear_img: "이미지 지우기",
+        receipt_type_label: "유형",
+        receipt_type_auto: "자동 판별",
+        receipt_type_expense: "지출",
+        receipt_type_income: "수입",
+        receipt_note_label: "내역 메모 / 은행 문자",
+        receipt_note_placeholder: "예: 카페 아메리카노 85바트, 지하철 47바트 또는 은행 알림 문자 붙여넣기...",
+        receipt_amount_label: "금액 (바트)",
+        receipt_merchant_label: "가맹점 / 거래처",
+        receipt_merchant_placeholder: "선택 사항: 거래처명을 직접 입력하거나 비워두면 자동 인식합니다",
+        receipt_cat_label: "카테고리",
+        receipt_btn_scan: "스캔 및 가계부 저장",
+        receipt_ledger_title: "최근 개인 가계부 내역",
+        receipt_btn_canvas: "Canvas 표로 보기",
+        receipt_btn_csv: "CSV 내보내기",
+        receipt_empty_state: "아직 내역이 없습니다. 왼쪽에서 영수증을 업로드하거나 첫 내역을 기록해 보세요.",
+        pwa_share_received: "공유된 내용을 Kira 입력창에 불러왔습니다."
     },
 
     ja: {
@@ -16617,7 +16838,40 @@ const KIRA_I18N = {
         memory_hub_settings_title: "メモリハブ & ブレインスタジオ",
         memory_hub_settings_desc: "個人メモリを自由に検索・分類・編集・削除できます",
         memory_hub_settings_btn: "メモリ管理",
-        bank_account_masked_hint: "プライバシー保護のため口座番号を一部伏せています。上のQRスキャンまたはPromptPay番号をご利用ください。"
+        bank_account_masked_hint: "プライバシー保護のため口座番号を一部伏せています。上のQRスキャンまたはPromptPay番号をご利用ください。",
+        tools_receipt_title: "ワンクリック伝票・家計簿",
+        tools_receipt_desc: "送金明細・レシートを読み取り、自動仕訳と CSV 書き出し",
+        chip_receipt_helper: "伝票スキャン / 家計簿",
+        chip_receipt_tooltip: "振込明細やレシートを読み取り、収支を自動記録します",
+        study_tab_pack: "ワンクリック学習パック",
+        study_btn_upload_file: "PDF / DOCX 添付",
+        study_upload_tooltip: "PDF・DOCX・テキストファイルを読み込んで学習パックを作成します",
+        study_btn_share_link: "共有リンク作成",
+        study_share_tooltip: "この学習パックを閲覧専用で共有する公開リンクを作成します",
+        receipt_modal_title: "ワンクリック伝票スキャナー & 個人家計簿",
+        receipt_modal_subtitle: "送金明細やレシート画像、またはメモを入力すると自動で家計簿に記録し CSV で書き出せます",
+        receipt_stat_today: "本日の支出",
+        receipt_stat_month_exp: "今月の支出",
+        receipt_stat_month_net: "今月の純収支",
+        receipt_dropzone_title: "タップして伝票・レシート画像を選択するか、下にメモを入力してください",
+        receipt_dropzone_hint: "銀行明細・店舗レシート対応（JPG、PNG、WEBP 最大 8 MB）",
+        receipt_btn_clear_img: "画像をクリア",
+        receipt_type_label: "区分",
+        receipt_type_auto: "自動判別",
+        receipt_type_expense: "支出",
+        receipt_type_income: "収入",
+        receipt_note_label: "明細メモ / 通知テキスト",
+        receipt_note_placeholder: "例: カフェ 85バーツ、電車 47バーツ、または銀行通知テキストを貼り付け...",
+        receipt_amount_label: "金額 (バーツ)",
+        receipt_merchant_label: "店舗 / 取引先",
+        receipt_merchant_placeholder: "任意: 店舗名を手入力するか、空欄で自動認識します",
+        receipt_cat_label: "カテゴリー",
+        receipt_btn_scan: "読み取り＆家計簿に保存",
+        receipt_ledger_title: "最近の個人家計簿",
+        receipt_btn_canvas: "Canvas 表で表示",
+        receipt_btn_csv: "CSV 書き出し",
+        receipt_empty_state: "まだ記録がありません。左側から伝票をアップロードするか最初の項目を記録してください。",
+        pwa_share_received: "他アプリからの共有内容を Kira 入力欄に読み込みました。"
     }
 };
 
@@ -16951,6 +17205,47 @@ function initStudyHubController() {
     const btnCopyResult = document.getElementById('btn-copy-study-result');
     const btnStudyToCanvas = document.getElementById('btn-study-to-canvas');
     const btnStudyToMindmap = document.getElementById('btn-study-to-mindmap');
+    const btnUploadStudyFile = document.getElementById('btn-upload-study-file');
+    const studyFileInput = document.getElementById('study-file-input');
+    const btnStudyShareLink = document.getElementById('btn-study-share-link');
+
+    function notifyStudy(msg, type = 'info') {
+        if (typeof showToast === 'function') showToast(msg, type);
+        else if (typeof showKiraToast === 'function') showKiraToast(msg, type);
+    }
+
+    function buildStudyHtmlDocument(docTitle, markdownText) {
+        const safeTitle = typeof escapeHtml === 'function' ? escapeHtml(docTitle) : docTitle;
+        const bodyHtml = typeof marked !== 'undefined'
+            ? marked.parse(markdownText)
+            : (typeof escapeHtml === 'function' ? escapeHtml(markdownText) : markdownText).replace(/\n/g, '<br>');
+        return `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${safeTitle}</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 28px; line-height: 1.7; color: #1e293b; background: #f8fafc; max-width: 920px; margin: 0 auto; }
+        .study-header { border-bottom: 2px solid #0284c7; padding-bottom: 14px; margin-bottom: 24px; }
+        h1, h2, h3 { color: #0f172a; }
+        h1 { font-size: 1.6rem; color: #0284c7; }
+        table { width: 100%; border-collapse: collapse; margin: 18px 0; background: #fff; }
+        th, td { border: 1px solid #cbd5e1; padding: 10px 14px; text-align: left; }
+        th { background: #e0f2fe; color: #0369a1; font-weight: 600; }
+        code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #0f766e; }
+        blockquote { border-left: 4px solid #38bdf8; margin: 16px 0; padding: 10px 14px; color: #475569; background: #f0f9ff; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="study-header">
+        <h1>🎓 ${safeTitle}</h1>
+        <p>สร้างโดย <strong>Kira Study Co-Pilot</strong> เมื่อ ${new Date().toLocaleString('th-TH')}</p>
+    </div>
+    <div class="study-content">${bodyHtml}</div>
+</body>
+</html>`;
+    }
 
     let currentAction = 'summarize';
     let lastResultMarkdown = '';
@@ -16961,35 +17256,40 @@ function initStudyHubController() {
             exam_prep: "วางเนื้อหาบทเรียนที่ต้องการให้คิระเก็งข้อสอบ 5 ข้อ (ทั้งปรนัยและอัตนัย) พร้อมเฉลยละเอียดและเหตุผล...",
             flashcards: "วางคำศัพท์ ทฤษฎี หรือเนื้อหาสำคัญที่ต้องการแปลงเป็นการ์ดคำถาม-คำตอบ (Flashcards) สำหรับติวหน้าห้องสอบ...",
             polish_report: "วางเนื้อหาบทความ รายงาน หรือร่างงานวิจัยที่ต้องการให้คิระช่วยตรวจไวยากรณ์และขัดเกลาเป็นภาษาวิชาการ...",
-            problem_solver: "วางโจทย์คณิตศาสตร์ วิทยาศาสตร์ หรือคำถามโค้ดโปรแกรมมิ่งที่ต้องการให้อธิบายวิธีทำทีละขั้นตอน..."
+            problem_solver: "วางโจทย์คณิตศาสตร์ วิทยาศาสตร์ หรือคำถามโค้ดโปรแกรมมิ่งที่ต้องการให้อธิบายวิธีทำทีละขั้นตอน...",
+            study_pack: "วางข้อความบทเรียน หรือกด 'แนบ PDF / DOCX' เพื่อสร้าง Study Pack ครบ 5 ส่วนในคลิกเดียว (สรุป + แนวสอบ + Flashcards + แผน 7 วัน)..."
         },
         en: {
             summarize: "Paste slide content, lecture notes, or text to summarize in 3 levels (1-min TL;DR, Core Concepts, Exam Traps)...",
             exam_prep: "Paste syllabus or lecture text to generate 5 targeted exam questions with comprehensive answer explanations...",
             flashcards: "Paste terms, definitions, or formulas to convert into active recall question-answer flashcards...",
             polish_report: "Paste your draft, essay, or research paper for academic grammar verification and executive polishing...",
-            problem_solver: "Paste mathematics, physics, science problem, or code to solve step-by-step with clear logic..."
+            problem_solver: "Paste mathematics, physics, science problem, or code to solve step-by-step with clear logic...",
+            study_pack: "Paste lecture notes or click Upload PDF / DOCX to generate a complete 5-part Study Pack (Summary + Quiz + Flashcards + 7-Day Plan)..."
         },
         zh: {
             summarize: "在此粘贴课件PPT、讲义或教材内容，生成三层递进式知识摘要（1分钟速览、核心概念、高频考点）...",
             exam_prep: "粘贴学习内容，生成5道精选预测考题（含选择题与简答题）及详细解析与考点分析...",
             flashcards: "粘贴关键术语或理论，快速生成考前背诵问答卡片（Flashcards）...",
             polish_report: "粘贴您的论文初稿、报告或文章，进行学术级语法润色与语言精炼...",
-            problem_solver: "粘贴数学、物理或编程题目，获取分步详尽推导与代码解题演示..."
+            problem_solver: "粘贴数学、物理或编程题目，获取分步详尽推导与代码解题演示...",
+            study_pack: "粘贴讲义内容或点击导入 PDF / DOCX，一键生成包含摘要、练习题、闪卡与 7 天计划的完整学习包..."
         },
         ko: {
             summarize: "요약할 강의 슬라이드, 필기 또는 교재 내용을 붙여넣으세요 (1분 TL;DR, 핵심 개념, 시험 빈출 포인트 3단계 요약)...",
             exam_prep: "예상 시험 문제 5문항(객관식/주관식)과 상세 정답 해설을 생성할 학습 내용을 입력하세요...",
             flashcards: "시험 직전 복습을 위한 질문-답변 암기 플래시카드로 변환할 용어나 이론을 입력하세요...",
             polish_report: "학술적 어调와 문법 교정이 필요한 보고서나 논문 초안을 붙여넣으세요...",
-            problem_solver: "단계별 풀이가 필요한 수학, 과학 문제 또는 프로그래밍 코드를 입력하세요..."
+            problem_solver: "단계별 풀이가 필요한 수학, 과학 문제 또는 프로그래밍 코드를 입력하세요...",
+            study_pack: "강의 노트를 붙여넣거나 PDF / DOCX 첨부 버튼을 눌러 요약·퀴즈·플래시카드·7일 복습 계획 5종 학습 팩을 한 번에 만드세요..."
         },
         ja: {
             summarize: "PDFスライド、講義メモ、または要約したい学習コンテンツを貼り付けてください（TL;DR、重要概念、試験対策ポイントの3段階で整理します）...",
             exam_prep: "予想問題5問（選択式・記述式）と詳細な解説を作成したい教材テキストを貼り付けてください...",
             flashcards: "試験直前の復習用一問一答カード（フラッシュカード）に変換したい専門用語や理論を貼り付けてください...",
             polish_report: "文法チェックや学術的な文章へのブラッシュアップを行いたいレポート、論文、または下書きを貼り付けてください...",
-            problem_solver: "ステップごとの解説が必要な数学、科学、またはプログラミングコードの課題を貼り付けてください..."
+            problem_solver: "ステップごとの解説が必要な数学、科学、またはプログラミングコードの課題を貼り付けてください...",
+            study_pack: "講義メモを貼り付けるか PDF / DOCX 添付を押して、要約・演習・暗記カード・7日間計画の5部構成学習パックを一括作成します..."
         }
     };
 
@@ -17069,6 +17369,46 @@ function initStudyHubController() {
             switchStudyTab(action);
         });
     });
+
+    // Upload PDF / DOCX / TXT file into Study Hub
+    if (btnUploadStudyFile && studyFileInput) {
+        btnUploadStudyFile.addEventListener('click', () => studyFileInput.click());
+        studyFileInput.addEventListener('change', async () => {
+            const file = studyFileInput.files && studyFileInput.files[0];
+            if (!file) return;
+            if (file.size > 8 * 1024 * 1024) {
+                notifyStudy('ไฟล์มีขนาดใหญ่เกิน 8 MB ค่ะ', 'warning');
+                studyFileInput.value = '';
+                return;
+            }
+            const origHtml = btnUploadStudyFile.innerHTML;
+            btnUploadStudyFile.disabled = true;
+            btnUploadStudyFile.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>กำลังอ่านไฟล์...</span>';
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                const res = await fetch('/api/study/extract-file', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!res.ok || data.status !== 'success') {
+                    throw new Error(data.detail || data.message || 'ไม่สามารถอ่านไฟล์ได้');
+                }
+                if (contentInput) contentInput.value = data.text || '';
+                if (subjectInput && !subjectInput.value.trim()) {
+                    subjectInput.value = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' ').slice(0, 60);
+                }
+                notifyStudy(`นำเข้าข้อความจาก ${data.filename} (${Number(data.char_count || 0).toLocaleString()} ตัวอักษร) เรียบร้อยค่ะ`, 'success');
+            } catch (err) {
+                console.error('Study file extract error:', err);
+                notifyStudy(err.message || 'เกิดข้อผิดพลาดในการอ่านไฟล์ค่ะ', 'warning');
+            } finally {
+                btnUploadStudyFile.disabled = false;
+                btnUploadStudyFile.innerHTML = origHtml;
+                studyFileInput.value = '';
+            }
+        });
+    }
+
+    window.openStudyHub = openStudyHub;
 
     // Paste button
     if (btnPaste) {
@@ -17184,34 +17524,7 @@ function initStudyHubController() {
             closeStudyHub();
             
             const title = (subjectInput && subjectInput.value.trim()) ? subjectInput.value.trim() : "บันทึกการเรียนรู้ Kira Study Co-Pilot";
-            let htmlDoc = `<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 28px; line-height: 1.7; color: #1e293b; background: #f8fafc; }
-        .study-header { border-bottom: 2px solid #0284c7; padding-bottom: 14px; margin-bottom: 24px; }
-        h1, h2, h3 { color: #0f172a; }
-        h1 { font-size: 1.6rem; color: #0284c7; }
-        table { width: 100%; border-collapse: collapse; margin: 18px 0; background: #fff; }
-        th, td { border: 1px solid #cbd5e1; padding: 10px 14px; text-align: left; }
-        th { background: #e0f2fe; color: #0369a1; font-weight: 600; }
-        code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #0f766e; }
-        blockquote { border-left: 4px solid #38bdf8; margin: 16px 0; padding-left: 14px; color: #475569; background: #f0f9ff; padding: 10px 14px; border-radius: 4px; }
-    </style>
-</head>
-<body>
-    <div class="study-header">
-        <h1>🎓 ${title}</h1>
-        <p>สร้างโดย <strong>Kira Study Co-Pilot</strong> เมื่อ ${new Date().toLocaleString('th-TH')}</p>
-    </div>
-    <div class="study-content">
-        ${typeof marked !== 'undefined' ? marked.parse(lastResultMarkdown) : lastResultMarkdown.replace(/\n/g, '<br>')}
-    </div>
-</body>
-</html>`;
+            const htmlDoc = buildStudyHtmlDocument(title, lastResultMarkdown);
 
             if (typeof openLiveCanvasWithCode === 'function') {
                 openLiveCanvasWithCode(htmlDoc, title);
@@ -17225,9 +17538,7 @@ function initStudyHubController() {
                 }
             }
 
-            if (typeof showKiraToast === 'function') {
-                showKiraToast("เปิดเอกสารบทเรียนใน Interactive Canvas เรียบร้อยค่ะ 💻", "success");
-            }
+            notifyStudy("เปิดเอกสารบทเรียนใน Interactive Canvas เรียบร้อยค่ะ", "success");
         });
     }
 
@@ -17239,9 +17550,49 @@ function initStudyHubController() {
             if (typeof openKiraMindMap === 'function') {
                 openKiraMindMap(lastResultMarkdown);
             } else {
-                if (typeof showKiraToast === 'function') {
-                    showKiraToast("กำลังสร้างผังความคิด...", "info");
+                notifyStudy("กำลังสร้างผังความคิด...", "info");
+            }
+        });
+    }
+
+    // Action: Create Read-Only Share Link for Study Result
+    if (btnStudyShareLink) {
+        btnStudyShareLink.addEventListener('click', async () => {
+            if (!lastResultMarkdown) return;
+            const origHtml = btnStudyShareLink.innerHTML;
+            btnStudyShareLink.disabled = true;
+            btnStudyShareLink.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>กำลังสร้างลิงก์...</span>';
+            try {
+                const title = (subjectInput && subjectInput.value.trim()) ? `Study Pack: ${subjectInput.value.trim()}` : 'Kira 1-Click Study Pack';
+                const htmlDoc = buildStudyHtmlDocument(title, lastResultMarkdown);
+                const uName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : (localStorage.getItem('kira_username') || 'guest');
+                const res = await fetch('/api/share/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: uName,
+                        title: title,
+                        share_type: 'canvas',
+                        content: { title: title, code: htmlDoc, version: 1 }
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || data.status !== 'success' || !data.share_url) {
+                    throw new Error(data.message || 'ไม่สามารถสร้างลิงก์แชร์ได้');
                 }
+                const fullShareUrl = `${window.location.origin}${data.share_url}`;
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(fullShareUrl);
+                    }
+                } catch (e) { /* clipboard optional */ }
+                notifyStudy(`สร้างและคัดลอกลิงก์สรุปแล้วค่ะ: ${data.share_url}`, 'success');
+            } catch (err) {
+                console.error('Study share link error:', err);
+                notifyStudy(err.message || 'เกิดข้อผิดพลาดในการสร้างลิงก์แชร์ค่ะ', 'warning');
+            } finally {
+                btnStudyShareLink.disabled = false;
+                btnStudyShareLink.innerHTML = origHtml;
             }
         });
     }
@@ -17252,6 +17603,349 @@ window.setKiraLanguage = setKiraLanguage;
 window.initKiraI18n = initKiraI18n;
 window.initStudyHubController = initStudyHubController;
 window.addMessage = addMessage;
+
+// =========================================================================
+// 🧾 Phase 1.2: 1-Click Slip Scanner & Personal Expense Ledger Controller
+// =========================================================================
+function initReceiptHelperController() {
+    const modal = document.getElementById('receipt-helper-modal');
+    if (!modal) return;
+
+    const btnClose = document.getElementById('btn-close-receipt-helper');
+    const dropzone = document.getElementById('receipt-dropzone');
+    const fileInput = document.getElementById('receipt-file-input');
+    const previewWrap = document.getElementById('receipt-preview-wrap');
+    const previewImg = document.getElementById('receipt-preview-img');
+    const btnClearImg = document.getElementById('btn-clear-receipt-img');
+    const noteInput = document.getElementById('receipt-note-input');
+    const typeSelect = document.getElementById('receipt-type-select');
+    const amountInput = document.getElementById('receipt-amount-input');
+    const merchantInput = document.getElementById('receipt-merchant-input');
+    const catInput = document.getElementById('receipt-cat-input');
+    const btnScanSave = document.getElementById('btn-scan-save-receipt');
+    const btnToCanvas = document.getElementById('btn-receipt-to-canvas');
+    const btnExportCsv = document.getElementById('btn-receipt-export-csv');
+    const ledgerList = document.getElementById('receipt-ledger-list');
+    const statToday = document.getElementById('receipt-stat-today-val');
+    const statMonthExp = document.getElementById('receipt-stat-month-exp-val');
+    const statMonthNet = document.getElementById('receipt-stat-month-net-val');
+
+    let currentSlipBase64 = '';
+    let lastLoadedEntries = [];
+    let lastLoadedSummary = { today_expense: 0, month_expense: 0, month_income: 0, month_net: 0 };
+
+    function getActiveUser() {
+        return (typeof currentUser !== 'undefined' && currentUser)
+            ? currentUser
+            : (localStorage.getItem('kira_username') || 'guest');
+    }
+
+    function notifyReceipt(msg, type = 'info') {
+        if (typeof showToast === 'function') showToast(msg, type);
+        else if (typeof showKiraToast === 'function') showKiraToast(msg, type);
+    }
+
+    function formatTHB(amount) {
+        const num = Number(amount || 0);
+        const absStr = Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return num < 0 ? `-฿${absStr}` : `฿${absStr}`;
+    }
+
+    function clearSlipImage(e) {
+        if (e) e.stopPropagation();
+        currentSlipBase64 = '';
+        if (fileInput) fileInput.value = '';
+        if (previewImg) previewImg.src = '';
+        if (previewWrap) previewWrap.style.display = 'none';
+    }
+
+    function loadImageFile(file) {
+        if (!file) return;
+        if (!file.type || !file.type.startsWith('image/')) {
+            notifyReceipt('กรุณาเลือกไฟล์รูปภาพ (JPG, PNG, WEBP) ค่ะ', 'warning');
+            return;
+        }
+        if (file.size > 8 * 1024 * 1024) {
+            notifyReceipt('ขนาดรูปภาพต้องไม่เกิน 8 MB ค่ะ', 'warning');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            currentSlipBase64 = ev.target && ev.target.result ? String(ev.target.result) : '';
+            if (previewImg && currentSlipBase64) {
+                previewImg.src = currentSlipBase64;
+                if (previewWrap) previewWrap.style.display = 'flex';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function renderSummary(summary) {
+        const s = summary || {};
+        lastLoadedSummary = s;
+        if (statToday) statToday.textContent = formatTHB(s.today_expense || 0);
+        if (statMonthExp) statMonthExp.textContent = formatTHB(s.month_expense || 0);
+        if (statMonthNet) {
+            const net = Number(s.month_net || 0);
+            statMonthNet.textContent = formatTHB(net);
+            statMonthNet.classList.toggle('positive', net >= 0);
+            statMonthNet.classList.toggle('negative', net < 0);
+        }
+    }
+
+    function renderLedger(entries) {
+        lastLoadedEntries = Array.isArray(entries) ? entries : [];
+        if (!ledgerList) return;
+
+        if (lastLoadedEntries.length === 0) {
+            const lang = localStorage.getItem('kira_ui_lang') || 'th';
+            const dict = (typeof KIRA_I18N !== 'undefined' && KIRA_I18N[lang]) ? KIRA_I18N[lang] : {};
+            const emptyMsg = dict.receipt_empty_state || 'ยังไม่มีรายการบัญชี ลองอัปโหลดสลิปหรือจดรายการแรกด้านซ้ายได้เลยค่ะ';
+            const safeEmpty = typeof escapeHtml === 'function' ? escapeHtml(emptyMsg) : emptyMsg;
+            ledgerList.innerHTML = `<div class="receipt-empty-box" data-i18n="receipt_empty_state">${safeEmpty}</div>`;
+            return;
+        }
+
+        const esc = (v) => (typeof escapeHtml === 'function' ? escapeHtml(String(v || '')) : String(v || ''));
+        ledgerList.innerHTML = lastLoadedEntries.map((item) => {
+            const isIncome = item.entry_type === 'income';
+            const amtPrefix = isIncome ? '+' : '-';
+            const refTag = item.ref_no ? `<span>Ref: ${esc(item.ref_no)}</span>` : '';
+            return `
+                <div class="receipt-entry-row" data-entry-id="${Number(item.id)}">
+                    <div class="receipt-entry-main">
+                        <div class="receipt-entry-title">${esc(item.merchant || item.ai_summary || 'รายการบัญชี')}</div>
+                        <div class="receipt-entry-meta">
+                            <span class="receipt-cat-badge">${esc(item.category)}</span>
+                            <span>${esc(item.tx_date)} ${esc(item.tx_time)}</span>
+                            ${refTag}
+                        </div>
+                    </div>
+                    <div class="receipt-entry-right">
+                        <span class="receipt-entry-amount ${isIncome ? 'income' : 'expense'}">${amtPrefix}${formatTHB(item.amount)}</span>
+                        <button type="button" class="receipt-del-btn" data-receipt-del-id="${Number(item.id)}" title="Delete">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function loadReceiptHistory() {
+        try {
+            const uName = getActiveUser();
+            const res = await fetch(`/api/receipts/history?username=${encodeURIComponent(uName)}&limit=50`);
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                renderSummary(data.summary);
+                renderLedger(data.entries);
+            }
+        } catch (err) {
+            console.error('Load receipt history error:', err);
+        }
+    }
+
+    function openReceiptHelperModal() {
+        const toolsMenu = document.getElementById('tools-dropdown-menu');
+        if (toolsMenu) toolsMenu.style.display = 'none';
+        modal.style.display = 'flex';
+        loadReceiptHistory();
+    }
+
+    function closeReceiptHelperModal() {
+        modal.style.display = 'none';
+    }
+
+    if (btnClose) btnClose.addEventListener('click', closeReceiptHelperModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeReceiptHelperModal();
+    });
+
+    if (dropzone && fileInput) {
+        dropzone.addEventListener('click', (e) => {
+            if (btnClearImg && (e.target === btnClearImg || btnClearImg.contains(e.target))) return;
+            fileInput.click();
+        });
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('drag-over');
+        });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if (f) loadImageFile(f);
+        });
+        fileInput.addEventListener('change', () => {
+            const f = fileInput.files && fileInput.files[0];
+            if (f) loadImageFile(f);
+        });
+    }
+
+    if (btnClearImg) {
+        btnClearImg.addEventListener('click', clearSlipImage);
+    }
+
+    if (btnScanSave) {
+        btnScanSave.addEventListener('click', async () => {
+            const noteVal = noteInput ? noteInput.value.trim() : '';
+            const amtRaw = amountInput ? amountInput.value.trim() : '';
+            const parsedAmt = amtRaw !== '' ? parseFloat(amtRaw) : null;
+            if (!currentSlipBase64 && !noteVal && !(parsedAmt > 0)) {
+                notifyReceipt('กรุณาแนบภาพสลิปหรือระบุรายการ/ยอดเงินก่อนบันทึกนะคะ', 'warning');
+                if (noteInput) noteInput.focus();
+                return;
+            }
+            const origHtml = btnScanSave.innerHTML;
+            btnScanSave.disabled = true;
+            btnScanSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>กำลังประมวลผล...</span>';
+            try {
+                const payload = {
+                    username: getActiveUser(),
+                    image_base64: currentSlipBase64,
+                    note_text: noteVal,
+                    entry_type: typeSelect ? typeSelect.value : 'auto',
+                    manual_amount: Number.isFinite(parsedAmt) ? parsedAmt : null,
+                    manual_merchant: merchantInput ? merchantInput.value.trim() : '',
+                    manual_category: catInput ? catInput.value : '',
+                    save_entry: true,
+                    ui_lang: localStorage.getItem('kira_ui_lang') || 'th'
+                };
+                const res = await fetch('/api/receipts/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok || data.status !== 'success') {
+                    throw new Error(data.detail || data.message || 'ไม่สามารถบันทึกสลิปได้');
+                }
+                if (noteInput) noteInput.value = '';
+                if (amountInput) amountInput.value = '';
+                if (merchantInput) merchantInput.value = '';
+                clearSlipImage();
+                await loadReceiptHistory();
+                const parsedInfo = data.parsed || {};
+                notifyReceipt(`บันทึกสำเร็จ: ${parsedInfo.merchant || ''} (${formatTHB(parsedInfo.amount || 0)})`, 'success');
+            } catch (err) {
+                console.error('Receipt scan error:', err);
+                notifyReceipt(err.message || 'เกิดข้อผิดพลาดในการสแกน/บันทึกรายการค่ะ', 'warning');
+            } finally {
+                btnScanSave.disabled = false;
+                btnScanSave.innerHTML = origHtml;
+            }
+        });
+    }
+
+    if (ledgerList) {
+        ledgerList.addEventListener('click', async (e) => {
+            const delBtn = e.target.closest('.receipt-del-btn');
+            if (!delBtn) return;
+            const entryId = delBtn.getAttribute('data-receipt-del-id');
+            if (!entryId) return;
+            delBtn.disabled = true;
+            try {
+                const res = await fetch(`/api/receipts/${encodeURIComponent(entryId)}?username=${encodeURIComponent(getActiveUser())}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    await loadReceiptHistory();
+                    notifyReceipt('ลบรายการบัญชีเรียบร้อยแล้วค่ะ', 'info');
+                }
+            } catch (err) {
+                console.error('Delete receipt error:', err);
+            } finally {
+                delBtn.disabled = false;
+            }
+        });
+    }
+
+    if (btnExportCsv) {
+        btnExportCsv.addEventListener('click', () => {
+            const url = `/api/receipts/export-csv?username=${encodeURIComponent(getActiveUser())}`;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'kira_expenses.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            notifyReceipt('กำลังดาวน์โหลดไฟล์บัญชี CSV ค่ะ', 'success');
+        });
+    }
+
+    if (btnToCanvas) {
+        btnToCanvas.addEventListener('click', () => {
+            if (!lastLoadedEntries || lastLoadedEntries.length === 0) {
+                notifyReceipt('ยังไม่มีรายการบัญชีสำหรับแสดงใน Canvas ค่ะ', 'warning');
+                return;
+            }
+            const esc = (v) => (typeof escapeHtml === 'function' ? escapeHtml(String(v || '')) : String(v || ''));
+            const rowsHtml = lastLoadedEntries.map((r) => `
+                <tr>
+                    <td>${esc(r.tx_date)} ${esc(r.tx_time)}</td>
+                    <td>${r.entry_type === 'income' ? 'รายรับ (+)' : 'รายจ่าย (-)'}</td>
+                    <td>${esc(r.category)}</td>
+                    <td>${esc(r.merchant)}</td>
+                    <td style="text-align:right;font-weight:600;color:${r.entry_type === 'income' ? '#059669' : '#dc2626'};">${r.entry_type === 'income' ? '+' : '-'}${formatTHB(r.amount)}</td>
+                </tr>
+            `).join('');
+            const title = `สรุปสมุดบัญชีส่วนตัว (${esc(getActiveUser())})`;
+            const htmlDoc = `<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:28px;color:#0f172a;background:#f8fafc;max-width:960px;margin:0 auto;}
+h1{font-size:1.45rem;margin-bottom:6px;}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0 22px;}
+.stat{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;min-width:170px;}
+.stat small{color:#64748b;display:block;font-size:0.78rem;}
+.stat strong{font-size:1.15rem;}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #cbd5e1;}
+th,td{padding:10px 12px;border-bottom:1px solid #e2e8f0;text-align:left;font-size:0.9rem;}
+th{background:#f1f5f9;font-weight:600;}
+</style>
+</head>
+<body>
+<h1>${title}</h1>
+<p>ส่งออกโดย Kira Personal Ledger เมื่อ ${new Date().toLocaleString('th-TH')}</p>
+<div class="stats">
+  <div class="stat"><small>รายจ่ายวันนี้</small><strong>${formatTHB(lastLoadedSummary.today_expense || 0)}</strong></div>
+  <div class="stat"><small>รายจ่ายเดือนนี้</small><strong>${formatTHB(lastLoadedSummary.month_expense || 0)}</strong></div>
+  <div class="stat"><small>รายรับเดือนนี้</small><strong>${formatTHB(lastLoadedSummary.month_income || 0)}</strong></div>
+  <div class="stat"><small>สุทธิเดือนนี้</small><strong>${formatTHB(lastLoadedSummary.month_net || 0)}</strong></div>
+</div>
+<table>
+  <thead><tr><th>วันที่ / เวลา</th><th>ประเภท</th><th>หมวดหมู่</th><th>รายการ / ร้านค้า</th><th style="text-align:right;">จำนวนเงิน</th></tr></thead>
+  <tbody>${rowsHtml}</tbody>
+</table>
+</body>
+</html>`;
+            closeReceiptHelperModal();
+            if (typeof openLiveCanvasWithCode === 'function') {
+                openLiveCanvasWithCode(htmlDoc, title);
+            } else {
+                const drawer = document.getElementById('artifacts-drawer');
+                const iframe = document.getElementById('artifacts-iframe');
+                if (drawer && iframe) {
+                    iframe.srcdoc = htmlDoc;
+                    drawer.classList.add('open');
+                    document.body.classList.add('split-workspace-active');
+                }
+            }
+            notifyReceipt('เปิดตารางบัญชีใน Interactive Canvas เรียบร้อยค่ะ', 'success');
+        });
+    }
+
+    window.openReceiptHelperModal = openReceiptHelperModal;
+    window.closeReceiptHelperModal = closeReceiptHelperModal;
+}
+
+window.initReceiptHelperController = initReceiptHelperController;
 
 // =========================================================================
 
@@ -17772,6 +18466,7 @@ function initKiraApp() {
     try { initSlideDeckStudio(); } catch (e) { console.error("Slide deck studio init error:", e); }
     try { initKiraMindMapController(); } catch (e) { console.error("Mind Map controller init error:", e); }
     try { initStudyHubController(); } catch (e) { console.error("Study Hub controller init error:", e); }
+    try { initReceiptHelperController(); } catch (e) { console.error("Receipt Helper controller init error:", e); }
     try { initSubscriptionController(); } catch (e) { console.error("Subscription controller init error:", e); }
     try { initPWAController(); } catch (e) { console.error("PWA controller init error:", e); }
     try { initMCPHubController(); } catch (e) { console.error("MCP Hub controller init error:", e); }
