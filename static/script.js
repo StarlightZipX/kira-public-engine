@@ -91,10 +91,10 @@ function initWebSearchController() {
 }
 
 // ====================================================================
-// 🚀 Kira AI v2.7.0 Client State & Cache Synchronizer (Auto-Purge Legacy)
+// Kira AI v2.9.4 Client State & Cache Synchronizer (Auto-Purge Legacy)
 // ====================================================================
 (function() {
-    const KIRA_CURRENT_VERSION = '2.9.3';
+    const KIRA_CURRENT_VERSION = '2.9.4';
     try {
         const lastVersion = localStorage.getItem('kira_app_version');
         if (lastVersion !== KIRA_CURRENT_VERSION) {
@@ -114,7 +114,7 @@ function initWebSearchController() {
             if ('caches' in window) {
                 caches.keys().then((keys) => {
                     keys.forEach((key) => {
-                        if (key !== 'kira-ai-cache-v2.7.0') {
+                        if (key !== 'kira-ai-cache-v2.9.4-zero-slop-web') {
                             caches.delete(key);
                         }
                     });
@@ -302,6 +302,19 @@ const isBoss = (name) => {
     const n = name.toLowerCase();
     return n.includes('boss') || n.includes('บอส') || n.includes('admin') || name === '👑 Boss (Owner)';
 };
+
+function normalizeKiraModelSelection(rawVal, selectEl) {
+    let val = String(rawVal || '2.9-reasoning').trim();
+    const mapped = val
+        .replace(/^(1\.[0-9]+|2\.[0-8])-/i, '2.9-')
+        .replace(/^(1\.[0-9]+)$/i, '2.9-reasoning');
+    val = mapped || '2.9-reasoning';
+    if (selectEl && selectEl.options && selectEl.options.length > 0) {
+        const exists = Array.from(selectEl.options).some(opt => opt.value === val);
+        if (!exists) return '2.9-reasoning';
+    }
+    return val;
+}
 
 function updateModelUI() {
     const modelSelect = document.getElementById('model-select');
@@ -1306,14 +1319,14 @@ async function renderWelcomeHub() {
         <div class="artisan-studio-bar" id="flagship-quick-hub">
             <span class="artisan-studio-label">${isEn ? 'Studios' : 'สตูดิโอ'}:</span>
             <div class="artisan-studio-pills">
-                <button type="button" class="artisan-pill" onclick="triggerQuickAction('flux')" title="${isEn ? 'Generate 8K Image' : 'สตูดิโอสร้างภาพ 8K'}">
+                <button type="button" class="artisan-pill" onclick="triggerQuickAction('flux')" title="${isEn ? 'Generate Image' : 'สตูดิโอสร้างภาพ'}">
                     <i class="fa-solid fa-palette text-amber"></i> ${isEn ? 'Image Studio' : 'สร้างภาพ'}
                 </button>
                 <button type="button" class="artisan-pill" onclick="triggerQuickAction('rmbg')" title="${isEn ? 'Cutout Image Background' : 'ตัดพื้นหลังรูปภาพ'}">
                     <i class="fa-solid fa-scissors text-emerald"></i> ${isEn ? 'Cutout' : 'ไดคัท'}
                 </button>
                 <button type="button" class="artisan-pill" onclick="triggerQuickAction('eraser')" title="${isEn ? 'Erase Objects or People' : 'ลบคน/วัตถุในภาพ'}">
-                    <i class="fa-solid fa-wand-magic-sparkles text-rose"></i> ${isEn ? 'Magic Eraser' : 'ลบวัตถุ'}
+                    <i class="fa-solid fa-eraser text-rose"></i> ${isEn ? 'Object Eraser' : 'ลบวัตถุ'}
                 </button>
                 <button type="button" class="artisan-pill" onclick="triggerQuickAction('transcribe')" title="${isEn ? 'Voice Transcriber' : 'ถอดเทปเสียงประชุม'}">
                     <i class="fa-solid fa-microphone-lines text-cyan"></i> ${isEn ? 'Transcribe' : 'ถอดเสียง'}
@@ -1354,7 +1367,7 @@ async function renderWelcomeHub() {
         { title: "Fast Concept Explainer", desc: "Explain complex topics clearly in 3 minutes with examples", prompt: "Please explain this concept clearly in 3 minutes with intuitive analogies.", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
         { title: "Live Code & Diagram Studio", desc: "Build interactive web UI on Live Canvas or Mermaid flowcharts", prompt: "Please generate a modern Dark Minimal Dashboard on Live Canvas with interactive components.", icon: "fa-solid fa-code", tag: "CANVAS", category: "tech" }
     ] : [
-        { title: isBossFallback ? "รายงานสถานะสถาปัตยกรรมระบบ" : "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: isBossFallback ? "ตรวจเช็กความพร้อม Multi-Brain Engine และเกราะป้องกัน Enterprise" : "ช่วยย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: isBossFallback ? "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.8.1 ตรวจสอบความพร้อมของ Multi-Brain Engine และเกราะป้องกันล่าสุดให้บอสหน่อยค่ะ" : "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: isBossFallback ? "ADMIN CORE" : "ADVISOR", category: "advisor" },
+        { title: isBossFallback ? "รายงานสถานะสถาปัตยกรรมระบบ" : "ที่ปรึกษาช่วยคิดและวางแผน (Strategy Advisor)", desc: isBossFallback ? "ตรวจเช็กความพร้อม Multi-Brain Engine และระบบป้องกัน Enterprise" : "ช่วยย่อยปัญหาซับซ้อน สรุป Action Plan และประเมินความเสี่ยง", prompt: isBossFallback ? "ช่วยรายงานสถานะสถาปัตยกรรมระบบ Kira 2.9 ตรวจสอบความพร้อมของ Multi-Brain Engine และระบบป้องกันล่าสุดให้บอสหน่อยค่ะ" : "ช่วยเป็นที่ปรึกษาช่วยคิด วิเคราะห์โจทย์และวางแผน Action Plan เป็นขั้นตอน พร้อมวิธีจัดการความเสี่ยงให้หน่อยค่ะ", icon: "fa-solid fa-compass", tag: isBossFallback ? "ADMIN CORE" : "ADVISOR", category: "advisor" },
         { title: "สร้างดราฟต์แรกของงานเขียน (First-Draft Machine)", desc: "ร่างอีเมลธุรกิจ บทความ โพสต์โซเชียล หรือโครงสร้างรายงานทันที", prompt: "ช่วยร่างโครงสร้างและเขียนดราฟต์แรกของเนื้อหาอย่างมืออาชีพ ปรับภาษาให้อ่านง่ายและน่าเชื่อถือให้หน่อยนะคะ", icon: "fa-solid fa-pen-nib", tag: "FIRST DRAFT", category: "draft" },
         { title: "ตรวจทาน & เกลาเอกสารระดับผู้บริหาร", desc: "ตรวจความถูกต้อง กรองความเสี่ยง และเกลาสำนวนให้น่าเชื่อถือ", prompt: "ช่วยตรวจทานความถูกต้องและเกลาข้อความต่อไปนี้ให้สุภาพ กระชับ เป็นมืออาชีพ และไม่มีคำผิดให้หน่อยค่ะ", icon: "fa-solid fa-magnifying-glass-chart", tag: "REVIEW", category: "review" },
         { title: "ย่อยเรื่องยากให้เข้าใจง่าย (Concept Explainer)", desc: "สรุปสาระสำคัญใน 3 นาที พร้อมยกตัวอย่างให้เห็นภาพชัดเจน", prompt: "ช่วยสรุปและอธิบายเรื่องนี้ให้เข้าใจง่ายใน 3 นาที แบบที่คนไม่มีพื้นฐานก็เข้าใจได้ทันทีให้หน่อยนะคะ", icon: "fa-solid fa-lightbulb", tag: "EXPLAINER", category: "learning" },
@@ -1362,7 +1375,7 @@ async function renderWelcomeHub() {
     ];
     const data = briefing || {
         greeting_title: isBossFallback && currentLang === 'th' ? 'สวัสดีค่ะ ท่านประธาน' : wDict.prep_title(currentUser),
-        greeting_subtitle: isBossFallback && currentLang === 'th' ? 'ระบบสถาปัตยกรรม Kira 2.8.1 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ' : (currentLang === 'en' ? 'Kira AI 2.8.1 is online and ready to assist with strategy, coding, and productivity.' : 'ระบบประมวลผล Kira 2.8.1 พร้อมช่วยคิดวิเคราะห์ เขียนโค้ด และจัดการภารกิจของคุณแล้วค่ะ'),
+        greeting_subtitle: isBossFallback && currentLang === 'th' ? 'ระบบสถาปัตยกรรม Kira 2.9 ออนไลน์สมบูรณ์ พร้อมรับคำสั่งเชิงยุทธศาสตร์จากบอสแล้วค่ะ' : (currentLang === 'en' ? 'Kira AI 2.9 is online and ready to assist with strategy, coding, and productivity.' : 'ระบบประมวลผล Kira 2.9 พร้อมช่วยคิดวิเคราะห์ เขียนโค้ด และจัดการงานของคุณแล้วค่ะ'),
         time_str: new Date().toLocaleTimeString(currentLang === 'ja' ? 'ja-JP' : (currentLang === 'en' ? 'en-US' : 'th-TH'), { hour: '2-digit', minute: '2-digit' }),
         date_thai: new Date().toLocaleDateString(currentLang === 'ja' ? 'ja-JP' : (currentLang === 'en' ? 'en-US' : 'th-TH'), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
         is_boss: isBossFallback,
@@ -1664,8 +1677,9 @@ function initLiveScreenInspector() {
                 // Auto-switch to Vision model
                 const modelSelect = document.getElementById('model-select');
                 if (modelSelect) {
-                    modelSelect.value = '2.0-vision';
-                    localStorage.setItem('kira_model', '2.0-vision');
+                    const targetVision = normalizeKiraModelSelection('2.9-vision', modelSelect);
+                    modelSelect.value = targetVision;
+                    localStorage.setItem('kira_model', targetVision);
                     updateModelUI();
                 }
 
@@ -1749,8 +1763,9 @@ function initLiveScreenInspector() {
                     // Auto-switch to Vision model
                     const modelSelect = document.getElementById('model-select');
                     if (modelSelect) {
-                        modelSelect.value = '2.0-vision';
-                        localStorage.setItem('kira_model', '2.0-vision');
+                        const targetVision = normalizeKiraModelSelection('2.9-vision', modelSelect);
+                        modelSelect.value = targetVision;
+                        localStorage.setItem('kira_model', targetVision);
                         updateModelUI();
                     }
 
@@ -1849,9 +1864,9 @@ function formatExecutiveDeliverable(text) {
     const now = new Date();
     const thaiDate = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     
-    let header = `# 📋 รายงานสรุปงานสำหรับผู้บริหาร (Executive Deliverable)\n`;
-    header += `**ระบบ:** Kira AI System 2.9 Flagship | **ผู้จัดทำ:** ${currentUser || 'ท่านประธาน'} | **วันที่:** ${thaiDate}\n`;
-    header += `**สถานะ:** ผ่านการกลั่นกรองและตรวจสอบความถูกต้องสมบูรณ์ (Verified)\n\n---\n\n`;
+    let header = `# รายงานสรุปงานสำหรับผู้บริหาร (Executive Deliverable)\n`;
+    header += `**ระบบ:** Kira AI System 2.9 | **ผู้จัดทำ:** ${currentUser || 'ผู้ใช้งาน'} | **วันที่:** ${thaiDate}\n`;
+    header += `**สถานะ:** ตรวจสอบความถูกต้องเรียบร้อย (Verified)\n\n---\n\n`;
     
     return header + clean + `\n\n---\n*จัดทำโดย Kira AI System — ระบบผู้ช่วยอัจฉริยะระดับผู้บริหาร*`;
 }
@@ -3769,18 +3784,18 @@ print("✨ ประมวลผลบนเบราว์เซอร์ด้
     </header>
 
     <main class="max-w-2xl mx-auto text-center my-auto py-12">
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-semibold mb-6">
-            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span> Kira v2.8.4 Live Interactive Suite
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-medium mb-6">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Kira v2.9 Live Interactive Suite
         </div>
-        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
-            สัมผัสประสบการณ์ AI Assistant ที่ไร้ขีดจำกัด
+        <h1 class="text-4xl sm:text-5xl font-bold tracking-tight mb-4 text-zinc-50">
+            พื้นที่ทำงาน AI ผู้ช่วยส่วนตัวและการเขียนโค้ด
         </h1>
-        <p class="text-slate-400 text-sm sm:text-base mb-8 leading-relaxed">
-            ระบบปัญญาประดิษฐ์อัจฉริยะที่พร้อมร่วมคิด วิเคราะห์ ออกแบบ และรันโค้ดสดข้างกล่องแชตของคุณแบบเรียลไทม์
+        <p class="text-zinc-400 text-sm sm:text-base mb-8 leading-relaxed">
+            สภาพแวดล้อมสำหรับวิเคราะห์ ออกแบบ และทดลองรันโค้ดแบบเรียลไทม์ควบคู่กับหน้าต่างสนทนา
         </p>
         <div class="flex justify-center gap-3">
-            <button onclick="confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 } })" class="px-6 py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 font-bold text-sm rounded-xl shadow-xl shadow-sky-500/30 transition transform hover:-translate-y-0.5">
-                🎉 ปล่อย Confetti ฉลองความสำเร็จ
+            <button onclick="confetti({ particleCount: 90, spread: 70, origin: { y: 0.7 } })" class="px-6 py-3 bg-zinc-100 hover:bg-white text-zinc-950 font-semibold text-sm rounded-xl transition">
+                ทดสอบเอฟเฟกต์ Interactive
             </button>
         </div>
     </main>
@@ -4592,78 +4607,61 @@ function drawViralSocialCard(title, snippet, shareUrl, authorName) {
     const width = viralCardCanvas.width;
     const height = viralCardCanvas.height;
 
-    // 1. Deep Space Cyber Gradient Background
-    const bgGrad = ctx.createLinearGradient(0, 0, width, height);
-    bgGrad.addColorStop(0, '#060913');
-    bgGrad.addColorStop(0.5, '#0b1120');
-    bgGrad.addColorStop(1, '#1e1b4b');
-    ctx.fillStyle = bgGrad;
+    // 1. Calm Obsidian Background
+    ctx.fillStyle = '#0b0c10';
     ctx.fillRect(0, 0, width, height);
 
-    // 2. Radial Glow Orbs
-    const glow1 = ctx.createRadialGradient(200, 150, 20, 200, 150, 450);
-    glow1.addColorStop(0, 'rgba(56, 189, 248, 0.25)');
-    glow1.addColorStop(1, 'rgba(56, 189, 248, 0)');
-    ctx.fillStyle = glow1;
-    ctx.fillRect(0, 0, width, height);
-
-    const glow2 = ctx.createRadialGradient(width - 250, height - 150, 20, width - 250, height - 150, 400);
-    glow2.addColorStop(0, 'rgba(168, 85, 247, 0.22)');
-    glow2.addColorStop(1, 'rgba(168, 85, 247, 0)');
-    ctx.fillStyle = glow2;
-    ctx.fillRect(0, 0, width, height);
-
-    // 3. Glowing Border
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(20, 20, width - 40, height - 40);
-
-    // 4. Header Branding (Kira AI Logo & Badge)
-    ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 34px -apple-system, sans-serif';
-    ctx.fillText('✨ KIRA AI', 60, 90);
-
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '600 20px -apple-system, sans-serif';
-    ctx.fillText('• NEXT-GEN ARTIFICIAL INTELLIGENCE', 240, 88);
-
-    // Tag Pill
-    ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
-    ctx.fillRect(width - 320, 58, 260, 42);
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(width - 320, 58, 260, 42);
-
-    ctx.fillStyle = '#7dd3fc';
-    ctx.font = 'bold 18px -apple-system, sans-serif';
-    ctx.fillText('VERIFIED ARTIFACT', width - 280, 85);
-
-    // Divider
+    // 2. Crisp Inner Hairline Border
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
     ctx.lineWidth = 2;
+    ctx.strokeRect(20, 20, width - 40, height - 40);
+
+    // 3. Header Branding (Kira AI Monochrome Header)
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = 'bold 34px -apple-system, sans-serif';
+    ctx.fillText('KIRA AI', 60, 90);
+
+    ctx.fillStyle = '#a1a1aa';
+    ctx.font = '500 19px -apple-system, sans-serif';
+    ctx.fillText('• EXECUTIVE AI WORKSPACE', 210, 88);
+
+    // Tag Pill
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.fillRect(width - 320, 58, 260, 42);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(width - 320, 58, 260, 42);
+
+    ctx.fillStyle = '#e4e4e7';
+    ctx.font = '600 17px -apple-system, sans-serif';
+    ctx.fillText('SHARED ARTIFACT', width - 275, 85);
+
+    // Divider
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(60, 125);
     ctx.lineTo(width - 60, 125);
     ctx.stroke();
 
-    // 5. Main Title (Word Wrap)
+    // 4. Main Title (Word Wrap)
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 44px -apple-system, sans-serif';
     wrapCanvasText(ctx, title, 60, 195, width - 120, 55, 2);
 
-    // 6. Quote Card Box
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+    // 5. Quote Card Box
+    ctx.fillStyle = '#13141a';
     ctx.fillRect(60, 310, width - 120, 190);
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 1.5;
     ctx.strokeRect(60, 310, width - 120, 190);
 
-    // Cyan accent bar on quote
-    ctx.fillStyle = '#38bdf8';
-    ctx.fillRect(60, 310, 8, 190);
+    // Minimal ivory accent bar on quote
+    ctx.fillStyle = '#e4e4e7';
+    ctx.fillRect(60, 310, 5, 190);
 
     // Quote text
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = '#e4e4e7';
     ctx.font = '26px -apple-system, sans-serif';
     wrapCanvasText(ctx, `"${snippet}"`, 95, 365, width - 180, 38, 3);
 
@@ -5005,7 +5003,7 @@ function showNodeDetails(node) {
     if (node.group === 'user') {
         info = `โหนดศูนย์กลางผู้ใช้งาน: <strong>${node.label}</strong>`;
     } else if (node.group === 'ai') {
-        info = `โหนดปัญญาประดิษฐ์: <strong>Kira AI System 2.9 Flagship</strong>`;
+        info = `โหนดปัญญาประดิษฐ์: <strong>Kira AI System 2.9</strong>`;
     } else if (node.full_fact) {
         info = `ข้อเท็จจริงที่จดจำ: "${node.full_fact}"`;
     } else {
@@ -5526,7 +5524,7 @@ async function loadSettingsPreferences() {
                 const quotaBar = document.getElementById('settings-quota-bar');
                 if (data.quota) {
                     const used = data.quota.used || 0;
-                    const limit = data.quota.limit || 150;
+                    const limit = data.quota.limit || 15;
                     if (quotaCount) quotaCount.textContent = `${used} / ${limit} ข้อความ`;
                     if (quotaBar) {
                         const pct = Math.min(100, Math.round((used / limit) * 100));
@@ -5550,10 +5548,10 @@ async function loadSettingsPreferences() {
                 
                 const modelSel = document.getElementById('setting-default-model');
                 if (modelSel && prefs.default_model) {
-                    modelSel.value = prefs.default_model;
+                    modelSel.value = normalizeKiraModelSelection(prefs.default_model, modelSel);
                     const mainModelSelect = document.getElementById('model-select');
                     if (mainModelSelect && !sessionStorage.getItem('user_switched_model')) {
-                        mainModelSelect.value = prefs.default_model;
+                        mainModelSelect.value = normalizeKiraModelSelection(prefs.default_model, mainModelSelect);
                         updateModelUI();
                     }
                 }
@@ -5651,7 +5649,7 @@ async function saveSettings() {
     const autoCanvas = document.getElementById('setting-auto-canvas')?.checked ?? true;
     
     const preferredName = document.getElementById('setting-preferred-name')?.value?.trim() || '';
-    const defaultModel = document.getElementById('setting-default-model')?.value || '2.7-reasoning';
+    const defaultModel = document.getElementById('setting-default-model')?.value || '2.9-reasoning';
     const persona = document.getElementById('setting-persona')?.value || 'default';
     const thinkingAccordion = document.getElementById('setting-thinking-accordion')?.value || 'auto_collapse';
     const customAbout = document.getElementById('setting-custom-about')?.value?.trim() || '';
@@ -5776,27 +5774,27 @@ async function previewVoiceSample() {
     const voice = document.getElementById('setting-voice-name')?.value || 'th-TH-PremwadeeNeural';
     const rate = parseFloat(document.getElementById('setting-speech-rate')?.value || 1.0);
     
-    let sampleText = "สวัสดีค่ะบอส หนูคือคิระ ขับเคลื่อนด้วยระบบเสียงธรรมชาติ Kokoro-82M นุ่มนวล อบอุ่น พร้อมดูแลเคียงข้างบอสเสมอค่ะ";
+    let sampleText = "สวัสดีค่ะ หนูคือคิระ ระบบเสียงธรรมชาติ Kokoro-82M นุ่มนวล ชัดเจน พร้อมดูแลการสนทนาของคุณแล้วค่ะ";
     if (voice === 'kokoro-th-sweet') {
-        sampleText = "สวัสดีค่ะบอส หนูคือคิระ ขับเคลื่อนด้วยระบบเสียงธรรมชาติ Kokoro-82M นุ่มนวล อบอุ่น พร้อมดูแลเคียงข้างบอสเสมอค่ะ";
+        sampleText = "สวัสดีค่ะ หนูคือคิระ ระบบเสียงธรรมชาติ Kokoro-82M นุ่มนวล ชัดเจน พร้อมดูแลการสนทนาของคุณแล้วค่ะ";
     } else if (voice === 'kokoro-th-smart') {
-        sampleText = "สวัสดีค่ะท่านประธาน ระบบเสียงผู้บริหารฉะฉานมั่นใจ Kokoro-82M Pro พร้อมรายงานสรุปกลยุทธ์แล้วค่ะ";
+        sampleText = "สวัสดีค่ะ ระบบเสียงผู้บริหาร Kokoro-82M Pro ชัดเจน มั่นใจ พร้อมรายงานสรุปกลยุทธ์แล้วค่ะ";
     } else if (voice === 'kokoro-th-gentle') {
-        sampleText = "สวัสดีค่ะคุณลุงคุณป้า วันนี้รู้สึกสบายดีไหมคะ คิระเตรียมข้อมูลสุขภาพมาดูแลอย่างอ่อนโยนแล้วค่ะ";
+        sampleText = "สวัสดีค่ะ วันนี้เป็นอย่างไรบ้างคะ คิระเตรียมข้อมูลดูแลสุขภาพมาอธิบายอย่างเข้าใจง่ายแล้วค่ะ";
     } else if (voice === 'th-TH-PremwadeeNeural') {
-        sampleText = "สวัสดีค่ะ ฉันคือคิระ ระบบปัญญาประดิษฐ์อัจฉริยะ พร้อมดูแลและช่วยเหลือคุณอย่างเต็มที่แล้วค่ะ";
+        sampleText = "สวัสดีค่ะ ฉันคือคิระ ผู้ช่วย AI ที่พร้อมสนับสนุนและช่วยจัดการงานของคุณอย่างเต็มที่ค่ะ";
     } else if (voice === 'en-US-JennyNeural') {
-        sampleText = "Hello! I am Kira, your next-generation intelligent AI companion, ready to assist you today.";
+        sampleText = "Hello! I am Kira, your personal AI assistant, ready to support your work today.";
     } else if (voice === 'en-US-AriaNeural') {
-        sampleText = "Welcome to Kira AI. I am Aria, your executive copilot, ready to empower your workflow.";
+        sampleText = "Welcome to Kira AI. I am Aria, ready to help structure your workflow clearly.";
     } else if (voice === 'ja-JP-NanamiNeural') {
-        sampleText = "こんにちは！私はキラです。次世代AIアシスタントとして、お手伝いいたします。";
+        sampleText = "こんにちは！私はキラです。パーソナルAIアシスタントとしてお手伝いいたします。";
     } else if (voice === 'zh-CN-XiaoxiaoNeural') {
-        sampleText = "你好！我是Kira，你的新一代智能AI助手，很高兴为你提供全方位的支持。";
+        sampleText = "你好！我是Kira，你的智能AI助手，很高兴为你提供清晰高效的支持。";
     } else if (voice === 'zh-CN-XiaoyiNeural') {
         sampleText = "您好！很高兴与您相遇，我是小伊，随时准备为您解答各种问题。";
     } else if (voice === 'ko-KR-SunHiNeural') {
-        sampleText = "안녕하세요! 저는 키라입니다. 차세대 인공지능 비서로서 최선을 다해 도와드리겠습니다.";
+        sampleText = "안녕하세요! 저는 키라입니다. 업무와 학습을 돕는 AI 비서로서 최선을 다해 도와드리겠습니다.";
     }
         
     if (previewBtn) {
@@ -5979,7 +5977,7 @@ async function exportChatJson() {
             return;
         }
         const exportData = {
-            app: "Kira AI System 2.9 Flagship Next-Gen",
+            app: "Kira AI System 2.9",
             exported_at: new Date().toISOString(),
             user: currentUser,
             messages_count: data.history.length,
@@ -6631,7 +6629,7 @@ function buildClientBoardroomMarkdown(payload, options = {}) {
     lines.push('---');
     lines.push('');
     lines.push('### 🛡️ ตราประทับรับรองความถูกต้องดิจิทัล (Kira Digital Audit Seal)');
-    lines.push(`- **ระบบประมวลผล:** Kira AI Enterprise v2.7.10 (4-Executive Virtual Boardroom Engine)`);
+    lines.push(`- **ระบบประมวลผล:** Kira AI Enterprise v2.9.4 (4-Executive Virtual Boardroom Engine)`);
     lines.push(`- **Digital Signature (SHA-256):** \`${sealHash}\``);
     lines.push('');
 
@@ -7050,7 +7048,7 @@ function refreshBoardroomExportStudioPreview() {
             <div>
                 <div class="a4-kicker">KIRA AI ENTERPRISE SYSTEM • 4-EXECUTIVE COUNCIL</div>
                 <div class="a4-title">รายงานมติที่ประชุมสภาที่ปรึกษาผู้บริหาร 4 ฝ่าย</div>
-                <p class="a4-sub">Executive Boardroom Resolution &amp; 90-Day Strategic Action Blueprint (v2.7.10)</p>
+                <p class="a4-sub">Executive Boardroom Resolution &amp; 90-Day Strategic Action Blueprint (v2.9.4)</p>
             </div>
             <div class="a4-stamp">
                 <div><strong>Document ID:</strong> ${escapeHtml(docId)}</div>
@@ -7223,7 +7221,7 @@ function setRoundtableActiveSpeaker(speakerId) {
     }
 
     const speakerNames = {
-        'BOSS': 'ท่านประธาน (บอส)',
+        'BOSS': 'ประธานการประชุม',
         'CEO': 'คุณคิรินทร์ (CEO)',
         'CFO': 'คุณเมธัส (CFO)',
         'CPO': 'คุณรินดา (CPO)',
@@ -7248,7 +7246,7 @@ function strikeBossGavel(customText = '') {
     const textToStrike = customText || (input ? input.value.trim() : '');
     if (!textToStrike) {
         if (typeof showConnectionToast === 'function') {
-            showConnectionToast('⚠️ กรุณาระบุคำสั่งค้อนแทรกแซงของท่านประธานค่ะ', 'warning');
+            showConnectionToast('กรุณาระบุคำสั่งแทรกแซงวาระการประชุมค่ะ', 'warning');
         }
         return;
     }
@@ -7272,12 +7270,12 @@ function strikeBossGavel(customText = '') {
     }
 
     setRoundtableActiveSpeaker('BOSS');
-    appendDebateMessage('BOSS', 'ท่านประธาน (The Boss)', '👑', `🔨 **คำสั่งเคาะค้อนแทรกแซง:** "${escapeHtml(textToStrike)}"`, 'speaker-BOSS');
+    appendDebateMessage('BOSS', 'ประธานการประชุม (Chairperson)', '📌', `**คำสั่งแทรกแซงวาระ:** "${escapeHtml(textToStrike)}"`, 'speaker-BOSS');
 
     if (input) input.value = '';
 
     if (typeof showConnectionToast === 'function') {
-        showConnectionToast(`⚡ เคาะค้อนสั่งการแทรกแซง: "${textToStrike}" แล้วค่ะ`, 'ready');
+        showConnectionToast(`ส่งคำสั่งแทรกแซง: "${textToStrike}" แล้วค่ะ`, 'ready');
     }
 
     const topicInput = document.getElementById('debate-topic-input');
@@ -7651,7 +7649,7 @@ function toggleBoardroomMode(forceState) {
         playGavelSound();
     } else {
         if (modelSelect && modelSelect.value === 'boardroom') {
-            modelSelect.value = (localStorage.getItem('kira_default_model') || '2.7-reasoning').replace('2.6-', '2.7-');
+            modelSelect.value = normalizeKiraModelSelection(localStorage.getItem('kira_default_model') || '2.9-reasoning', modelSelect);
         }
         if (userInput) {
             userInput.placeholder = 'ถามอะไรก็ได้กับคิระ หรือพิมพ์โจทย์ของคุณ...';
@@ -8321,7 +8319,7 @@ function createTaskCardHTML(task) {
     return `
     <div class="task-card ${task.status === 'completed' ? 'is-done' : ''}" data-task-id="${task.task_id}">
         <div class="task-card-top">
-            <div class="task-source-meta">${sourceIcon} <span>${task.requester ? escapeHTML(task.requester) : 'บอส'}</span></div>
+            <div class="task-source-meta">${sourceIcon} <span>${task.requester ? escapeHTML(task.requester) : 'ผู้ใช้งาน'}</span></div>
             <div class="task-score-badge ${score >= 80 ? 'high-score' : ''}">Score: ${score}/100</div>
         </div>
         <h4 class="task-card-title">${escapeHTML(task.title)}</h4>
@@ -8610,6 +8608,7 @@ function initSubscriptionController() {
     const ppNameText = document.getElementById('pp-name-text');
     const ppAmountText = document.getElementById('pp-amount-text');
     const btnCopyPpNumber = document.getElementById('btn-copy-pp-number');
+    const btnCopyPpAmount = document.getElementById('btn-copy-pp-amount');
 
     const slipDropzone = document.getElementById('slip-dropzone');
     const slipFileInput = document.getElementById('slip-file-input');
@@ -8669,6 +8668,17 @@ function initSubscriptionController() {
         if (subViewPlans) subViewPlans.style.display = viewName === 'plans' ? 'block' : 'none';
         if (subViewCheckout) subViewCheckout.style.display = viewName === 'checkout' ? 'block' : 'none';
         if (subViewSuccess) subViewSuccess.style.display = viewName === 'success' ? 'block' : 'none';
+        const subModal = document.getElementById('subscription-modal');
+        if (subModal) {
+            const card = subModal.querySelector('.subscription-modal-card');
+            if (card) {
+                card.scrollTop = 0;
+                card.querySelectorAll('.subscription-views-container, .subscription-modal-body, .sub-view').forEach(el => {
+                    el.scrollTop = 0;
+                });
+            }
+            subModal.scrollTop = 0;
+        }
     }
 
     if (btnUpgradePro) btnUpgradePro.addEventListener('click', () => openSubModal());
@@ -8695,21 +8705,21 @@ function initSubscriptionController() {
                 }
                 if (userPlanBadge && sub.plan) {
                     if (sub.plan === 'founder' || sub.is_boss) {
-                        userPlanBadge.style.color = '#c084fc';
-                        userPlanBadge.style.background = 'rgba(168, 85, 247, 0.15)';
-                        userPlanBadge.style.borderColor = 'rgba(168, 85, 247, 0.4)';
+                        userPlanBadge.style.color = '#fde68a';
+                        userPlanBadge.style.background = 'rgba(245, 158, 11, 0.1)';
+                        userPlanBadge.style.borderColor = 'rgba(245, 158, 11, 0.25)';
                     } else if (sub.plan === 'pro') {
-                        userPlanBadge.style.color = '#fbbf24';
-                        userPlanBadge.style.background = 'rgba(245, 158, 11, 0.18)';
-                        userPlanBadge.style.borderColor = 'rgba(245, 158, 11, 0.45)';
+                        userPlanBadge.style.color = '#f8fafc';
+                        userPlanBadge.style.background = 'rgba(255, 255, 255, 0.08)';
+                        userPlanBadge.style.borderColor = 'rgba(255, 255, 255, 0.2)';
                     } else if (sub.plan === 'trial') {
-                        userPlanBadge.style.color = '#38bdf8';
-                        userPlanBadge.style.background = 'rgba(56, 189, 248, 0.15)';
-                        userPlanBadge.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+                        userPlanBadge.style.color = '#e4e4e7';
+                        userPlanBadge.style.background = 'rgba(255, 255, 255, 0.05)';
+                        userPlanBadge.style.borderColor = 'rgba(255, 255, 255, 0.14)';
                     } else {
-                        userPlanBadge.style.color = '#94a3b8';
-                        userPlanBadge.style.background = 'rgba(148, 163, 184, 0.12)';
-                        userPlanBadge.style.borderColor = 'rgba(148, 163, 184, 0.25)';
+                        userPlanBadge.style.color = '#a1a1aa';
+                        userPlanBadge.style.background = 'rgba(255, 255, 255, 0.04)';
+                        userPlanBadge.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                     }
                 }
 
@@ -8718,7 +8728,7 @@ function initSubscriptionController() {
                 }
                 if (subExpiryInfo) {
                     if (sub.is_boss) {
-                        subExpiryInfo.textContent = '• บัญชีผู้ดูแลระบบ / Boss Admin (สิทธิ์ผู้ดูแลระบบสูงสุด)';
+                        subExpiryInfo.textContent = '• บัญชีผู้ดูแลระบบ (Administrator)';
                     } else if (sub.expire_date) {
                         const expStr = sub.expire_date.includes(' ') ? sub.expire_date.split(' ')[0] : sub.expire_date.split('T')[0];
                         subExpiryInfo.textContent = `• ใช้งานได้ถึง: ${expStr} (โควตา ${sub.daily_quota || 500} ข้อความ/วัน)`;
@@ -8730,7 +8740,7 @@ function initSubscriptionController() {
                     if (sub.is_active_pro) {
                         subBadgeHint.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> กำลังใช้งาน ${sub.badge} (โควตา ${sub.daily_quota || 500} ข้อความ/วัน)`;
                     } else {
-                        subBadgeHint.textContent = 'อัปเกรดเพื่อรับโควตาสูงสุด 1,000 ข้อความ/วัน พร้อมปลดล็อกทุกฟีเจอร์';
+                        subBadgeHint.textContent = 'อัปเกรดเพื่อขยายโควตาสูงสุด 1,000 ข้อความ/วัน และเข้าถึงเครื่องมือครบทุกฟีเจอร์';
                     }
                 }
             }
@@ -8768,6 +8778,7 @@ function initSubscriptionController() {
 
         const selectBtns = document.querySelectorAll(`.btn-select-plan[data-plan="${planId}"]`);
         selectBtns.forEach(b => {
+            if (!b.dataset.origHtml) b.dataset.origHtml = b.innerHTML;
             b.disabled = true;
             b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้างคำสั่งซื้อ...';
         });
@@ -8813,9 +8824,15 @@ function initSubscriptionController() {
         } finally {
             selectBtns.forEach(b => {
                 b.disabled = false;
-                if (planId === 'trial') b.innerHTML = '<span>เลือกแพ็กเกจ Trial (39.-)</span> <i class="fa-solid fa-arrow-right"></i>';
-                else if (planId === 'pro') b.innerHTML = '<span>สมัครสมาชิก Kira Pro (129.-)</span> <i class="fa-solid fa-bolt-lightning"></i>';
-                else b.innerHTML = '<span>ครอบครองสิทธิ์ Founder (499.-)</span> <i class="fa-solid fa-gem"></i>';
+                if (b.dataset.origHtml) {
+                    b.innerHTML = b.dataset.origHtml;
+                } else if (planId === 'trial') {
+                    b.innerHTML = '<span>เลือกแพ็กเกจ Trial</span> <i class="fa-solid fa-arrow-right"></i>';
+                } else if (planId === 'pro') {
+                    b.innerHTML = '<span>เลือกแพ็กเกจ Kira Pro</span> <i class="fa-solid fa-arrow-right"></i>';
+                } else {
+                    b.innerHTML = '<span>เลือกแพ็กเกจ Founder Pass</span> <i class="fa-solid fa-arrow-right"></i>';
+                }
             });
         }
     }
@@ -8857,10 +8874,24 @@ function initSubscriptionController() {
             const num = ppNumberText.textContent.trim();
             navigator.clipboard.writeText(num).then(() => {
                 const orig = btnCopyPpNumber.innerHTML;
-                btnCopyPpNumber.innerHTML = '<i class="fa-solid fa-check text-emerald"></i> คัดลอกแล้ว!';
+                btnCopyPpNumber.innerHTML = '<i class="fa-solid fa-check text-emerald"></i> คัดลอกแล้ว';
                 setTimeout(() => { btnCopyPpNumber.innerHTML = orig; }, 2000);
             }).catch(() => {
                 alert('คัดลอกหมายเลข: ' + num);
+            });
+        });
+    }
+
+    if (btnCopyPpAmount) {
+        btnCopyPpAmount.addEventListener('click', () => {
+            const rawAmt = (checkoutPlanPrice?.textContent || ppAmountText?.textContent || '').replace(/[^0-9.]/g, '');
+            if (!rawAmt) return;
+            navigator.clipboard.writeText(rawAmt).then(() => {
+                const orig = btnCopyPpAmount.innerHTML;
+                btnCopyPpAmount.innerHTML = '<i class="fa-solid fa-check text-emerald"></i> คัดลอกแล้ว';
+                setTimeout(() => { btnCopyPpAmount.innerHTML = orig; }, 2000);
+            }).catch(() => {
+                alert('ยอดโอน: ' + rawAmt + ' บาท');
             });
         });
     }
@@ -8947,7 +8978,7 @@ function initSubscriptionController() {
 
             const origHtml = btnSubmitSlip.innerHTML;
             btnSubmitSlip.disabled = true;
-            btnSubmitSlip.innerHTML = '<i class="fa-solid fa-microchip fa-spin"></i> AI กำลังตรวจสอบสลิป...';
+            btnSubmitSlip.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> กำลังตรวจสอบสลิป...';
 
             try {
                 const note = slipNoteInput ? slipNoteInput.value.trim() : '';
@@ -8985,7 +9016,7 @@ function initSubscriptionController() {
                     if (confirmedOrderId) confirmedOrderId.textContent = `#${orderId}`;
                     const subSuccessPlanInfo = document.getElementById('sub-success-plan-info');
                     if (subSuccessPlanInfo) {
-                        subSuccessPlanInfo.innerHTML = `<span style="color:#fbbf24; font-weight:600;"><i class="fa-solid fa-clock"></i> บันทึกสลิปเรียบร้อยแล้วค่ะ</span><br><span style="font-size:12px; color:#cbd5e1;">ระบบส่งสลิปให้แอดมินบอสตรวจสอบและอนุมัติให้ภายในไม่กี่นาทีนะคะ</span>`;
+                        subSuccessPlanInfo.innerHTML = `<span style="color:#fbbf24; font-weight:600;"><i class="fa-solid fa-clock"></i> บันทึกสลิปเรียบร้อยแล้วค่ะ</span><br><span style="font-size:12px; color:#a1a1aa;">ระบบได้รับสลิปแล้ว กำลังตรวจสอบรายการโอนและจะปรับสถานะสิทธิ์ให้อัตโนมัติค่ะ</span>`;
                     }
                     switchSubView('success');
                 } else {
@@ -9021,7 +9052,7 @@ function initSubscriptionController() {
                         clearInterval(statusPollingTimer);
                         statusPollingTimer = null;
                     }
-                    alert('🎉 ยินดีด้วยค่ะ! บัญชีของคุณได้รับการอนุมัติเป็น ' + sub.badge + ' เรียบร้อยแล้ว!');
+                    alert('บัญชีของคุณเปิดใช้งานสิทธิ์ ' + sub.badge + ' เรียบร้อยแล้วค่ะ');
                     closeSubModal();
                     loadUserProfile();
                 } else if (alertIfPending) {
@@ -9474,16 +9505,16 @@ function initKiraUpdateController() {
             fetch('/api/system/version?_t=' + Date.now(), { cache: 'no-store' })
                 .then(r => r.ok ? r.json() : null)
                 .then(d => {
-                    const v = d && d.version ? `v${d.version}` : 'v2.7.10';
+                    const v = d && d.version ? `v${d.version}` : 'v2.9.4';
                     const rel = d && d.release_name ? ` (${d.release_name})` : '';
                     if (typeof showConnectionToast === 'function') {
-                        showConnectionToast(`✨ อัปเดต Kira AI ${v}${rel} สำเร็จแล้วค่ะ! พร้อมให้บริการคุณแล้วนะคะ 🌸`, 'ready');
+                        showConnectionToast(`อัปเดตระบบ Kira AI ${v}${rel} สำเร็จแล้วค่ะ`, 'ready');
                         if (typeof hideConnectionToast === 'function') hideConnectionToast(5500);
                     }
                 })
                 .catch(() => {
                     if (typeof showConnectionToast === 'function') {
-                        showConnectionToast('✨ อัปเดต Kira AI เรียบร้อยแล้วค่ะ! พร้อมให้บริการคุณแล้วนะคะ 🌸', 'ready');
+                        showConnectionToast('อัปเดตระบบ Kira AI เรียบร้อยแล้วค่ะ', 'ready');
                         if (typeof hideConnectionToast === 'function') hideConnectionToast(4500);
                     }
                 });
@@ -12415,7 +12446,7 @@ function initLiveVoiceAssistant() {
                     message: cleanQuery,
                     username: effectiveUser,
                     auth_token: authToken,
-                    model_version: modelVersion === 'boardroom' ? '2.7-flash' : modelVersion,
+                    model_version: modelVersion === 'boardroom' ? '2.9-flash' : modelVersion,
                     session_id: currentSessionId,
                     persona: persona,
                     user_mode: currentUserMode || 'general',
@@ -13105,7 +13136,7 @@ async function handleRegisterMCPServer(e) {
 }
 
 async function deleteMCPServerPrompt(serverId, name) {
-    if (!confirm(`ท่านประธานต้องการตัดการเชื่อมต่อกับเซิร์ฟเวอร์ '${name}' หรือไม่คะ?`)) return;
+    if (!confirm(`ต้องการตัดการเชื่อมต่อกับเซิร์ฟเวอร์ '${name}' หรือไม่คะ?`)) return;
 
     try {
         const res = await fetch(`/api/mcp/servers/${serverId}`, { method: 'DELETE' });
@@ -13520,7 +13551,7 @@ function renderVaultCatalog(itemsToRender = null) {
             <div class="vault-empty-state" style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; color: #94a3b8;">
                 <div style="font-size: 2.8rem; margin-bottom: 12px; color: #64748b;"><i class="fa-solid fa-box-open"></i></div>
                 <h4 style="color: #f1f5f9; margin: 0 0 6px 0; font-size: 1.05rem;">ยังไม่มีเอกสารในหมวดหมู่นี้</h4>
-                <p style="font-size: 0.85rem; max-width: 440px; margin: 0 auto 16px auto; line-height: 1.5;">ท่านประธานสามารถคลิกแท็บ 'สร้างบันทึก / คำสั่งด่วน' เพื่อจัดเก็บข้อมูลลงคลังนิรภัยออฟไลน์ได้ทันทีนะคะ</p>
+                <p style="font-size: 0.85rem; max-width: 440px; margin: 0 auto 16px auto; line-height: 1.5;">สามารถคลิกแท็บ 'สร้างบันทึก / คำสั่งด่วน' เพื่อจัดเก็บข้อมูลลงคลังนิรภัยออฟไลน์ได้ทันทีนะคะ</p>
                 <button type="button" class="btn-sec-secondary" onclick="switchVaultTab('memo')">
                     <i class="fa-solid fa-pen-to-square"></i> สร้างบันทึกแรก
                 </button>
@@ -13725,7 +13756,7 @@ async function togglePinVaultItem(itemId) {
 }
 
 async function deleteVaultItemPrompt(itemId, title) {
-    if (!confirm(`ท่านประธานต้องการลบเอกสาร '${title}' ออกจากคลังนิรภัยหรือไม่คะ?`)) return;
+    if (!confirm(`ต้องการลบเอกสาร '${title}' ออกจากคลังนิรภัยหรือไม่คะ?`)) return;
 
     let items = getLocalVaultItems();
     items = items.filter(i => i.item_id !== itemId);
@@ -13812,7 +13843,7 @@ function deleteViewedVaultDocument() {
 }
 
 function clearVaultCachePrompt() {
-    if (!confirm('คำเตือน: ท่านประธานต้องการล้างแคชออฟไลน์ในเครื่องนี้หรือไม่คะ? (รายการทั้งหมดจะถูกดาวน์โหลดใหม่จาก Cloud เมื่อออนไลน์)')) return;
+    if (!confirm('คำเตือน: ต้องการล้างแคชออฟไลน์ในเครื่องนี้หรือไม่คะ? (รายการทั้งหมดจะถูกดาวน์โหลดใหม่จาก Cloud เมื่อออนไลน์)')) return;
 
     localStorage.removeItem(VAULT_STORAGE_ITEMS_KEY);
     localStorage.removeItem(VAULT_STORAGE_OUTBOX_KEY);
@@ -13831,7 +13862,7 @@ function clearVaultCachePrompt() {
 }
 
 function clearVaultOutboxPrompt() {
-    if (!confirm('ท่านประธานต้องการล้างคิวรอซิงก์ทั้งหมดหรือไม่คะ?')) return;
+    if (!confirm('ต้องการล้างคิวรอซิงก์ทั้งหมดหรือไม่คะ?')) return;
     setLocalVaultOutbox([]);
     renderVaultOutbox();
     updateVaultPillAndBadgeUI();
@@ -14068,7 +14099,7 @@ const KIRA_I18N = {
         mode_executive_title: "โหมดผู้บริหาร (Executive): กลยุทธ์ สัญญา ส่งงานในคลิกเดียว",
         mode_silver_title: "โหมดวัยเก๋าอุ่นใจ (Silver Care): ตัวหนังสือใหญ่พิเศษ สั่งด้วยเสียง 100%",
         share: "แชร์",
-        share_title: "แชร์บทสนทนาสู่โซเชียล & สร้างการ์ดไวรัล",
+        share_title: "แชร์บทสนทนา & สร้างการ์ดภาพสรุป",
         tools: "เครื่องมือ",
         tools_title: "ศูนย์รวมฟีเจอร์และเครื่องมือ",
         live_voice: "คุยสด",
@@ -14106,7 +14137,7 @@ const KIRA_I18N = {
         chip_exam_prep: "เก็งข้อสอบ & เฉลย",
         chip_flashcards: "Flashcards ทบทวน",
         chip_problem_solver: "แก้โจทย์ทีละสเต็ป",
-        chip_study_hub: "ห้องติวสอบ ✨",
+        chip_study_hub: "ห้องติวสอบ",
 
         // Input & Actions
         input_placeholder: "พิมพ์ข้อความหรือคำถามถึง Kira AI... (Shift+Enter ขึ้นบรรทัดใหม่, Ctrl+V วางรูป)",
@@ -14141,7 +14172,7 @@ const KIRA_I18N = {
         tools_task_matrix_desc: "จัดการ Task Matrix & ดราฟต์อัตโนมัติ",
         tools_slide_title: "สไลด์พรีเซนต์ (16:9)",
         tools_slide_desc: "สร้างชุดสไลด์ผู้บริหาร Keynote ในคลิกเดียว",
-        tools_viral_share_title: "แชร์สู่โซเชียล & การ์ดไวรัล",
+        tools_viral_share_title: "แชร์สู่โซเชียล & การ์ดสรุป",
         tools_viral_share_desc: "สร้างลิงก์แชร์และดาวน์โหลดการ์ดสรุปสำหรับโซเชียล",
         tools_canvas_title: "Interactive Canvas",
         tools_canvas_desc: "ห้องทำงานคู่ขนาน พรีวิวเว็บแอพ และเอกสารสด",
@@ -14268,8 +14299,8 @@ const KIRA_I18N = {
         auth_guest_btn_desc: "ลองถาม-ตอบได้ฟรี 5 ข้อความ ไม่ต้องผูกบัญชี ไม่ต้องจำรหัสผ่าน",
         auth_portal_welcome: "เข้าสู่ระบบบัญชีของคุณ",
         auth_portal_create_title: "สร้างบัญชีผู้ใช้งานใหม่",
-        reg_perk_1_title: "ฟรี 150 ข้อความ/วัน",
-        reg_perk_1_desc: "ใช้งานสมองกล AI ได้เต็มอิ่มทุกวัน",
+        reg_perk_1_title: "ฟรี 15 ข้อความ/วัน",
+        reg_perk_1_desc: "ใช้งานผู้ช่วย AI ได้ฟรีทุกวัน",
         reg_perk_2_title: "Cloud Vault Sync",
         reg_perk_2_desc: "บันทึกประวัติและเอกสารข้ามอุปกรณ์",
         reg_perk_3_title: "ปลดล็อกทุกสตูดิโอ",
@@ -14294,7 +14325,7 @@ const KIRA_I18N = {
         reg_status_success: "สมัครสมาชิกสำเร็จ! กำลังเข้าสู่ระบบให้ท่านทันที...",
 
         // Share Modal
-        share_modal_title: "แชร์บทสนทนา & สร้างการ์ดไวรัล",
+        share_modal_title: "แชร์บทสนทนา & การ์ดภาพสรุป",
         share_title_label: "หัวข้อบทสนทนาสำหรับการแชร์:",
         share_btn_copy: "คัดลอกลิงก์",
         share_btn_download: "ดาวน์โหลดภาพการ์ด (1200x630)",
@@ -14320,9 +14351,9 @@ const KIRA_I18N = {
         study_output_title: "ผลลัพธ์การติวเข้ม & สรุปบทเรียน",
         study_btn_canvas: "เปิดใน Canvas",
         study_btn_mindmap: "สร้าง Mind Map",
-        study_empty_placeholder: "เลือกโหมดที่ต้องการ แล้ววางเนื้อหาบทเรียนเพื่อเริ่มติวเข้มกับคิระได้ทันทีค่ะ 🌸",
+        study_empty_placeholder: "เลือกโหมดที่ต้องการ แล้ววางเนื้อหาบทเรียนเพื่อเริ่มทบทวนกับคิระได้ทันทีค่ะ",
         boardroom_modal_badge: "สภาที่ปรึกษาเสมือน",
-        boardroom_modal_desc: "ระดมสมอง 4 ขุนพลผู้บริหารระดับสูง ร่วมวิเคราะห์ ถกเถียง หักล้าง และสังเคราะห์มติเอกฉันท์แบบ 360 องศา",
+        boardroom_modal_desc: "ระดมสมองผู้บริหาร 4 ฝ่าย ร่วมวิเคราะห์ ถกเถียง ตรวจสอบจุดอ่อน และสังเคราะห์มติแบบ 360 องศา",
         boardroom_ceo_role: "CEO • วิสัยทัศน์ & กลยุทธ์",
         boardroom_cfo_role: "CFO • การเงิน & ความเสี่ยง",
         boardroom_cpo_role: "CPO • ประสบการณ์ผู้ใช้ & ตลาด",
@@ -14330,9 +14361,9 @@ const KIRA_I18N = {
         boardroom_step_1: "แถลงมุมมองเดี่ยว 4 ด้าน",
         boardroom_step_2: "การถกเถียง & หักล้างจุดอ่อน",
         boardroom_step_3: "มติเอกฉันท์ & แผน 90 วัน",
-        boardroom_btn_start: "เริ่มเปิดวาระการประชุมทันที",
+        boardroom_btn_start: "เปิดวาระการประชุม",
         debate_header_title: "สภาผู้บริหารจำลองสถานการณ์และดีเบตสด",
-        debate_header_desc: "วิเคราะห์เชิงลึก ถกเถียงสด 4 มุมมอง พร้อมแท่นเคาะค้อนสั่งการของท่านประธาน",
+        debate_header_desc: "วิเคราะห์เชิงลึก ถกเถียงสด 4 มุมมอง พร้อมคำสั่งแทรกแซงจากประธานการประชุม",
         debate_topic_label: "วาระการประชุม / โจทย์ธุรกิจ:",
         debate_topic_placeholder: "เช่น แผนการเปิดตัวผลิตภัณฑ์ใหม่ใน 30 วัน, การลดงบประมาณ 50%, หรือกลยุทธ์เจาะตลาด B2B...",
         proactive_time_just_now: "เมื่อสักครู่",
@@ -14368,9 +14399,9 @@ const KIRA_I18N = {
         share_tab_canvas: "แชร์ผลงาน Canvas",
         share_title_placeholder: "ระบุหัวข้อที่ต้องการแชร์...",
         share_link_label: "ลิงก์สาธารณะ (Public URL):",
-        share_card_title: "การ์ดรูปภาพไวรัลสำหรับโพสต์โซเชียล (1200x630)",
+        share_card_title: "ตัวอย่างการ์ดภาพสำหรับแชร์ (1200x630)",
         feedback_modal_title: "ส่งความคิดเห็นให้ Kira",
-        feedback_modal_subtitle: "คำติชมของคุณจะช่วยให้ Kira ฉลาดขึ้นในอนาคต!",
+        feedback_modal_subtitle: "ความคิดเห็นของคุณช่วยให้คิระพัฒนาคุณภาพได้ดียิ่งขึ้นค่ะ",
         feedback_placeholder: "พิมพ์คำแนะนำ หรือสิ่งที่คุณอยากให้ Kira ปรับปรุง...",
         feedback_btn_submit: "ส่งรีวิว (Submit)",
         feedback_btn_cancel: "ยกเลิก (Cancel)",
@@ -14380,7 +14411,7 @@ const KIRA_I18N = {
         share_title_label: "หัวข้อผลงานหรือบทสนทนา:",
         share_generating_link: "กำลังสร้างลิงก์แชร์...",
         toast_connecting: "กำลังเชื่อมต่อเซิร์ฟเวอร์คิระ...",
-        cloud_free_quota: "Kira 2.9 Flagship • ใช้งานฟรี 150 ข้อความ/วัน",
+        cloud_free_quota: "Kira 2.9 • ใช้งานฟรี 15 ข้อความ/วัน",
         auth_or_quick_register: "หรือสมัครสมาชิกด่วนด้วย",
         pwa_modal_title: "ติดตั้งแอป Kira AI",
         pwa_modal_desc: "เปิดใช้งานแบบเต็มจอ รวดเร็ว และเข้าถึงง่ายจากหน้าจอของคุณ",
@@ -14423,9 +14454,9 @@ const KIRA_I18N = {
         thinking_opt_alwaysopen: "เปิดค้างไว้เสมอ (ดูทุกขั้นตอนทันที)",
         resilience_title: "เกราะส่งต่ออัจฉริยะ (Circuit Breaker & Fallback)",
         resilience_desc: "เมื่อโมเดลหลักขัดข้องหรือโควต้าหมด ระบบจะสลับไปยังโหนดสำรองทันทีอย่างไร้รอยต่อ",
-        chip_groq: "Primary Cloud Engine (ประมวลผลความเร็วแสง)",
-        chip_openrouter: "Global Redundant Mesh (เครือข่ายสำรองระดับโลก)",
-        chip_gemini: "Deep Cognitive Backbone (ขุมพลังวิเคราะห์เชิงลึก)",
+        chip_groq: "Primary Cloud Engine (ความหน่วงต่ำ)",
+        chip_openrouter: "Global Redundant Mesh (เครือข่ายสำรอง)",
+        chip_gemini: "Deep Cognitive Backbone (โครงสร้างวิเคราะห์เชิงลึก)",
         chip_circuit: "Iron Citadel Circuit Breaker (เปิดใช้งาน)",
         custom_instructions_title: "คำสั่งพิเศษประจำตัว (Custom Instructions)",
         custom_instructions_desc: "ให้ Kira รู้จักคุณดีขึ้นและตอบตรงใจคุณในทุกการสนทนาโดยไม่ต้องบอกซ้ำ",
@@ -14539,7 +14570,27 @@ const KIRA_I18N = {
         lv_sens_noise: "VAD: กันเสียงรบกวน",
         lv_btn_send_now: "ส่งทันที",
         lv_btn_interrupt: "พูดแทรก",
-        lv_btn_end: "วางสาย"
+        lv_btn_end: "วางสาย",
+        lang_switcher_tooltip: "เปลี่ยนภาษา (Change Language)",
+        tools_rmbg_title: "สตูดิโอลบพื้นหลัง (RMBG-1.4)",
+        tools_rmbg_desc: "ลบพื้นหลังภาพบนเบราว์เซอร์โดยตรง",
+        tools_swarm_title: "Multi-Agent Swarm Studio",
+        tools_swarm_desc: "Architect, Researcher, Coder & Reviewer",
+        tools_memory_hub_title: "ศูนย์จัดการความจำ (Memory Hub)",
+        tools_memory_hub_desc: "ดู ค้นหา แก้ไข และจัดการความจำส่วนบุคคล",
+        web_search_active_label: "โหมดค้นหาเว็บสดเปิดใช้งาน (Realtime Grounding)",
+        swarm_active_label: "โหมดฝูงเอเจนต์อัตโนมัติเปิดใช้งาน (Multi-Agent Swarm)",
+        attach_rmbg: "ลบพื้นหลังภาพ (RMBG)",
+        web_search_title: "เปิด/ปิดการค้นหาเว็บสดจากอินเทอร์เน็ต",
+        swarm_toggle_title: "เปิด/ปิดโหมด Multi-Agent Swarm",
+        ollama_failover_title: "Local GPU AI Failover (Ollama Self-Host)",
+        ollama_failover_desc: "เชื่อมต่อ Ollama ในเครื่องเพื่อเป็นโมเดลสำรองเมื่ออินเทอร์เน็ตหรือเซิร์ฟเวอร์ขัดข้อง",
+        ollama_url_label: "Endpoint URL ของ Ollama API",
+        btn_test_ollama: "ทดสอบเชื่อมต่อ",
+        memory_hub_settings_title: "ศูนย์จัดการความจำ & Brain Studio (Memory Hub)",
+        memory_hub_settings_desc: "จัดการข้อเท็จจริง ค้นหา กรองหมวดหมู่ แก้ไข และลบความจำส่วนบุคคลได้อย่างอิสระ",
+        memory_hub_settings_btn: "จัดการความจำ",
+        bank_account_masked_hint: "แสดงเลขบัญชีแบบย่อเพื่อความปลอดภัย สามารถสแกน QR หรือคัดลอกรหัส PromptPay ด้านบนได้เลยค่ะ"
     },
 
     en: {
@@ -14554,7 +14605,7 @@ const KIRA_I18N = {
         mode_executive_title: "Executive Mode: Strategy, contracts, one-click deliverables",
         mode_silver_title: "Silver Care: Extra large text, 100% voice interactive",
         share: "Share",
-        share_title: "Share conversation & generate social viral card",
+        share_title: "Share conversation & generate summary card",
         tools: "Tools",
         tools_title: "Feature hub & tool collection",
         live_voice: "Live Voice",
@@ -14573,6 +14624,7 @@ const KIRA_I18N = {
         sidebar_persona_label: "Response Style:",
         persona_formal: "Formal & Polite",
         persona_casual: "Casual & Friendly",
+        persona_sassy: "Witty & Direct (Sassy)",
         persona_direct: "Direct & Result-driven",
         guide_title: "User Guide (Kira Guide)",
         logout_title: "Log Out",
@@ -14591,7 +14643,7 @@ const KIRA_I18N = {
         chip_exam_prep: "Exam Prep & Keys",
         chip_flashcards: "Review Flashcards",
         chip_problem_solver: "Step-by-Step Solver",
-        chip_study_hub: "Study Co-Pilot ✨",
+        chip_study_hub: "Study Co-Pilot",
 
         // Input & Actions
         input_placeholder: "Type a message to Kira... (Shift+Enter for newline, Ctrl+V to paste image)",
@@ -14626,7 +14678,7 @@ const KIRA_I18N = {
         tools_task_matrix_desc: "Manage task matrix & automated drafts",
         tools_slide_title: "Presentation Slides (16:9)",
         tools_slide_desc: "Create executive keynote deck in 1-click",
-        tools_viral_share_title: "Social Share & Viral Card",
+        tools_viral_share_title: "Share Link & Summary Card",
         tools_viral_share_desc: "Generate share link & download summary card",
         tools_canvas_title: "Interactive Canvas",
         tools_canvas_desc: "Parallel workspace, web app preview & live code",
@@ -14754,8 +14806,8 @@ const KIRA_I18N = {
         auth_guest_btn_desc: "5 free instant messages — zero sign-up friction, no password needed",
         auth_portal_welcome: "Sign in to your account",
         auth_portal_create_title: "Create your Kira account",
-        reg_perk_1_title: "150 Free Messages/Day",
-        reg_perk_1_desc: "Generous daily intelligence quota",
+        reg_perk_1_title: "15 Free Messages/Day",
+        reg_perk_1_desc: "Complimentary daily AI assistant quota",
         reg_perk_2_title: "Cloud Vault Sync",
         reg_perk_2_desc: "Persistent cross-device workspace",
         reg_perk_3_title: "Full Studio Access",
@@ -14780,7 +14832,7 @@ const KIRA_I18N = {
         reg_status_success: "Account created! Signing you in automatically...",
 
         // Share Modal
-        share_modal_title: "Share Conversation & Viral Card",
+        share_modal_title: "Share Conversation & Summary Card",
         share_title_label: "Share Card Title:",
         share_btn_copy: "Copy Link",
         share_btn_download: "Download Image (1200x630)",
@@ -14806,7 +14858,7 @@ const KIRA_I18N = {
         study_output_title: "Study Co-Pilot Results & Summaries",
         study_btn_canvas: "Open in Canvas",
         study_btn_mindmap: "Create Mind Map",
-        study_empty_placeholder: "Select a study mode and paste your learning material to start learning with Kira! 🌸",
+        study_empty_placeholder: "Select a study mode and paste your learning material to begin reviewing with Kira.",
         boardroom_modal_badge: "Virtual Executive Boardroom",
         boardroom_modal_desc: "Convene 4 C-suite executives to debate, challenge, and synthesize 360-degree strategic consensus.",
         boardroom_ceo_role: "CEO • Vision & Strategy",
@@ -14818,7 +14870,7 @@ const KIRA_I18N = {
         boardroom_step_3: "Consensus & 90-Day Plan",
         boardroom_btn_start: "Convene Boardroom Session",
         debate_header_title: "Executive Live Debate Arena",
-        debate_header_desc: "In-depth 4-way debate simulation with interactive Boss Gavel intervention.",
+        debate_header_desc: "Structured 4-perspective debate simulation with live Chairperson directives.",
         debate_topic_label: "Agenda / Strategic Business Topic:",
         debate_topic_placeholder: "e.g., 30-day product launch roadmap, 50% budget cut contingency, or B2B market entry...",
         proactive_time_just_now: "Just now",
@@ -14854,9 +14906,9 @@ const KIRA_I18N = {
         share_tab_canvas: "Share Canvas Work",
         share_title_placeholder: "Enter title for shared card...",
         share_link_label: "Public URL:",
-        share_card_title: "Social Viral Card Preview (1200x630)",
+        share_card_title: "Summary Card Preview (1200x630)",
         feedback_modal_title: "Send Feedback to Kira",
-        feedback_modal_subtitle: "Your feedback empowers Kira to evolve and improve.",
+        feedback_modal_subtitle: "Your feedback helps us improve Kira every day.",
         feedback_placeholder: "Type suggestions or features you'd love to see improved...",
         feedback_btn_submit: "Submit Feedback",
         feedback_btn_cancel: "Cancel",
@@ -14866,7 +14918,7 @@ const KIRA_I18N = {
         share_title_label: "Topic or Work Title:",
         share_generating_link: "Generating share link...",
         toast_connecting: "Connecting to Kira Cloud Server...",
-        cloud_free_quota: "Kira 2.9 Flagship • 150 free messages/day",
+        cloud_free_quota: "Kira 2.9 • 15 free messages/day",
         auth_or_quick_register: "Or quick register with",
         pwa_modal_title: "Install Kira AI Web App",
         pwa_modal_desc: "Launch full-screen, ultra-fast and accessible directly from your home screen.",
@@ -15025,7 +15077,27 @@ const KIRA_I18N = {
         lv_sens_noise: "VAD: Noise Guard",
         lv_btn_send_now: "Send Now",
         lv_btn_interrupt: "Interrupt",
-        lv_btn_end: "End Call"
+        lv_btn_end: "End Call",
+        lang_switcher_tooltip: "Change Language",
+        tools_rmbg_title: "Background Remover Studio",
+        tools_rmbg_desc: "Remove image backgrounds directly in browser",
+        tools_swarm_title: "Multi-Agent Swarm Studio",
+        tools_swarm_desc: "Architect, Researcher, Coder & Reviewer",
+        tools_memory_hub_title: "Memory Hub",
+        tools_memory_hub_desc: "View, search, and edit personal memories",
+        web_search_active_label: "Live Web Search Enabled (Realtime Grounding)",
+        swarm_active_label: "Multi-Agent Swarm Mode Enabled",
+        attach_rmbg: "Remove Background",
+        web_search_title: "Toggle Realtime Web Search",
+        swarm_toggle_title: "Toggle Multi-Agent Swarm Mode",
+        ollama_failover_title: "Local GPU AI Failover (Ollama Self-Host)",
+        ollama_failover_desc: "Connect local Ollama as an offline fallback when cloud nodes are unavailable",
+        ollama_url_label: "Ollama API Endpoint URL",
+        btn_test_ollama: "Test Connection",
+        memory_hub_settings_title: "Memory Hub & Brain Studio",
+        memory_hub_settings_desc: "Manage, search, filter, edit, and delete personal memories freely",
+        memory_hub_settings_btn: "Manage Memory",
+        bank_account_masked_hint: "Account number masked for privacy; scan QR or copy PromptPay ID above."
     },
 
     zh: {
@@ -15059,6 +15131,7 @@ const KIRA_I18N = {
         sidebar_persona_label: "回复风格：",
         persona_formal: "正式严谨",
         persona_casual: "轻松随和",
+        persona_sassy: "犀利直爽 (Sassy)",
         persona_direct: "注重结果、直奔主题",
         guide_title: "使用指南 (Kira Guide)",
         logout_title: "退出登录",
@@ -15077,7 +15150,7 @@ const KIRA_I18N = {
         chip_exam_prep: "模拟考题与解析",
         chip_flashcards: "复习记忆卡",
         chip_problem_solver: "逐步分步解题",
-        chip_study_hub: "学习自习室 ✨",
+        chip_study_hub: "学习自习室",
 
         // Input & Actions
         input_placeholder: "输入消息与 Kira 交流... (Shift+Enter 换行，Ctrl+V 粘贴图片)",
@@ -15112,7 +15185,7 @@ const KIRA_I18N = {
         tools_task_matrix_desc: "管理任务矩阵并自动起草成果",
         tools_slide_title: "演示文稿幻灯片 (16:9)",
         tools_slide_desc: "一键生成高管 Keynote 演示文稿",
-        tools_viral_share_title: "社交分享与爆款卡片",
+        tools_viral_share_title: "社交分享与摘要卡片",
         tools_viral_share_desc: "创建分享链接并下载社交摘要卡片",
         tools_canvas_title: "Interactive Canvas",
         tools_canvas_desc: "并行分屏工作空间、Web 应用预览与实时代码",
@@ -15239,8 +15312,8 @@ const KIRA_I18N = {
         auth_guest_btn_desc: "免费体验 5 条智能问答，无需绑定账号或记忆密码",
         auth_portal_welcome: "登录您的 Kira 账户",
         auth_portal_create_title: "注册 Kira 企业级账户",
-        reg_perk_1_title: "每日免费 150 条",
-        reg_perk_1_desc: "充足的日常智能问答额度",
+        reg_perk_1_title: "每日免费 15 条",
+        reg_perk_1_desc: "每日提供基础智能对话额度",
         reg_perk_2_title: "云端安全同步",
         reg_perk_2_desc: "跨设备保存对话历史与文档",
         reg_perk_3_title: "解锁全套工具",
@@ -15265,7 +15338,7 @@ const KIRA_I18N = {
         reg_status_success: "注册成功！正在为您自动登录...",
 
         // Share Modal
-        share_modal_title: "分享对话与生成社交卡片",
+        share_modal_title: "分享对话与摘要卡片",
         share_title_label: "分享卡片主题：",
         share_btn_copy: "复制链接",
         share_btn_download: "下载高清卡片 (1200x630)",
@@ -15291,9 +15364,9 @@ const KIRA_I18N = {
         study_output_title: "智能解析结果与复习摘要",
         study_btn_canvas: "在画布中打开",
         study_btn_mindmap: "生成思维导图",
-        study_empty_placeholder: "选择所需模式并粘贴学习材料，即可立即与 Kira 一同高效学习 🌸",
+        study_empty_placeholder: "选择所需模式并粘贴学习材料，即可立即与 Kira 一同学习。",
         boardroom_modal_badge: "虚拟高管顾问委员会",
-        boardroom_modal_desc: "集结四大核心高管，从360度全面审视、辩论反驳并合成战略共识蓝图",
+        boardroom_modal_desc: "集结四大核心高管，从360度全面审视、辩论并合成战略共识蓝图",
         boardroom_ceo_role: "CEO • 愿景与战略",
         boardroom_cfo_role: "CFO • 财务与风险",
         boardroom_cpo_role: "CPO • 用户体验与市场",
@@ -15301,9 +15374,9 @@ const KIRA_I18N = {
         boardroom_step_1: "四维视角独立陈述",
         boardroom_step_2: "实时辩论攻防",
         boardroom_step_3: "全票共识与90天执行图",
-        boardroom_btn_start: "立即召开高管会议",
+        boardroom_btn_start: "召开高管会议",
         debate_header_title: "高管现场辩论与情景模拟",
-        debate_header_desc: "四维实时交锋模拟，支持董事长一键落槌干预指导",
+        debate_header_desc: "四维实时交锋模拟，支持主持人一键介入指导",
         debate_topic_label: "会议议程 / 商业战略议题：",
         debate_topic_placeholder: "例如：30天新品上市路线图、缩减50%预算应对方案、B2B市场突破战略...",
         proactive_time_just_now: "刚刚",
@@ -15339,9 +15412,9 @@ const KIRA_I18N = {
         share_tab_canvas: "分享画布作品",
         share_title_placeholder: "输入分享主题...",
         share_link_label: "公开访问链接 (Public URL)：",
-        share_card_title: "社交平台精美分享长图 (1200x630)",
+        share_card_title: "社交分享摘要卡片预览 (1200x630)",
         feedback_modal_title: "向 Kira 反馈建议",
-        feedback_modal_subtitle: "您的宝贵建议将助力 Kira 持续升级与优化！",
+        feedback_modal_subtitle: "您的宝贵建议将帮助 Kira 持续改进与完善。",
         feedback_placeholder: "写下您的建议或期望改进的功能...",
         feedback_btn_submit: "提交反馈 (Submit)",
         feedback_btn_cancel: "取消 (Cancel)",
@@ -15351,7 +15424,7 @@ const KIRA_I18N = {
         share_title_label: "分享标题或议题：",
         share_generating_link: "正在生成分享链接...",
         toast_connecting: "正在连接 Kira 云端服务器...",
-        cloud_free_quota: "Kira 2.9 旗舰版运行中 • 每日免费 150 条消息",
+        cloud_free_quota: "Kira 2.9 运行中 • 每日免费 15 条消息",
         auth_or_quick_register: "或通过第三方快速注册",
         pwa_modal_title: "安装 Kira AI 桌面应用",
         pwa_modal_desc: "全屏秒开体验，极致流畅，随时随地从桌面快速进入",
@@ -15510,7 +15583,27 @@ const KIRA_I18N = {
         lv_sens_noise: "灵敏度：抗噪",
         lv_btn_send_now: "立即发送",
         lv_btn_interrupt: "打断发言",
-        lv_btn_end: "挂断"
+        lv_btn_end: "挂断",
+        lang_switcher_tooltip: "切换语言",
+        tools_rmbg_title: "智能抠图工作室",
+        tools_rmbg_desc: "在浏览器中直接移除图片背景",
+        tools_swarm_title: "Multi-Agent Swarm Studio",
+        tools_swarm_desc: "规划、调研、编码与审查",
+        tools_memory_hub_title: "认知记忆中心",
+        tools_memory_hub_desc: "查看、搜索并管理个人记忆",
+        web_search_active_label: "实时联网检索已启用",
+        swarm_active_label: "多智能体协同模式已启用",
+        attach_rmbg: "移除背景",
+        web_search_title: "开启或关闭实时联网搜索",
+        swarm_toggle_title: "开启或关闭多智能体协同模式",
+        ollama_failover_title: "本地 GPU 备用模型 (Ollama)",
+        ollama_failover_desc: "连接本地 Ollama 作为网络或云端不可用时的备用模型",
+        ollama_url_label: "Ollama API 地址",
+        btn_test_ollama: "测试连接",
+        memory_hub_settings_title: "记忆中心与大脑工作室",
+        memory_hub_settings_desc: "自由查看、筛选、编辑或删除个人事实记忆",
+        memory_hub_settings_btn: "管理记忆",
+        bank_account_masked_hint: "为保障隐私已隐藏部分账号，可扫描上方二维码或复制 PromptPay 号码。"
     },
 
     ko: {
@@ -15544,6 +15637,7 @@ const KIRA_I18N = {
         sidebar_persona_label: "응답 스타일:",
         persona_formal: "공식적이고 정중함",
         persona_casual: "친근하고 편안함",
+        persona_sassy: "위트 있고 직설적 (Sassy)",
         persona_direct: "결과 중심적, 명확함",
         guide_title: "사용자 가이드 (Kira Guide)",
         logout_title: "로그아웃",
@@ -15562,7 +15656,7 @@ const KIRA_I18N = {
         chip_exam_prep: "예상문제 & 정답해설",
         chip_flashcards: "복습 플래시카드",
         chip_problem_solver: "단계별 문제 풀이",
-        chip_study_hub: "스터디 룸 ✨",
+        chip_study_hub: "스터디 룸",
 
         // Input & Actions
         input_placeholder: "Kira에게 메시지를 입력하세요... (줄바꿈 Shift+Enter, 붙여넣기 Ctrl+V)",
@@ -15597,7 +15691,7 @@ const KIRA_I18N = {
         tools_task_matrix_desc: "태스크 매트릭스 및 자동 초안 관리",
         tools_slide_title: "프레젠테이션 슬라이드 (16:9)",
         tools_slide_desc: "원클릭 임원 프레젠테이션 덱 생성",
-        tools_viral_share_title: "소셜 공유 & 바이럴 카드",
+        tools_viral_share_title: "소셜 공유 & 요약 카드",
         tools_viral_share_desc: "공유 링크 생성 및 요약 카드 다운로드",
         tools_canvas_title: "Interactive Canvas",
         tools_canvas_desc: "스플릿 작업 공간, 웹앱 미리보기 및 실시간 코드",
@@ -15725,8 +15819,8 @@ const KIRA_I18N = {
         auth_guest_btn_desc: "계정 연결이나 비밀번호 없이 무료로 5회 대화 체험 가능",
         auth_portal_welcome: "계정에 로그인하세요",
         auth_portal_create_title: "새 Kira 계정 만들기",
-        reg_perk_1_title: "일 150회 무료 메시지",
-        reg_perk_1_desc: "매일 넉넉한 인공지능 사용량 제공",
+        reg_perk_1_title: "일 15회 무료 메시지",
+        reg_perk_1_desc: "매일 기본 인공지능 대화 사용량 제공",
         reg_perk_2_title: "클라우드 보관함 동기화",
         reg_perk_2_desc: "모든 기기에서 대화 및 문서 저장",
         reg_perk_3_title: "모든 스튜디오 잠금 해제",
@@ -15751,7 +15845,7 @@ const KIRA_I18N = {
         reg_status_success: "회원가입 완료! 자동으로 로그인합니다...",
 
         // Share Modal
-        share_modal_title: "대화 공유 및 바이럴 카드 생성",
+        share_modal_title: "대화 공유 및 요약 카드 생성",
         share_title_label: "공유 카드 제목:",
         share_btn_copy: "링크 복사",
         share_btn_download: "카드 이미지 다운로드 (1200x630)",
@@ -15777,9 +15871,9 @@ const KIRA_I18N = {
         study_output_title: "학습 분석 결과 및 요약",
         study_btn_canvas: "Canvas에서 열기",
         study_btn_mindmap: "Mind Map 생성",
-        study_empty_placeholder: "원하는 모드를 선택하고 학습 내용을 붙여넣어 Kira와 학습을 시작하세요 🌸",
+        study_empty_placeholder: "원하는 모드를 선택하고 학습 내용을 붙여넣어 Kira와 학습을 시작하세요.",
         boardroom_modal_badge: "가상 고위 임원 이사회",
-        boardroom_modal_desc: "4인의 C-Level 임원진이 다각도로 토론하고 반론하며 360도 전략적 합의안을 도출합니다.",
+        boardroom_modal_desc: "4인의 임원진이 다각도로 토론하고 검토하여 360도 전략 합의안을 도출합니다.",
         boardroom_ceo_role: "CEO • 비전 & 전략",
         boardroom_cfo_role: "CFO • 재무 & 리스크 관리",
         boardroom_cpo_role: "CPO • 사용자 경험 & 시장",
@@ -15789,7 +15883,7 @@ const KIRA_I18N = {
         boardroom_step_3: "최종 만장일치 & 90일 계획",
         boardroom_btn_start: "이사회 안건 즉시 개회",
         debate_header_title: "임원진 실시간 디베이트 아레나",
-        debate_header_desc: "4가지 관점의 심층 토론 및 의장(보스)의 봉사 개입 지원",
+        debate_header_desc: "4가지 관점의 심층 토론 및 의장의 직접 개입을 지원합니다.",
         debate_topic_label: "회의 안건 / 비즈니스 과제:",
         debate_topic_placeholder: "예: 30일 신제품 런칭 로드맵, 예산 50% 절감 방안, B2B 시장 진입 전략...",
         proactive_time_just_now: "방금 전",
@@ -15825,9 +15919,9 @@ const KIRA_I18N = {
         share_tab_canvas: "Canvas 결과물 공유",
         share_title_placeholder: "공유할 제목을 입력하세요...",
         share_link_label: "공개 링크 (Public URL):",
-        share_card_title: "SNS용 바이럴 카드 미리보기 (1200x630)",
+        share_card_title: "공유 요약 카드 미리보기 (1200x630)",
         feedback_modal_title: "Kira에게 의견 보내기",
-        feedback_modal_subtitle: "여러분의 소중한 피드백이 Kira를 더욱 스마트하게 만듭니다!",
+        feedback_modal_subtitle: "여러분의 소중한 피드백이 Kira의 품질 향상에 도움이 됩니다.",
         feedback_placeholder: "Kira에게 바라는 점이나 개선 사항을 입력해 주세요...",
         feedback_btn_submit: "피드백 제출 (Submit)",
         feedback_btn_cancel: "취소 (Cancel)",
@@ -15837,7 +15931,7 @@ const KIRA_I18N = {
         share_title_label: "공유할 제목 또는 작업명:",
         share_generating_link: "공유 링크 생성 중...",
         toast_connecting: "Kira 클라우드 서버에 연결 중...",
-        cloud_free_quota: "Kira 2.9 플래그십 활성화 • 일 150회 무료 메시지",
+        cloud_free_quota: "Kira 2.9 • 일 15회 무료 메시지",
         auth_or_quick_register: "또는 간편 회원가입",
         pwa_modal_title: "Kira AI 앱 설치",
         pwa_modal_desc: "홈 화면에서 바로 실행되는 빠르고 쾌적한 풀스크린 웹앱 환경",
@@ -15996,7 +16090,27 @@ const KIRA_I18N = {
         lv_sens_noise: "VAD: 소음 차단",
         lv_btn_send_now: "즉시 전송",
         lv_btn_interrupt: "말 끊기",
-        lv_btn_end: "통화 종료"
+        lv_btn_end: "통화 종료",
+        lang_switcher_tooltip: "언어 변경",
+        tools_rmbg_title: "배경 제거 스튜디오",
+        tools_rmbg_desc: "브라우저에서 직접 이미지 배경 제거",
+        tools_swarm_title: "Multi-Agent Swarm Studio",
+        tools_swarm_desc: "설계, 조사, 코딩 및 검토",
+        tools_memory_hub_title: "메모리 허브",
+        tools_memory_hub_desc: "개인 메모리 조회, 검색 및 편집",
+        web_search_active_label: "실시간 웹 검색 활성화됨",
+        swarm_active_label: "멀티 에이전트 모드 활성화됨",
+        attach_rmbg: "배경 제거",
+        web_search_title: "실시간 웹 검색 켜기/끄기",
+        swarm_toggle_title: "멀티 에이전트 모드 켜기/끄기",
+        ollama_failover_title: "로컬 GPU 장애 조치 (Ollama)",
+        ollama_failover_desc: "클라우드 오류 시 대체 모델로 로컬 Ollama 연결",
+        ollama_url_label: "Ollama API 엔드포인트 URL",
+        btn_test_ollama: "연결 테스트",
+        memory_hub_settings_title: "메모리 허브 & 브레인 스튜디오",
+        memory_hub_settings_desc: "개인 기억을 자유롭게 검색, 분류, 편집 및 삭제하세요",
+        memory_hub_settings_btn: "메모리 관리",
+        bank_account_masked_hint: "개인정보 보호를 위해 계좌 일부가 가려져 있습니다. 상단 QR 스캔 또는 PromptPay 번호를 복사해 주세요."
     },
 
     ja: {
@@ -16030,6 +16144,7 @@ const KIRA_I18N = {
         sidebar_persona_label: "応答スタイル：",
         persona_formal: "丁寧・ビジネス",
         persona_casual: "フレンドリー",
+        persona_sassy: "ウィット・率直 (Sassy)",
         persona_direct: "結論重視・簡潔",
         guide_title: "ユーザーガイド (Kira Guide)",
         logout_title: "ログアウト",
@@ -16048,7 +16163,7 @@ const KIRA_I18N = {
         chip_exam_prep: "予想問題＆詳細解説",
         chip_flashcards: "復習フラッシュカード",
         chip_problem_solver: "段階別ステップ解説",
-        chip_study_hub: "スタディハブ ✨",
+        chip_study_hub: "スタディハブ",
 
         // Input & Actions
         input_placeholder: "Kiraにメッセージを入力... (Shift+Enterで改行、Ctrl+Vで画像貼付)",
@@ -16083,7 +16198,7 @@ const KIRA_I18N = {
         tools_task_matrix_desc: "タスク管理＆自動ドラフト生成",
         tools_slide_title: "プレゼンテーションスライド (16:9)",
         tools_slide_desc: "ワンクリックで役員向けプレゼン資料を生成",
-        tools_viral_share_title: "SNS共有＆バイラルカード",
+        tools_viral_share_title: "SNS共有＆サマリーカード",
         tools_viral_share_desc: "共有リンク生成＆SNS用要約カードを保存",
         tools_canvas_title: "Interactive Canvas",
         tools_canvas_desc: "分割ワークスペース、Webアプリプレビュー＆生コード",
@@ -16211,8 +16326,8 @@ const KIRA_I18N = {
         auth_guest_btn_desc: "アカウント作成不要・無料で5メッセージまで即座にお試し可能",
         auth_portal_welcome: "アカウントにサインイン",
         auth_portal_create_title: "Kira 新規アカウント作成",
-        reg_perk_1_title: "1日150件まで無料",
-        reg_perk_1_desc: "毎日ゆとりのあるAI処理枠を提供",
+        reg_perk_1_title: "1日15件まで無料",
+        reg_perk_1_desc: "毎日の基本AIチャット利用枠を提供",
         reg_perk_2_title: "クラウド保管庫同期",
         reg_perk_2_desc: "デバイス間で履歴と文書を安全保存",
         reg_perk_3_title: "全スタジオ解放",
@@ -16237,7 +16352,7 @@ const KIRA_I18N = {
         reg_status_success: "登録完了！自動的にサインインしています...",
 
         // Share Modal
-        share_modal_title: "対話の共有＆ソーシャルカード作成",
+        share_modal_title: "対話の共有＆サマリーカード",
         share_title_label: "共有カードのタイトル：",
         share_btn_copy: "リンクをコピー",
         share_btn_download: "カード画像を保存 (1200x630)",
@@ -16263,9 +16378,9 @@ const KIRA_I18N = {
         study_output_title: "学習分析結果＆まとめ",
         study_btn_canvas: "Canvasで開く",
         study_btn_mindmap: "マインドマップ生成",
-        study_empty_placeholder: "モードを選択し、学習教材を貼り付けてKiraと一緒に学びを始めましょう 🌸",
+        study_empty_placeholder: "モードを選択し、学習教材を貼り付けてKiraと一緒に学びを始めましょう。",
         boardroom_modal_badge: "バーチャル役員会",
-        boardroom_modal_desc: "4名のトップ役員が集結し、360度の視点から多角的に分析・討論し、戦略合意書を策定します。",
+        boardroom_modal_desc: "4名の役員が集結し、360度の視点から多角的に分析・討論し、戦略合意書を策定します。",
         boardroom_ceo_role: "CEO • ビジョン＆戦略",
         boardroom_cfo_role: "CFO • 財務＆リスク管理",
         boardroom_cpo_role: "CPO • ユーザー体験＆市場",
@@ -16273,9 +16388,9 @@ const KIRA_I18N = {
         boardroom_step_1: "4視点個別ステートメント",
         boardroom_step_2: "リアルタイム相互討論",
         boardroom_step_3: "最終合意＆90日実行計画",
-        boardroom_btn_start: "役員会議を即座に開会",
+        boardroom_btn_start: "役員会議を開会",
         debate_header_title: "役員ライブ討論アリーナ",
-        debate_header_desc: "4つの視点による白熱討論＆議長（ボス）の木槌介入サポート",
+        debate_header_desc: "4つの視点による討論と議長からの進行指示に対応しています。",
         debate_topic_label: "会議アジェンダ・事業課題：",
         debate_topic_placeholder: "例：30日以内の新製品ローンチ計画、予算50%削減対策、B2B市場参入戦略...",
         proactive_time_just_now: "たった今",
@@ -16298,7 +16413,7 @@ const KIRA_I18N = {
         vault_cat_slides: "スライド資料 (16:9)",
         vault_cat_tasks: "タスク＆成果物",
         task_matrix_modal_title: "タスクマトリクス＆成果物ボード",
-        task_matrix_modal_desc: "次世代タスク実行システム：成果物の自動ドラフト生成＆4名役員によるリスク評価",
+        task_matrix_modal_desc: "タスク実行システム：成果物の自動ドラフト生成と4視点によるリスク評価",
         task_btn_new: "新規タスク",
         task_tab_eisenhower: "アイゼンハワーマトリクス (4領域)",
         task_tab_kanban: "カンバンボード",
@@ -16311,9 +16426,9 @@ const KIRA_I18N = {
         share_tab_canvas: "キャンバス作品を共有",
         share_title_placeholder: "共有カードのタイトルを入力...",
         share_link_label: "公開リンク (Public URL)：",
-        share_card_title: "SNS用バイラルカード画像 (1200x630)",
+        share_card_title: "共有用サマリーカード (1200x630)",
         feedback_modal_title: "Kiraにご意見・フィードバックを送信",
-        feedback_modal_subtitle: "皆様からのフィードバックがKiraのさらなる成長につながります！",
+        feedback_modal_subtitle: "皆様からのフィードバックがKiraの品質向上に役立ちます。",
         feedback_placeholder: "改善してほしい点やご要望を入力してください...",
         feedback_btn_submit: "送信する (Submit)",
         feedback_btn_cancel: "キャンセル (Cancel)",
@@ -16323,7 +16438,7 @@ const KIRA_I18N = {
         share_title_label: "共有タイトルまたは課題名：",
         share_generating_link: "共有リンクを生成中...",
         toast_connecting: "Kiraクラウドサーバーに接続中...",
-        cloud_free_quota: "Kira 2.9 フラッグシップ稼働中 • 1日150件まで無料",
+        cloud_free_quota: "Kira 2.9 • 1日15件まで無料",
         auth_or_quick_register: "または以下のサービスで登録",
         pwa_modal_title: "Kira AI アプリをインストール",
         pwa_modal_desc: "ホーム画面から瞬時に起動。全画面で快適な操作環境を提供します。",
@@ -16482,7 +16597,27 @@ const KIRA_I18N = {
         lv_sens_noise: "VAD: ノイズ抑制",
         lv_btn_send_now: "今すぐ送信",
         lv_btn_interrupt: "割り込む",
-        lv_btn_end: "通話終了"
+        lv_btn_end: "通話終了",
+        lang_switcher_tooltip: "言語切り替え",
+        tools_rmbg_title: "背景切り抜きスタジオ",
+        tools_rmbg_desc: "ブラウザ上で直接背景を削除",
+        tools_swarm_title: "Multi-Agent Swarm Studio",
+        tools_swarm_desc: "設計・調査・実装・検証の連携",
+        tools_memory_hub_title: "メモリハブ",
+        tools_memory_hub_desc: "個人メモリの閲覧・検索・編集",
+        web_search_active_label: "リアルタイムWeb検索が有効です",
+        swarm_active_label: "マルチエージェントモードが有効です",
+        attach_rmbg: "背景削除",
+        web_search_title: "リアルタイムWeb検索の切り替え",
+        swarm_toggle_title: "マルチエージェントモードの切り替え",
+        ollama_failover_title: "ローカルGPUフォールバック (Ollama)",
+        ollama_failover_desc: "クラウド障害時の代替としてローカルOllamaに接続します",
+        ollama_url_label: "Ollama API エンドポイントURL",
+        btn_test_ollama: "接続テスト",
+        memory_hub_settings_title: "メモリハブ & ブレインスタジオ",
+        memory_hub_settings_desc: "個人メモリを自由に検索・分類・編集・削除できます",
+        memory_hub_settings_btn: "メモリ管理",
+        bank_account_masked_hint: "プライバシー保護のため口座番号を一部伏せています。上のQRスキャンまたはPromptPay番号をご利用ください。"
     }
 };
 
@@ -18433,7 +18568,7 @@ function initRMBGController() {
                 if (btnSendChat) btnSendChat.disabled = false;
 
                 if (typeof showToast === 'function') {
-                    showToast('🪄 ลบวัตถุเนียนกริบด้วย Meta SAM 3 เรียบร้อยแล้วค่ะ!', 'success');
+                    showToast('ลบวัตถุออกจากภาพเรียบร้อยแล้วค่ะ', 'success');
                 }
             } catch (err) {
                 console.error('Meta SAM inpainting error:', err);
@@ -19166,7 +19301,7 @@ function initTranscribeController() {
                     </div>
 
                     <div class="footer">
-                        จัดทำโดย Kira 2.9 Flagship Neural Audio Studio
+                        จัดทำโดย Kira 2.9 Neural Audio Studio
                     </div>
 
                     <script>

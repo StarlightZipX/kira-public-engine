@@ -26,7 +26,7 @@ import asyncio
 sys.stdout.reconfigure(encoding='utf-8')
 
 from fastapi.testclient import TestClient
-from app import app, verify_line_signature, process_line_chat_event, execute_query, LINE_CHANNEL_SECRET
+from app import app, verify_line_signature, process_line_chat_event, execute_query, LINE_CHANNEL_SECRET, KIRA_SYSTEM_VERSION
 
 client = TestClient(app)
 
@@ -37,7 +37,7 @@ def test_line_health_endpoint():
     data = resp.json()
     assert data.get("status") == "online"
     assert "LINE Official Account" in data.get("service")
-    assert str(data.get("version", "")).startswith("2.7")
+    assert data.get("version") == KIRA_SYSTEM_VERSION, f"Expected version {KIRA_SYSTEM_VERSION}, got {data.get('version')}"
     print(f"  ✅ Status: {data.get('status')} | Service: {data.get('service')} | Version: {data.get('version')}")
 
 def test_signature_verification_logic():

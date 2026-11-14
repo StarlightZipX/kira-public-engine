@@ -6,7 +6,7 @@
     <title>{{ title }} | Kira AI</title>
     
     <!-- OpenGraph Social Meta Tags (Facebook, Discord, LinkedIn) -->
-    <meta property="og:site_name" content="Kira AI - Next-Gen Intelligence">
+    <meta property="og:site_name" content="Kira AI Workspace">
     <meta property="og:title" content="{{ title }} | สร้างโดย Kira AI">
     <meta property="og:description" content="{{ excerpt }}">
     <meta property="og:url" content="{{ share_url }}">
@@ -102,11 +102,9 @@
 
         .brand-text h1 {
             font-size: 1.15rem;
-            font-weight: 800;
+            font-weight: 700;
             letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #f8fafc;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -114,14 +112,14 @@
 
         .brand-badge {
             font-size: 0.65rem;
-            padding: 2px 7px;
-            background: rgba(56, 189, 248, 0.15);
-            border: 1px solid rgba(56, 189, 248, 0.35);
-            color: #7dd3fc;
+            padding: 2px 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: #cbd5e1;
             border-radius: 999px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            font-weight: 700;
+            font-weight: 600;
         }
 
         .header-actions {
@@ -131,8 +129,8 @@
         }
 
         .btn-cta {
-            background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
-            color: #ffffff;
+            background: #f8fafc;
+            color: #0b0c10;
             padding: 8px 16px;
             border-radius: 999px;
             font-size: 0.88rem;
@@ -141,16 +139,16 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+            box-shadow: none;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.25s ease;
+            transition: background 0.15s ease, transform 0.15s ease;
             cursor: pointer;
         }
 
         .btn-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.6);
-            background: linear-gradient(135deg, #0369a1 0%, #1d4ed8 100%);
+            transform: translateY(-1px);
+            box-shadow: none;
+            background: #e2e8f0;
         }
 
         .btn-action {
@@ -493,8 +491,8 @@
             height: 44px;
             border-radius: 12px;
             object-fit: cover;
-            border: 1px solid rgba(56, 189, 248, 0.5);
-            box-shadow: 0 0 12px var(--primary-glow);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: none;
         }
 
         .bar-info h4 {
@@ -669,13 +667,13 @@
     {% if not_found %}
     <!-- 404 Not Found State -->
     <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; text-align: center;">
-        <div style="max-width: 480px; background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 24px; padding: 40px 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-            <i class="fa-solid fa-link-slash" style="font-size: 3.5rem; color: #f43f5e; margin-bottom: 20px;"></i>
-            <h2 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 10px;">ไม่พบข้อมูลที่แชร์ค่ะ</h2>
+        <div style="max-width: 480px; background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 18px; padding: 40px 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+            <i class="fa-solid fa-link-slash" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 18px;"></i>
+            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 10px; color: #f8fafc;">ไม่พบข้อมูลที่แชร์ค่ะ</h2>
             <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6; margin-bottom: 24px;">
-                ลิงก์บทสนทนาหรือผลงานนี้อาจหมดอายุ หรือถูกนำออกจากระบบแล้วค่ะ บอสและผู้ใช้สามารถเข้าสู่ระบบและเริ่มคุยกับ Kira ใหม่ได้เสมอนะคะ 🌸
+                ลิงก์บทสนทนาหรือผลงานนี้อาจหมดอายุ หรือถูกนำออกจากระบบแล้วค่ะ ผู้ใช้งานสามารถเข้าสู่ระบบเพื่อเริ่มบทสนทนาใหม่กับ Kira ได้เสมอนะคะ
             </p>
-            <a href="/" class="btn-cta" style="padding: 12px 24px; font-size: 1rem;">
+            <a href="/" class="btn-cta" style="padding: 11px 22px; font-size: 0.95rem;">
                 <i class="fa-solid fa-house"></i> กลับสู่หน้าหลัก Kira AI
             </a>
         </div>

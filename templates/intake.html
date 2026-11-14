@@ -104,13 +104,12 @@
         }
 
         .glass-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-glass);
-            border-radius: 20px;
+            background: #101116;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
             padding: 32px;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 30px rgba(56, 189, 248, 0.05);
-            transition: border-color 0.3s ease;
+            box-shadow: 0 20px 44px -18px rgba(0, 0, 0, 0.72);
+            transition: border-color 0.2s ease;
         }
 
         .feature-ribbon {
@@ -128,15 +127,15 @@
             gap: 8px;
             font-size: 0.8rem;
             color: #cbd5e1;
-            background: rgba(30, 41, 59, 0.4);
+            background: rgba(255, 255, 255, 0.025);
             padding: 8px 10px;
             border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .feature-item i {
-            color: #38bdf8;
-            font-size: 0.95rem;
+            color: #e2e8f0;
+            font-size: 0.9rem;
         }
 
         .form-group {
@@ -152,7 +151,7 @@
         }
 
         .form-group label .required {
-            color: #f43f5e;
+            color: #f87171;
         }
 
         .form-row {
@@ -164,19 +163,19 @@
         .input-control {
             width: 100%;
             padding: 12px 14px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: #0b0c10;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            color: #fff;
+            color: #f8fafc;
             font-size: 0.92rem;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s ease, background 0.2s ease;
             outline: none;
         }
 
         .input-control:focus {
-            border-color: #38bdf8;
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
-            background: rgba(15, 23, 42, 0.85);
+            border-color: rgba(255, 255, 255, 0.35);
+            box-shadow: none;
+            background: #0d0e14;
         }
 
         textarea.input-control {
@@ -208,7 +207,7 @@
             justify-content: center;
             gap: 6px;
             padding: 10px 12px;
-            background: rgba(30, 41, 59, 0.5);
+            background: rgba(255, 255, 255, 0.025);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 8px;
             font-size: 0.85rem;
@@ -218,27 +217,27 @@
         }
 
         .urgency-option input:checked + .urgency-badge {
-            background: rgba(56, 189, 248, 0.15);
-            border-color: #38bdf8;
-            color: #38bdf8;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+            background: rgba(248, 250, 252, 0.1);
+            border-color: rgba(248, 250, 252, 0.4);
+            color: #f8fafc;
+            box-shadow: none;
         }
 
         .urgency-option.urgent input:checked + .urgency-badge {
-            background: rgba(244, 63, 94, 0.15);
-            border-color: #f43f5e;
-            color: #f43f5e;
-            box-shadow: 0 0 12px rgba(244, 63, 94, 0.2);
+            background: rgba(239, 68, 68, 0.14);
+            border-color: rgba(248, 113, 113, 0.45);
+            color: #fca5a5;
+            box-shadow: none;
         }
 
         .btn-submit {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
-            border: none;
-            border-radius: 12px;
-            color: #fff;
-            font-size: 1rem;
+            padding: 13px 16px;
+            background: #f8fafc;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #0b0c10;
+            font-size: 0.96rem;
             font-weight: 700;
             cursor: pointer;
             display: flex;
@@ -246,13 +245,14 @@
             justify-content: center;
             gap: 8px;
             margin-top: 24px;
-            box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.4);
-            transition: all 0.2s ease;
+            box-shadow: none;
+            transition: background 0.15s ease, transform 0.15s ease;
         }
 
         .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px -5px rgba(56, 189, 248, 0.5);
+            background: #e2e8f0;
+            transform: translateY(-1px);
+            box-shadow: none;
         }
 
         .btn-submit:active {
@@ -260,7 +260,7 @@
         }
 
         .btn-submit:disabled {
-            opacity: 0.6;
+            opacity: 0.55;
             cursor: not-allowed;
             transform: none;
         }
@@ -273,19 +273,19 @@
         }
 
         .success-icon {
-            width: 64px;
-            height: 64px;
-            background: rgba(16, 185, 129, 0.15);
-            border: 2px solid #10b981;
-            color: #10b981;
+            width: 58px;
+            height: 58px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(52, 211, 153, 0.4);
+            color: #34d399;
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 24px;
             margin-bottom: 20px;
-            box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
-            animation: pulseSuccess 2s infinite;
+            box-shadow: none;
+            animation: none;
         }
 
         @keyframes pulseSuccess {

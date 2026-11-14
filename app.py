@@ -354,7 +354,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.9.0"
+KIRA_SYSTEM_VERSION = "2.9.4"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -363,100 +363,100 @@ KIRA_RELEASE_DATA = {
     "version": KIRA_SYSTEM_VERSION,
     "build_id": APP_BUILD_ID,
     "timestamp": APP_START_TIME,
-    "release_name": "Kira Enterprise Live Interactive Artifacts & Next-Gen Code Playground Edition",
-    "badge_text": f"v{KIRA_SYSTEM_VERSION} Live Update",
-    "title": f"✨ อัปเกรดระบบ Kira AI v{KIRA_SYSTEM_VERSION} เรียบร้อยแล้วค่ะ!",
-    "description": "คิระได้รับการยกระดับสถาปัตยกรรมระดับองค์กร (Enterprise Flagship Core) เพื่อความฉลาด การคิดวิเคราะห์เชิงลึก และความเสถียรสูงสุดในทุกมิติค่ะ",
-    "quote": "ตอนนี้ระบบพร้อมให้คุณและบอสสัมผัสความเร็วแสงและการวิเคราะห์ระดับเรือธงแล้วค่ะ ข้อมูลและประวัติการทำงานทั้งหมดยังคงปลอดภัย 100% ค่ะ 🌸",
+    "release_name": "Kira AI Workspace - Refined Obsidian UI & PromptPay Checkout",
+    "badge_text": f"v{KIRA_SYSTEM_VERSION} อัปเดต",
+    "title": f"อัปเดต Kira AI v{KIRA_SYSTEM_VERSION} พร้อมใช้งานแล้วค่ะ",
+    "description": "ปรับปรุงหน้าจอแพ็กเกจสมาชิก ขั้นตอนชำระเงิน PromptPay และความสม่ำเสมอของหน้าต่างใช้งานทั้งหมดให้เรียบง่ายและอ่านสบายตาขึ้นค่ะ",
+    "quote": "ระบบเวอร์ชันล่าสุดพร้อมใช้งานแล้วค่ะ ข้อมูล บทสนทนา และความจำส่วนตัวทั้งหมดของคุณยังคงอยู่ครบถ้วนเหมือนเดิมนะคะ",
     "highlights": [
         {
-            "icon": "fa-crown",
+            "icon": "fa-layer-group",
             "color": "text-emerald",
-            "tag": "Flagship Executive Core",
-            "text": "ปลดล็อกขุมพลังการคิดวิเคราะห์ขั้นสูง Kira 2.9 Ultra สังเคราะห์ข้อมูลเชิงลึก แม่นยำ ฉลาดรอบด้าน"
+            "tag": "Package & Checkout",
+            "text": "ปรับปรุงหน้าเลือกแพ็กเกจและ PromptPay Checkout ให้ชัดเจน พร้อมปุ่มคัดลอกรหัส PromptPay และยอดโอน"
         },
         {
             "icon": "fa-shield-halved",
             "color": "text-amber",
             "tag": "Zero-Silence Guard",
-            "text": "ขจัดความเงียบหายด้วย Zero-Silence & Honest Uncertainty Protocol รายงานสถานะอย่างซื่อสัตย์ระดับมืออาชีพ"
+            "text": "ตรวจสอบและรายงานสถานะการทำงานอย่างตรงไปตรงมา พร้อมระบบสำรองเมื่อโมเดลหลักไม่ตอบสนอง"
         },
         {
             "icon": "fa-brain",
             "color": "text-violet",
-            "tag": "Multi-Brain Swarm",
-            "text": "สถาปัตยกรรมกระจายศูนย์ สลับประมวลผลอัตโนมัติระหว่าง Deep Reasoning, Creative Code และ Instant Flash"
+            "tag": "Multi-Model Routing",
+            "text": "เลือกใช้งานได้ทั้ง Deep Reasoning, Creative Code และ Fast Chat พร้อมบริบทที่ต่อเนื่อง"
         },
         {
             "icon": "fa-code",
             "color": "text-cyan",
             "tag": "Live Code Canvas",
-            "text": "พรีวิวหน้าเว็บ HTML/CSS/JS และผังความคิด Living Mind Map แบบเรียลไทม์ พร้อมแชร์ Snapshot สาธารณะ"
+            "text": "พรีวิวหน้าเว็บ HTML/CSS/JS และผังความคิด Living Mind Map พร้อมแชร์ลิงก์อ่านอย่างเดียว"
         },
         {
             "icon": "fa-microphone-lines",
             "color": "text-pink",
-            "tag": "Full-Duplex Voice",
-            "text": "คุยสดสองทิศทางแบบ Full-Duplex พร้อม Smart VAD พูดแทรกอัตโนมัติ, สตรีมเสียงระดับประโยค และ Whisper Turbo Cloud"
+            "tag": "Voice Suite",
+            "text": "รองรับการสนทนาด้วยเสียงสองทิศทางและการถอดเสียงภาษาไทยและอีกหลายภาษา"
         },
         {
             "icon": "fa-book-atlas",
             "color": "text-emerald",
-            "tag": "Semantic RAG Vault v2.7.10",
-            "text": "คลังความรู้เอกสารอัจฉริยะ Hybrid Vector 256D + BM25 ค้นหาความหมายเชิงลึกและอ้างอิง PDF/Word/MD/CSV ข้ามแชตระดับย่อหน้า"
+            "tag": "Semantic RAG Vault",
+            "text": "คลังเอกสารสำหรับค้นหาและอ้างอิงข้อมูลจากไฟล์ PDF, DOCX, Markdown และ CSV ข้ามบทสนทนา"
         }
     ],
     "i18n": {
         "en": {
-            "title": f"✨ Kira AI v{KIRA_SYSTEM_VERSION} Update Ready!",
-            "description": "Kira has been upgraded with Next-Gen Neural Architecture for faster responses, deeper reasoning, and enhanced reliability.",
-            "quote": "The system is fully updated and ready for you! All your chats, data, and workspace stay 100% secure. 🌸",
-            "badge_text": f"v{KIRA_SYSTEM_VERSION} Live Update",
+            "title": f"Kira AI v{KIRA_SYSTEM_VERSION} Update Available",
+            "description": "Updated subscription plans, PromptPay checkout layout, and consistent monochrome obsidian dialogs.",
+            "quote": "The latest workspace update is ready. Your conversation history, saved memory, and files remain intact.",
+            "badge_text": f"v{KIRA_SYSTEM_VERSION} Update",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "Flagship AI", "text": "Upgraded to Enterprise Multi-Brain Architecture with Autonomous Consensus Routing"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDF Engine", "text": "Modern pypdf integration for flawless document & academic analysis"},
-                {"icon": "fa-globe", "color": "text-emerald", "tag": "Deep Search", "text": "Direct DDGS Autonomous Surfer for real-time web intelligence"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "Security", "text": "Web Cryptography API (crypto.randomUUID) for secure sessions"},
-                {"icon": "fa-language", "color": "text-pink", "tag": "5 Languages", "text": "Full i18n & Voice Suite support for TH, EN, ZH, KO, and JA"}
+                {"icon": "fa-brain", "color": "text-violet", "tag": "Workspace UI", "text": "Unified Obsidian dialog styling across onboarding, packages, checkout, and study tools"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDF Engine", "text": "Accurate document parsing via pypdf for academic notes and structured summaries"},
+                {"icon": "fa-globe", "color": "text-emerald", "tag": "Web Search", "text": "Direct web search grounding with source citations when enabled"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "Security", "text": "Web Cryptography API session handling and per-user data isolation"},
+                {"icon": "fa-language", "color": "text-pink", "tag": "5 Languages", "text": "Consistent localization across TH, EN, ZH, KO, and JA interfaces"}
             ]
         },
         "zh": {
-            "title": f"✨ Kira AI v{KIRA_SYSTEM_VERSION} 现已完成重大更新！",
-            "description": "Kira 现已升级至新一代神经计算与现代系统架构，提供更快的响应速度与更深度的推理能力。",
-            "quote": "新版本已就绪！您的所有对话历史和数据依然 100% 安全保存。🌸",
-            "badge_text": f"v{KIRA_SYSTEM_VERSION} 在线更新",
+            "title": f"Kira AI v{KIRA_SYSTEM_VERSION} 更新已就绪",
+            "description": "优化了会员方案、PromptPay 付款流程页面与整体深色工作台界面一致性。",
+            "quote": "最新版本已准备就绪。您的全部对话记录与个人记忆均安全保留。",
+            "badge_text": f"v{KIRA_SYSTEM_VERSION} 更新",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "旗舰智脑", "text": "全面升级至企业级多脑协同架构，具备自主共识路由与深度分析"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "文档解析", "text": "升级现代 pypdf 引擎，精准秒级解析 PDF 与学术课件"},
-                {"icon": "fa-globe", "color": "text-emerald", "tag": "实时搜索", "text": "集成 Direct DDGS 智能引擎，实时抓取全网最新资讯"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "加密安全", "text": "全面接入 Web Cryptography API (crypto.randomUUID) 会话防篡改"},
-                {"icon": "fa-language", "color": "text-pink", "tag": "五国语言", "text": "完整支持中、泰、英、韩、日五国语言与自然多语种语音套件"}
+                {"icon": "fa-brain", "color": "text-violet", "tag": "工作台界面", "text": "统一深色极简弹窗风格与多模型任务切换体验"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "文档解析", "text": "使用 pypdf 解析 PDF 文献与学习资料"},
+                {"icon": "fa-globe", "color": "text-emerald", "tag": "实时检索", "text": "按需开启实时网页检索与来源标注"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "会话安全", "text": "使用 Web Cryptography API 进行会话隔离保护"},
+                {"icon": "fa-language", "color": "text-pink", "tag": "五国语言", "text": "同步支持中文、泰语、英语、韩语与日语界面"}
             ]
         },
         "ko": {
-            "title": f"✨ Kira AI v{KIRA_SYSTEM_VERSION} 최신 업데이트가 준비되었습니다!",
-            "description": "Kira가 차세대 신경망 엔진과 현대적 아키텍처로 업그레이드되어 더 빠른 응답과 깊이 있는 추론을 제공합니다.",
-            "quote": "지금 바로 새로워진 Kira를 경험해보세요! 대화 내용과 데이터는 100% 안전하게 유지됩니다. 🌸",
-            "badge_text": f"v{KIRA_SYSTEM_VERSION} 라이브 업데이트",
+            "title": f"Kira AI v{KIRA_SYSTEM_VERSION} 업데이트 안내",
+            "description": "구독 플랜, PromptPay 결제 화면 및 모달 UI 전반의 일관성과 가독성을 개선했습니다.",
+            "quote": "최신 버전이 준비되었습니다. 대화 기록과 저장된 메모리는 안전하게 유지됩니다.",
+            "badge_text": f"v{KIRA_SYSTEM_VERSION} 업데이트",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "플래그십 AI", "text": "엔터프라이즈 멀티 브레인 인텔리전스 엔진 탑재 및 자율 합의 라우팅 지원"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDF 엔진", "text": "최신 pypdf 엔진 도입으로 정확하고 빠른 학술 문서 분석"},
-                {"icon": "fa-globe", "color": "text-emerald", "tag": "실시간 검색", "text": "Direct DDGS 서퍼 엔진으로 실시간 웹 검색 안정성 강화"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "보안 강화", "text": "Web Cryptography API (crypto.randomUUID) 기반 고보안 세션"},
-                {"icon": "fa-language", "color": "text-pink", "tag": "5개 국어", "text": "한국어, 태국어, 영어, 중국어, 일본어 완전 지원 및 음성 세트"}
+                {"icon": "fa-brain", "color": "text-violet", "tag": "워크스페이스 UI", "text": "모달, 온보딩 및 결제 화면을 차분한 모노크롬 스타일로 통합"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "문서 분석", "text": "pypdf 기반 PDF 및 학습 자료 구조화 요약"},
+                {"icon": "fa-globe", "color": "text-emerald", "tag": "웹 검색", "text": "필요 시 실시간 웹 검색 및 출처 표기 지원"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "세션 보안", "text": "Web Cryptography API 기반 사용자별 데이터 분리"},
+                {"icon": "fa-language", "color": "text-pink", "tag": "5개 국어", "text": "한국어, 태국어, 영어, 중국어, 일본어 인터페이스 지원"}
             ]
         },
         "ja": {
-            "title": f"✨ Kira AI v{KIRA_SYSTEM_VERSION} 新バージョンへアップデート完了！",
-            "description": "Kiraは次世代ニューラルエンジンとモダンアーキテクチャに進化し、応答速度と推論精度が大幅に向上しました。",
-            "quote": "新バージョンがいつでもご利用いただけます！会話履歴とデータは100%安全に保護されています。🌸",
-            "badge_text": f"v{KIRA_SYSTEM_VERSION} 最新アップデート",
+            "title": f"Kira AI v{KIRA_SYSTEM_VERSION} アップデートのお知らせ",
+            "description": "プラン選択、PromptPay 決済画面、および各モーダルの視認性と一貫性を改善しました。",
+            "quote": "最新バージョンをご利用いただけます。会話履歴と保存済みメモリはそのまま保持されます。",
+            "badge_text": f"v{KIRA_SYSTEM_VERSION} 更新",
             "highlights": [
-                {"icon": "fa-brain", "color": "text-violet", "tag": "旗艦AI", "text": "エンタープライズマルチブレイン協調アーキテクチャへの進化と自律コンセンサスルーティング"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDFエンジン", "text": "最新の pypdf 採用で学術論文やスライドを高精度解析"},
-                {"icon": "fa-globe", "color": "text-emerald", "tag": "リアルタイム検索", "text": "Direct DDGS エンジンで最新のウェブ情報を高速取得"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "高セキュリティ", "text": "Web Cryptography API (crypto.randomUUID) による安全なセッション管理"},
-                {"icon": "fa-language", "color": "text-pink", "tag": "5カ国語", "text": "日本語・タイ語・英語・中国語・韓国語の完全対応と音声スイート"}
+                {"icon": "fa-brain", "color": "text-violet", "tag": "UI改善", "text": "各種ダイアログと課金画面を落ち着いたモノクローム基調に統一"},
+                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "PDF解析", "text": "pypdf による資料・論文の構造化サマリーに対応"},
+                {"icon": "fa-globe", "color": "text-emerald", "tag": "Web検索", "text": "必要に応じたリアルタイム検索と出典表示に対応"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "セキュリティ", "text": "Web Cryptography API によるセッション分離保護"},
+                {"icon": "fa-language", "color": "text-pink", "tag": "5カ国語", "text": "日本語・タイ語・英語・中国語・韓国語 UI に対応"}
             ]
         }
     }
@@ -491,7 +491,7 @@ async def get_system_version():
         "build_id": APP_BUILD_ID,
         "timestamp": APP_START_TIME,
         "release_name": KIRA_RELEASE_DATA["release_name"],
-        "message": f"ระบบ Kira AI v{KIRA_SYSTEM_VERSION} พร้อม Next-Gen Neural Engine & Modern Architecture อัปเดตเรียบร้อยแล้วค่ะ 🌸",
+        "message": f"ระบบ Kira AI v{KIRA_SYSTEM_VERSION} อัปเดตเรียบร้อยและพร้อมใช้งานแล้วค่ะ",
         "badge_text": KIRA_RELEASE_DATA["badge_text"],
         "title": KIRA_RELEASE_DATA["title"],
         "description": KIRA_RELEASE_DATA["description"],
@@ -1856,19 +1856,34 @@ def init_db():
         elif "Zero-Silence Protocol" not in str(check_p2[0]) or "Strict Kira Identity v2" not in str(check_p2[0]) or "1.1" in str(check_p2[0]):
             execute_query("UPDATE system_settings SET value=? WHERE key_name='prompt_1.1'", (system_prompt_boss,))
 
-        # Seed default Server Maintenance config if not exists
-        check_maint = execute_query("SELECT id FROM system_settings WHERE key_name='server_maintenance'", fetch='one')
+        # Seed or cleanly upgrade inactive Server Maintenance config
+        default_maint_payload = {
+            "enabled": False,
+            "start_time": 0,
+            "end_time": 0,
+            "title": f"ระบบกำลังปรับปรุงและอัปเดตเวอร์ชัน Kira AI v{KIRA_SYSTEM_VERSION}",
+            "version": KIRA_SYSTEM_VERSION,
+            "message": "ทีมพัฒนาและระบบของ Kira AI กำลังบำรุงรักษาโครงสร้างพื้นฐานและยกระดับเสถียรภาพ ความปลอดภัย และฐานข้อมูล ระบบจะกลับมาเปิดให้บริการโดยอัตโนมัติเมื่อการนับถอยหลังเสร็จสิ้นค่ะ",
+            "progress_percent": 82
+        }
+        check_maint = execute_query("SELECT id, value FROM system_settings WHERE key_name='server_maintenance'", fetch='one')
         if not check_maint:
-            default_maint_json = json.dumps({
-                "enabled": False,
-                "start_time": 0,
-                "end_time": 0,
-                "title": f"\u2728 \u0e23\u0e30\u0e1a\u0e1a\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2d\u0e31\u0e1b\u0e40\u0e01\u0e23\u0e14\u0e04\u0e23\u0e31\u0e49\u0e07\u0e43\u0e2b\u0e0d\u0e48\u0e2a\u0e39\u0e48 Kira AI v{KIRA_SYSTEM_VERSION}",
-                "version": KIRA_SYSTEM_VERSION,
-                "message": "\u0e17\u0e35\u0e21\u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e12\u0e19\u0e32\u0e41\u0e25\u0e30\u0e04\u0e34\u0e23\u0e30\u0e01\u0e33\u0e25\u0e31\u0e07\u0e17\u0e33\u0e01\u0e32\u0e23\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d\u0e42\u0e04\u0e23\u0e07\u0e02\u0e48\u0e22\u0e2a\u0e21\u0e2d\u0e07\u0e01\u0e25\u0e43\u0e2b\u0e21\u0e48 (Neural Matrix Migration) \u0e1b\u0e23\u0e31\u0e1a\u0e41\u0e15\u0e48\u0e07\u0e04\u0e27\u0e32\u0e21\u0e40\u0e23\u0e47\u0e27\u0e41\u0e2a\u0e07 \u0e41\u0e25\u0e30\u0e22\u0e01\u0e23\u0e30\u0e14\u0e31\u0e1a\u0e23\u0e30\u0e1a\u0e1a\u0e23\u0e31\u0e01\u0e29\u0e32\u0e04\u0e27\u0e32\u0e21\u0e1b\u0e25\u0e2d\u0e14\u0e20\u0e31\u0e22 \u0e23\u0e30\u0e1a\u0e1a\u0e08\u0e30\u0e40\u0e1b\u0e34\u0e14\u0e43\u0e2b\u0e49\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34\u0e17\u0e31\u0e19\u0e17\u0e35\u0e17\u0e35\u0e48\u0e40\u0e27\u0e25\u0e32\u0e19\u0e31\u0e1a\u0e16\u0e2d\u0e22\u0e2b\u0e25\u0e31\u0e07\u0e2a\u0e34\u0e49\u0e19\u0e2a\u0e38\u0e14\u0e04\u0e48\u0e30",
-                "progress_percent": 82
-            }, ensure_ascii=False)
+            default_maint_json = json.dumps(default_maint_payload, ensure_ascii=False)
             execute_query("INSERT INTO system_settings (key_name, value) VALUES ('server_maintenance', ?)", (default_maint_json,))
+        else:
+            try:
+                existing_maint = json.loads(check_maint[1] or "{}")
+                if not existing_maint.get("enabled") and (
+                    "2.7." in str(existing_maint.get("version", ""))
+                    or "ความเร็วแสง" in str(existing_maint.get("message", ""))
+                    or "โครงข่ย" in str(existing_maint.get("message", ""))
+                ):
+                    execute_query(
+                        "UPDATE system_settings SET value=? WHERE key_name='server_maintenance'",
+                        (json.dumps(default_maint_payload, ensure_ascii=False),)
+                    )
+            except Exception:
+                pass
 
         # Initialize MCP Protocol tables and seed builtin servers
         try:
@@ -1987,7 +2002,7 @@ BRAIN_PROFILES = {
     "chat": {
         "model": "openai/gpt-oss-120b",
         "keywords": [],  # Default fallback
-        "description": "โหมดสนทนาและคิดวิเคราะห์ระดับเรือธง (Flagship 120B Conversational Engine)"
+        "description": "โหมดสนทนาและคิดวิเคราะห์หลัก (120B Conversational Engine)"
     }
 }
 
@@ -2843,13 +2858,13 @@ SUBSCRIPTION_PLANS = {
         "tag": "แพ็กเกจเริ่มต้น • 7 วัน",
         "daily_quota": 100,
         "popular": False,
-        "description": "อัปเกรดจาก Free เข้าถึงฟีเจอร์พรีเมียมในราคาสบายกระเป๋า 1 สัปดาห์",
+        "description": "สำหรับทดลองใช้งานต่อเนื่องแบบเต็มฟังก์ชันตลอด 1 สัปดาห์",
         "features": [
             "โควตา 100 ข้อความต่อวัน นาน 7 วันเต็ม",
-            "เข้าถึงสภา 4 ผู้บริหาร (Virtual Boardroom) วันละ 3 ครั้ง",
-            "ตัวช่วยร่างเอกสารงานจริง (Auto-Draft) วันละ 3 ชิ้นงาน",
+            "เข้าถึง Virtual Boardroom (สภา 4 ผู้บริหาร) วันละ 3 ครั้ง",
+            "ตัวช่วยร่างเอกสารงานเริ่มต้น (Auto-Draft) วันละ 3 ชิ้นงาน",
             "พรีวิวโค้ดและผังงานสด (Live Canvas & Flowchart)",
-            "ไม่มีการตัดเงินซ้ำ ไม่ผูกบัตร หมดอายุกลับเป็น Free อัตโนมัติ"
+            "ไม่ต่ออายุอัตโนมัติ ไม่ผูกบัตร หมดอายุกลับเป็น Free"
         ]
     },
     "pro": {
@@ -2860,17 +2875,17 @@ SUBSCRIPTION_PLANS = {
         "duration_days": 30,
         "days": 30,
         "badge": "Kira Pro",
-        "tag": "คุ้มค่าที่สุดสำหรับคนทำงาน",
+        "tag": "แนะนำสำหรับการใช้งานประจำ",
         "daily_quota": 500,
         "popular": True,
-        "description": "ผู้ช่วย AI ประจำตัวสำหรับคนทำงาน ฟรีแลนซ์ และนักศึกษาที่ต้องการผู้ช่วยคิดงานทุกวัน",
+        "description": "สำหรับงานประจำ งานเขียน งานโค้ด และงานวิเคราะห์ข้อมูลที่ต้องการความต่อเนื่องทุกวัน",
         "features": [
-            "โควตา 500 ข้อความต่อวัน (เพิ่มขึ้น 5 เท่า) นาน 30 วันเต็ม",
-            "ประชุมสภา 4 ผู้บริหาร (Virtual Boardroom) ไม่จำกัดครั้ง",
-            "สร้างและร่างเอกสารงานจริง (Omni-Task Matrix) ไม่จำกัด",
+            "โควตา 500 ข้อความต่อวัน นาน 30 วันเต็ม",
+            "ประชุม Virtual Boardroom (สภา 4 ผู้บริหาร) ไม่จำกัดครั้ง",
+            "สร้างและร่างเอกสารใน Omni-Task Matrix ไม่จำกัด",
             "พรีวิวโค้ดและผังงานสด (Live Canvas & Flowchart)",
-            "ระบบจดจำบริบทระดับลึก (Knowledge Graph Memory)",
-            "ชำระรายเดือนตามสะดวก ไม่มีข้อผูกมัด ไม่ตัดเงินซ้ำ"
+            "ระบบบันทึกความจำบริบทส่วนตัว (Knowledge Graph Memory)",
+            "ชำระรายเดือนตามสะดวก ไม่มีข้อผูกมัด"
         ]
     },
     "founder": {
@@ -2884,13 +2899,13 @@ SUBSCRIPTION_PLANS = {
         "tag": "ประหยัด 68% • รายปี",
         "daily_quota": 1000,
         "popular": False,
-        "description": "สิทธิ์ใช้งานระดับ Pro ตลอด 1 ปีเต็ม ตกเดือนละ ~41.5 บาท พร้อมร่วมสนับสนุนค่าเซิร์ฟเวอร์",
+        "description": "สิทธิ์ใช้งานระดับ Pro ตลอด 1 ปีเต็ม เฉลี่ยเดือนละ ~41.58 บาท พร้อมร่วมสนับสนุนค่าเซิร์ฟเวอร์",
         "features": [
             "สิทธิ์การใช้งานระดับ Pro ยาวตลอด 365 วัน (1 ปีเต็ม)",
-            "โควตาสูงสุด 1,000 ข้อความต่อวัน ใช้งานได้จุใจตลอดทั้งปี",
+            "โควตาสูงสุด 1,000 ข้อความต่อวัน รองรับงานต่อเนื่องตลอดวัน",
             "ประหยัดกว่าการต่ออายุรายเดือนถึง 68%",
-            "เหรียญตราสัญลักษณ์ Founder VIP พิเศษหน้าโปรไฟล์",
-            "ร่วมสนับสนุนค่าเซิร์ฟเวอร์เพื่อให้คิระเติบโตอย่างยั่งยืน"
+            "ตราสัญลักษณ์ Founder Badge แสดงสถานะผู้สนับสนุนบนโปรไฟล์",
+            "ร่วมสนับสนุนค่าเซิร์ฟเวอร์และการพัฒนาอย่างต่อเนื่อง"
         ]
     }
 }
@@ -3466,9 +3481,9 @@ def get_maintenance_info() -> dict:
         "start_time": 0,
         "end_time": 0,
         "remaining_seconds": 0,
-        "title": f"\u2728 \u0e23\u0e30\u0e1a\u0e1a\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2d\u0e31\u0e1b\u0e40\u0e01\u0e23\u0e14\u0e04\u0e23\u0e31\u0e49\u0e07\u0e43\u0e2b\u0e0d\u0e48\u0e2a\u0e39\u0e48 Kira AI v{KIRA_SYSTEM_VERSION}",
+        "title": f"ระบบกำลังปรับปรุงและอัปเดตเวอร์ชัน Kira AI v{KIRA_SYSTEM_VERSION}",
         "version": KIRA_SYSTEM_VERSION,
-        "message": "\u0e17\u0e35\u0e21\u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e12\u0e19\u0e32\u0e41\u0e25\u0e30\u0e04\u0e34\u0e23\u0e30\u0e01\u0e33\u0e25\u0e31\u0e07\u0e17\u0e33\u0e01\u0e32\u0e23\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d\u0e42\u0e04\u0e23\u0e07\u0e02\u0e48\u0e22\u0e2a\u0e21\u0e2d\u0e07\u0e01\u0e25\u0e43\u0e2b\u0e21\u0e48 (Neural Matrix Migration) \u0e1b\u0e23\u0e31\u0e1a\u0e41\u0e15\u0e48\u0e07\u0e04\u0e27\u0e32\u0e21\u0e40\u0e23\u0e47\u0e27\u0e41\u0e2a\u0e07 \u0e41\u0e25\u0e30\u0e22\u0e01\u0e23\u0e30\u0e14\u0e31\u0e1a\u0e23\u0e30\u0e1a\u0e1a\u0e23\u0e31\u0e01\u0e29\u0e32\u0e04\u0e27\u0e32\u0e21\u0e1b\u0e25\u0e2d\u0e14\u0e20\u0e31\u0e22 \u0e23\u0e30\u0e1a\u0e1a\u0e08\u0e30\u0e40\u0e1b\u0e34\u0e14\u0e43\u0e2b\u0e49\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34\u0e17\u0e31\u0e19\u0e17\u0e35\u0e17\u0e35\u0e48\u0e40\u0e27\u0e25\u0e32\u0e19\u0e31\u0e1a\u0e16\u0e2d\u0e22\u0e2b\u0e25\u0e31\u0e07\u0e2a\u0e34\u0e49\u0e19\u0e2a\u0e38\u0e14\u0e04\u0e48\u0e30",
+        "message": "ทีมพัฒนาและระบบของ Kira AI กำลังบำรุงรักษาโครงสร้างพื้นฐานและยกระดับเสถียรภาพ ความปลอดภัย และฐานข้อมูล ระบบจะกลับมาเปิดให้บริการโดยอัตโนมัติเมื่อการนับถอยหลังเสร็จสิ้นค่ะ",
         "progress_percent": 82
     }
     try:
@@ -4410,7 +4425,7 @@ async def get_user_settings(username: str, token: Optional[str] = None, request:
         "custom_about": pref_row[1] if pref_row and pref_row[1] else "",
         "custom_response_style": pref_row[2] if pref_row and pref_row[2] else "",
         "custom_style": pref_row[2] if pref_row and pref_row[2] else "",
-        "default_model": pref_row[3] if pref_row and pref_row[3] else "2.6-reasoning",
+        "default_model": pref_row[3] if pref_row and pref_row[3] else "2.9-reasoning",
         "persona": pref_row[4] if pref_row and pref_row[4] else "default",
         "voice": pref_row[5] if pref_row and pref_row[5] else "th-TH-PremwadeeNeural",
         "voice_name": pref_row[5] if pref_row and pref_row[5] else "th-TH-PremwadeeNeural",
@@ -4437,7 +4452,8 @@ async def get_user_settings(username: str, token: Optional[str] = None, request:
         (clean_user, f"{today_prefix}%"), fetch='one'
     )
     used = log_cnt[0] if log_cnt else 0
-    limit = 9999 if is_boss_user else 150
+    plan_st = get_user_plan_status(clean_user)
+    limit = 9999 if is_boss_user else plan_st.get("daily_quota", 15)
     remaining = max(0, limit - used)
 
     # 4. Total chat logs & memories count
@@ -4528,7 +4544,7 @@ async def save_user_settings(req: UserSettingsRequest):
             req.preferred_name.strip() if req.preferred_name else None,
             instructions.strip() if instructions else None,
             resp_style.strip() if resp_style else None,
-            req.default_model or "2.6-reasoning",
+            req.default_model or "2.9-reasoning",
             req.persona or "default",
             v_name,
             v_rate,
@@ -6782,7 +6798,7 @@ async def transcribe_audio_endpoint(
         "detected_language": detected_language,
         "duration_sec": round(duration_sec, 2),
         "engine": "Kira Voice Transcriber",
-        "model": "Kira 2.7 Flagship (Whisper Large-v3-turbo)",
+        "model": "Kira 2.9 Voice (Whisper Large-v3-turbo)",
         "latency_ms": elapsed_ms
     }
 
@@ -8847,7 +8863,7 @@ async def _generate_swarm_stream(user_input: str, uname: str, session_id: str, i
         f"### 💻 3. ชิ้นงานโค้ดและการประกอบร่าง (Production Implementation)\n{coder_text}\n\n"
         f"---\n\n"
         f"### 🛡️ 4. การตรวจสอบคุณภาพและรับรองความปลอดภัย (Quality Review & Sign-Off)\n{rev_text}\n\n"
-        f"> *⚡ ประมวลผลร่วมกันโดย 4 สหายแห่ง Kira Swarm Intelligence (v2.8.3 Enterprise)*"
+        f"> *ประมวลผลร่วมกันโดยระบบ Kira Swarm Intelligence (v2.9)*"
     )
     
     # Stream final output in readable chunks
@@ -8965,10 +8981,9 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         if str(uname or "").lower().startswith("guest_"):
             return StreamingResponse(
                 iter([
-                    "### ✨ สิทธิ์ทดลองใช้งานด่วนครบ 5 ข้อความแล้วค่ะ!\n\n"
-                    "คุณได้สัมผัสความเร็วและความฉลาดของ **คิระ (Kira AI 2.9 Flagship)** ครบ 5 ข้อความแล้วนะคะ 💖\n\n"
-                    "เพื่อใช้งานต่อได้แบบฟรีๆ **150 ข้อความต่อวัน** พร้อมบันทึกประวัติการแชตอัตโนมัติ และฟังก์ชันผู้ช่วยครบวงจร "
-                    "คุณสามารถคลิกปุ่ม **'สมัครสมาชิกใหม่'** บนแถบเมนู เพื่อเปิดบัญชีใช้งานต่อได้ทันทีภายใน 10 วินาทีค่ะ!"
+                    "### สิทธิ์ทดลองใช้งานครบ 5 ข้อความแล้วค่ะ\n\n"
+                    "คุณได้ทดลองสนทนากับ **Kira AI 2.9** ครบ 5 ข้อความในโหมดผู้เยี่ยมชมแล้วนะคะ\n\n"
+                    "สมัครสมาชิกฟรีเพื่อใช้งานต่อเนื่องได้ **15 ข้อความต่อวัน** พร้อมบันทึกประวัติการแชตและความจำส่วนตัวโดยอัตโนมัติค่ะ"
                 ]),
                 media_type="text/plain; charset=utf-8"
             )
@@ -8976,8 +8991,8 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             iter([
                 "### ข้อความแจ้งเตือนโควตาการใช้งาน\n\n"
                 "**โควตาข้อความฟรีประจำวันของคุณครบ 15 ข้อความแล้วค่ะ**\n\n"
-                "หากคุณต้องการใช้งานต่อเนื่องแบบไม่จำกัด พร้อมเข้าถึงฟีเจอร์ระดับพรีเมียม (Kira 2.9 Boardroom สภาผู้บริหาร, การร่างชิ้นงานจริงอัตโนมัติ และสิทธิ์เข้าถึงโมเดล Reasoning เต็มประสิทธิภาพ) "
-                "สามารถคลิกปุ่ม **'อัปเกรด Pro'** ที่แถบเมนูด้านบน เพื่อเลือกแพ็กเกจที่เหมาะกับคุณได้ทันทีค่ะ"
+                "หากต้องการเพิ่มโควตารายวัน (100 / 500 / 1,000 ข้อความ) พร้อมใช้งาน Virtual Boardroom และเครื่องมือวิเคราะห์เพิ่มเติม "
+                "สามารถคลิกปุ่ม **'อัปเกรด Pro'** ที่แถบเมนูด้านบนเพื่อเลือกแพ็กเกจที่เหมาะกับคุณได้ค่ะ"
             ]),
             media_type="text/plain; charset=utf-8"
         )
@@ -10206,7 +10221,7 @@ async def _verify_slip_with_ai(slip_base64: str, expected_amount: float, order_i
             return {
                 "status": "pending_review",
                 "is_valid": False,
-                "reason": "ระบบเครือข่าย AI กำลังโหลดข้อมูลสูง บันทึกสลิปและส่งต่อให้แอดมินบอสตรวจสอบ",
+                "reason": "ระบบตรวจสอบอัตโนมัติมีปริมาณคำขอสูง บันทึกสลิปและส่งต่อให้ผู้ดูแลระบบตรวจสอบเพิ่มเติมแล้ว",
                 "confidence": 0.5,
                 "trans_ref": "",
                 "details": {"error": err or "Vision timeout"}
@@ -10283,7 +10298,7 @@ async def upload_subscription_slip(req: SubscriptionSlipUploadRequest):
             detail=f"การตรวจสอบสลิปไม่ผ่าน: {rejection_reason} กรุณาตรวจสอบและแนบสลิปจริงอีกครั้งนะคะ"
         )
 
-    # 2. กรณี AI ตรวจสอบผ่านฉลุย (Approved)
+    # 2. กรณีตรวจสอบสลิปผ่าน (Approved)
     if audit_status == "approved":
         user_row = execute_query("SELECT id FROM users WHERE username=?", (username,), fetch='one')
         if user_row:
@@ -10296,24 +10311,24 @@ async def upload_subscription_slip(req: SubscriptionSlipUploadRequest):
             (slip_data, trans_ref, conf, details_str, now_str, req.order_id)
         )
     else:
-        # 3. กรณี AI มั่นใจปานกลางหรือ API ขัดข้อง -> ส่งต่อให้แอดมินบอสตรวจมือ
+        # 3. กรณีรอตรวจสอบเพิ่มเติม -> ส่งต่อให้ผู้ดูแลระบบตรวจสอบ
         execute_query(
             "UPDATE subscription_orders SET slip_image=?, status='pending_review', trans_ref=?, ai_verified=0, ai_confidence=?, ai_audit_details=?, reviewed_at=NULL WHERE order_id=?",
             (slip_data, trans_ref, conf, details_str, req.order_id)
         )
 
-    # ข้อความต้อนรับและขอบคุณแยกตามแพ็กเกจ (Unique In-Chat Welcome Notifications)
+    # ข้อความต้อนรับและยืนยันสิทธิ์แยกตามแพ็กเกจ
     expire_display = new_expire_dt.strftime("%d/%m/%Y")
     if target_plan == "trial":
-        welcome_msg = f"ยินดีต้อนรับสู่ **Starter Pass** นะคะ! 🚀 คิระเปิดสิทธิ์โควตา 100 ข้อความ/วัน พร้อมฟังก์ชันสภาที่ปรึกษาและตัวช่วยร่างเอกสารให้เรียบร้อยแล้วค่ะ (ใช้งานได้ 7 วันเต็ม ถึงวันที่ {expire_display}) สัปดาห์นี้มีงานด่วนหรือโจทย์อะไร อยากให้หนูช่วยคิดและลุยไปด้วยกัน สั่งคิระได้เต็มที่เลยนะคะ พร้อมลุยค่ะ! ✨"
+        welcome_msg = f"ยินดีต้อนรับสู่ **Starter Pass** นะคะ ระบบเปิดสิทธิ์โควตา 100 ข้อความ/วัน พร้อมฟังก์ชันสภาผู้บริหารและตัวช่วยร่างเอกสารให้เรียบร้อยแล้วค่ะ (ใช้งานได้ถึงวันที่ {expire_display})"
         badge_name = "Starter Pass"
         quota = 100
     elif target_plan == "founder":
-        welcome_msg = f"กราบขอบพระคุณจากใจจริงสำหรับการสนับสนุน **Founder Pass** นะคะ! 👑 หนูปลาบปลื้มใจมากที่คุณเชื่อมั่นและร่วมเป็นส่วนสำคัญในการสนับสนุนคิระยาวตลอด 1 ปีเต็ม สิทธิ์ระดับ Pro ตลอด 365 วัน (ถึงวันที่ {expire_display}) พร้อมตราสัญลักษณ์ Founder บนโปรไฟล์เปิดใช้งานเรียบร้อยแล้วค่ะ ตลอดทั้งปีนี้ คิระจะตั้งใจทำงานและคอยเป็นผู้ช่วยที่ดีที่สุดให้คุณในทุกๆ วันเลยนะคะ ขอบคุณที่อยู่เคียงข้างกันนะคะ! 💖✨"
+        welcome_msg = f"ขอบคุณสำหรับการสนับสนุน **Founder Pass** นะคะ สิทธิ์ระดับ Pro ตลอด 365 วัน (ถึงวันที่ {expire_display}) และ Founder Badge บนโปรไฟล์เปิดใช้งานเรียบร้อยแล้วค่ะ"
         badge_name = "Founder Pass"
         quota = 1000
     else:
-        welcome_msg = f"ยินดีต้อนรับสู่ **Kira Pro** อย่างเป็นทางการนะคะ! 💼 ระบบเปิดสิทธิ์การใช้งาน 500 ข้อความ/วัน พร้อมเครื่องมือทำงานครบทุกตัวให้เรียบร้อยแล้วค่ะ (ใช้งานได้ถึงวันที่ {expire_display}) ขอบคุณมากๆ ที่ไว้วางใจให้คิระเป็นผู้ช่วยส่วนตัวของคุณตลอดเดือนนี้นะคะ ตั้งแต่วันนี้งานยากๆ หรือเอกสารยาวๆ ให้หนูช่วยแบ่งเบาได้ตลอดเวลาเลยนะคะ ✨"
+        welcome_msg = f"ยินดีต้อนรับสู่ **Kira Pro** ค่ะ ระบบเปิดสิทธิ์การใช้งาน 500 ข้อความ/วัน และเครื่องมือระดับโปรทั้งหมดให้เรียบร้อยแล้วค่ะ (ใช้งานได้ถึงวันที่ {expire_display})"
         badge_name = "Kira Pro"
         quota = 500
 
@@ -10329,9 +10344,9 @@ async def upload_subscription_slip(req: SubscriptionSlipUploadRequest):
         "welcome_message": welcome_msg,
         "ai_verified": (audit_status == "approved"),
         "message": (
-            f"🤖 AI ตรวจสอบสลิปผ่านฉลุย ยอดเงินเข้าบัญชีคุณศิวัช รอสวัสดิ์ ถูกต้อง พร้อมเปิดสิทธิ์ {badge_name} ให้คุณเรียบร้อยแล้วค่ะ!"
+            f"ตรวจสอบสลิปเรียบร้อย ยอดโอนเข้าบัญชีคุณศิวัช รอสวัสดิ์ ถูกต้อง และเปิดสิทธิ์ {badge_name} ให้เรียบร้อยแล้วค่ะ"
             if audit_status == "approved" else
-            "📨 บันทึกสลิปเรียบร้อยแล้วค่ะ ระบบส่งต่อไปยังแอดมินบอสเพื่อตรวจสอบและอนุมัติให้ภายในไม่กี่นาทีนะคะ"
+            "บันทึกสลิปเรียบร้อยแล้วค่ะ ระบบส่งรายการให้ผู้ดูแลระบบตรวจสอบและเปิดสิทธิ์โดยเร็วค่ะ"
         )
     }
 
@@ -10734,30 +10749,30 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
     payment_keywords = ["โปร", "สมัคร", "โอนเงิน", "ราคา", "บัญชี", "แพ็กเกจ", "vip", "pro", "founder", "subscription", "ชำระเงิน", "เลขบัญชี"]
     if any(k in lower_text for k in payment_keywords):
         reply_msg = (
-            "👑 ยินดีต้อนรับสู่ศูนย์บริการสมาชิก Kira AI Official ค่ะ!\n\n"
-            "✨ สิทธิพิเศษและอัตราค่าบริการแพ็กเกจสมาชิก:\n\n"
-            "1. 🥉 Starter Pass (39 บาท / 7 วัน):\n"
+            "ข้อมูลแพ็กเกจสมาชิก Kira AI Official ค่ะ\n\n"
+            "รายละเอียดและอัตราค่าบริการแพ็กเกจ:\n\n"
+            "1. Starter Pass (39 บาท / 7 วัน):\n"
             "• โควตา 100 ข้อความต่อวัน นาน 7 วันเต็ม\n"
             "• เข้าถึงสภา 4 ผู้บริหาร (Virtual Boardroom) วันละ 3 ครั้ง\n"
-            "• ตัวช่วยร่างเอกสารงานจริง (Auto-Draft) วันละ 3 ชิ้น\n"
-            "• Live Canvas พรีวิวโค้ดและผังงานสด\n"
-            "• ชำระครั้งเดียว ไม่ผูกบัตร ไม่ตัดเงินซ้ำ หมดอายุกลับสู่ระดับ Free อัตโนมัติ\n\n"
-            "2. 🥈 Kira Pro (129 บาท / เดือน (30 วัน) • แนะนำสูงสุด):\n"
-            "• โควตา 500 ข้อความต่อวัน นาน 30 วันเต็ม (เฉลี่ยเพียงวันละ 4.30 บาท)\n"
+            "• ตัวช่วยร่างเอกสารอัตโนมัติ (Auto-Draft) วันละ 3 ชิ้น\n"
+            "• Live Canvas พรีวิวโค้ดและผังงาน\n"
+            "• ชำระครั้งเดียว ไม่ผูกบัตร ไม่ตัดเงินซ้ำอัตโนมัติ\n\n"
+            "2. Kira Pro (129 บาท / 30 วัน • แพ็กเกจแนะนำ):\n"
+            "• โควตา 500 ข้อความต่อวัน นาน 30 วันเต็ม (เฉลี่ยวันละ ~4.30 บาท)\n"
             "• ประชุมสภา 4 ผู้บริหาร (Virtual Boardroom) ไม่จำกัดครั้ง\n"
-            "• ร่างเอกสารและงานจริง (Omni-Task Matrix) ไม่จำกัด\n"
-            "• Live Canvas & ผังความจำอัจฉริยะ Knowledge Graph Memory\n"
-            "• ชำระรายเดือนตามสะดวก ไม่มีข้อผูกมัด ไม่ตัดเงินซ้ำ\n\n"
-            "3. 🥇 Founder Pass (499 บาท / รายปี 1 ปีเต็ม (365 วัน)):\n"
-            "• สิทธิ์ระดับ Pro ตลอด 365 วัน (1 ปีเต็ม) ตกเดือนละ ~41.5 บาท\n"
-            "• ประหยัดกว่าการต่ออายุรายเดือนถึง 68%\n"
-            "• โควตาสูงสุด 1,000 ข้อความต่อวัน ใช้งานได้จุใจตลอดทั้งปี\n"
-            "• เหรียญตราสัญลักษณ์ Founder VIP พิเศษติดหน้าโปรไฟล์\n"
-            "• ร่วมสนับสนุนค่าเซิร์ฟเวอร์เพื่อให้คิระเติบโตอย่างยั่งยืน\n\n"
-            "🔐 ช่องทางการชำระเงินและเปิดใช้งานบัญชีอย่างปลอดภัย:\n"
-            "เพื่อความสะดวกรวดเร็วและเปิดใช้งานสิทธิ์สมาชิกแบบอัตโนมัติ กรุณาดำเนินการผ่านศูนย์บริการสมาชิกทางการของ Kira AI ได้ที่:\n"
-            "👉 https://kira-public-engine.onrender.com/\n\n"
-            "(ท่านสามารถเลือกแพ็กเกจและชำระเงินผ่านระบบ PromptPay QR Payment ที่ปลอดภัย โดยระบบจะเปิดใช้งานสิทธิ์ให้ทันทีตลอด 24 ชั่วโมงค่ะ ✨)"
+            "• ร่างเอกสารและตารางงาน (Omni-Task Matrix) ไม่จำกัด\n"
+            "• Live Canvas และคลังความจำ Knowledge Graph Memory\n"
+            "• ชำระรายเดือน ไม่มีข้อผูกมัด\n\n"
+            "3. Founder Pass (499 บาท / 365 วัน):\n"
+            "• สิทธิ์ระดับ Pro ตลอด 365 วัน (เฉลี่ย ~41.5 บาทต่อเดือน)\n"
+            "• ประหยัดกว่าการต่ออายุรายเดือน 68%\n"
+            "• โควตา 1,000 ข้อความต่อวัน ตลอดระยะเวลาสมาชิก\n"
+            "• ตราประจำตัว Founder Edition บนโปรไฟล์\n"
+            "• ร่วมสนับสนุนค่าบำรุงรักษาเซิร์ฟเวอร์\n\n"
+            "ช่องทางชำระเงินและเปิดใช้งานสิทธิ์:\n"
+            "สามารถเลือกแพ็กเกจและชำระผ่านระบบ PromptPay QR อย่างปลอดภัยได้ที่:\n"
+            "https://kira-public-engine.onrender.com/\n\n"
+            "ระบบตรวจสอบและเปิดใช้งานสิทธิ์ให้โดยอัตโนมัติตลอด 24 ชั่วโมงค่ะ"
         )
         try:
             log_chat(username=line_username, role="Kira", content=reply_msg, session_id=line_username)
@@ -10770,14 +10785,14 @@ async def process_line_chat_event(user_text: str, reply_token: str, user_id: str
     web_keywords = ["เว็บ", "เว็บไซ", "boardroom", "canvas", "mind map", "vault", "link", "ลิงก์", "ทางเข้า", "หน้าเว็บ"]
     if any(k in lower_text for k in web_keywords):
         reply_msg = (
-            "🌐 ท่านสามารถเข้าใช้งานระบบเต็มรูปแบบของคิระได้ที่:\n"
-            "👉 https://kira-public-engine.onrender.com/\n\n"
-            "✨ ฟังก์ชันเด่นบนหน้าเว็บ:\n"
-            "• Virtual Boardroom: ปรึกษาพร้อมกัน 4 ผู้บริหาร (CEO, CFO, CPO, CTO)\n"
-            "• Split Canvas: พื้นที่พัฒนาโค้ดและพรีวิวงานสดแบบ Real-time\n"
-            "• Living Mind Map: แผนผังความคิดเชื่อมโยงอัตโนมัติ\n"
-            "• Offline Vault: บันทึกข้อมูลและโค้ดลับแบบปลอดภัย\n\n"
-            "หรือจะปรึกษางานกับคิระใน LINE นี้ได้ตลอด 24 ชม. เลยนะคะ หนูพร้อมช่วยเสมอค่ะ! 💜"
+            "สามารถเข้าใช้งานระบบเว็บเต็มรูปแบบของคิระได้ที่:\n"
+            "https://kira-public-engine.onrender.com/\n\n"
+            "เครื่องมือหลักบนหน้าเว็บ:\n"
+            "• Virtual Boardroom: วิเคราะห์มุมมองร่วมกัน 4 ผู้บริหาร (CEO, CFO, CPO, CTO)\n"
+            "• Split Canvas: พื้นที่เขียนโค้ดและพรีวิวงานแบบเรียลไทม์\n"
+            "• Living Mind Map: แผนผังความคิดเชื่อมโยงโครงสร้างอัตโนมัติ\n"
+            "• Offline Vault: บันทึกข้อมูลและบันทึกช่วยจำแบบปลอดภัย\n\n"
+            "หรือสามารถสนทนากับคิระผ่าน LINE นี้ได้ตลอด 24 ชั่วโมงค่ะ"
         )
         try:
             log_chat(username=line_username, role="Kira", content=reply_msg, session_id=line_username)
@@ -10902,7 +10917,7 @@ async def line_webhook_health():
     return {
         "status": "online",
         "service": "Kira LINE Official Account Webhook Engine",
-        "version": "2.6.5",
+        "version": KIRA_SYSTEM_VERSION,
         "channel_configured": bool(token_set and secret_set),
         "channel_secret_set": secret_set,
         "channel_access_token_set": token_set,
@@ -10923,7 +10938,7 @@ async def line_diagnostics_endpoint():
     return {
         "status": "online",
         "service": "Kira LINE OA Diagnostics Hub",
-        "version": "2.6.5",
+        "version": KIRA_SYSTEM_VERSION,
         "timestamp": datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S"),
         "channel_access_token_configured": token_set,
         "channel_secret_configured": secret_set,

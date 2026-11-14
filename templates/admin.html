@@ -100,7 +100,7 @@
             
             <div class="flex items-center gap-3">
                 <div class="glass-panel px-4 py-2 rounded-full flex items-center gap-3 border border-slate-700/50">
-                    <div class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+                    <div class="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
                     <span class="text-sm text-slate-300 font-medium">System Online</span>
                 </div>
                 <a href="/admin_boss/logout" class="glass-panel px-4 py-2 rounded-full flex items-center gap-1.5 border border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-sm font-medium">
@@ -404,8 +404,8 @@
                             <span class="text-2xl">🛠️</span>
                             <h2 class="text-2xl font-bold text-white">Server Maintenance & Live Countdown Hub</h2>
                             <span id="maint-active-pill" class="{% if maintenance and maintenance.is_active %}bg-red-500/20 text-red-400 border-red-500/40{% else %}bg-emerald-500/20 text-emerald-400 border-emerald-500/40{% endif %} border text-xs px-3 py-1 rounded-full font-semibold flex items-center gap-1.5">
-                                <span class="w-2 h-2 rounded-full {% if maintenance and maintenance.is_active %}bg-red-400 animate-ping{% else %}bg-emerald-400{% endif %}"></span>
-                                <span id="maint-active-text">{% if maintenance and maintenance.is_active %}🔴 ปิดปรับปรุงอยู่ (Locked){% else %}🟢 ระบบเปิดให้บริการปกติ (Online){% endif %}</span>
+                                <span class="w-2 h-2 rounded-full {% if maintenance and maintenance.is_active %}bg-red-400{% else %}bg-emerald-400{% endif %}"></span>
+                                <span id="maint-active-text">{% if maintenance and maintenance.is_active %}ปิดปรับปรุงชั่วคราว (Maintenance){% else %}เปิดให้บริการปกติ (Online){% endif %}</span>
                             </span>
                         </div>
                         <p class="text-slate-400 text-sm mt-1">ควบคุมโหมดปิดปรับปรุงเซิร์ฟเวอร์สำหรับการอัปเกรดใหญ่ (Major Update) กำหนดเวลานับถอยหลัง และเปิดระบบอัตโนมัติ</p>
@@ -453,38 +453,38 @@
                         </div>
 
                         <!-- Real-time Countdown Stats -->
-                        <div class="bg-cyan-950/20 border border-cyan-500/30 rounded-xl p-4">
-                            <span class="text-xs uppercase font-bold text-cyan-400 block mb-1">เวลาที่เหลืออยู่ (Live Countdown)</span>
-                            <div class="text-2xl font-mono font-bold text-white digit-glow" id="admin_live_countdown">--:--:--</div>
-                            <span class="text-[11px] text-slate-400 mt-1 block">เมื่อหมดเวลานี้ ประตูเซิร์ฟเวอร์จะเปิดให้ทุกคนเข้าใช้งานอัตโนมัติทันที</span>
+                        <div class="bg-slate-900/80 border border-slate-700/70 rounded-xl p-4">
+                            <span class="text-xs uppercase font-bold text-slate-300 block mb-1">เวลาที่เหลืออยู่ (Live Countdown)</span>
+                            <div class="text-2xl font-mono font-bold text-white" id="admin_live_countdown">--:--:--</div>
+                            <span class="text-[11px] text-slate-400 mt-1 block">เมื่อหมดเวลานี้ ระบบจะเปิดให้ผู้ใช้เข้าใช้งานอัตโนมัติทันที</span>
                         </div>
                     </div>
 
                     <!-- Column 2 & 3: Announcement Text & Actions -->
                     <div class="lg:col-span-2 space-y-4">
                         <div class="bg-slate-900/60 rounded-xl p-5 border border-slate-800 space-y-4">
-                            <label class="block text-xs uppercase tracking-wider text-slate-400 font-bold mb-2">2. ข้อมูลการประกาศอัปเกรด (Announcement & Highlights)</label>
+                            <label class="block text-xs uppercase tracking-wider text-slate-400 font-bold mb-2">2. ข้อมูลการประกาศปรับปรุงระบบ (Announcement)</label>
                             
                             <div>
-                                <label class="block text-xs text-slate-300 font-medium mb-1">หัวข้อการอัปเกรด (Headline Title)</label>
-                                <input type="text" id="maint_title" value="✨ ระบบกำลังอัปเกรดครั้งใหญ่สู่ Kira AI v2.6" placeholder="ระบุหัวข้อ..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:border-cyan-500 focus:outline-none">
+                                <label class="block text-xs text-slate-300 font-medium mb-1">หัวข้อการปรับปรุง (Headline Title)</label>
+                                <input type="text" id="maint_title" value="ปิดปรับปรุงระบบ Kira AI ชั่วคราว (v2.9)" placeholder="ระบุหัวข้อ..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:border-slate-400 focus:outline-none">
                             </div>
 
                             <div>
                                 <label class="block text-xs text-slate-300 font-medium mb-1">เวอร์ชันเป้าหมาย (Target Version)</label>
-                                <input type="text" id="maint_version" value="2.6.0" placeholder="2.6.0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm text-cyan-300 font-mono focus:border-cyan-500 focus:outline-none">
+                                <input type="text" id="maint_version" value="2.9.4" placeholder="2.9.4" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-200 font-mono focus:border-slate-400 focus:outline-none">
                             </div>
 
                             <div>
                                 <label class="block text-xs text-slate-300 font-medium mb-1">ข้อความรายละเอียดสำหรับผู้ใช้งาน (Public Message)</label>
-                                <textarea id="maint_message" rows="4" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none">ทีมผู้พัฒนาและคิระกำลังทำการเชื่อมต่อโครงข่ายสมองกลใหม่ (Neural Matrix Migration) ปรับแต่งความเร็วแสง และยกระดับระบบรักษาความปลอดภัย ระบบจะเปิดให้บริการอัตโนมัติทันทีที่เวลานับถอยหลังสิ้นสุดค่ะ</textarea>
+                                <textarea id="maint_message" rows="4" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 focus:border-slate-400 focus:outline-none">ทีมงานกำลังปรับปรุงฐานข้อมูลและตรวจสอบความเรียบร้อยของระบบ ระบบจะกลับมาเปิดให้บริการโดยอัตโนมัติเมื่อเวลานับถอยหลังสิ้นสุดค่ะ</textarea>
                             </div>
 
                             <!-- Action Bar -->
                             <div class="pt-4 border-t border-slate-800 flex flex-col sm:flex-row gap-3">
-                                <button type="button" onclick="saveAndStartMaintenance(true)" class="flex-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 px-6 rounded-xl transition duration-200 shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 text-sm">
+                                <button type="button" onclick="saveAndStartMaintenance(true)" class="flex-1 bg-slate-100 hover:bg-white text-slate-950 font-bold py-3 px-6 rounded-xl transition duration-200 flex items-center justify-center gap-2 text-sm">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                    เปิดโหมดปิดปรับปรุงเซิร์ฟเวอร์ & เริ่มนับถอยหลัง
+                                    เปิดโหมดปิดปรับปรุงเซิร์ฟเวอร์ &amp; เริ่มนับถอยหลัง
                                 </button>
                                 <button type="button" onclick="saveAndStartMaintenance(false)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-3 px-5 rounded-xl border border-slate-700 transition text-sm">
                                     ปิดโหมดปรับปรุง (ยกเลิก)
