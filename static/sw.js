@@ -1,12 +1,12 @@
 // ====================================================================
-// Kira AI Progressive Web App - Service Worker (v2.9.6)
+// Kira AI Progressive Web App - Service Worker (v2.9.7)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.9.6-phase2-secretary-agent';
+const CACHE_NAME = 'kira-ai-cache-v2.9.7-phase3-action-agent';
 const STATIC_ASSETS = [
     '/',
-    '/static/style.css?v=20261115_phase2_v296',
-    '/static/script.js?v=20261115_phase2_v296',
+    '/static/style.css?v=20261115_phase3_v297',
+    '/static/script.js?v=20261115_phase3_v297',
     '/manifest.json',
     '/static/manifest.json',
     '/static/images/kira_logo.png?v=6',

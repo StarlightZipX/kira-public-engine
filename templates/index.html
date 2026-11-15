@@ -39,15 +39,15 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=20261115_phase2_v296">
+    <link rel="stylesheet" href="/static/style.css?v=20261115_phase3_v297">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0b0c10">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kira AI">
-    <meta name="kira-build-id" content="{{ build_id or 'kira-v2.9.6' }}">
-    <meta name="kira-app-version" content="{{ app_version or '2.9.0' }}">
+    <meta name="kira-build-id" content="{{ build_id or 'kira-v2.9.7' }}">
+    <meta name="kira-app-version" content="{{ app_version or '2.9.7' }}">
     <link rel="apple-touch-icon" href="/static/images/kira_logo.png?v=6">
     <link rel="icon" type="image/png" href="/static/images/kira_logo.png?v=6">
     <!-- MathJax for LaTeX Rendering -->
@@ -578,6 +578,12 @@
                         <span id="notification-unread-badge" class="notif-unread-badge" style="display: none;">0</span>
                     </button>
 
+                    <!-- 🤖 Kira Action Agent & OS Companion Button (Phase 3) -->
+                    <button id="btn-action-agent" class="header-action-btn agent-header-btn" data-i18n-title="action_agent_title" title="ศูนย์ปฏิบัติการตัวแทนอัจฉริยะ (Web Computer Use & OS Companion)">
+                        <i class="fa-solid fa-robot"></i>
+                        <span class="agent-btn-text" data-i18n="action_agent_btn">Action Agent</span>
+                    </button>
+
                     <!-- PWA Quick Install Header Action (Preserved for compatibility) -->
                     <button id="btn-install-pwa-header" class="header-action-btn pwa-header-install-btn" title="ติดตั้ง Kira AI Web App บนอุปกรณ์" style="display: none;">
                         <i class="fa-solid fa-cloud-arrow-down"></i>
@@ -761,6 +767,13 @@
                                 <div class="tools-category-label">
                                     <i class="fa-solid fa-gear"></i> <span data-i18n="tools_cat_system">ระบบ & การช่วยเหลือ</span>
                                 </div>
+                                <button class="tools-menu-item" id="btn-tools-action-agent" type="button" onclick="if (typeof openActionAgentModal === 'function') openActionAgentModal();" title="ศูนย์ปฏิบัติการตัวแทนอัจฉริยะ (Web Computer Use & OS Companion)">
+                                    <span class="tool-item-icon icon-indigo"><i class="fa-solid fa-robot"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title" data-i18n="tools_agent_title">Action Agent &amp; OS Companion</span>
+                                        <span class="tool-item-desc" data-i18n="tools_agent_desc">Web Computer Use Sandbox, Prompt Shield &amp; Desktop/ADB Bridge</span>
+                                    </div>
+                                </button>
                                 <button class="tools-menu-item" id="btn-tools-notification-center" type="button" onclick="if (typeof openNotificationCenterModal === 'function') openNotificationCenterModal();" title="ศูนย์แจ้งเตือนนัดหมาย บิล และงานเข้า PWA">
                                     <span class="tool-item-icon icon-emerald"><i class="fa-regular fa-bell"></i></span>
                                     <div class="tool-item-info">
@@ -1802,7 +1815,7 @@
                     </ul>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px;">
-                    <span>เวอร์ชัน: <strong>Kira 2.9.6 Enterprise (Build 2026.11)</strong></span>
+                    <span>เวอร์ชัน: <strong>Kira 2.9.7 Enterprise (Build 2026.11)</strong></span>
                     <span>ผู้พัฒนา: <strong>Kira AI System Team</strong></span>
                 </div>
             </div>
@@ -4078,15 +4091,15 @@
                 <div class="kira-update-badge">
                     <span class="pulse-indicator"></span>
                     <span>อัปเดตระบบ</span>
-                    <span class="kira-version-tag" id="kira-new-version-tag">v2.9.6</span>
+                    <span class="kira-version-tag" id="kira-new-version-tag">v2.9.7</span>
                 </div>
             </div>
 
             <!-- Title & Kira Dialogue -->
             <div class="kira-update-content">
-                <h3 class="kira-update-title" id="kira-update-title">อัปเดต Kira AI v2.9.6 พร้อมใช้งานแล้วค่ะ</h3>
+                <h3 class="kira-update-title" id="kira-update-title">อัปเดต Kira AI v2.9.7 พร้อมใช้งานแล้วค่ะ</h3>
                 <p class="kira-update-desc" id="kira-update-desc">
-                    เพิ่มพอร์ทัลรับงานส่วนตัว &amp; นามบัตร QR, ศูนย์แจ้งเตือน PWA Notification Center, ศูนย์อธิปไตยข้อมูล PDPA &amp; Local AI และช่องทางชำระเงินสากลเรียบร้อยค่ะ
+                    เพิ่มศูนย์ปฏิบัติการตัวแทนอัจฉริยะ Cloud Web Computer Use, เกราะป้องกัน Visual Prompt Injection Shield, Live Split Canvas และ OS Companion Bridge (PyAutoGUI / ADB) ค่ะ
                 </p>
                 <div class="kira-update-quote-box">
                     <i class="fa-solid fa-quote-left quote-icon"></i>
@@ -4667,6 +4680,141 @@
         </div>
     </div>
 
+    <!-- 🤖 Kira Action Agent & OS Companion Hub Modal (Phase 3) -->
+    <div id="action-agent-modal" class="kira-modal-overlay" style="display: none; z-index: 1124;">
+        <div class="phase2-modal-card phase3-agent-card glass-panel">
+            <div class="phase2-modal-header">
+                <div class="phase2-title-group">
+                    <span class="phase2-icon-badge"><i class="fa-solid fa-robot"></i></span>
+                    <div>
+                        <h3 data-i18n="agent_modal_title">Action Agent &amp; Autonomous OS Companion</h3>
+                        <p data-i18n="agent_modal_subtitle">ปฏิบัติการเว็บใน Sandbox พร้อมเกราะกัน Visual Prompt Injection และเชื่อม OS Companion บน Desktop/Mobile</p>
+                    </div>
+                </div>
+                <button type="button" id="btn-close-action-agent" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="agent-mode-tabs">
+                <button type="button" id="btn-agent-tab-web" class="agent-tab-btn active" data-tab="web">
+                    <i class="fa-solid fa-globe"></i> <span data-i18n="agent_tab_web">Cloud Web Computer Use</span>
+                </button>
+                <button type="button" id="btn-agent-tab-os" class="agent-tab-btn" data-tab="os">
+                    <i class="fa-solid fa-laptop-code"></i> <span data-i18n="agent_tab_os">Desktop &amp; Mobile OS Companion</span>
+                </button>
+            </div>
+
+            <!-- Tab 1: Cloud Web Computer Use Sandbox -->
+            <div id="agent-pane-web" class="phase2-modal-grid">
+                <form id="agent-web-form" class="phase2-panel-box">
+                    <h4 data-i18n="agent_web_form_title">ภารกิจ Web Sandbox &amp; Prompt Shield</h4>
+                    <div class="form-group">
+                        <label for="agent-web-url" data-i18n="agent_web_url_label">URL ปลายทางสาธารณะ (เว้นว่างได้เพื่อตรวจข้อความ/HTML ภายในเครื่อง)</label>
+                        <input type="url" id="agent-web-url" class="input-control" data-i18n-placeholder="agent_web_url_ph" placeholder="https://example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="agent-web-mode" data-i18n="agent_web_mode_label">โหมดปฏิบัติการ</label>
+                        <select id="agent-web-mode" class="input-control">
+                            <option value="inspect_and_extract">Inspect DOM &amp; Extract Safe Summary</option>
+                            <option value="shield_audit">Visual &amp; DOM Prompt Shield Audit</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="agent-web-goal" data-i18n="agent_web_goal_label">เป้าหมายหรือโค้ด/ข้อความที่ต้องการตรวจ</label>
+                        <textarea id="agent-web-goal" class="input-control" rows="4" data-i18n-placeholder="agent_web_goal_ph" placeholder="เช่น สรุปลิงก์สำคัญหน้าแรก และตรวจสอบว่ามีคำสั่งแฝงหรือไม่..." required></textarea>
+                    </div>
+                    <div class="agent-form-actions">
+                        <button type="submit" id="btn-run-web-agent" class="btn-action-sm primary">
+                            <i class="fa-solid fa-play"></i> <span data-i18n="agent_btn_run_web">สั่งตัวแทนทำงานใน Sandbox</span>
+                        </button>
+                        <button type="button" id="btn-agent-test-shield" class="btn-action-sm secondary">
+                            <i class="fa-solid fa-shield-virus"></i> <span data-i18n="agent_btn_test_shield">จำลองทดสอบ Prompt Shield</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="phase2-panel-box">
+                    <div class="phase2-feed-header">
+                        <h4 data-i18n="agent_web_result_title">Sandbox Viewport &amp; Shield Trace</h4>
+                        <button type="button" id="btn-agent-open-canvas" class="btn-action-sm secondary" disabled>
+                            <i class="fa-solid fa-columns"></i> <span data-i18n="agent_btn_open_canvas">เปิดใน Split Canvas</span>
+                        </button>
+                    </div>
+                    <div id="agent-shield-banner" class="agent-shield-banner safe">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Iron Citadel Visual &amp; SSRF Shield: Standby</span>
+                    </div>
+                    <div id="agent-viewport-frame" class="agent-viewport-frame">
+                        <div class="phase2-empty-state">Live DOM Wireframe SVG will appear here after inspection.</div>
+                    </div>
+                    <div id="agent-trace-list" class="agent-trace-list"></div>
+                    <div id="agent-deliverable-box" class="agent-deliverable-box"></div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Autonomous OS Companion Bridge (PyAutoGUI / ADB) -->
+            <div id="agent-pane-os" style="display: none;">
+                <div class="phase2-status-ribbon" style="margin-bottom: 14px;">
+                    <div class="phase2-status-text" id="companion-pairing-status">
+                        <i class="fa-solid fa-link-slash"></i> Companion Bridge: Not Paired Yet
+                    </div>
+                    <div class="phase2-status-actions">
+                        <button type="button" id="btn-pair-companion" class="btn-action-sm primary">
+                            <i class="fa-solid fa-key"></i> <span data-i18n="agent_os_pair_btn">สร้างรหัสจับคู่เครื่อง</span>
+                        </button>
+                        <button type="button" id="btn-download-companion-bridge" class="btn-action-sm secondary">
+                            <i class="fa-solid fa-download"></i> <span data-i18n="agent_os_download_btn">ดาวน์โหลด Bridge (.py)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="phase2-modal-grid">
+                    <form id="agent-os-form" class="phase2-panel-box">
+                        <h4 data-i18n="agent_os_form_title">สร้างแผนควบคุม Desktop / Mobile</h4>
+                        <div class="form-group">
+                            <label for="agent-os-platform" data-i18n="agent_os_platform_label">แพลตฟอร์มเป้าหมาย</label>
+                            <select id="agent-os-platform" class="input-control">
+                                <option value="desktop">Desktop (PyAutoGUI Failsafe Mode)</option>
+                                <option value="mobile">Mobile (Android ADB Bridge)</option>
+                                <option value="hybrid">Hybrid (Desktop + Android ADB)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="agent-os-goal" data-i18n="agent_os_goal_label">คำสั่งหรือเวิร์กโฟลว์ที่ต้องการอัตโนมัติ</label>
+                            <textarea id="agent-os-goal" class="input-control" rows="4" data-i18n-placeholder="agent_os_goal_ph" placeholder="เช่น เปิดหน้าต่างสรุปรายงานประจำวันและบันทึกภาพตรวจสอบก่อนส่งต่อ..." required></textarea>
+                        </div>
+                        <label class="intake-accept-toggle">
+                            <input type="checkbox" id="agent-os-confirm-toggle" checked>
+                            <span data-i18n="agent_os_confirm_lbl">บังคับถามยืนยัน [y/N] ก่อนรันทุกขั้นตอน (Human-in-the-Loop)</span>
+                        </label>
+                        <button type="submit" id="btn-run-os-planner" class="btn-action-sm primary full-width">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="agent_btn_run_os">สร้างแผน &amp; สคริปต์ Companion</span>
+                        </button>
+                    </form>
+
+                    <div class="phase2-panel-box">
+                        <div class="phase2-feed-header">
+                            <h4 data-i18n="agent_os_result_title">แผนปฏิบัติการ &amp; สคริปต์พร้อมใช้งาน</h4>
+                            <div class="notif-filter-tabs">
+                                <button type="button" id="btn-os-script-pyautogui" class="notif-filter-btn active">PyAutoGUI</button>
+                                <button type="button" id="btn-os-script-adb" class="notif-filter-btn">ADB</button>
+                            </div>
+                        </div>
+                        <div id="agent-os-steps-list" class="agent-trace-list"></div>
+                        <pre id="agent-os-code-pre" class="agent-os-code-pre"># Generated companion script will appear here...</pre>
+                        <div class="agent-form-actions">
+                            <button type="button" id="btn-copy-os-script" class="btn-action-sm secondary">
+                                <i class="fa-regular fa-copy"></i> <span data-i18n="agent_btn_copy_script">คัดลอกสคริปต์</span>
+                            </button>
+                            <button type="button" id="btn-os-open-canvas" class="btn-action-sm secondary" disabled>
+                                <i class="fa-solid fa-columns"></i> <span data-i18n="agent_btn_open_canvas">เปิดใน Split Canvas</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 👑 Guest Trial Limit Celebration & Upgrade Modal -->
     <div id="guest-limit-modal" class="kira-modal-overlay" style="display: none;">
         <div class="guest-limit-card">
@@ -4696,6 +4844,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=20261115_phase2_v296"></script>
+    <script src="/static/script.js?v=20261115_phase3_v297"></script>
 </body>
 </html>

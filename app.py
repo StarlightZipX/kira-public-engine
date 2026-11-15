@@ -9,6 +9,14 @@ import asyncio
 from datetime import datetime, date, timezone, timedelta
 from dotenv import load_dotenv
 import re
+import socket
+import ipaddress
+import html as html_lib
+from urllib.parse import urlparse, urljoin
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
 
 load_dotenv()
 
@@ -354,7 +362,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.9.6"
+KIRA_SYSTEM_VERSION = "2.9.7"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -363,12 +371,30 @@ KIRA_RELEASE_DATA = {
     "version": KIRA_SYSTEM_VERSION,
     "build_id": APP_BUILD_ID,
     "timestamp": APP_START_TIME,
-    "release_name": "Kira AI Phase 2 - Personal Intake QR, PWA Notification Center, Sovereign Privacy & International Payment Rail",
-    "badge_text": f"v{KIRA_SYSTEM_VERSION} อัปเดต Phase 2",
+    "release_name": "Kira AI Phase 3 - Cloud Web Computer Use, Visual Prompt Injection Shield & OS Companion Bridge",
+    "badge_text": f"v{KIRA_SYSTEM_VERSION} อัปเดต Phase 3",
     "title": f"อัปเดต Kira AI v{KIRA_SYSTEM_VERSION} พร้อมใช้งานแล้วค่ะ",
-    "description": "เพิ่มพอร์ทัลรับงานส่วนตัวพร้อมนามบัตร QR, ศูนย์แจ้งเตือน PWA Notification & Reminders, ศูนย์อธิปไตยข้อมูล PDPA & Local AI และช่องทางชำระเงินสากลค่ะ",
-    "quote": "คิระพร้อมรับงานแทนบอส แจ้งเตือนตรงเข้ามือถือไม่พึ่งโควตา LINE และดูแลอธิปไตยข้อมูลส่วนตัวให้ครบวงจรแล้วค่ะ",
+    "description": "เพิ่มศูนย์ปฏิบัติการตัวแทนอัจฉริยะ (Cloud Web Computer Use Sandbox), เกราะป้องกัน Visual & DOM Prompt Injection, การเปิดผลเข้า Live Split Canvas และตัวช่วยเชื่อม OS Companion (PyAutoGUI / ADB) ค่ะ",
+    "quote": "คิระพร้อมปฏิบัติงานเว็บแทนบอสใน Sandbox พร้อมเกราะกันข้อความแฝง และสร้างแผนควบคุม Desktop/Mobile ภายใต้การยืนยันจากผู้ใช้งานค่ะ",
     "highlights": [
+        {
+            "icon": "fa-robot",
+            "color": "text-cyan",
+            "tag": "Web Computer Use Sandbox",
+            "text": "สกัดโครงสร้างเว็บและองค์ประกอบโต้ตอบแบบ Live Wireframe SVG ส่งเข้า Split Canvas ได้ในคลิกเดียว"
+        },
+        {
+            "icon": "fa-shield-halved",
+            "color": "text-emerald",
+            "tag": "Prompt Injection Shield",
+            "text": "ตรวจจับและสกัดข้อความซ่อนเร้น (Hidden DOM / Zero-Width / System Override) และตรวจสิทธิ์ SSRF อัตโนมัติ"
+        },
+        {
+            "icon": "fa-laptop-code",
+            "color": "text-amber",
+            "tag": "OS Companion Bridge",
+            "text": "สร้างแผนงาน + สคริปต์ PyAutoGUI (Failsafe) และ ADB พร้อมรหัสจับคู่และยืนยันก่อนรันทุกขั้นตอน"
+        },
         {
             "icon": "fa-qrcode",
             "color": "text-cyan",
@@ -382,80 +408,62 @@ KIRA_RELEASE_DATA = {
             "text": "ศูนย์แจ้งเตือนงานเข้า บิล และนัดหมายบนมือถือ/เดสก์ท็อป พร้อม Web Push 0฿"
         },
         {
-            "icon": "fa-shield-halved",
-            "color": "text-amber",
-            "tag": "Sovereign Privacy & Local AI",
-            "text": "ตรวจสอบสถานะ Local Ollama, สถิติข้อมูลส่วนตัว และส่งออกข้อมูล PDPA JSON ได้ในคลิกเดียว"
-        },
-        {
             "icon": "fa-earth-asia",
             "color": "text-cyan",
-            "tag": "International Rail",
-            "text": "รองรับ Cross-Border QR อาเซียน และโอนผ่าน Wise / SWIFT เข้าบัญชี KBANK โดยตรง"
-        },
-        {
-            "icon": "fa-receipt",
-            "color": "text-emerald",
-            "tag": "1-Click Slip & Ledger",
-            "text": "สแกนสลิปโอนเงินและบันทึกรายรับ-รายจ่ายอัตโนมัติ พร้อมตาราง Canvas และส่งออกไฟล์ CSV"
-        },
-        {
-            "icon": "fa-book-atlas",
-            "color": "text-emerald",
-            "tag": "Semantic RAG Vault",
-            "text": "คลังเอกสารสำหรับค้นหาและอ้างอิงข้อมูลจากไฟล์ PDF, DOCX, Markdown และ CSV ข้ามบทสนทนา"
+            "tag": "Sovereign PDPA & Intl Rail",
+            "text": "ส่งออกข้อมูล PDPA JSON 100%, ตรวจ Local Ollama และรองรับโอนต่างประเทศผ่าน Wise / SWIFT"
         }
     ],
     "i18n": {
         "en": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} Update Available",
-            "description": "Added Personal Intake Portal & QR, PWA Notification & Reminder Center, Sovereign Privacy & Local AI Hub, and International Payment Rail.",
-            "quote": "Kira can now act as your personal intake secretary with direct PWA notifications, PDPA export, and cross-border payment options.",
+            "description": "Added Cloud Web Computer Use Sandbox, Visual & DOM Prompt Injection Shield, Live Split Canvas integration, and Desktop (PyAutoGUI) / Mobile (ADB) OS Companion Bridge.",
+            "quote": "Kira can now inspect public web pages in a sandbox with anti-injection defenses and generate human-confirmed Desktop/Mobile companion workflows.",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} Update",
             "highlights": [
-                {"icon": "fa-qrcode", "color": "text-cyan", "tag": "Personal Intake QR", "text": "Shareable personal intake link, scannable QR card, and public ticket tracking"},
-                {"icon": "fa-bell", "color": "text-emerald", "tag": "PWA Notifications", "text": "In-app notification center, reminders, and browser Web Push alerts with zero third-party fees"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "Sovereign Privacy", "text": "Live Local Ollama check, personal footprint telemetry, and 1-click PDPA JSON export"},
-                {"icon": "fa-earth-asia", "color": "text-cyan", "tag": "International Rail", "text": "ASEAN Cross-Border QR and Wise/SWIFT international transfer rail alongside PromptPay"},
+                {"icon": "fa-robot", "color": "text-cyan", "tag": "Web Computer Use", "text": "Sandbox DOM inspection, interactive element mapping, live SVG wireframe, and Split Canvas export"},
+                {"icon": "fa-shield-halved", "color": "text-emerald", "tag": "Prompt Shield & SSRF", "text": "Strips hidden DOM injection payloads and blocks private-network SSRF targets"},
+                {"icon": "fa-laptop-code", "color": "text-amber", "tag": "OS Companion Bridge", "text": "Generates PyAutoGUI (failsafe) and ADB automation scripts with pairing code and step confirmation"},
+                {"icon": "fa-bell", "color": "text-emerald", "tag": "Secretary & PDPA Suite", "text": "Includes Phase 2 Personal Intake QR, PWA Notification Center, Sovereign PDPA Export & International Rail"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "5 Languages", "text": "Consistent localization across TH, EN, ZH, KO, and JA interfaces"}
             ]
         },
         "zh": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} 更新已就绪",
-            "description": "新增个人任务接单入口与二维码名片、PWA 通知与提醒中心、主权隐私与本地引擎中心及国际支付渠道。",
-            "quote": "Kira 现已升级为您的专属接单与日程秘书，支持零费用 PWA 通知与 PDPA 数据自主导出。",
+            "description": "新增云端网页操作沙盒 (Web Computer Use)、视觉与 DOM 提示词注入防护盾、Split Canvas 联动以及桌面 (PyAutoGUI) / 移动 (ADB) OS 伴侣桥接。",
+            "quote": "Kira 现已在沙盒与安全确认机制下支持网页结构解析、隐藏注入拦截与跨端自动化脚本生成。",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 更新",
             "highlights": [
-                {"icon": "fa-qrcode", "color": "text-cyan", "tag": "个人接单二维码", "text": "支持个人专属接单链接、可扫码 SVG 二维码名片及工单状态查询"},
-                {"icon": "fa-bell", "color": "text-emerald", "tag": "PWA 通知中心", "text": "日程、账单与新任务桌面/手机直达通知提醒"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "隐私与本地引擎", "text": "实时查看 Ollama 本地模型状态、个人数据统计并一键导出 JSON"},
-                {"icon": "fa-earth-asia", "color": "text-cyan", "tag": "国际支付渠道", "text": "在 PromptPay 基础上支持跨境扫码与 Wise / SWIFT 国际汇款"},
+                {"icon": "fa-robot", "color": "text-cyan", "tag": "Web 沙盒代理", "text": "提取公开网页交互元素并生成 SVG 线框视图与 Split Canvas 报告"},
+                {"icon": "fa-shield-halved", "color": "text-emerald", "tag": "提示注入防护盾", "text": "自动剥离隐藏 DOM 恶意指令并拦截内网 SSRF 访问"},
+                {"icon": "fa-laptop-code", "color": "text-amber", "tag": "OS 伴侣桥接", "text": "生成带急停开关与人工确认的 PyAutoGUI 桌面脚本和 ADB 移动脚本"},
+                {"icon": "fa-bell", "color": "text-emerald", "tag": "秘书与隐私套件", "text": "包含接单二维码、PWA 通知中心、PDPA 导出及国际汇款通道"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "五国语言", "text": "同步支持中文、泰语、英语、韩语与日语界面"}
             ]
         },
         "ko": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} 업데이트 안내",
-            "description": "개인 업무 접수 포털 및 QR 카드, PWA 알림 센터, 데이터 주권 및 로컬 AI 허브, 국제 결제 레일을 추가했습니다.",
-            "quote": "이제 Kira가 개인 접수 비서로서 PWA 알림, PDPA 데이터 내보내기 및 국제 결제 안내까지 지원합니다.",
+            "description": "클라우드 웹 컴퓨터 유즈 샌드박스, 시각/DOM 프롬프트 인젝션 실드, Split Canvas 연동 및 데스크톱(PyAutoGUI)/모바일(ADB) OS 컴패니언 브리지를 추가했습니다.",
+            "quote": "이제 Kira가 샌드박스 방어막과 사용자 승인 게이트 아래 웹 분석과 데스크톱/모바일 자동화 워크플로를 제공합니다.",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 업데이트",
             "highlights": [
-                {"icon": "fa-qrcode", "color": "text-cyan", "tag": "개인 접수 QR", "text": "맞춤형 업무 접수 링크, 스캔 가능한 QR 카드 및 실시간 티켓 조회"},
-                {"icon": "fa-bell", "color": "text-emerald", "tag": "PWA 알림 센터", "text": "별도 메시징 요금 없는 일정·청구서·업무 접수 알림 및 웹 푸시"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "데이터 주권 허브", "text": "로컬 Ollama 상태 확인, 데이터 현황 및 원클릭 PDPA JSON 내보내기"},
-                {"icon": "fa-earth-asia", "color": "text-cyan", "tag": "국제 결제 지원", "text": "PromptPay와 함께 아세안 크로스보더 QR 및 Wise/SWIFT 송금 안내"},
+                {"icon": "fa-robot", "color": "text-cyan", "tag": "Web Computer Use", "text": "공개 웹 DOM 요소 추출, 실시간 SVG 와이어프레임 및 Split Canvas 내보내기"},
+                {"icon": "fa-shield-halved", "color": "text-emerald", "tag": "프롬프트 인젝션 실드", "text": "숨겨진 DOM 인젝션 차단 및 내부망 SSRF 요청 원천 차단"},
+                {"icon": "fa-laptop-code", "color": "text-amber", "tag": "OS 컴패니언 브리지", "text": "페어링 코드와 단계별 확인이 포함된 PyAutoGUI 및 ADB 스크립트 생성"},
+                {"icon": "fa-bell", "color": "text-emerald", "tag": "비서 및 PDPA 스위트", "text": "개인 접수 QR, PWA 알림 센터, PDPA 내보내기 및 국제 결제 레일 탑재"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "5개 국어", "text": "한국어, 태국어, 영어, 중국어, 일본어 인터페이스 지원"}
             ]
         },
         "ja": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} アップデートのお知らせ",
-            "description": "個人受付ポータルと QR カード、PWA 通知センター、データ主権・ローカル AI ハブ、国際決済レールを追加しました。",
-            "quote": "Kira が個人秘書として PWA 通知、PDPA データエクスポート、国際送金案内まで一括対応します。",
+            "description": "クラウド Web コンピュータ操作サンドボックス、視覚・DOM プロンプトインジェクション防御、Split Canvas 連携、デスクトップ(PyAutoGUI)/モバイル(ADB) OS コンパニオンを追加しました。",
+            "quote": "Kira がサンドボックスと確認ゲートのもとで安全な Web 解析とマルチデバイス自動化スクリプト作成を支援します。",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 更新",
             "highlights": [
-                {"icon": "fa-qrcode", "color": "text-cyan", "tag": "個人受付 QR", "text": "専用受付 URL、スキャン可能な QR カード、公開チケット進捗確認"},
-                {"icon": "fa-bell", "color": "text-emerald", "tag": "PWA 通知センター", "text": "予定・請求・新規依頼を直接通知するリマインダーと Web Push"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "データ主権ハブ", "text": "ローカル Ollama 状態確認、保有データ可視化、PDPA JSON 書き出し"},
-                {"icon": "fa-earth-asia", "color": "text-cyan", "tag": "国際決済レール", "text": "PromptPay に加えてクロスボーダー QR・Wise / SWIFT 送金に対応"},
+                {"icon": "fa-robot", "color": "text-cyan", "tag": "Web Computer Use", "text": "公開ページの DOM 要素抽出、ライブ SVG ワイヤーフレーム生成と Split Canvas 出力"},
+                {"icon": "fa-shield-halved", "color": "text-emerald", "tag": "インジェクション防御", "text": "非表示 DOM の悪意ある命令除去とプライベートネットワーク SSRF 遮断"},
+                {"icon": "fa-laptop-code", "color": "text-amber", "tag": "OS コンパニオン連携", "text": "ペアリングコード・フェイルセーフ付きの PyAutoGUI / ADB スクリプト生成"},
+                {"icon": "fa-bell", "color": "text-emerald", "tag": "秘書・PDPA スイート", "text": "個人受付 QR、PWA 通知センター、PDPA 書き出し・国際決済対応"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "5カ国語", "text": "日本語・タイ語・英語・中国語・韓国語 UI に対応"}
             ]
         }
@@ -2412,6 +2420,29 @@ def init_db():
                       auth TEXT,
                       user_agent TEXT,
                       created_at TEXT)''')
+
+        execute_query('''CREATE TABLE IF NOT EXISTS agent_action_logs
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      run_id TEXT UNIQUE,
+                      username TEXT,
+                      mode TEXT,
+                      target TEXT,
+                      goal TEXT,
+                      risk_level TEXT,
+                      status TEXT,
+                      trace_json TEXT,
+                      deliverable TEXT,
+                      created_at TEXT)''')
+        execute_query('''CREATE INDEX IF NOT EXISTS idx_agent_logs_user ON agent_action_logs (username, id)''')
+
+        execute_query('''CREATE TABLE IF NOT EXISTS companion_pairings
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      username TEXT,
+                      pairing_code TEXT UNIQUE,
+                      platform TEXT,
+                      device_label TEXT,
+                      pending_queue_json TEXT,
+                      updated_at TEXT)''')
         
         # Synchronize default prompts to current architecture (Auto-Upgrade legacy, Zero-Silence & Strict Kira Identity v2)
         check_p1 = execute_query("SELECT value FROM system_settings WHERE key_name='prompt_1.0'", fetch='one')
@@ -11371,6 +11402,710 @@ async def export_sovereign_user_data(username: str = "guest"):
         media_type="application/json; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="kira_sovereign_data_{safe_fname}.json"'},
     )
+
+# ====================================================================
+# 🤖 Phase 3: Action Agent (Web Computer Use, Prompt Shield & OS Companion)
+# ====================================================================
+
+class WebComputerUseRequest(BaseModel):
+    username: Optional[str] = "guest"
+    url: Optional[str] = ""
+    goal: str
+    action_mode: Optional[str] = "inspect_and_extract"
+    ui_lang: Optional[str] = "th"
+
+class PromptShieldScanRequest(BaseModel):
+    content: str
+    source_url: Optional[str] = ""
+
+class OSCompanionPlanRequest(BaseModel):
+    username: Optional[str] = "guest"
+    platform: Optional[str] = "desktop"
+    goal: str
+    require_confirmation: Optional[bool] = True
+    ui_lang: Optional[str] = "th"
+
+class OSCompanionPairRequest(BaseModel):
+    username: str
+    platform: Optional[str] = "desktop"
+    device_label: Optional[str] = "My Workstation"
+
+_BLOCKED_SSRF_HOSTS = {
+    "localhost", "127.0.0.1", "0.0.0.0", "::1",
+    "169.254.169.254", "metadata.google.internal", "metadata",
+}
+
+def _is_disallowed_ip(ip_str: str) -> bool:
+    """ตรวจสอบว่า IP อยู่ในวงเครือข่ายส่วนตัวหรือสงวนสิทธิ์หรือไม่"""
+    try:
+        clean_ip = ip_str.split("%", 1)[0]
+        ip_obj = ipaddress.ip_address(clean_ip)
+        return (
+            ip_obj.is_private
+            or ip_obj.is_loopback
+            or ip_obj.is_link_local
+            or ip_obj.is_multicast
+            or ip_obj.is_reserved
+            or ip_obj.is_unspecified
+            or not ip_obj.is_global
+        )
+    except ValueError:
+        return True
+
+def _validate_safe_public_url(raw_url: str) -> str:
+    """ตรวจสอบ URL ปลายทางเพื่อป้องกัน SSRF ไปยังเครือข่ายภายใน"""
+    candidate = (raw_url or "").strip()
+    parsed = urlparse(candidate)
+    if parsed.scheme.lower() not in ("http", "https") or not parsed.netloc:
+        raise HTTPException(status_code=400, detail="Blocked unsafe or private network URL by Iron Citadel SSRF Guard")
+
+    hostname = (parsed.hostname or "").strip().lower().rstrip(".")
+    if (
+        not hostname
+        or hostname in _BLOCKED_SSRF_HOSTS
+        or hostname.endswith((".local", ".internal", ".localhost"))
+    ):
+        raise HTTPException(status_code=400, detail="Blocked unsafe or private network URL by Iron Citadel SSRF Guard")
+
+    try:
+        literal_ip = ipaddress.ip_address(hostname)
+    except ValueError:
+        literal_ip = None
+
+    if literal_ip is not None:
+        if _is_disallowed_ip(str(literal_ip)):
+            raise HTTPException(status_code=400, detail="Blocked unsafe or private network URL by Iron Citadel SSRF Guard")
+        return candidate
+
+    port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
+    try:
+        addr_info = socket.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Blocked unsafe or unresolvable URL by Iron Citadel SSRF Guard")
+
+    if not addr_info:
+        raise HTTPException(status_code=400, detail="Blocked unsafe or private network URL by Iron Citadel SSRF Guard")
+
+    for item in addr_info:
+        resolved_ip = item[4][0]
+        if _is_disallowed_ip(resolved_ip):
+            raise HTTPException(status_code=400, detail="Blocked unsafe or private network URL by Iron Citadel SSRF Guard")
+
+    return candidate
+
+_INJECTION_SIGNATURES = [
+    (re.compile(r"ignore\s+(?:all\s+|any\s+)?(?:previous|prior|above)\s+instructions", re.I), "ignore_previous_instructions", "high"),
+    (re.compile(r"disregard\s+(?:all\s+|any\s+)?(?:previous|prior|above)", re.I), "disregard_prior", "high"),
+    (re.compile(r"\bsystem\s+prompt\b|\breveal\s+your\s+instructions\b", re.I), "system_prompt_probe", "high"),
+    (re.compile(r"\byou\s+are\s+now\b|\bact\s+as\s+an\s+unrestricted\b", re.I), "role_override", "medium"),
+    (re.compile(r"\bnew\s+instructions\s*:", re.I), "new_instructions", "medium"),
+    (re.compile(r"\bexfiltrate\b|send\s+(?:all\s+)?(?:passwords|credentials|tokens|api\s*keys)", re.I), "exfiltration_intent", "high"),
+    (re.compile(r"<\|im_start\|>|\[INST\]|override\s+security", re.I), "delimiter_or_security_override", "high"),
+]
+
+_HIDDEN_STYLE_RE = re.compile(
+    r"(?:display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0(?:\.0+)?(?:\s*;|$)|font-size\s*:\s*0(?:px|em|rem)?(?:\s*;|$))",
+    re.I,
+)
+
+def _scan_visual_and_dom_prompt_injection(raw_html_or_text: str) -> dict:
+    """สแกนและคัดแยกโค้ดซ่อนเร้นหรือคำสั่งแฝง (Visual & DOM Prompt Injection Shield)"""
+    source_text = str(raw_html_or_text or "")
+    hidden_chunks: List[str] = []
+    hidden_nodes_stripped = 0
+
+    for comment in re.findall(r"<!--(.*?)-->", source_text, flags=re.S):
+        if comment.strip():
+            hidden_chunks.append(comment)
+        hidden_nodes_stripped += 1
+
+    cleaned_html = re.sub(r"<!--.*?-->", " ", source_text, flags=re.S)
+
+    if BeautifulSoup is not None and ("<" in cleaned_html and ">" in cleaned_html):
+        soup = BeautifulSoup(cleaned_html, "html.parser")
+        for tag in list(soup.find_all(["script", "style", "template", "noscript"])):
+            hidden_nodes_stripped += 1
+            tag.decompose()
+        for el in list(soup.find_all(True)):
+            style_attr = str(el.get("style") or "")
+            is_hidden_attr = el.has_attr("hidden") or str(el.get("aria-hidden") or "").lower() == "true"
+            if is_hidden_attr or (style_attr and _HIDDEN_STYLE_RE.search(style_attr)):
+                txt = el.get_text(" ", strip=True)
+                if txt:
+                    hidden_chunks.append(txt)
+                hidden_nodes_stripped += 1
+                el.decompose()
+        visible_raw = soup.get_text("\n", strip=True)
+    else:
+        for m in re.finditer(r"<[^>]+style=[\"'][^\"']*(?:display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0|font-size\s*:\s*0)[^\"']*[\"'][^>]*>(.*?)</[^>]+>", cleaned_html, flags=re.I | re.S):
+            if m.group(1).strip():
+                hidden_chunks.append(m.group(1))
+            hidden_nodes_stripped += 1
+        visible_raw = re.sub(r"<[^>]+>", " ", cleaned_html)
+
+    zero_width_re = re.compile(r"[\u200b-\u200f\u202a-\u202e\ufeff]")
+    visible_clean = zero_width_re.sub("", visible_raw)
+    visible_clean = re.sub(r"\s+", " ", visible_clean).strip()
+
+    threats_found: List[str] = []
+    high_hits = 0
+    hidden_joined = "\n".join(hidden_chunks)
+    combined_scan = f"{hidden_joined}\n{visible_clean}"
+
+    for pat, label, severity in _INJECTION_SIGNATURES:
+        if pat.search(combined_scan):
+            if label not in threats_found:
+                threats_found.append(label)
+            if severity == "high":
+                high_hits += 1
+            if hidden_joined and pat.search(hidden_joined) and "hidden_dom_injection" not in threats_found:
+                threats_found.append("hidden_dom_injection")
+                high_hits += 1
+
+    if zero_width_re.search(source_text):
+        threats_found.append("zero_width_obfuscation")
+
+    if high_hits > 0 or len(threats_found) >= 2:
+        risk_level = "BLOCKED"
+    elif len(threats_found) == 1:
+        risk_level = "WARN"
+    else:
+        risk_level = "SAFE"
+
+    return {
+        "risk_level": risk_level,
+        "threats_found": threats_found,
+        "hidden_nodes_stripped": hidden_nodes_stripped,
+        "sanitized_text": visible_clean[:4000],
+        "shield_passed": risk_level != "BLOCKED",
+    }
+
+_ANTIBOT_GATE_MARKERS = (
+    "cf-turnstile",
+    "g-recaptcha",
+    "h-captcha",
+    "cf-browser-verification",
+    "verify you are human",
+    "just a moment...",
+    "enable javascript and cookies to continue",
+)
+
+def _detect_antibot_or_captcha_gate(status_code: int, html_text: str) -> bool:
+    """ตรวจจับด่าน CAPTCHA หรือ anti-bot โดยจะหยุดทันทีและไม่ข้ามระบบป้องกัน"""
+    lower = (html_text or "").lower()
+    if any(marker in lower for marker in _ANTIBOT_GATE_MARKERS):
+        return True
+    if status_code in (403, 429) and any(k in lower for k in ("captcha", "cloudflare", "challenge-platform")):
+        return True
+    return False
+
+def _render_dom_wireframe_svg(page_title: str, target_url: str, elements: list, shield_report: dict) -> str:
+    """สร้างภาพจำลอง Wireframe SVG แบบ Quiet Luxury Obsidian ของหน้าเว็บใน Sandbox"""
+    risk = str((shield_report or {}).get("risk_level") or "SAFE").upper()
+    badge_bg = "#065f46" if risk == "SAFE" else ("#78350f" if risk == "WARN" else "#7f1d1d")
+    badge_fg = "#6ee7b7" if risk == "SAFE" else ("#fcd34d" if risk == "WARN" else "#fca5a5")
+
+    safe_url = html_lib.escape((target_url or "sandbox://offline-audit")[:62], quote=True)
+    safe_title = html_lib.escape((page_title or "Kira Sandbox Viewport")[:52], quote=True)
+    safe_risk = html_lib.escape(risk, quote=True)
+
+    cards_svg = []
+    for idx, el in enumerate((elements or [])[:6]):
+        col = idx % 2
+        row = idx // 2
+        x = 30 + col * 335
+        y = 148 + row * 80
+        tag_name = html_lib.escape(str(el.get("tag") or "el").upper()[:10], quote=True)
+        label_txt = html_lib.escape(str(el.get("label") or el.get("href") or "Interactive node")[:34], quote=True)
+        cards_svg.append(
+            f'<g transform="translate({x},{y})">'
+            f'<rect width="320" height="66" rx="10" fill="#111116" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>'
+            f'<rect x="12" y="14" width="68" height="20" rx="5" fill="#18181b" stroke="rgba(255,255,255,0.14)"/>'
+            f'<text x="46" y="28" text-anchor="middle" fill="#a1a1aa" font-family="monospace" font-size="10">[#{idx + 1}] {tag_name}</text>'
+            f'<text x="14" y="51" fill="#e4e4e7" font-family="sans-serif" font-size="12">{label_txt}</text>'
+            f'</g>'
+        )
+
+    if not cards_svg:
+        cards_svg.append(
+            '<rect x="30" y="156" width="660" height="90" rx="12" fill="#111116" stroke="rgba(255,255,255,0.1)"/>'
+            '<text x="360" y="206" text-anchor="middle" fill="#a1a1aa" font-family="sans-serif" font-size="13">'
+            'Sandbox Inspection Complete - Visual Wireframe Ready'
+            '</text>'
+        )
+
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-label="Kira Sandbox Viewport Wireframe">'
+        '<rect width="720" height="420" rx="14" fill="#09090b"/>'
+        '<rect x="1" y="1" width="718" height="418" rx="13" fill="none" stroke="rgba(255,255,255,0.1)"/>'
+        '<rect x="16" y="16" width="688" height="44" rx="10" fill="#111116" stroke="rgba(255,255,255,0.08)"/>'
+        '<circle cx="34" cy="38" r="5" fill="#52525b"/><circle cx="50" cy="38" r="5" fill="#52525b"/><circle cx="66" cy="38" r="5" fill="#52525b"/>'
+        f'<text x="86" y="42" fill="#d4d4d8" font-family="monospace" font-size="12">{safe_url}</text>'
+        f'<rect x="594" y="24" width="98" height="28" rx="7" fill="{badge_bg}"/>'
+        f'<text x="643" y="42" text-anchor="middle" fill="{badge_fg}" font-family="monospace" font-size="11" font-weight="bold">SHIELD: {safe_risk}</text>'
+        f'<text x="30" y="94" fill="#fafafa" font-family="sans-serif" font-size="18" font-weight="bold">{safe_title}</text>'
+        '<line x1="30" y1="112" x2="690" y2="112" stroke="rgba(255,255,255,0.08)"/>'
+        '<text x="30" y="132" fill="#71717a" font-family="monospace" font-size="11">INTERACTIVE SANDBOX NODES</text>'
+        f'{"".join(cards_svg)}'
+        '</svg>'
+    )
+
+async def _fetch_public_sandbox_page(initial_url: str) -> tuple[str, int, str]:
+    """ดึงเนื้อหาเว็บสาธารณะแบบตรวจสิทธิ์ SSRF ทุก Redirect Hop"""
+    current_url = _validate_safe_public_url(initial_url)
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; KiraSandboxInspector/2.9.7; +https://kira-public-engine.onrender.com)"}
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
+        for _ in range(4):
+            resp = await client.get(current_url, headers=headers)
+            if resp.is_redirect and resp.headers.get("location"):
+                next_url = urljoin(current_url, resp.headers["location"])
+                current_url = _validate_safe_public_url(next_url)
+                continue
+            return current_url, resp.status_code, resp.text[:350000]
+    raise HTTPException(status_code=400, detail="Too many redirects during sandbox inspection")
+
+def _extract_dom_elements(raw_html: str) -> tuple[str, list]:
+    """สกัดชื่อหน้าเว็บและรายการองค์ประกอบสำคัญสำหรับการทำงานแบบ Computer Use"""
+    elements: List[dict] = []
+    page_title = "Kira Sandbox Document"
+    if BeautifulSoup is not None and ("<" in (raw_html or "") and ">" in (raw_html or "")):
+        soup = BeautifulSoup(raw_html, "html.parser")
+        if soup.title and soup.title.string:
+            page_title = re.sub(r"\s+", " ", soup.title.string).strip()[:120]
+        idx = 1
+        for node in soup.select("h1, h2, h3, a, button, input, select"):
+            tag = (node.name or "el").lower()
+            label = re.sub(r"\s+", " ", node.get_text(" ", strip=True) or node.get("placeholder") or node.get("aria-label") or node.get("name") or "").strip()[:100]
+            href = str(node.get("href") or "")[:180]
+            if not label and not href:
+                continue
+            elements.append({"index": idx, "tag": tag, "label": label or href, "href": href})
+            idx += 1
+            if idx > 12:
+                break
+    else:
+        title_m = re.search(r"<title[^>]*>(.*?)</title>", raw_html or "", flags=re.I | re.S)
+        if title_m:
+            page_title = re.sub(r"\s+", " ", title_m.group(1)).strip()[:120]
+    return page_title, elements
+
+def _build_os_companion_plan(platform: str, goal: str, require_confirmation: bool, ui_lang: str) -> dict:
+    """สร้างแผนและสคริปต์ควบคุม OS Companion (PyAutoGUI / ADB) พร้อมมาตรการยืนยันความปลอดภัย"""
+    clean_platform = (platform or "desktop").strip().lower()
+    if clean_platform not in ("desktop", "mobile", "hybrid"):
+        clean_platform = "desktop"
+    clean_goal = re.sub(r"\s+", " ", (goal or "")).strip()[:400]
+    confirm_expr = "True" if require_confirmation else "False"
+    gate_label = "HUMAN_CONFIRM_REQUIRED" if require_confirmation else "STEP_LOGGED"
+
+    step_specs = [
+        ("Verify Workspace & Active Window", "system_focus", "echo 'Checking active focus & failsafe boundaries'"),
+        ("Execute Target Goal Preparation", "open_or_navigate", f"# Prepare target workspace for: {clean_goal}"),
+        ("Capture Pre-Action Visual Check", "screenshot_audit", "# Capture screen digest before input mutation"),
+        ("Perform Confirmed Automation Step", "controlled_input", "# Wait for confirmation gate before sending keystrokes/taps"),
+    ]
+    steps = [
+        {
+            "step": i + 1,
+            "action": name,
+            "target": clean_platform,
+            "command": cmd,
+            "safety_gate": gate_label,
+        }
+        for i, (name, _, cmd) in enumerate(step_specs)
+    ]
+
+    safe_goal_py = json.dumps(clean_goal, ensure_ascii=False)
+    pyautogui_script = f'''"""Kira OS Companion — Desktop PyAutoGUI Runner (v{KIRA_SYSTEM_VERSION})"""
+import time
+import pyautogui
+
+pyautogui.FAILSAFE = True  # Move cursor to top-left corner (0, 0) to abort immediately
+pyautogui.PAUSE = 0.6
+REQUIRE_CONFIRMATION = {confirm_expr}
+GOAL = {safe_goal_py}
+
+def confirm_step(label: str) -> bool:
+    if not REQUIRE_CONFIRMATION:
+        return True
+    ans = input(f"[Kira Safety Gate] Execute '{{label}}'? [y/N]: ").strip().lower()
+    return ans in ("y", "yes")
+
+def run_workflow():
+    print(f"Target Goal: {{GOAL}}")
+    screen_w, screen_h = pyautogui.size()
+    print(f"Detected Display: {{screen_w}}x{{screen_h}} (FAILSAFE={{pyautogui.FAILSAFE}})")
+    if confirm_step("Focus active workspace window"):
+        time.sleep(0.5)
+    if confirm_step("Capture pre-action verification screenshot"):
+        pyautogui.screenshot("kira_companion_precheck.png")
+    print("Ready for user-supervised execution. Add exact target coordinates or window hooks safely.")
+
+if __name__ == "__main__":
+    run_workflow()
+'''
+
+    adb_script = f'''# Kira OS Companion — Android ADB Workflow (v{KIRA_SYSTEM_VERSION})
+# Target Goal: {clean_goal}
+# Requires USB Debugging authorized by device owner
+
+adb devices
+adb shell dumpsys window windows | grep -E "mCurrentFocus|mFocusedApp"
+# Preview screen safely before tapping:
+adb exec-out screencap -p > kira_mobile_precheck.png
+# Confirmed interaction examples (replace X Y with verified screen bounds):
+# adb shell input tap 540 1200
+# adb shell input keyevent KEYCODE_HOME
+'''
+
+    safety_policy = {
+        "human_in_the_loop": bool(require_confirmation),
+        "failsafe_corner_abort": True,
+        "credential_harvesting_blocked": True,
+        "anti_bot_bypass_blocked": True,
+    }
+
+    md_lines = [
+        f"# Kira OS Companion Execution Plan ({clean_platform.upper()})",
+        f"- **Goal:** {clean_goal}",
+        f"- **Confirmation Gate:** `{gate_label}`",
+        "- **PyAutoGUI Failsafe:** `True` (`PAUSE = 0.6s`)",
+        "",
+        "## Planned Steps",
+    ]
+    for s in steps:
+        md_lines.append(f"{s['step']}. **{s['action']}** (`{s['safety_gate']}`) — `{s['command']}`")
+
+    return {
+        "steps": steps,
+        "pyautogui_script": pyautogui_script,
+        "adb_script": adb_script,
+        "markdown_report": "\n".join(md_lines),
+        "safety_policy": safety_policy,
+    }
+
+@app.post("/api/agent/shield-scan")
+async def scan_agent_prompt_shield(req: PromptShieldScanRequest):
+    """สแกนข้อความหรือ HTML เพื่อป้องกัน Visual & DOM Prompt Injection"""
+    if not (req.content or "").strip():
+        raise HTTPException(status_code=400, detail="กรุณาระบุข้อความหรือโค้ด HTML ที่ต้องการสแกนค่ะ")
+    report = _scan_visual_and_dom_prompt_injection(req.content)
+    return {"status": "success", "source_url": req.source_url or "", "shield_report": report}
+
+@app.post("/api/agent/web-computer-use")
+async def run_web_computer_use(req: WebComputerUseRequest):
+    """Cloud Web Computer Use Sandbox: ดึงหน้าเว็บสาธารณะอย่างปลอดภัย สกัดองค์ประกอบ และตรวจจับ Injection"""
+    clean_goal = (req.goal or "").strip()
+    if not clean_goal:
+        raise HTTPException(status_code=400, detail="กรุณาระบุเป้าหมายการทำงานของตัวแทนค่ะ")
+
+    clean_user = (req.username or "guest").strip()[:80] or "guest"
+    clean_url = (req.url or "").strip()
+    action_mode = (req.action_mode or "inspect_and_extract").strip().lower()
+    run_id = f"run_{secrets.token_hex(6)}"
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    trace = [{"step": 1, "action": "parse_goal", "detail": f"Goal initialized ({action_mode})"}]
+    raw_content = clean_goal
+    target_url = clean_url or "sandbox://offline-audit"
+    page_title = "Kira Sandbox Prompt & DOM Audit"
+    elements: List[dict] = []
+    status_label = "completed"
+
+    if clean_url:
+        validated_url = _validate_safe_public_url(clean_url)
+        trace.append({"step": 2, "action": "ssrf_guard", "detail": f"Validated public URL: {validated_url}"})
+        if action_mode != "shield_audit":
+            try:
+                final_url, http_status, body_text = await _fetch_public_sandbox_page(validated_url)
+                target_url = final_url
+                raw_content = body_text
+                trace.append({"step": 3, "action": "sandbox_fetch", "detail": f"HTTP {http_status} from {final_url}"})
+                if _detect_antibot_or_captcha_gate(http_status, body_text):
+                    status_label = "halted_captcha_gate"
+                    trace.append({"step": 4, "action": "captcha_halt", "detail": "Anti-bot/CAPTCHA gate detected; execution halted safely without bypass"})
+                page_title, elements = _extract_dom_elements(body_text)
+            except HTTPException:
+                raise
+            except Exception as fetch_err:
+                raise HTTPException(status_code=502, detail=f"ไม่สามารถเชื่อมต่อปลายทางใน Sandbox ได้ค่ะ: {str(fetch_err)[:160]}")
+        else:
+            page_title, elements = _extract_dom_elements(clean_goal)
+    else:
+        page_title, elements = _extract_dom_elements(clean_goal)
+        trace.append({"step": 2, "action": "offline_sandbox", "detail": "Inspected user-supplied snippet in offline sandbox"})
+
+    shield_report = _scan_visual_and_dom_prompt_injection(raw_content)
+    trace.append({
+        "step": len(trace) + 1,
+        "action": "visual_prompt_shield",
+        "detail": f"Risk={shield_report['risk_level']} | Stripped hidden={shield_report['hidden_nodes_stripped']} | Threats={len(shield_report['threats_found'])}",
+    })
+
+    if status_label != "halted_captcha_gate" and not shield_report["shield_passed"]:
+        status_label = "blocked_by_shield"
+
+    viewport_svg = _render_dom_wireframe_svg(page_title, target_url, elements, shield_report)
+
+    md_parts = [
+        f"# Kira Cloud Web Computer Use Report (`{run_id}`)",
+        f"- **Target:** `{target_url}`",
+        f"- **Page Title:** {page_title}",
+        f"- **Status:** `{status_label}`",
+        f"- **Shield Risk Level:** `{shield_report['risk_level']}` (Hidden nodes stripped: {shield_report['hidden_nodes_stripped']})",
+        "",
+        "## Interactive DOM Elements",
+    ]
+    if elements:
+        for el in elements[:10]:
+            md_parts.append(f"- `[#{el['index']}]` `<{el['tag']}>` {el['label']}")
+    else:
+        md_parts.append("- No interactive HTML elements extracted.")
+    md_parts.extend(["", "## Sanitized Visible Summary", shield_report["sanitized_text"][:1200] or "_Empty visible text_"])
+    deliverable = "\n".join(md_parts)
+
+    execute_query(
+        """
+        INSERT INTO agent_action_logs (run_id, username, mode, target, goal, risk_level, status, trace_json, deliverable, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            run_id,
+            clean_user,
+            "web_computer_use",
+            target_url[:300],
+            clean_goal[:400],
+            shield_report["risk_level"],
+            status_label,
+            json.dumps(trace, ensure_ascii=False),
+            deliverable[:8000],
+            now_str,
+        ),
+    )
+
+    return {
+        "status": status_label,
+        "run_id": run_id,
+        "target_url": target_url,
+        "page_title": page_title,
+        "shield_report": shield_report,
+        "interactive_elements": elements,
+        "action_trace": trace,
+        "viewport_svg": viewport_svg,
+        "deliverable": deliverable,
+    }
+
+@app.post("/api/agent/os-companion/plan")
+async def create_os_companion_plan(req: OSCompanionPlanRequest):
+    """สร้างแผนปฏิบัติการและสคริปต์ควบคุมสำหรับ OS Companion (Desktop PyAutoGUI / Android ADB)"""
+    clean_goal = (req.goal or "").strip()
+    if not clean_goal:
+        raise HTTPException(status_code=400, detail="กรุณาระบุคำสั่งหรือเป้าหมายสำหรับ OS Companion ค่ะ")
+
+    clean_user = (req.username or "guest").strip()[:80] or "guest"
+    clean_platform = (req.platform or "desktop").strip().lower()
+    if clean_platform not in ("desktop", "mobile", "hybrid"):
+        clean_platform = "desktop"
+
+    plan = _build_os_companion_plan(clean_platform, clean_goal, req.require_confirmation is not False, req.ui_lang or "th")
+    run_id = f"os_{secrets.token_hex(6)}"
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    execute_query(
+        """
+        INSERT INTO agent_action_logs (run_id, username, mode, target, goal, risk_level, status, trace_json, deliverable, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            run_id,
+            clean_user,
+            f"os_companion_{clean_platform}",
+            clean_platform,
+            clean_goal[:400],
+            "SAFE",
+            "planned",
+            json.dumps(plan["steps"], ensure_ascii=False),
+            plan["markdown_report"][:8000],
+            now_str,
+        ),
+    )
+
+    pair_row = execute_query("SELECT pairing_code FROM companion_pairings WHERE username=? ORDER BY id DESC LIMIT 1", (clean_user,), fetch="one")
+    if pair_row:
+        queue_payload = json.dumps({"run_id": run_id, "platform": clean_platform, "goal": clean_goal, "steps": plan["steps"], "created_at": now_str}, ensure_ascii=False)
+        execute_query(
+            "UPDATE companion_pairings SET pending_queue_json=?, updated_at=? WHERE pairing_code=?",
+            (queue_payload, now_str, pair_row[0]),
+        )
+
+    return {
+        "status": "success",
+        "run_id": run_id,
+        "platform": clean_platform,
+        "plan": plan,
+    }
+
+@app.post("/api/agent/os-companion/pair")
+async def pair_os_companion(req: OSCompanionPairRequest):
+    """สร้างหรือรีเฟรชรหัสจับคู่ (Pairing Code) สำหรับเชื่อม Kira OS Companion บนเครื่องผู้ใช้"""
+    clean_user = (req.username or "").strip()[:80]
+    if not clean_user:
+        raise HTTPException(status_code=400, detail="กรุณาระบุชื่อผู้ใช้ก่อนจับคู่ OS Companion ค่ะ")
+    clean_platform = (req.platform or "desktop").strip().lower()
+    if clean_platform not in ("desktop", "mobile", "hybrid"):
+        clean_platform = "desktop"
+    clean_label = (req.device_label or "My Workstation").strip()[:100] or "My Workstation"
+
+    pairing_code = f"KIRA-COMP-{secrets.token_hex(3).upper()}"
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    existing = execute_query("SELECT id FROM companion_pairings WHERE username=?", (clean_user,), fetch="one")
+    if existing:
+        execute_query(
+            "UPDATE companion_pairings SET pairing_code=?, platform=?, device_label=?, updated_at=? WHERE username=?",
+            (pairing_code, clean_platform, clean_label, now_str, clean_user),
+        )
+    else:
+        execute_query(
+            "INSERT INTO companion_pairings (username, pairing_code, platform, device_label, pending_queue_json, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (clean_user, pairing_code, clean_platform, clean_label, "{}", now_str),
+        )
+
+    bridge_url = f"/api/agent/os-companion/download-bridge?username={clean_user}&pairing_code={pairing_code}"
+    return {
+        "status": "success",
+        "pairing_code": pairing_code,
+        "username": clean_user,
+        "platform": clean_platform,
+        "device_label": clean_label,
+        "bridge_download_url": bridge_url,
+    }
+
+@app.get("/api/agent/os-companion/download-bridge")
+async def download_os_companion_bridge(request: Request, username: str = "guest", pairing_code: str = "KIRA-COMP-DEMO"):
+    """ดาวน์โหลดไฟล์ kira_os_companion_bridge.py ที่ตั้งค่า Pairing Code และระบบยืนยันให้แล้ว"""
+    clean_user = (username or "guest").strip()[:80] or "guest"
+    clean_code = re.sub(r"[^A-Za-z0-9_-]", "", (pairing_code or "KIRA-COMP-DEMO"))[:40] or "KIRA-COMP-DEMO"
+    server_url = str(request.base_url).rstrip("/")
+
+    script_body = f'''"""
+Kira OS Companion Local Bridge (v{KIRA_SYSTEM_VERSION})
+- Desktop Control via PyAutoGUI (FAILSAFE enabled)
+- Mobile Control via Android ADB
+- Enforces mandatory Human-in-the-Loop confirmation before running any queued step.
+"""
+import json
+import subprocess
+import sys
+import urllib.request
+
+SERVER_URL = {json.dumps(server_url)}
+USERNAME = {json.dumps(clean_user)}
+PAIRING_CODE = {json.dumps(clean_code)}
+
+def verify_failsafe():
+    try:
+        import pyautogui
+        pyautogui.FAILSAFE = True
+        pyautogui.PAUSE = 0.6
+        print(f"PyAutoGUI Failsafe Enabled: {{pyautogui.FAILSAFE}} | Screen: {{pyautogui.size()}}")
+    except ImportError:
+        print("PyAutoGUI not installed yet (pip install pyautogui). Running ADB / Preview bridge only.")
+
+def fetch_agent_history():
+    url = f"{{SERVER_URL}}/api/agent/history?username={{urllib.parse.quote(USERNAME)}}"
+    with urllib.request.urlopen(url, timeout=10) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+def confirm_and_preview_steps(queue_data: dict):
+    steps = queue_data.get("steps") or []
+    print(f"\\n[Kira OS Bridge] Paired User={{USERNAME}} | Code={{PAIRING_CODE}}")
+    print(f"Queued Goal: {{queue_data.get('goal', 'None')}}")
+    for st in steps:
+        ans = input(f"Step {{st.get('step')}}: {{st.get('action')}} -> Run command preview? [y/N]: ").strip().lower()
+        if ans in ("y", "yes"):
+            print(f"  [Approved Step {{st.get('step')}}] {{st.get('command')}}")
+        else:
+            print(f"  [Skipped Step {{st.get('step')}}] Cancelled by user.")
+
+def check_adb_devices():
+    try:
+        out = subprocess.check_output(["adb", "devices"], stderr=subprocess.STDOUT, timeout=5)
+        print("\\n[ADB Devices]\\n" + out.decode("utf-8", errors="ignore"))
+    except Exception as exc:
+        print(f"\\n[ADB] Standby / Not connected: {{exc}}")
+
+if __name__ == "__main__":
+    import urllib.parse
+    verify_failsafe()
+    check_adb_devices()
+    try:
+        hist = fetch_agent_history()
+        pairing = hist.get("pairing") or {{}}
+        queue = pairing.get("pending_queue") or {{}}
+        if queue.get("steps"):
+            confirm_and_preview_steps(queue)
+        else:
+            print("No pending OS Companion steps queued yet.")
+    except Exception as exc:
+        print("Bridge connection notice:", exc, file=sys.stderr)
+'''
+
+    return Response(
+        content=script_body.encode("utf-8"),
+        media_type="text/x-python; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="kira_os_companion_bridge.py"'},
+    )
+
+@app.get("/api/agent/history")
+async def get_agent_action_history(username: str = "guest"):
+    """ดึงประวัติการรัน Action Agent และสถานะอุปกรณ์ที่จับคู่ไว้ของผู้ใช้"""
+    clean_user = (username or "guest").strip()[:80] or "guest"
+    rows = execute_query(
+        "SELECT run_id, mode, target, goal, risk_level, status, trace_json, created_at FROM agent_action_logs WHERE username=? ORDER BY id DESC LIMIT 20",
+        (clean_user,),
+        fetch="all",
+    ) or []
+    history = []
+    for r in rows:
+        try:
+            trace_parsed = json.loads(r[6]) if r[6] else []
+        except Exception:
+            trace_parsed = []
+        history.append({
+            "run_id": r[0],
+            "mode": r[1],
+            "target": r[2],
+            "goal": r[3],
+            "risk_level": r[4],
+            "status": r[5],
+            "trace": trace_parsed,
+            "created_at": r[7] or "",
+        })
+
+    pair_row = execute_query(
+        "SELECT pairing_code, platform, device_label, pending_queue_json, updated_at FROM companion_pairings WHERE username=? ORDER BY id DESC LIMIT 1",
+        (clean_user,),
+        fetch="one",
+    )
+    pairing = None
+    if pair_row:
+        try:
+            pq = json.loads(pair_row[3]) if pair_row[3] else {}
+        except Exception:
+            pq = {}
+        pairing = {
+            "pairing_code": pair_row[0],
+            "platform": pair_row[1],
+            "device_label": pair_row[2],
+            "pending_queue": pq,
+            "updated_at": pair_row[4] or "",
+        }
+
+    return {"status": "success", "username": clean_user, "history": history, "pairing": pairing}
 
 # ====================================================================
 # 💎 Kira Subscription & Monetization Engine Endpoints

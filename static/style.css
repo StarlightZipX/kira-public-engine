@@ -21078,14 +21078,181 @@ pre, .code-block-wrapper {
         justify-content: center;
     }
 
-    .notif-header-btn .notif-btn-text {
+    .notif-header-btn .notif-btn-text,
+    .agent-header-btn .agent-btn-text {
         display: none;
+    }
+
+    .agent-mode-tabs,
+    .agent-form-actions {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .agent-form-actions .btn-action-sm {
+        width: 100%;
+        justify-content: center;
     }
 
     .sovereign-footprint-grid,
     .sovereign-vault-links {
         grid-template-columns: 1fr;
     }
+}
+
+/* ====================================================================
+   Phase 3 Quiet Luxury Obsidian Styles (v2.9.7)
+   - Cloud Web Computer Use Sandbox, Prompt Shield, OS Companion Bridge
+   ==================================================================== */
+.agent-header-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.phase3-agent-card {
+    width: min(1020px, calc(100vw - 24px));
+}
+
+.agent-mode-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+
+.agent-tab-btn {
+    border: 1px solid transparent;
+    background: transparent;
+    color: #a1a1aa;
+    padding: 9px 12px;
+    border-radius: 7px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.agent-tab-btn:hover {
+    color: #f4f4f5;
+}
+
+.agent-tab-btn.active {
+    background: #18181b;
+    color: #f4f4f5;
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.agent-form-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.agent-shield-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    background: rgba(16, 185, 129, 0.07);
+    color: #6ee7b7;
+    word-break: break-word;
+}
+
+.agent-shield-banner.warn {
+    border-color: rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.08);
+    color: #fcd34d;
+}
+
+.agent-shield-banner.blocked {
+    border-color: rgba(239, 68, 68, 0.38);
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+}
+
+.agent-viewport-frame {
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #09090b;
+    overflow: hidden;
+    min-height: 160px;
+}
+
+.agent-viewport-frame svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.agent-trace-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.agent-step-card {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: 0.78rem;
+    color: #d4d4d8;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    word-break: break-word;
+}
+
+.agent-step-idx {
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fafafa;
+    font-family: monospace;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+}
+
+.agent-deliverable-box {
+    font-size: 0.8rem;
+    color: #a1a1aa;
+    line-height: 1.5;
+    max-height: 140px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.agent-os-code-pre {
+    margin: 0;
+    padding: 12px;
+    border-radius: 10px;
+    background: #050507;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    color: #e4e4e7;
+    font-family: monospace;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    max-width: 100%;
+    max-height: 220px;
+    overflow: auto;
+    box-sizing: border-box;
+    white-space: pre;
 }
 
 
