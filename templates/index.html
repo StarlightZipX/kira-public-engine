@@ -39,7 +39,7 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=20261115_fix_resilience_tools">
+    <link rel="stylesheet" href="/static/style.css?v=20261115_clean_responsive_bars">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0b0c10">
@@ -393,7 +393,8 @@
 
     <div class="app-container" id="app-container" style="display: none;">
         <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
+        <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+    <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h2 style="display: flex; align-items: center; gap: 8px;">
                     <img src="/static/images/kira_logo.png?v=6" alt="Kira Logo" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.12);"> 
@@ -508,7 +509,7 @@
                     </button>
 
                     <!-- Share Button -->
-                    <button title="แชร์บทสนทนา &amp; การ์ดภาพสรุป (Share)" id="btn-share-chat" class="header-action-btn share-chat-btn">
+                    <button title="แชร์บทสนทนา &amp; การ์ดภาพสรุป (Share)" id="btn-share-chat" class="header-action-btn share-chat-btn header-consolidated-btn">
                         <i class="fa-solid fa-share-nodes text-cyan"></i>
                         <span class="share-btn-text" data-i18n="share">แชร์</span>
                     </button>
@@ -565,21 +566,21 @@
                     </button>
 
                     <!-- 📚 Kira Semantic Vector RAG Knowledge Vault Button -->
-                    <button data-i18n-title="rag_vault_title" title="เปิดคลังความรู้เอกสารอัจฉริยะ (Semantic Vector RAG Knowledge Vault)" id="btn-rag-vault" class="header-action-btn rag-vault-header-btn">
+                    <button data-i18n-title="rag_vault_title" title="เปิดคลังความรู้เอกสารอัจฉริยะ (Semantic Vector RAG Knowledge Vault)" id="btn-rag-vault" class="header-action-btn rag-vault-header-btn header-consolidated-btn">
                         <i class="fa-solid fa-book-atlas text-emerald"></i>
                         <span class="rag-vault-btn-text" data-i18n="rag_vault_btn">คลังความรู้</span>
                         <span id="rag-vault-count-badge" class="rag-vault-count-badge" style="display: none;">0</span>
                     </button>
 
                     <!-- 🔔 Kira PWA Notification & Reminder Center Button (Phase 2.2) -->
-                    <button id="btn-notification-center" class="header-action-btn notif-header-btn" data-i18n-title="notif_center_title" title="ศูนย์แจ้งเตือนนัดหมาย บิล และงานเข้า (PWA Notification Center)">
+                    <button id="btn-notification-center" class="header-action-btn notif-header-btn header-consolidated-btn" data-i18n-title="notif_center_title" title="ศูนย์แจ้งเตือนนัดหมาย บิล และงานเข้า (PWA Notification Center)">
                         <i class="fa-regular fa-bell"></i>
                         <span class="notif-btn-text" data-i18n="notif_center_btn">แจ้งเตือน</span>
                         <span id="notification-unread-badge" class="notif-unread-badge" style="display: none;">0</span>
                     </button>
 
                     <!-- 🤖 Kira Action Agent & OS Companion Button (Phase 3) -->
-                    <button id="btn-action-agent" class="header-action-btn agent-header-btn" data-i18n-title="action_agent_title" title="ศูนย์ปฏิบัติการตัวแทนอัจฉริยะ (Web Computer Use & OS Companion)">
+                    <button id="btn-action-agent" class="header-action-btn agent-header-btn header-consolidated-btn" data-i18n-title="action_agent_title" title="ศูนย์ปฏิบัติการตัวแทนอัจฉริยะ (Web Computer Use & OS Companion)">
                         <i class="fa-solid fa-robot"></i>
                         <span class="agent-btn-text" data-i18n="action_agent_btn">Action Agent</span>
                     </button>
@@ -600,11 +601,26 @@
                     <!-- Categorized Secondary Tools Dropdown -->
                     <div class="tools-dropdown-wrapper" id="tools-dropdown-wrapper">
                         <button id="btn-header-tools" class="header-action-btn tools-trigger-btn" data-i18n-title="tools_title" title="ศูนย์รวมฟีเจอร์และเครื่องมือ">
+                            <span id="tools-notif-dot" class="tools-notif-dot" style="display: none;"></span>
                             <i class="fa-solid fa-toolbox"></i>
                             <span class="tools-btn-text" data-i18n="tools">เครื่องมือ</span>
                             <i class="fa-solid fa-chevron-down tools-caret"></i>
                         </button>
                         <div class="tools-dropdown-menu" id="tools-dropdown-menu">
+                            <!-- Responsive Mode & Quick Controls (shown on tablet/mobile when header collapses cleanly) -->
+                            <div class="tools-mobile-mode-section" id="tools-mobile-mode-section">
+                                <div class="tools-category-label" data-i18n="mode_switcher_label">โหมดการใช้งาน (User Mode)</div>
+                                <div class="user-mode-pill-group tools-mode-pill-group" id="tools-user-mode-group">
+                                    <button type="button" class="mode-pill-btn active" data-mode="general"><i class="fa-solid fa-house"></i> <span data-i18n="mode_general">ทั่วไป</span></button>
+                                    <button type="button" class="mode-pill-btn" data-mode="executive"><i class="fa-solid fa-briefcase"></i> <span data-i18n="mode_executive">ผู้บริหาร</span></button>
+                                    <button type="button" class="mode-pill-btn silver-mode-btn" data-mode="silver_care"><i class="fa-solid fa-heart-pulse"></i> <span data-i18n="mode_silver">วัยเก๋า</span></button>
+                                </div>
+                                <div class="tools-mobile-quick-row">
+                                    <button type="button" class="tools-quick-chip-btn" id="btn-tools-mobile-theme" title="สลับโหมดสีหน้าจอ"><i class="fa-solid fa-circle-half-stroke"></i> <span>ธีม</span></button>
+                                    <button type="button" class="tools-quick-chip-btn" id="btn-tools-mobile-pro" title="แพ็กเกจ Pro / Founder"><i class="fa-solid fa-crown text-amber"></i> <span>Pro</span></button>
+                                    <button type="button" class="tools-quick-chip-btn" id="btn-tools-mobile-lang" title="สลับภาษา TH/EN/ZH/KO/JA"><i class="fa-solid fa-globe text-cyan"></i> <span id="tools-mobile-lang-label">TH</span></button>
+                                </div>
+                            </div>
                             <div class="tools-dropdown-header">
                                 <i class="fa-solid fa-sliders"></i> ศูนย์รวมฟีเจอร์ & เครื่องมือ
                             </div>
@@ -775,6 +791,7 @@
                                     </div>
                                 </button>
                                 <button class="tools-menu-item" id="btn-tools-notification-center" type="button" onclick="if (typeof openNotificationCenterModal === 'function') openNotificationCenterModal();" title="ศูนย์แจ้งเตือนนัดหมาย บิล และงานเข้า PWA">
+                                <span id="tools-menu-notif-badge" class="tools-menu-notif-badge" style="display: none;">0</span>
                                     <span class="tool-item-icon icon-emerald"><i class="fa-regular fa-bell"></i></span>
                                     <div class="tool-item-info">
                                         <span class="tool-item-title" data-i18n="tools_notif_title">ศูนย์แจ้งเตือน &amp; เตือนความจำ PWA</span>
@@ -4844,6 +4861,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=20261115_boss_copilot"></script>
+    <script src="/static/script.js?v=20261115_clean_responsive_bars"></script>
 </body>
 </html>

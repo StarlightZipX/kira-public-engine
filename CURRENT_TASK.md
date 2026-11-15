@@ -1,10 +1,25 @@
 # 📝 สมุดส่งเวรสถานะงานสด (KIRA AI SYSTEM - LIVING TASK ANCHOR)
 
-> **อัปเดตล่าสุด:** Kira Web v2.9.7 — Boss Flexible Co-Pilot, PostgreSQL Auth Sync & Async Chat Race Fix (**เพิ่มความยืดหยุ่นแบบเหมา 3 แกนหลักเฉพาะบัญชีบอส, แก้ Cross-DB PostgreSQL Boss Auth Token `403`, แก้ Async Chat History Race และอัปเดต Cache-Busting**)
+> **อัปเดตล่าสุด:** Kira Web v2.9.8 — Anti-Slop Decluttered Bars & True Multi-Device Responsiveness (**จัดระเบียบแถบ Header/Sidebar/Composer/Tools ให้สะอาดตาไร้ Slop และแก้ไข Responsive ให้ใช้งานลื่นครบทุกอุปกรณ์ `360px`–`1440px+` พร้อม Cache-Busting**)
 
 ---
 
-### ✅ 1. งานระดับจุลภาคที่เพิ่งทำเสร็จ (Latest Completed Work - `v2.9.7` Boss Flexible Co-Pilot & Prod Fix)
+### ✅ 1. งานระดับจุลภาคที่เพิ่งทำเสร็จ (Latest Completed Work - `v2.9.8` Clean Multi-Device UI)
+- **จัดระเบียบ Header & Consolidation (`templates/index.html`, `static/style.css`, `static/script.js`):**
+  - รวมปุ่มที่ซ้ำซ้อนบน Top Header (`#btn-share-chat`, `#btn-rag-vault`, `#btn-notification-center`, `#btn-action-agent`) เข้าสู่ศูนย์รวม `#tools-dropdown-menu` ผ่านคลาส `.header-consolidated-btn` (ยังคง DOM ID เดิมครบถ้วนเพื่อความเข้ากันได้ของ JS/Tests) พร้อมจุดแจ้งเตือน `#tools-notif-dot` / `#tools-menu-notif-badge`
+  - แก้ไขบั๊ก Layout Collision ของ `.header-center` (`position: static`), ล้าง margin เกินจาก `#toggle-sidebar.menu-btn` และ `#model-select` พร้อมคุม `.model-select-wrapper` ให้พอดีจอมือถือ `360px`/`390px` ภายในแถวเดียวสูง `54px` (`headerOverlaps: []`, `overflowX: false`)
+  - เพิ่ม `#tools-mobile-mode-section` (`User Mode` 3 โหมด + `.tools-mobile-quick-row` สำหรับ ธีม / Pro / ภาษา) พร้อมเติมคีย์แปล `mode_switcher_label` ครบทั้ง 5 ภาษา (`TH / EN / ZH / KO / JA`) ใน `KIRA_I18N`
+  - ยุบป้าย Plan ซ้ำซ้อนเมื่อเป็น `founder` / `is_boss`, แทนที่ `ui-avatars.com` ด้วย inline SVG `getInitialAvatarSvg`, และซ่อน `#study-quick-chips` อัตโนมัติระหว่างสนทนา (`.hidden-during-chat`)
+- **Responsive Sidebar, Dropdowns, Composer & Light Mode Contrast (`static/style.css`, `static/script.js`):**
+  - `<= 1024px`: แปลง `#sidebar` เป็น slide-over drawer (`z-index: 1250`) เหนือ header พร้อม `#sidebar-backdrop` กดปิด/กด `Esc`/auto-close เมื่อเลือกเมนูได้ลื่นไหล
+  - มือถือ (`<= 640px`): จัดเรียง Composer 2 แถวให้ `textarea#user-input` (`min-height: 44px`, `font-size: 16px`) อยู่ด้านบนสุดกว้างเต็มหน้าจอ และแถวปุ่ม Action อยู่ด้านล่าง พร้อมจำกัดขอบเขต `#tools-dropdown-menu` และ `#lang-dropdown-menu` ไม่ให้ล้นจอ (`clippedX: false`)
+  - แก้ Contrast ของ Welcome Hub และ Guest Banner ใน Light Theme (`body.light-theme` / `body.light-mode`) ให้อ่านง่ายชัดเจน
+- **Cache-Busting & Service Worker (`templates/index.html`, `static/sw.js`):**
+  - อัปเดต `?v=20261115_clean_responsive_bars` และ `CACHE_NAME = 'kira-ai-cache-v2.9.8-clean-responsive-bars'`
+
+---
+
+### 📌 2. ประวัติงานก่อนหน้า (`v2.9.7` Boss Flexible Co-Pilot & Prod Fix)
 * **1.1 ความยืดหยุ่นแบบเหมา 3 แกนหลักเฉพาะบัญชีบอส (`is_boss_user` หลังยืนยันตัวตน/โลคอลใน `app.py`):**
   * **IT / Sysadmin Practical Co-Pilot:** อัปเดต `system_prompt_boss` และ `init_db()` (`prompt_1.1` auto-upgrade สำหรับ Prompt ที่มีขนาดกะทัดรัด 4,078 ตัวอักษรสำหรับ Boss / 5,412 ตัวอักษรสำหรับ Guest) ให้วิเคราะห์ต้นตอปัญหา (Root Cause) คำสั่ง CLI/Config และแนวทาง Hardening ระบบที่บอสดูแลทันที โดย **ยังรักษาขอบเขตความปลอดภัย** (ปฏิเสธการข้ามล็อค/Paywall, การเจาะบัญชีผู้อื่น หรืออันตราย โดยข้ามการฉีด Co-Pilot directive เมื่อ `_is_security_or_harm_boundary_query` เป็นจริง)
   * **Adaptive Response Style:** ถอดข้อความบังคับปิดท้าย `"เชิญชวนบอสกด Like/Dislike"` ออกจาก Prompt บอส และเพิ่ม `_parse_boss_turn_mode()` + `_build_boss_adaptive_directive()` ให้ปรับความยาว/รูปแบบอัตโนมัติ (ถามสั้น/แก้ error → คำสั่งหรือโค้ดพร้อมรัน; ถามวางแผน → วิเคราะห์ Scenario & ความเสี่ยงครบ) พร้อม Prefix รายเทิร์น `/สั้น`, `/fast`, `/direct` และ `/ลึก`, `/deep`

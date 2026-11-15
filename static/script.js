@@ -378,6 +378,13 @@ function checkAuth() {
             if (authModal) authModal.style.display = 'none';
             if (appContainer) appContainer.style.display = 'flex';
 
+            const getInitialAvatarSvg = (label, bg = '#0284c7', fg = '#ffffff') => {
+                const raw = String(label || 'K').replace(/[^\p{L}\p{N}]/gu, '');
+                const letter = (raw ? raw.charAt(0) : 'K').toUpperCase();
+                const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="${bg}"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Inter,Noto Sans Thai,sans-serif" font-size="26" font-weight="700" fill="${fg}">${letter}</text></svg>`;
+                return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+            };
+
             if (isGuest) {
                 if (guestBanner) guestBanner.style.display = 'flex';
                 let guestCount = parseInt(localStorage.getItem('kira_guest_msg_count') || '0', 10);
@@ -387,17 +394,21 @@ function checkAuth() {
                 if (planBadgeText) planBadgeText.textContent = "Guest Trial";
                 if (quotaText) quotaText.textContent = `${remaining}/5`;
                 if (profilePic) {
-                    profilePic.src = "https://ui-avatars.com/api/?name=Guest&background=38BDF8&color=0f172a";
+                    profilePic.src = getInitialAvatarSvg('G', '#0284c7', '#ffffff');
                 }
             } else {
                 if (guestBanner) guestBanner.style.display = 'none';
                 if (profileName) profileName.textContent = currentUser;
                 const customAvatar = localStorage.getItem('kira_avatar');
                 if (profilePic) {
+                    profilePic.onerror = () => {
+                        profilePic.onerror = null;
+                        profilePic.src = getInitialAvatarSvg(currentUser, '#0D8ABC', '#ffffff');
+                    };
                     if (customAvatar) {
                         profilePic.src = customAvatar;
                     } else {
-                        profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser)}&background=0D8ABC&color=fff`;
+                        profilePic.src = getInitialAvatarSvg(currentUser, '#0D8ABC', '#ffffff');
                     }
                 }
             }
@@ -1311,6 +1322,10 @@ async function renderWelcomeHub() {
     if (qpWrapper) {
         qpWrapper.classList.remove('hidden-during-chat');
     }
+    const studyChipsEl = document.getElementById('study-quick-chips');
+    if (studyChipsEl) {
+        studyChipsEl.classList.remove('hidden-during-chat');
+    }
 
     const currentLang = localStorage.getItem('kira_ui_lang') || localStorage.getItem('kira_lang') || 'th';
     const wDict = WELCOME_I18N[currentLang] || WELCOME_I18N['th'];
@@ -1840,9 +1855,11 @@ async function loadSession(sessionId) {
             return;
         }
         chatBox.innerHTML = '';
+        const studyChipsEl = document.getElementById('study-quick-chips');
         if (data.history.length === 0) {
             renderWelcomeHub();
         } else {
+            if (studyChipsEl) studyChipsEl.classList.add('hidden-during-chat');
             data.history.forEach(msg => {
                 // Strip legacy badges when rendering old history so everything displays as unified Kira 2.6
                 let displayTxt = msg.content.replace(/^([✨🤖👁️🧠👑💼⚙️]?[ ]*\**\[Kira (?:1\.[0-9]|2\.[0-5]).*?\]\**(?:\n\n|\n)?)/i, "")
@@ -2325,10 +2342,14 @@ async function sendMessage() {
     addMessage(text || 'ส่งรูปภาพเพื่อตรวจสอบ (Visual Diagnostic)', true, imgBase64ToSend);
     playKiraSound('send');
 
-    // Hide quick prompts bar during active chat for clean space
+    // Hide quick prompts & study chips bar during active chat for clean space
     const qpWrapper = document.getElementById('quick-prompts-wrapper');
     if (qpWrapper) {
         qpWrapper.classList.add('hidden-during-chat');
+    }
+    const studyChipsEl = document.getElementById('study-quick-chips');
+    if (studyChipsEl) {
+        studyChipsEl.classList.add('hidden-during-chat');
     }
 
     // Ensure sidebar has the active chat item if not already there
@@ -2791,11 +2812,49 @@ userInput.addEventListener('input', function() {
     }
 });
 
+const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+function setMobileSidebarOpen(shouldOpen) {
+    if (!sidebar) return;
+    const isOpen = Boolean(shouldOpen);
+    sidebar.classList.toggle('open', isOpen);
+    if (sidebarBackdrop) {
+        sidebarBackdrop.classList.toggle('open', isOpen);
+        sidebarBackdrop.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    }
+    if (toggleSidebarBtn) {
+        toggleSidebarBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+}
+window.setMobileSidebarOpen = setMobileSidebarOpen;
+
 if (toggleSidebarBtn && sidebar) {
-    toggleSidebarBtn.addEventListener('click', () => sidebar.classList.add('open'));
+    toggleSidebarBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setMobileSidebarOpen(!sidebar.classList.contains('open'));
+    });
 }
 if (closeSidebarBtn && sidebar) {
-    closeSidebarBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+    closeSidebarBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setMobileSidebarOpen(false);
+    });
+}
+if (sidebarBackdrop) {
+    sidebarBackdrop.addEventListener('click', () => setMobileSidebarOpen(false));
+}
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) {
+        setMobileSidebarOpen(false);
+    }
+});
+if (sidebar) {
+    sidebar.addEventListener('click', (e) => {
+        if (window.innerWidth > 1024) return;
+        const clickedAction = e.target.closest('.history-item, .new-chat-btn, #btn-sidebar-settings, #btn-sidebar-guide, #btn-admin-orders');
+        if (clickedAction) {
+            setMobileSidebarOpen(false);
+        }
+    });
 }
 
 // Add floating label behavior to input area
@@ -7950,12 +8009,59 @@ function initToolsDropdownController() {
     if (triggerBtn && wrapper) {
         triggerBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            // Ensure language dropdown does not overlap tools drawer
+            const langWrap = document.getElementById('lang-switch-wrapper');
+            const langMenu = document.getElementById('lang-dropdown-menu');
+            if (langWrap) langWrap.classList.remove('open');
+            if (langMenu) langMenu.style.display = 'none';
+
             if (dropdownMenu) {
                 // Always clear any inline display override so .tools-dropdown-wrapper.open CSS works reliably
                 dropdownMenu.style.removeProperty('display');
             }
             wrapper.classList.toggle('open');
             document.querySelectorAll('.msg-tools-dropdown-menu').forEach(m => m.style.display = 'none');
+        });
+    }
+
+    // Bind responsive mobile quick controls inside Tools menu
+    const btnMobileTheme = document.getElementById('btn-tools-mobile-theme');
+    if (btnMobileTheme) {
+        btnMobileTheme.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const themeBtn = document.getElementById('btn-theme');
+            if (themeBtn) themeBtn.click();
+        });
+    }
+    const btnMobilePro = document.getElementById('btn-tools-mobile-pro');
+    if (btnMobilePro) {
+        btnMobilePro.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeHeaderToolsMenu();
+            const proBtn = document.getElementById('btn-upgrade-pro');
+            if (proBtn) proBtn.click();
+        });
+    }
+    const btnMobileLang = document.getElementById('btn-tools-mobile-lang');
+    const mobileLangLabel = document.getElementById('tools-mobile-lang-label');
+    const syncMobileLangLabel = (code) => {
+        if (!mobileLangLabel) return;
+        const c = String(code || localStorage.getItem('kira_lang') || 'th').toUpperCase();
+        mobileLangLabel.textContent = c;
+    };
+    syncMobileLangLabel(localStorage.getItem('kira_lang') || 'th');
+    window._syncMobileLangLabel = syncMobileLangLabel;
+    if (btnMobileLang) {
+        const order = ['th', 'en', 'zh', 'ko', 'ja'];
+        btnMobileLang.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const cur = (localStorage.getItem('kira_lang') || 'th').toLowerCase();
+            const idx = order.indexOf(cur);
+            const next = order[(idx >= 0 ? idx + 1 : 0) % order.length];
+            if (typeof setKiraLanguage === 'function') {
+                setKiraLanguage(next, true, true);
+            }
+            syncMobileLangLabel(next);
         });
     }
 
@@ -8862,21 +8968,27 @@ function initSubscriptionController() {
                 }
                 if (userPlanBadge && sub.plan) {
                     if (sub.plan === 'founder' || sub.is_boss) {
-                        userPlanBadge.style.color = '#fde68a';
-                        userPlanBadge.style.background = 'rgba(245, 158, 11, 0.1)';
-                        userPlanBadge.style.borderColor = 'rgba(245, 158, 11, 0.25)';
+                        // Hide redundant second Founder badge since #user-quota-badge already displays Founder status cleanly
+                        userPlanBadge.style.display = 'none';
+                        if (btnUpgradePro) btnUpgradePro.classList.add('is-founder-hidden');
                     } else if (sub.plan === 'pro') {
+                        userPlanBadge.style.display = 'inline-flex';
                         userPlanBadge.style.color = '#f8fafc';
                         userPlanBadge.style.background = 'rgba(255, 255, 255, 0.08)';
                         userPlanBadge.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                        if (btnUpgradePro) btnUpgradePro.classList.remove('is-founder-hidden');
                     } else if (sub.plan === 'trial') {
+                        userPlanBadge.style.display = 'inline-flex';
                         userPlanBadge.style.color = '#e4e4e7';
                         userPlanBadge.style.background = 'rgba(255, 255, 255, 0.05)';
                         userPlanBadge.style.borderColor = 'rgba(255, 255, 255, 0.14)';
+                        if (btnUpgradePro) btnUpgradePro.classList.remove('is-founder-hidden');
                     } else {
+                        userPlanBadge.style.display = 'inline-flex';
                         userPlanBadge.style.color = '#a1a1aa';
                         userPlanBadge.style.background = 'rgba(255, 255, 255, 0.04)';
                         userPlanBadge.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                        if (btnUpgradePro) btnUpgradePro.classList.remove('is-founder-hidden');
                     }
                 }
 
@@ -14400,6 +14512,7 @@ const KIRA_I18N = {
         flag: "🇹🇭",
         name: "ภาษาไทย",
         // Header & Navigation
+        mode_switcher_label: "โหมดการใช้งาน (User Mode)",
         mode_general: "ทั่วไป",
         mode_executive: "ผู้บริหาร",
         mode_silver: "วัยเก๋า",
@@ -15002,6 +15115,7 @@ const KIRA_I18N = {
         flag: "🇺🇸",
         name: "English",
         // Header & Navigation
+        mode_switcher_label: "User Mode",
         mode_general: "General",
         mode_executive: "Executive",
         mode_silver: "Silver Care",
@@ -15605,6 +15719,7 @@ const KIRA_I18N = {
         flag: "🇨🇳",
         name: "中文",
         // Header & Navigation
+        mode_switcher_label: "使用模式 (User Mode)",
         mode_general: "常规",
         mode_executive: "高管",
         mode_silver: "关怀",
@@ -16207,6 +16322,7 @@ const KIRA_I18N = {
         flag: "🇰🇷",
         name: "한국어",
         // Header & Navigation
+        mode_switcher_label: "사용 모드 (User Mode)",
         mode_general: "일반",
         mode_executive: "임원진",
         mode_silver: "시니어",
@@ -16810,6 +16926,7 @@ const KIRA_I18N = {
         flag: "🇯🇵",
         name: "日本語",
         // Header & Navigation
+        mode_switcher_label: "利用モード (User Mode)",
         mode_general: "一般",
         mode_executive: "エグゼクティブ",
         mode_silver: "シニア",
@@ -17607,7 +17724,10 @@ function setKiraLanguage(lang, syncVoice = true, showNotification = false) {
         if (dict[hKey]) authHeadingEl.textContent = dict[hKey];
     }
 
-    // 11. Close Dropdown Menus (Main Header & Auth Portal)
+    // 11. Close Dropdown Menus (Main Header & Auth Portal) & Sync Mobile Tools Lang Pill
+    if (typeof window._syncMobileLangLabel === 'function') {
+        window._syncMobileLangLabel(targetLang);
+    }
     const wrapper = document.getElementById('lang-switch-wrapper');
     const menu = document.getElementById('lang-dropdown-menu');
     if (wrapper) wrapper.classList.remove('open');
@@ -20663,14 +20783,20 @@ function initNotificationCenterController() {
     let activeFilter = 'all';
 
     function updateBadge(unreadCount) {
-        if (!badgeEl) return;
         const count = Math.max(0, Number(unreadCount) || 0);
-        if (count > 0) {
-            badgeEl.textContent = count > 99 ? '99+' : String(count);
-            badgeEl.style.display = 'inline-flex';
-        } else {
-            badgeEl.textContent = '0';
-            badgeEl.style.display = 'none';
+        const label = count > 99 ? '99+' : String(count);
+        if (badgeEl) {
+            badgeEl.textContent = label;
+            badgeEl.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+        const toolsNotifDot = document.getElementById('tools-notif-dot');
+        if (toolsNotifDot) {
+            toolsNotifDot.style.display = count > 0 ? 'inline-block' : 'none';
+        }
+        const toolsMenuBadge = document.getElementById('tools-menu-notif-badge');
+        if (toolsMenuBadge) {
+            toolsMenuBadge.textContent = label;
+            toolsMenuBadge.style.display = count > 0 ? 'inline-flex' : 'none';
         }
     }
 
