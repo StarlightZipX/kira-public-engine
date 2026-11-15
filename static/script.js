@@ -8465,9 +8465,107 @@ function initTaskMatrixController() {
     const createTaskForm = document.getElementById('create-task-form');
     const publicUrlInput = document.getElementById('public-intake-url-input');
     const btnCopyUrl = document.getElementById('btn-copy-intake-url');
+    const btnVisitUrl = document.getElementById('btn-visit-intake-url');
+    const intakeQrImg = document.getElementById('intake-personal-qr-img');
+    const btnDownloadQr = document.getElementById('btn-download-intake-qr');
+    const inpProfileName = document.getElementById('intake-profile-display-name');
+    const inpProfileHeadline = document.getElementById('intake-profile-headline');
+    const chkProfileAccepting = document.getElementById('intake-profile-accepting');
+    const btnSaveProfile = document.getElementById('btn-save-intake-profile');
 
-    if (publicUrlInput) {
-        publicUrlInput.value = window.location.origin + '/intake';
+    async function refreshPersonalIntakeLink() {
+        const user = (typeof currentUser !== 'undefined' && currentUser) || localStorage.getItem('kira_username') || 'guest';
+        const isNamedUser = Boolean(user && user.toLowerCase() !== 'guest');
+        const targetPath = isNamedUser ? `/intake?owner=${encodeURIComponent(user)}` : '/intake';
+        const fullUrl = window.location.origin + targetPath;
+
+        if (publicUrlInput) publicUrlInput.value = fullUrl;
+        if (btnVisitUrl) btnVisitUrl.setAttribute('href', targetPath);
+        if (intakeQrImg) {
+            const qrApiUrl = `/api/intake/qr.svg?url=${encodeURIComponent(fullUrl)}`;
+            intakeQrImg.src = qrApiUrl;
+        }
+
+        if (isNamedUser) {
+            try {
+                const res = await fetch(`/api/intake/profile?owner=${encodeURIComponent(user)}`);
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    if (inpProfileName && !inpProfileName.value) inpProfileName.value = data.display_name || '';
+                    if (inpProfileHeadline && !inpProfileHeadline.value) inpProfileHeadline.value = data.headline || '';
+                    if (chkProfileAccepting) chkProfileAccepting.checked = data.accepting_requests !== false;
+                }
+            } catch (e) { /* keep defaults */ }
+        }
+    }
+    window.refreshPersonalIntakeLink = refreshPersonalIntakeLink;
+    refreshPersonalIntakeLink();
+
+    if (btnSaveProfile) {
+        btnSaveProfile.addEventListener('click', async () => {
+            const user = (typeof currentUser !== 'undefined' && currentUser) || localStorage.getItem('kira_username') || 'guest';
+            if (!user || user.toLowerCase() === 'guest') {
+                if (typeof showToast === 'function') showToast('กรุณาเข้าสู่ระบบก่อนตั้งค่าพอร์ทัลรับงานส่วนตัวค่ะ', 'warning');
+                return;
+            }
+            const origHtml = btnSaveProfile.innerHTML;
+            btnSaveProfile.disabled = true;
+            try {
+                const res = await fetch('/api/intake/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: user,
+                        display_name: inpProfileName ? inpProfileName.value.trim() : '',
+                        headline: inpProfileHeadline ? inpProfileHeadline.value.trim() : '',
+                        accepting_requests: chkProfileAccepting ? chkProfileAccepting.checked : true,
+                        auto_draft_enabled: true
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    if (typeof showToast === 'function') showToast('บันทึกการตั้งค่าพอร์ทัลรับงานส่วนตัวเรียบร้อยค่ะ', 'success');
+                } else {
+                    if (typeof showToast === 'function') showToast(data.detail || 'ไม่สามารถบันทึกได้', 'error');
+                }
+            } catch (e) {
+                if (typeof showToast === 'function') showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+            } finally {
+                btnSaveProfile.disabled = false;
+                btnSaveProfile.innerHTML = origHtml;
+            }
+        });
+    }
+
+    if (btnDownloadQr && intakeQrImg) {
+        btnDownloadQr.addEventListener('click', () => {
+            const urlText = publicUrlInput ? publicUrlInput.value : (window.location.origin + '/intake');
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 520;
+                canvas.height = 600;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#09090b';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(70, 56, 380, 380);
+                ctx.drawImage(img, 90, 76, 340, 340);
+                ctx.fillStyle = '#f4f4f5';
+                ctx.font = 'bold 20px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('KIRA PERSONAL INTAKE', 260, 480);
+                ctx.fillStyle = '#a1a1aa';
+                ctx.font = '14px monospace';
+                ctx.fillText(urlText.slice(0, 48), 260, 515);
+                const link = document.createElement('a');
+                link.download = 'kira-personal-intake-qr.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            };
+            img.src = intakeQrImg.src;
+        });
     }
 
     if (btnCopyUrl && publicUrlInput) {
@@ -8487,9 +8585,20 @@ function initTaskMatrixController() {
     if (btnToggle && modal) {
         btnToggle.addEventListener('click', () => {
             modal.style.display = 'flex';
+            refreshPersonalIntakeLink();
             loadOmniTasks();
         });
     }
+
+    window.openPersonalIntakeTab = () => {
+        if (!modal) return;
+        modal.style.display = 'flex';
+        refreshPersonalIntakeLink();
+        loadOmniTasks();
+        tabBtns.forEach(b => {
+            if (b.getAttribute('data-tab') === 'intake-link') b.click();
+        });
+    };
 
     if (btnClose && modal) {
         btnClose.addEventListener('click', () => {
@@ -8643,12 +8752,38 @@ function initSubscriptionController() {
 
     let currentSlipBase64 = null;
     let statusPollingTimer = null;
+    let selectedPaymentRail = 'promptpay';
+
+    const btnRailPromptpay = document.getElementById('btn-rail-promptpay');
+    const btnRailIntl = document.getElementById('btn-rail-international');
+    const checkoutRailPromptpayPane = document.getElementById('checkout-rail-promptpay-pane');
+    const checkoutRailIntlPane = document.getElementById('checkout-rail-intl-pane');
+    const intlNameText = document.getElementById('intl-name-text');
+    const intlSwiftText = document.getElementById('intl-swift-text');
+    const intlAccText = document.getElementById('intl-acc-text');
+    const intlAmountUsdText = document.getElementById('intl-amount-usd-text');
+
+    function switchCheckoutPaymentRail(rail = 'promptpay') {
+        selectedPaymentRail = rail === 'international' ? 'international' : 'promptpay';
+        if (btnRailPromptpay) btnRailPromptpay.classList.toggle('active', selectedPaymentRail === 'promptpay');
+        if (btnRailIntl) btnRailIntl.classList.toggle('active', selectedPaymentRail === 'international');
+        if (checkoutRailPromptpayPane) checkoutRailPromptpayPane.style.display = selectedPaymentRail === 'promptpay' ? 'block' : 'none';
+        if (checkoutRailIntlPane) checkoutRailIntlPane.style.display = selectedPaymentRail === 'international' ? 'block' : 'none';
+    }
+
+    if (btnRailPromptpay) {
+        btnRailPromptpay.addEventListener('click', () => switchCheckoutPaymentRail('promptpay'));
+    }
+    if (btnRailIntl) {
+        btnRailIntl.addEventListener('click', () => switchCheckoutPaymentRail('international'));
+    }
 
     // Open/Close Modal
     function openSubModal(targetPlan = null) {
         if (!subModal) return;
         subModal.style.display = 'flex';
         switchSubView('plans');
+        switchCheckoutPaymentRail('promptpay');
         refreshSubscriptionStatus();
         if (targetPlan) {
             selectPlan(targetPlan);
@@ -8750,6 +8885,12 @@ function initSubscriptionController() {
                 if (btnAdminOrders) btnAdminOrders.style.display = 'inline-flex';
                 checkAdminPendingCount();
             }
+            if (typeof window.refreshNotificationBadge === 'function') {
+                window.refreshNotificationBadge();
+            }
+            if (typeof window.refreshPersonalIntakeLink === 'function') {
+                window.refreshPersonalIntakeLink();
+            }
         } catch (e) {
             console.error("Subscription status fetch error:", e);
         }
@@ -8787,7 +8928,7 @@ function initSubscriptionController() {
             const res = await fetch('/api/subscription/create-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: user, plan_id: planId })
+                body: JSON.stringify({ username: user, plan_id: planId, payment_rail: selectedPaymentRail })
             });
             const data = await res.json();
             if (res.ok && data.status === 'success') {
@@ -8797,6 +8938,26 @@ function initSubscriptionController() {
                 if (ppAmountText) ppAmountText.textContent = `${Number(data.amount).toFixed(2)} บาท`;
                 if (ppNumberText) ppNumberText.textContent = data.promptpay_number;
                 if (ppNameText) ppNameText.textContent = data.promptpay_name;
+
+                // Phase 2.4: Populate International Cross-Border QR / Wise / SWIFT pane
+                const intlInfo = data.international || {};
+                const usdMap = intlInfo.usd_approx || { trial: 1.15, pro: 3.80, founder: 14.50 };
+                const normPlanKey = planId.includes('founder') ? 'founder' : (planId.includes('pro') ? 'pro' : 'trial');
+                const approxUsd = Number(usdMap[normPlanKey] || (Number(data.amount) / 34.0)).toFixed(2);
+                if (intlNameText && intlInfo.account_holder_en) {
+                    intlNameText.textContent = intlInfo.account_holder_en;
+                }
+                if (intlSwiftText && intlInfo.swift_bic) {
+                    intlSwiftText.textContent = intlInfo.swift_bic;
+                }
+                if (intlAccText) {
+                    const accMask = intlInfo.account_number_masked || data.promptpay_account_masked || 'xxx-x-xx252-5';
+                    const ppId = intlInfo.promptpay_id || data.promptpay_number || '004999252517585';
+                    intlAccText.textContent = `${accMask} • ${ppId}`;
+                }
+                if (intlAmountUsdText) {
+                    intlAmountUsdText.textContent = `${Number(data.amount).toFixed(2)} THB (~$${approxUsd} USD)`;
+                }
 
                 // Set QR Image URL: Use verified local PromptPay card asset of Boss, fallback to QR
                 const promptpayCardUrl = data.promptpay_qr_url || data.qr_url || '/static/images/boss_promptpay_card.png';
@@ -8895,6 +9056,25 @@ function initSubscriptionController() {
             });
         });
     }
+
+    function bindMiniCopyBtn(btnId, getTextFn) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            const val = String(getTextFn() || '').trim();
+            if (!val) return;
+            navigator.clipboard.writeText(val).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check text-emerald"></i> Copied';
+                setTimeout(() => { btn.innerHTML = orig; }, 2000);
+            }).catch(() => {
+                alert(val);
+            });
+        });
+    }
+    bindMiniCopyBtn('btn-copy-intl-name', () => intlNameText?.textContent || 'SIWAT ROSAWAT');
+    bindMiniCopyBtn('btn-copy-intl-swift', () => intlSwiftText?.textContent || 'KASITHBK');
+    bindMiniCopyBtn('btn-copy-intl-acc', () => ppNumberText?.textContent || '004999252517585');
 
     // Slip Upload Handling
     function resetSlipDropzone() {
@@ -9763,6 +9943,21 @@ function handlePWADeepLinksAndShareTarget() {
             } else if (openTarget === 'tasks') {
                 const btnTasks = document.getElementById('btn-task-matrix-toggle');
                 if (btnTasks) btnTasks.click();
+            } else if (openTarget === 'intake') {
+                if (typeof window.openPersonalIntakeTab === 'function') {
+                    window.openPersonalIntakeTab();
+                } else {
+                    const btnTasks = document.getElementById('btn-task-matrix-toggle');
+                    if (btnTasks) btnTasks.click();
+                }
+            } else if (openTarget === 'notifications') {
+                if (typeof window.openNotificationCenterModal === 'function') {
+                    window.openNotificationCenterModal();
+                }
+            } else if (openTarget === 'privacy') {
+                if (typeof window.openSovereignPrivacyModal === 'function') {
+                    window.openSovereignPrivacyModal();
+                }
             } else if (openTarget === 'vault') {
                 if (window.KiraRAGVault && typeof window.KiraRAGVault.open === 'function') {
                     window.KiraRAGVault.open();
@@ -14712,7 +14907,42 @@ const KIRA_I18N = {
         receipt_btn_canvas: "ตาราง Canvas",
         receipt_btn_csv: "ส่งออก CSV",
         receipt_empty_state: "ยังไม่มีรายการบัญชี ลองอัปโหลดสลิปหรือจดรายการแรกด้านซ้ายได้เลยค่ะ",
-        pwa_share_received: "รับข้อมูลที่แชร์เข้าสู่คิระเรียบร้อยแล้วค่ะ"
+        pwa_share_received: "รับข้อมูลที่แชร์เข้าสู่คิระเรียบร้อยแล้วค่ะ",
+        notif_center_title: "ศูนย์แจ้งเตือนนัดหมาย บิล และงานเข้า (PWA Notification Center)",
+        notif_center_btn: "แจ้งเตือน",
+        tools_notif_title: "ศูนย์แจ้งเตือน (PWA Push)",
+        tools_notif_desc: "เตือนนัดหมาย บิล และงานเข้าตรงเข้ามือถือ",
+        tools_privacy_title: "ศูนย์อธิปไตยข้อมูล (PDPA)",
+        tools_privacy_desc: "Ollama Local Engine & ส่งออกข้อมูล 100%",
+        intake_personal_title: "พอร์ทัลรับงานส่วนตัว & QR นามบัตร",
+        intake_personal_desc: "ให้ลูกค้าหรือผู้ร่วมงานสแกน QR เพื่อส่งงานถึงคุณโดยตรง พร้อมแจ้งเตือนในศูนย์แจ้งเตือน PWA ทันที",
+        intake_profile_name_ph: "ชื่อที่แสดงหน้าพอร์ทัล (เช่น ชื่อคุณหรือทีม)",
+        intake_profile_headline_ph: "คำทักทายใต้หัวข้อ (เช่น ส่งบรีฟงานหรือขอนัดหมายได้ที่นี่)",
+        intake_profile_accepting_lbl: "เปิดรับคำของานจากลิงก์นี้",
+        intake_btn_save_profile: "บันทึกโปรไฟล์รับงาน",
+        intake_btn_download_qr: "ดาวน์โหลด QR Card (.PNG)",
+        pay_rail_promptpay: "PromptPay ไทย (0% ค่าธรรมเนียม)",
+        pay_rail_intl: "International QR & Wise / SWIFT",
+        notif_modal_title: "ศูนย์แจ้งเตือน & เลขาส่วนตัว PWA",
+        notif_modal_subtitle: "แจ้งเตือนนัดหมาย บิล และงานเข้าจากพอร์ทัลตรงเข้าอุปกรณ์ โดยไม่พึ่งโควตา LINE",
+        notif_btn_enable_push: "เปิดรับแจ้งเตือนบนเบราว์เซอร์",
+        notif_btn_test_push: "ส่งแจ้งเตือนทดสอบ",
+        notif_btn_read_all: "อ่านทั้งหมดแล้ว",
+        notif_form_title: "เพิ่มแจ้งเตือน / นัดหมายใหม่",
+        notif_type_label: "หมวดหมู่",
+        notif_title_label: "หัวข้อการแจ้งเตือน",
+        notif_title_ph: "เช่น ประชุมสรุปงบ Q4 หรือ จ่ายบิลค่าเน็ต...",
+        notif_due_label: "กำหนดเวลา (ไม่บังคับ)",
+        notif_body_label: "รายละเอียดเพิ่มเติม",
+        notif_body_ph: "ระบุรายละเอียด ลิงก์ หรือโน้ตช่วยจำ...",
+        notif_btn_create: "บันทึกการแจ้งเตือน",
+        notif_feed_title: "รายการแจ้งเตือนล่าสุด",
+        notif_empty: "ยังไม่มีการแจ้งเตือนใหม่ในขณะนี้ค่ะ",
+        sovereign_modal_title: "ศูนย์อธิปไตยข้อมูล & Local AI (PDPA Hub)",
+        sovereign_modal_subtitle: "ตรวจสอบความเป็นเจ้าของข้อมูลส่วนบุคคล เชื่อมต่อ Local Ollama และส่งออกข้อมูลของคุณได้ 100%",
+        sovereign_local_title: "Local AI Engine (Ollama Edge Failover)",
+        sovereign_footprint_title: "สรุปข้อมูลส่วนตัวภายใต้สิทธิ์ของคุณ",
+        sovereign_btn_export: "ส่งออกข้อมูลส่วนตัวทั้งหมด (PDPA JSON)"
     },
 
     en: {
@@ -15252,7 +15482,42 @@ const KIRA_I18N = {
         receipt_btn_canvas: "Open Canvas Table",
         receipt_btn_csv: "Export CSV",
         receipt_empty_state: "No ledger entries yet. Upload a slip or log your first item on the left.",
-        pwa_share_received: "Shared content loaded into Kira input box."
+        pwa_share_received: "Shared content loaded into Kira input box.",
+        notif_center_title: "PWA Notification Center & Secretary Alerts",
+        notif_center_btn: "Alerts",
+        tools_notif_title: "Notification Center (PWA)",
+        tools_notif_desc: "Reminders, bills & intake alerts straight to device",
+        tools_privacy_title: "Sovereign Privacy (PDPA)",
+        tools_privacy_desc: "Local Ollama Engine & 100% personal data export",
+        intake_personal_title: "Personal Intake Portal & Business Card QR",
+        intake_personal_desc: "Let clients scan your QR code to send briefs directly into your Task Matrix and PWA alerts.",
+        intake_profile_name_ph: "Public display name (e.g., Your Name or Studio)",
+        intake_profile_headline_ph: "Portal subtitle (e.g., Send project briefs or meeting requests)",
+        intake_profile_accepting_lbl: "Accept incoming requests via this portal",
+        intake_btn_save_profile: "Save Portal Profile",
+        intake_btn_download_qr: "Download QR Card (.PNG)",
+        pay_rail_promptpay: "Thai PromptPay (0% Fee)",
+        pay_rail_intl: "International QR & Wise / SWIFT",
+        notif_modal_title: "PWA Notification & Secretary Center",
+        notif_modal_subtitle: "Receive meeting, bill, and intake alerts directly on your device without LINE quotas.",
+        notif_btn_enable_push: "Enable Browser Alerts",
+        notif_btn_test_push: "Send Test Alert",
+        notif_btn_read_all: "Mark All Read",
+        notif_form_title: "New Reminder / Appointment",
+        notif_type_label: "Category",
+        notif_title_label: "Alert Title",
+        notif_title_ph: "e.g., Q4 budget review or Internet bill due...",
+        notif_due_label: "Due Time (Optional)",
+        notif_body_label: "Details",
+        notif_body_ph: "Notes, meeting links, or context...",
+        notif_btn_create: "Save Alert",
+        notif_feed_title: "Recent Alerts",
+        notif_empty: "No alerts yet.",
+        sovereign_modal_title: "Sovereign Privacy & Local AI Hub (PDPA)",
+        sovereign_modal_subtitle: "Inspect your personal data footprint, connect Local Ollama, and export 100% of your data.",
+        sovereign_local_title: "Local AI Engine (Ollama Edge Failover)",
+        sovereign_footprint_title: "Your Personal Data Footprint",
+        sovereign_btn_export: "Export All Personal Data (PDPA JSON)"
     },
 
     zh: {
@@ -15791,7 +16056,42 @@ const KIRA_I18N = {
         receipt_btn_canvas: "在 Canvas 打开表格",
         receipt_btn_csv: "导出 CSV",
         receipt_empty_state: "暂无记录，请在左侧上传账单或输入第一笔收支。",
-        pwa_share_received: "已将系统分享的内容导入 Kira 输入框。"
+        pwa_share_received: "已将系统分享的内容导入 Kira 输入框。",
+        notif_center_title: "PWA 通知中心与秘书提醒",
+        notif_center_btn: "通知",
+        tools_notif_title: "通知中心 (PWA)",
+        tools_notif_desc: "日程、账单与客户接单直达设备提醒",
+        tools_privacy_title: "数据主权中心 (PDPA)",
+        tools_privacy_desc: "Ollama 本地引擎与 100% 个人数据导出",
+        intake_personal_title: "个人接单入口与名片二维码",
+        intake_personal_desc: "客户扫描二维码即可直接向您的任务矩阵发送需求并触发 PWA 即时通知。",
+        intake_profile_name_ph: "公开展示名称（例如您的名字或工作室）",
+        intake_profile_headline_ph: "入口欢迎语（例如请在此发送需求或预约会议）",
+        intake_profile_accepting_lbl: "通过此链接开放接收外部需求",
+        intake_btn_save_profile: "保存入口资料",
+        intake_btn_download_qr: "下载二维码名片 (.PNG)",
+        pay_rail_promptpay: "泰国 PromptPay (0% 手续费)",
+        pay_rail_intl: "跨境 QR 与 Wise / SWIFT",
+        notif_modal_title: "PWA 通知与私人秘书中心",
+        notif_modal_subtitle: "直接在您的设备上接收日程、账单与接单提醒，无需依赖 LINE 配额。",
+        notif_btn_enable_push: "开启浏览器提醒",
+        notif_btn_test_push: "发送测试提醒",
+        notif_btn_read_all: "全部标记已读",
+        notif_form_title: "新增提醒 / 日程预约",
+        notif_type_label: "分类",
+        notif_title_label: "提醒标题",
+        notif_title_ph: "例如：Q4 预算会议或宽带账单到期...",
+        notif_due_label: "截止时间（可选）",
+        notif_body_label: "补充说明",
+        notif_body_ph: "填写详情、会议链接或备忘...",
+        notif_btn_create: "保存提醒",
+        notif_feed_title: "最新提醒列表",
+        notif_empty: "暂无新提醒。",
+        sovereign_modal_title: "数据主权与本地 AI 中心 (PDPA)",
+        sovereign_modal_subtitle: "查看个人数据统计、连接本地 Ollama 引擎并 100% 导出您的数据。",
+        sovereign_local_title: "本地 AI 引擎 (Ollama Edge Failover)",
+        sovereign_footprint_title: "您的个人数据存储概览",
+        sovereign_btn_export: "导出全部个人数据 (PDPA JSON)"
     },
 
     ko: {
@@ -16331,7 +16631,42 @@ const KIRA_I18N = {
         receipt_btn_canvas: "Canvas 표로 보기",
         receipt_btn_csv: "CSV 내보내기",
         receipt_empty_state: "아직 내역이 없습니다. 왼쪽에서 영수증을 업로드하거나 첫 내역을 기록해 보세요.",
-        pwa_share_received: "공유된 내용을 Kira 입력창에 불러왔습니다."
+        pwa_share_received: "공유된 내용을 Kira 입력창에 불러왔습니다.",
+        notif_center_title: "PWA 알림 센터 및 비서 리마인더",
+        notif_center_btn: "알림",
+        tools_notif_title: "알림 센터 (PWA)",
+        tools_notif_desc: "일정, 청구서 및 접수 요청을 기기로 즉시 알림",
+        tools_privacy_title: "데이터 주권 (PDPA)",
+        tools_privacy_desc: "로컬 Ollama 엔진 및 100% 개인 데이터 내보내기",
+        intake_personal_title: "개인 접수 포털 및 명함 QR",
+        intake_personal_desc: "고객이 QR을 스캔하면 작업 매트릭스와 PWA 알림으로 요청이 바로 전달됩니다.",
+        intake_profile_name_ph: "공개 표시 이름 (예: 이름 또는 팀명)",
+        intake_profile_headline_ph: "포털 안내 문구 (예: 프로젝트 브리핑 또는 미팅 요청)",
+        intake_profile_accepting_lbl: "이 링크로 외부 요청 접수 허용",
+        intake_btn_save_profile: "포털 프로필 저장",
+        intake_btn_download_qr: "QR 카드 다운로드 (.PNG)",
+        pay_rail_promptpay: "태국 PromptPay (수수료 0%)",
+        pay_rail_intl: "글로벌 크로스보더 QR & Wise / SWIFT",
+        notif_modal_title: "PWA 알림 및 비서 센터",
+        notif_modal_subtitle: "LINE 한도 없이 기기에서 직접 일정, 청구서 및 접수 알림을 받으세요.",
+        notif_btn_enable_push: "브라우저 알림 켜기",
+        notif_btn_test_push: "테스트 알림 보내기",
+        notif_btn_read_all: "모두 읽음 표시",
+        notif_form_title: "새 알림 / 일정 추가",
+        notif_type_label: "분류",
+        notif_title_label: "알림 제목",
+        notif_title_ph: "예: Q4 예산 회의 또는 인터넷 요금 납부...",
+        notif_due_label: "예정 시간 (선택)",
+        notif_body_label: "상세 내용",
+        notif_body_ph: "세부 사항, 링크 또는 메모 입력...",
+        notif_btn_create: "알림 저장",
+        notif_feed_title: "최근 알림 목록",
+        notif_empty: "새로운 알림이 없습니다.",
+        sovereign_modal_title: "데이터 주권 및 로컬 AI 허브 (PDPA)",
+        sovereign_modal_subtitle: "개인 데이터 보유 현황을 확인하고 로컬 Ollama 연결 및 100% 데이터 내보내기를 실행하세요.",
+        sovereign_local_title: "로컬 AI 엔진 (Ollama Edge Failover)",
+        sovereign_footprint_title: "개인 데이터 보관 현황",
+        sovereign_btn_export: "전체 개인 데이터 내보내기 (PDPA JSON)"
     },
 
     ja: {
@@ -16871,7 +17206,42 @@ const KIRA_I18N = {
         receipt_btn_canvas: "Canvas 表で表示",
         receipt_btn_csv: "CSV 書き出し",
         receipt_empty_state: "まだ記録がありません。左側から伝票をアップロードするか最初の項目を記録してください。",
-        pwa_share_received: "他アプリからの共有内容を Kira 入力欄に読み込みました。"
+        pwa_share_received: "他アプリからの共有内容を Kira 入力欄に読み込みました。",
+        notif_center_title: "PWA 通知センター & 秘書リマインダー",
+        notif_center_btn: "通知",
+        tools_notif_title: "通知センター (PWA)",
+        tools_notif_desc: "予定、請求、依頼を端末へ直接お知らせ",
+        tools_privacy_title: "データ主権ハブ (PDPA)",
+        tools_privacy_desc: "ローカル Ollama エンジン & 100% 個人データ書き出し",
+        intake_personal_title: "個人受付ポータル & 名刺 QR",
+        intake_personal_desc: "相手が QR を読み取るだけで、タスク表と PWA 通知へ直接依頼が届きます。",
+        intake_profile_name_ph: "公開表示名（例：お名前またはチーム名）",
+        intake_profile_headline_ph: "ポータル案内文（例：ご依頼や打ち合わせ希望はこちら）",
+        intake_profile_accepting_lbl: "このリンクからの依頼受付を有効にする",
+        intake_btn_save_profile: "受付プロフィールを保存",
+        intake_btn_download_qr: "QR カードをダウンロード (.PNG)",
+        pay_rail_promptpay: "タイ PromptPay (手数料 0%)",
+        pay_rail_intl: "海外クロスボーダー QR & Wise / SWIFT",
+        notif_modal_title: "PWA 通知 & パーソナル秘書センター",
+        notif_modal_subtitle: "LINE の配信上限に依存せず、予定・請求・新規依頼を端末へ直接通知します。",
+        notif_btn_enable_push: "ブラウザ通知を有効化",
+        notif_btn_test_push: "テスト通知を送信",
+        notif_btn_read_all: "すべて既読にする",
+        notif_form_title: "新しいリマインダー / 予定を追加",
+        notif_type_label: "カテゴリ",
+        notif_title_label: "通知タイトル",
+        notif_title_ph: "例：Q4 予算会議またはネット料金の支払い...",
+        notif_due_label: "日時指定（任意）",
+        notif_body_label: "詳細メモ",
+        notif_body_ph: "補足内容、会議リンク、メモなどを入力...",
+        notif_btn_create: "通知を保存",
+        notif_feed_title: "最近の通知一覧",
+        notif_empty: "新しい通知はありません。",
+        sovereign_modal_title: "データ主権 & ローカル AI ハブ (PDPA)",
+        sovereign_modal_subtitle: "個人データの保存状況を確認し、ローカル Ollama 連携と 100% データ書き出しを行えます。",
+        sovereign_local_title: "ローカル AI エンジン (Ollama Edge Failover)",
+        sovereign_footprint_title: "個人データの保存状況",
+        sovereign_btn_export: "全個人データを書き出す (PDPA JSON)"
     }
 };
 
@@ -18469,6 +18839,8 @@ function initKiraApp() {
     try { initReceiptHelperController(); } catch (e) { console.error("Receipt Helper controller init error:", e); }
     try { initSubscriptionController(); } catch (e) { console.error("Subscription controller init error:", e); }
     try { initPWAController(); } catch (e) { console.error("PWA controller init error:", e); }
+    try { initNotificationCenterController(); } catch (e) { console.error("Notification Center controller init error:", e); }
+    try { initSovereignPrivacyController(); } catch (e) { console.error("Sovereign Privacy controller init error:", e); }
     try { initMCPHubController(); } catch (e) { console.error("MCP Hub controller init error:", e); }
     try { initOfflineVaultController(); } catch (e) { console.error("Offline Vault controller init error:", e); }
     try { initRAGKnowledgeVaultController(); } catch (e) { console.error("RAG Knowledge Vault controller init error:", e); }
@@ -20088,6 +20460,522 @@ function initTranscribeController() {
                 if (typeof showToast === 'function') {
                     showToast('ส่งรายงานเข้าห้องแชตคิระเรียบร้อยแล้วค่ะ!', 'info');
                 }
+            }
+        });
+    }
+}
+
+// ====================================================================
+// 🔔 Phase 2.2: PWA Notification & Secretary Center Controller
+// ====================================================================
+function getPhase2ActiveUsername() {
+    if (typeof currentUser !== 'undefined' && currentUser && String(currentUser).trim()) {
+        return String(currentUser).trim();
+    }
+    const stored = localStorage.getItem('kira_username');
+    return (stored && stored.trim()) ? stored.trim() : 'guest';
+}
+
+function normalizeInternalActionUrl(rawUrl) {
+    const val = String(rawUrl || '').trim();
+    if (val.startsWith('/') && !val.startsWith('//')) return val;
+    return '/';
+}
+
+function initNotificationCenterController() {
+    const modal = document.getElementById('notification-center-modal');
+    const btnOpen = document.getElementById('btn-notification-center');
+    const btnClose = document.getElementById('btn-close-notification-center');
+    const badgeEl = document.getElementById('notification-unread-badge');
+    const pushStatusEl = document.getElementById('notif-push-status-text');
+    const btnEnablePush = document.getElementById('btn-enable-pwa-push');
+    const btnTestPush = document.getElementById('btn-test-pwa-push');
+    const btnReadAll = document.getElementById('btn-notif-read-all');
+    const formEl = document.getElementById('notif-create-form');
+    const typeSelect = document.getElementById('notif-type-select');
+    const titleInput = document.getElementById('notif-title-input');
+    const dueInput = document.getElementById('notif-due-input');
+    const bodyInput = document.getElementById('notif-body-input');
+    const btnCreate = document.getElementById('btn-create-notif');
+    const listContainer = document.getElementById('notif-list-container');
+    const filterTabsEl = document.getElementById('notif-filter-tabs');
+
+    if (!modal || !listContainer) return;
+
+    let cachedNotifications = [];
+    let activeFilter = 'all';
+
+    function updateBadge(unreadCount) {
+        if (!badgeEl) return;
+        const count = Math.max(0, Number(unreadCount) || 0);
+        if (count > 0) {
+            badgeEl.textContent = count > 99 ? '99+' : String(count);
+            badgeEl.style.display = 'inline-flex';
+        } else {
+            badgeEl.textContent = '0';
+            badgeEl.style.display = 'none';
+        }
+    }
+
+    function updatePushStatusLabel(pushSubscribed = false) {
+        if (!pushStatusEl) return;
+        const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
+        if (perm === 'granted') {
+            pushStatusEl.innerHTML = '<i class="fa-solid fa-circle-check text-emerald"></i> Browser Push: Active &amp; Ready';
+        } else if (perm === 'denied') {
+            pushStatusEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Browser Push: Blocked in Browser Settings';
+        } else if (pushSubscribed) {
+            pushStatusEl.innerHTML = '<i class="fa-solid fa-mobile-screen-button"></i> Browser Push: Registered (Grant Permission for Popups)';
+        } else {
+            pushStatusEl.innerHTML = '<i class="fa-solid fa-mobile-screen-button"></i> Browser Push: Standby';
+        }
+    }
+
+    function triggerLocalSwNotification(title, body, url = '/?open=notifications') {
+        try {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'KIRA_SHOW_LOCAL_NOTIFICATION',
+                    title: String(title || 'Kira AI'),
+                    body: String(body || ''),
+                    url: normalizeInternalActionUrl(url)
+                });
+            }
+        } catch (err) {
+            console.warn('Local SW notification dispatch skipped:', err);
+        }
+    }
+
+    const typeIconMap = {
+        intake_task: { icon: 'fa-inbox', label: 'Intake' },
+        appointment: { icon: 'fa-calendar-check', label: 'Appointment' },
+        bill: { icon: 'fa-file-invoice-dollar', label: 'Bill' },
+        reminder: { icon: 'fa-bell', label: 'Reminder' },
+        system: { icon: 'fa-circle-info', label: 'System' }
+    };
+
+    function renderNotificationFeed() {
+        const filtered = cachedNotifications.filter((item) => {
+            if (activeFilter === 'unread') return !item.is_read;
+            if (activeFilter === 'intake_task') return item.notif_type === 'intake_task';
+            return true;
+        });
+
+        if (!filtered.length) {
+            const emptyMsg = (typeof getTranslation === 'function' && getTranslation('notif_empty'))
+                || 'ยังไม่มีการแจ้งเตือนใหม่ในขณะนี้ค่ะ';
+            listContainer.innerHTML = `<div class="phase2-empty-state">${escapeHtml(emptyMsg)}</div>`;
+            return;
+        }
+
+        listContainer.innerHTML = filtered.map((item) => {
+            const meta = typeIconMap[item.notif_type] || typeIconMap.system;
+            const nid = Number(item.id) || 0;
+            const unreadClass = item.is_read ? '' : ' unread';
+            const dueMarkup = item.due_at
+                ? `<span class="notif-meta-chip"><i class="fa-regular fa-clock"></i> ${escapeHtml(item.due_at)}</span>`
+                : '';
+            const createdMarkup = item.created_at
+                ? `<span class="notif-meta-chip">${escapeHtml(item.created_at)}</span>`
+                : '';
+            const safeUrl = normalizeInternalActionUrl(item.action_url);
+
+            return `
+                <div class="notif-item-row${unreadClass}" data-notif-id="${nid}" data-action-url="${escapeHtml(safeUrl)}">
+                    <div class="notif-item-icon"><i class="fa-solid ${meta.icon}"></i></div>
+                    <div class="notif-item-main">
+                        <div class="notif-item-head">
+                            <span class="notif-type-badge">${escapeHtml(meta.label)}</span>
+                            <strong class="notif-item-title">${escapeHtml(item.title || '')}</strong>
+                        </div>
+                        ${item.body ? `<p class="notif-item-body">${escapeHtml(item.body)}</p>` : ''}
+                        <div class="notif-item-meta">${dueMarkup}${createdMarkup}</div>
+                    </div>
+                    <div class="notif-item-actions">
+                        ${!item.is_read ? `<button type="button" class="btn-notif-mini btn-notif-mark-read" data-id="${nid}" title="อ่านแล้ว"><i class="fa-solid fa-check"></i></button>` : ''}
+                        <button type="button" class="btn-notif-mini danger btn-notif-delete" data-id="${nid}" title="ลบ"><i class="fa-regular fa-trash-can"></i></button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        listContainer.querySelectorAll('.btn-notif-mark-read').forEach((btn) => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await markNotificationRead(btn.getAttribute('data-id'));
+            });
+        });
+
+        listContainer.querySelectorAll('.btn-notif-delete').forEach((btn) => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await deleteNotificationItem(btn.getAttribute('data-id'));
+            });
+        });
+
+        listContainer.querySelectorAll('.notif-item-row').forEach((row) => {
+            row.addEventListener('click', async () => {
+                const nid = row.getAttribute('data-notif-id');
+                const targetUrl = row.getAttribute('data-action-url') || '/';
+                if (row.classList.contains('unread')) {
+                    await markNotificationRead(nid);
+                }
+                if (targetUrl.includes('open=intake')) {
+                    closeModal();
+                    if (typeof window.openPersonalIntakeTab === 'function') window.openPersonalIntakeTab();
+                } else if (targetUrl.includes('open=tasks')) {
+                    closeModal();
+                    document.getElementById('btn-task-matrix-toggle')?.click();
+                } else if (targetUrl.includes('open=privacy')) {
+                    closeModal();
+                    if (typeof window.openSovereignPrivacyModal === 'function') window.openSovereignPrivacyModal();
+                }
+            });
+        });
+    }
+
+    async function loadNotifications(renderList = true) {
+        const uname = getPhase2ActiveUsername();
+        try {
+            const res = await fetch(`/api/notifications?username=${encodeURIComponent(uname)}&limit=50`);
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                cachedNotifications = Array.isArray(data.notifications) ? data.notifications : [];
+                updateBadge(data.unread_count);
+                updatePushStatusLabel(Boolean(data.push_subscribed));
+                if (renderList) renderNotificationFeed();
+            }
+        } catch (err) {
+            console.error('Failed to fetch notifications:', err);
+        }
+    }
+
+    async function markNotificationRead(notificationId) {
+        const uname = getPhase2ActiveUsername();
+        try {
+            const res = await fetch('/api/notifications/read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: uname, notification_id: String(notificationId || 'all') })
+            });
+            if (res.ok) {
+                await loadNotifications(modal.style.display === 'flex');
+            }
+        } catch (err) {
+            console.error('Mark read failed:', err);
+        }
+    }
+
+    async function deleteNotificationItem(notificationId) {
+        const uname = getPhase2ActiveUsername();
+        const nid = Number(notificationId) || 0;
+        if (!nid) return;
+        try {
+            const res = await fetch(`/api/notifications/${nid}?username=${encodeURIComponent(uname)}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                await loadNotifications(true);
+            }
+        } catch (err) {
+            console.error('Delete notification failed:', err);
+        }
+    }
+
+    function openModal() {
+        modal.style.display = 'flex';
+        updatePushStatusLabel();
+        loadNotifications(true);
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    window.openNotificationCenterModal = openModal;
+    window.refreshNotificationBadge = () => loadNotifications(modal.style.display === 'flex');
+
+    if (btnOpen) btnOpen.addEventListener('click', openModal);
+    if (btnClose) btnClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    if (filterTabsEl) {
+        filterTabsEl.querySelectorAll('.notif-filter-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                activeFilter = btn.getAttribute('data-filter') || 'all';
+                filterTabsEl.querySelectorAll('.notif-filter-btn').forEach((b) => {
+                    b.classList.toggle('active', b === btn);
+                });
+                renderNotificationFeed();
+            });
+        });
+    }
+
+    if (btnReadAll) {
+        btnReadAll.addEventListener('click', async () => {
+            await markNotificationRead('all');
+            if (typeof showToast === 'function') showToast('อ่านการแจ้งเตือนทั้งหมดแล้วค่ะ', 'success');
+        });
+    }
+
+    if (btnEnablePush) {
+        btnEnablePush.addEventListener('click', async () => {
+            const uname = getPhase2ActiveUsername();
+            try {
+                let perm = ('Notification' in window) ? Notification.permission : 'default';
+                if ('Notification' in window && perm === 'default') {
+                    perm = await Notification.requestPermission();
+                }
+                let endpoint = `kira-local-pwa://${encodeURIComponent(uname)}/${Date.now()}`;
+                let keysObj = {};
+                if ('serviceWorker' in navigator && 'PushManager' in window) {
+                    try {
+                        const reg = await navigator.serviceWorker.ready;
+                        const existingSub = await reg.pushManager.getSubscription();
+                        if (existingSub) {
+                            const jsonSub = existingSub.toJSON();
+                            endpoint = existingSub.endpoint || endpoint;
+                            keysObj = jsonSub.keys || {};
+                        }
+                    } catch (_) {
+                        // Browser without VAPID key still registers local SW notification capability
+                    }
+                }
+                await fetch('/api/notifications/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: uname,
+                        endpoint,
+                        keys: keysObj,
+                        user_agent: navigator.userAgent || ''
+                    })
+                });
+                updatePushStatusLabel(true);
+                if (typeof showToast === 'function') {
+                    showToast(
+                        perm === 'granted'
+                            ? 'เปิดรับแจ้งเตือน PWA บนเบราว์เซอร์เรียบร้อยแล้วค่ะ'
+                            : 'ลงทะเบียนอุปกรณ์รับแจ้งเตือนในศูนย์แจ้งเตือนแล้วค่ะ',
+                        'success'
+                    );
+                }
+            } catch (err) {
+                console.error('Enable push error:', err);
+            }
+        });
+    }
+
+    if (btnTestPush) {
+        btnTestPush.addEventListener('click', async () => {
+            const uname = getPhase2ActiveUsername();
+            btnTestPush.disabled = true;
+            try {
+                const res = await fetch('/api/notifications/test-push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: uname })
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    await loadNotifications(true);
+                    const n = data.notification || {};
+                    triggerLocalSwNotification(n.title, n.body, n.action_url);
+                    if (typeof showToast === 'function') {
+                        showToast('ส่งแจ้งเตือนทดสอบเข้าศูนย์แจ้งเตือนแล้วค่ะ', 'success');
+                    }
+                }
+            } catch (err) {
+                console.error('Test push error:', err);
+            } finally {
+                btnTestPush.disabled = false;
+            }
+        });
+    }
+
+    if (formEl) {
+        formEl.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titleVal = (titleInput?.value || '').trim();
+            if (!titleVal) return;
+            const uname = getPhase2ActiveUsername();
+            if (btnCreate) btnCreate.disabled = true;
+            try {
+                const res = await fetch('/api/notifications/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: uname,
+                        notif_type: typeSelect?.value || 'reminder',
+                        title: titleVal,
+                        due_at: (dueInput?.value || '').trim(),
+                        body: (bodyInput?.value || '').trim(),
+                        action_url: '/?open=notifications'
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    formEl.reset();
+                    await loadNotifications(true);
+                    const n = data.notification || {};
+                    triggerLocalSwNotification(n.title, n.body, n.action_url);
+                    if (typeof showToast === 'function') {
+                        showToast('บันทึกการแจ้งเตือนเรียบร้อยแล้วค่ะ', 'success');
+                    }
+                }
+            } catch (err) {
+                console.error('Create notification error:', err);
+            } finally {
+                if (btnCreate) btnCreate.disabled = false;
+            }
+        });
+    }
+
+    loadNotifications(false);
+}
+
+// ====================================================================
+// 🛡️ Phase 2.3: Sovereign Privacy & Local Engine Hub Controller
+// ====================================================================
+function initSovereignPrivacyController() {
+    const modal = document.getElementById('sovereign-privacy-modal');
+    const btnClose = document.getElementById('btn-close-sovereign-privacy');
+    const localStatusEl = document.getElementById('sovereign-local-status-val');
+    const totalRecordsEl = document.getElementById('sovereign-total-records-val');
+    const ollamaUrlInput = document.getElementById('sovereign-ollama-url');
+    const btnTestOllama = document.getElementById('btn-sovereign-test-ollama');
+    const modelsBoxEl = document.getElementById('sovereign-ollama-models-box');
+    const footprintGridEl = document.getElementById('sovereign-footprint-grid');
+    const btnExportJson = document.getElementById('btn-sovereign-export-json');
+    const btnOpenRag = document.getElementById('btn-sovereign-open-rag');
+    const btnOpenVault = document.getElementById('btn-sovereign-open-vault');
+
+    if (!modal) return;
+
+    async function loadSovereignStatus() {
+        const uname = getPhase2ActiveUsername();
+        if (localStatusEl) localStatusEl.textContent = 'Checking...';
+        try {
+            const res = await fetch(`/api/privacy/sovereign-status?username=${encodeURIComponent(uname)}`);
+            const data = await res.json();
+            if (!res.ok || data.status !== 'success') return;
+
+            const local = data.local_engine || {};
+            const fp = data.data_footprint || {};
+            const isOnline = local.status === 'online';
+
+            if (localStatusEl) {
+                localStatusEl.textContent = isOnline
+                    ? `Online (${Number(local.count) || 0} models)`
+                    : 'Standby (Cloud Failover)';
+            }
+            if (totalRecordsEl) {
+                totalRecordsEl.textContent = Number(fp.total_records || 0).toLocaleString();
+            }
+            if (ollamaUrlInput && local.endpoint && !ollamaUrlInput.dataset.userEdited) {
+                ollamaUrlInput.value = local.endpoint;
+            }
+            if (modelsBoxEl) {
+                const models = Array.isArray(local.models) ? local.models : [];
+                if (isOnline && models.length) {
+                    const pills = models.map((m) => `<span class="sovereign-model-chip">${escapeHtml(String(m))}</span>`).join('');
+                    modelsBoxEl.innerHTML = `<div class="sovereign-model-list">${pills}</div>`;
+                } else {
+                    modelsBoxEl.innerHTML = `
+                        <div class="sovereign-standby-hint">
+                            <strong>Local Edge Ready:</strong> รัน <code>ollama serve</code> บนเครื่องเมื่อต้องการประมวลผลออฟไลน์ 100% (ระบบสลับคลาวด์ให้อัตโนมัติเมื่อไม่พบโหนดท้องถิ่น)
+                        </div>
+                    `;
+                }
+            }
+            if (footprintGridEl) {
+                const cards = [
+                    { label: 'Chat Logs', val: fp.chat_logs || 0, icon: 'fa-comments' },
+                    { label: 'Memories', val: fp.memories || 0, icon: 'fa-brain' },
+                    { label: 'Tasks', val: fp.tasks || 0, icon: 'fa-list-check' },
+                    { label: 'Expenses', val: fp.expenses || 0, icon: 'fa-receipt' },
+                    { label: 'RAG Docs', val: fp.rag_docs || 0, icon: 'fa-book-atlas' },
+                    { label: 'Vault Items', val: fp.vault_items || 0, icon: 'fa-vault' }
+                ];
+                footprintGridEl.innerHTML = cards.map((c) => `
+                    <div class="sovereign-fp-card">
+                        <span class="fp-lbl"><i class="fa-solid ${c.icon}"></i> ${escapeHtml(c.label)}</span>
+                        <strong class="fp-val">${Number(c.val).toLocaleString()}</strong>
+                    </div>
+                `).join('');
+            }
+        } catch (err) {
+            console.error('Sovereign status load error:', err);
+            if (localStatusEl) localStatusEl.textContent = 'Unavailable';
+        }
+    }
+
+    function openModal() {
+        modal.style.display = 'flex';
+        loadSovereignStatus();
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    window.openSovereignPrivacyModal = openModal;
+
+    if (btnClose) btnClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    if (ollamaUrlInput) {
+        ollamaUrlInput.addEventListener('input', () => {
+            ollamaUrlInput.dataset.userEdited = '1';
+        });
+    }
+
+    if (btnTestOllama) {
+        btnTestOllama.addEventListener('click', async () => {
+            btnTestOllama.disabled = true;
+            await loadSovereignStatus();
+            btnTestOllama.disabled = false;
+            if (typeof showToast === 'function') {
+                showToast('ตรวจสอบสถานะ Local AI & ข้อมูลส่วนบุคคลเรียบร้อยแล้วค่ะ', 'info');
+            }
+        });
+    }
+
+    if (btnExportJson) {
+        btnExportJson.addEventListener('click', () => {
+            const uname = getPhase2ActiveUsername();
+            const url = `/api/privacy/export-data?username=${encodeURIComponent(uname)}`;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `kira_sovereign_data_${uname.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            if (typeof showToast === 'function') {
+                showToast('กำลังดาวน์โหลดข้อมูลส่วนบุคคลของคุณ (PDPA JSON) ค่ะ', 'success');
+            }
+        });
+    }
+
+    if (btnOpenRag) {
+        btnOpenRag.addEventListener('click', () => {
+            closeModal();
+            if (window.KiraRAGVault && typeof window.KiraRAGVault.open === 'function') {
+                window.KiraRAGVault.open();
+            }
+        });
+    }
+
+    if (btnOpenVault) {
+        btnOpenVault.addEventListener('click', () => {
+            closeModal();
+            if (typeof window.openOfflineVaultModal === 'function') {
+                window.openOfflineVaultModal('catalog');
             }
         });
     }

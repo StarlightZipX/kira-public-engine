@@ -1,12 +1,12 @@
 // ====================================================================
-// Kira AI Progressive Web App - Service Worker (v2.9.5)
+// Kira AI Progressive Web App - Service Worker (v2.9.6)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.9.5-phase1-pwa-utilities';
+const CACHE_NAME = 'kira-ai-cache-v2.9.6-phase2-secretary-agent';
 const STATIC_ASSETS = [
     '/',
-    '/static/style.css?v=20261114_phase1_v295',
-    '/static/script.js?v=20261114_phase1_v295',
+    '/static/style.css?v=20261115_phase2_v296',
+    '/static/script.js?v=20261115_phase2_v296',
     '/manifest.json',
     '/static/manifest.json',
     '/static/images/kira_logo.png?v=6',
@@ -56,11 +56,66 @@ self.addEventListener('sync', (event) => {
     }
 });
 
-// Messages from clients (Skip Waiting or Cache Requests)
+// Messages from clients (Skip Waiting or Show Notification)
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
+    } else if (event.data && event.data.type === 'KIRA_SHOW_LOCAL_NOTIFICATION') {
+        const title = event.data.title || 'Kira AI';
+        const body = event.data.body || '';
+        const url = event.data.url || '/?open=notifications';
+        event.waitUntil(
+            self.registration.showNotification(title, {
+                body,
+                icon: '/static/images/kira_logo.png?v=6',
+                badge: '/static/images/kira_logo.png?v=6',
+                data: { url }
+            })
+        );
     }
+});
+
+// Web Push Notification Listener (Phase 2.2)
+self.addEventListener('push', (event) => {
+    let payload = { title: 'Kira AI', body: 'มีรายการแจ้งเตือนใหม่ค่ะ', url: '/?open=notifications' };
+    try {
+        if (event.data) {
+            const parsed = event.data.json();
+            payload = Object.assign(payload, parsed);
+        }
+    } catch (e) {
+        try {
+            if (event.data) payload.body = event.data.text();
+        } catch (_ignored) {}
+    }
+    event.waitUntil(
+        self.registration.showNotification(payload.title || 'Kira AI', {
+            body: payload.body || '',
+            icon: '/static/images/kira_logo.png?v=6',
+            badge: '/static/images/kira_logo.png?v=6',
+            data: { url: payload.url || '/?open=notifications' }
+        })
+    );
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            for (const client of windowClients) {
+                if ('focus' in client) {
+                    if ('navigate' in client && targetUrl !== '/') {
+                        client.navigate(targetUrl).catch(() => {});
+                    }
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
+    );
 });
 
 // Fetch Strategy:

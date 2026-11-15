@@ -20437,4 +20437,655 @@ pre, .code-block-wrapper {
     }
 }
 
+/* ====================================================================
+   Phase 2 Quiet Luxury Obsidian Styles (v2.9.6)
+   - Personal Intake QR Portal, PWA Notification Center, Sovereign Hub,
+     and International Cross-Border / Wise Payment Rail Switcher
+   ==================================================================== */
+.notif-header-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.notif-unread-badge {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #10b981;
+    color: #04130d;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* Personal Intake Portal + QR Grid */
+.intake-personal-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.85fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.intake-personal-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.intake-profile-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+}
+
+.intake-profile-editor .form-group {
+    margin: 0;
+}
+
+.intake-profile-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+}
+
+.intake-accept-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #e4e4e7;
+    cursor: pointer;
+}
+
+.intake-qr-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 18px;
+    background: #0c0c0f;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 14px;
+}
+
+.intake-qr-frame {
+    width: 100%;
+    max-width: 204px;
+    aspect-ratio: 1 / 1;
+    padding: 12px;
+    background: #ffffff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.intake-qr-frame img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.intake-personal-grid .btn-action-sm.primary {
+    background: #f4f4f5;
+    color: #09090b;
+    box-shadow: none;
+}
+
+.intake-personal-grid .btn-action-sm.primary:hover {
+    background: #ffffff;
+}
+
+.intake-personal-grid .btn-action-sm.secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: #f4f4f5;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    width: 100%;
+    justify-content: center;
+}
+
+/* Payment Rail Switcher (Phase 2.4) */
+.payment-rail-switcher {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+
+.rail-switch-btn {
+    border: 1px solid transparent;
+    background: transparent;
+    color: #a1a1aa;
+    padding: 9px 10px;
+    border-radius: 7px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    text-align: center;
+}
+
+.rail-switch-btn:hover {
+    color: #f4f4f5;
+}
+
+.rail-switch-btn.active {
+    background: #18181b;
+    color: #f4f4f5;
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.intl-payment-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.intl-qr-notice {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: #d4d4d8;
+}
+
+.intl-qr-notice strong {
+    display: block;
+    color: #f4f4f5;
+    margin-bottom: 4px;
+}
+
+.intl-qr-notice p {
+    margin: 0;
+}
+
+.intl-upload-hint {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: #a1a1aa;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Phase 2 Shared Modals (Notifications & Sovereign Privacy) */
+.phase2-modal-card {
+    width: min(940px, calc(100vw - 28px));
+    max-height: calc(100vh - 36px);
+    overflow-y: auto;
+    background: #09090b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 22px 24px;
+    color: #f4f4f5;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.phase2-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.phase2-title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.phase2-title-group h3 {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fafafa;
+}
+
+.phase2-title-group p {
+    margin: 0;
+    font-size: 0.83rem;
+    color: #a1a1aa;
+}
+
+.phase2-icon-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #e4e4e7;
+    flex-shrink: 0;
+}
+
+.phase2-status-ribbon {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+}
+
+.phase2-status-text {
+    font-size: 0.84rem;
+    color: #d4d4d8;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.phase2-status-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.phase2-modal-card .btn-action-sm.primary {
+    background: #f4f4f5;
+    color: #09090b;
+    box-shadow: none;
+}
+
+.phase2-modal-card .btn-action-sm.primary:hover {
+    background: #ffffff;
+}
+
+.phase2-modal-card .btn-action-sm.secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: #e4e4e7;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.phase2-modal-card .btn-action-sm.secondary:hover {
+    background: rgba(255, 255, 255, 0.11);
+}
+
+.phase2-modal-card .btn-action-sm.full-width {
+    width: 100%;
+    justify-content: center;
+    align-self: stretch;
+}
+
+.phase2-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.phase2-panel-box {
+    background: #0d0d11;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.phase2-panel-box h4 {
+    margin: 0;
+    font-size: 0.94rem;
+    font-weight: 600;
+    color: #f4f4f5;
+}
+
+.phase2-panel-box .form-group {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.phase2-panel-box .form-group label {
+    font-size: 0.78rem;
+    color: #a1a1aa;
+}
+
+.phase2-feed-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.notif-filter-tabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 3px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+}
+
+.notif-filter-btn {
+    border: none;
+    background: transparent;
+    color: #a1a1aa;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.notif-filter-btn.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #f4f4f5;
+}
+
+.phase2-feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.phase2-empty-state {
+    padding: 28px 16px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #71717a;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.notif-item-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.notif-item-row:hover {
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.notif-item-row.unread {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.notif-item-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #e4e4e7;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.notif-item-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-item-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.notif-type-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    color: #d4d4d8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.notif-item-title {
+    font-size: 0.86rem;
+    color: #f4f4f5;
+    word-break: break-word;
+}
+
+.notif-item-body {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    color: #a1a1aa;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.notif-item-meta {
+    margin-top: 6px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.notif-meta-chip {
+    font-size: 0.72rem;
+    color: #71717a;
+}
+
+.notif-item-actions {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.btn-notif-mini {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: #d4d4d8;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.74rem;
+}
+
+.btn-notif-mini:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.btn-notif-mini.danger:hover {
+    color: #fca5a5;
+    border-color: rgba(248, 113, 113, 0.4);
+}
+
+/* Sovereign Privacy Hub */
+.sovereign-telemetry-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.sovereign-stat-card {
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sovereign-stat-card .stat-lbl {
+    font-size: 0.74rem;
+    color: #a1a1aa;
+}
+
+.sovereign-stat-card .stat-val {
+    font-size: 0.9rem;
+    color: #f4f4f5;
+    word-break: break-word;
+}
+
+.sovereign-url-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.sovereign-models-box {
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: 0.8rem;
+    color: #a1a1aa;
+    line-height: 1.5;
+}
+
+.sovereign-model-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.sovereign-model-chip {
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #6ee7b7;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.sovereign-standby-hint code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: #f4f4f5;
+}
+
+.sovereign-vault-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.sovereign-vault-links .btn-action-sm.secondary {
+    width: 100%;
+    justify-content: center;
+}
+
+.sovereign-footprint-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.sovereign-fp-card {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.sovereign-fp-card .fp-lbl {
+    font-size: 0.78rem;
+    color: #a1a1aa;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sovereign-fp-card .fp-val {
+    font-size: 0.92rem;
+    color: #f4f4f5;
+}
+
+@media (max-width: 900px) {
+    .intake-personal-grid,
+    .phase2-modal-grid,
+    .sovereign-telemetry-strip,
+    .payment-rail-switcher {
+        grid-template-columns: 1fr;
+    }
+
+    .phase2-modal-card {
+        width: calc(100vw - 16px);
+        max-height: calc(100vh - 20px);
+        padding: 16px 14px;
+    }
+
+    .phase2-status-actions,
+    .sovereign-url-row {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .phase2-status-actions .btn-action-sm {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .notif-header-btn .notif-btn-text {
+        display: none;
+    }
+
+    .sovereign-footprint-grid,
+    .sovereign-vault-links {
+        grid-template-columns: 1fr;
+    }
+}
+
 

@@ -39,14 +39,14 @@
     <!-- Highlight.js for Code -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=20261114_phase1_v295">
+    <link rel="stylesheet" href="/static/style.css?v=20261115_phase2_v296">
     <!-- PWA Manifest & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0b0c10">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kira AI">
-    <meta name="kira-build-id" content="{{ build_id or 'kira-v2.9.5' }}">
+    <meta name="kira-build-id" content="{{ build_id or 'kira-v2.9.6' }}">
     <meta name="kira-app-version" content="{{ app_version or '2.9.0' }}">
     <link rel="apple-touch-icon" href="/static/images/kira_logo.png?v=6">
     <link rel="icon" type="image/png" href="/static/images/kira_logo.png?v=6">
@@ -571,6 +571,13 @@
                         <span id="rag-vault-count-badge" class="rag-vault-count-badge" style="display: none;">0</span>
                     </button>
 
+                    <!-- 🔔 Kira PWA Notification & Reminder Center Button (Phase 2.2) -->
+                    <button id="btn-notification-center" class="header-action-btn notif-header-btn" data-i18n-title="notif_center_title" title="ศูนย์แจ้งเตือนนัดหมาย บิล และงานเข้า (PWA Notification Center)">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="notif-btn-text" data-i18n="notif_center_btn">แจ้งเตือน</span>
+                        <span id="notification-unread-badge" class="notif-unread-badge" style="display: none;">0</span>
+                    </button>
+
                     <!-- PWA Quick Install Header Action (Preserved for compatibility) -->
                     <button id="btn-install-pwa-header" class="header-action-btn pwa-header-install-btn" title="ติดตั้ง Kira AI Web App บนอุปกรณ์" style="display: none;">
                         <i class="fa-solid fa-cloud-arrow-down"></i>
@@ -754,6 +761,20 @@
                                 <div class="tools-category-label">
                                     <i class="fa-solid fa-gear"></i> <span data-i18n="tools_cat_system">ระบบ & การช่วยเหลือ</span>
                                 </div>
+                                <button class="tools-menu-item" id="btn-tools-notification-center" type="button" onclick="if (typeof openNotificationCenterModal === 'function') openNotificationCenterModal();" title="ศูนย์แจ้งเตือนนัดหมาย บิล และงานเข้า PWA">
+                                    <span class="tool-item-icon icon-emerald"><i class="fa-regular fa-bell"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title" data-i18n="tools_notif_title">ศูนย์แจ้งเตือน &amp; เตือนความจำ PWA</span>
+                                        <span class="tool-item-desc" data-i18n="tools_notif_desc">ตั้งเตือนนัดหมาย บิล และดูการแจ้งเตือนงานเข้าตรงเข้ามือถือ</span>
+                                    </div>
+                                </button>
+                                <button class="tools-menu-item" id="btn-tools-sovereign-privacy" type="button" onclick="if (typeof openSovereignPrivacyModal === 'function') openSovereignPrivacyModal();" title="ศูนย์อธิปไตยข้อมูลส่วนบุคคล & Local AI Engine">
+                                    <span class="tool-item-icon icon-cyan"><i class="fa-solid fa-shield-halved"></i></span>
+                                    <div class="tool-item-info">
+                                        <span class="tool-item-title" data-i18n="tools_privacy_title">ศูนย์อธิปไตยข้อมูล &amp; Local AI</span>
+                                        <span class="tool-item-desc" data-i18n="tools_privacy_desc">ตรวจ Ollama, ดูสถิติข้อมูลส่วนตัว และส่งออก PDPA JSON</span>
+                                    </div>
+                                </button>
                                 <button class="tools-menu-item" id="btn-install-app-menu" title="ติดตั้ง Kira AI Web App ลงอุปกรณ์">
                                     <span class="tool-item-icon icon-indigo"><i class="fa-solid fa-mobile-screen-button"></i></span>
                                     <div class="tool-item-info">
@@ -1781,7 +1802,7 @@
                     </ul>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px;">
-                    <span>เวอร์ชัน: <strong>Kira 2.9.5 Enterprise (Build 2026.11)</strong></span>
+                    <span>เวอร์ชัน: <strong>Kira 2.9.6 Enterprise (Build 2026.11)</strong></span>
                     <span>ผู้พัฒนา: <strong>Kira AI System Team</strong></span>
                 </div>
             </div>
@@ -3118,25 +3139,45 @@
                 </div>
             </div>
 
-            <!-- Tab 4: Public Intake Form Link & Webhook -->
+            <!-- Tab 4: Personal Intake Portal Link & QR Card (Phase 2.1) -->
             <div id="tab-pane-intake-link" class="task-tab-pane">
-                <div class="intake-share-panel">
-                    <div class="share-icon-banner">
-                        <i class="fa-solid fa-globe"></i>
-                    </div>
-                    <h3>Public Service Intake Portal</h3>
-                    <p class="share-desc">แชร์ลิงก์นี้ให้กับบุคคลภายนอก (ลูกค้า, เพื่อนร่วมงาน, แผนกอื่น) เพื่อส่งคำขอเข้ามายังระบบ Kira ของคุณโดยตรง โดยผู้ส่งไม่ต้องเข้าสู่ระบบ</p>
-                    
-                    <div class="share-url-box">
-                        <input type="text" id="public-intake-url-input" class="input-control" readonly value="">
-                        <button id="btn-copy-intake-url" class="btn-copy-url"><i class="fa-regular fa-copy"></i> คัดลอกลิงก์</button>
-                        <a id="btn-visit-intake-url" href="/intake" target="_blank" class="btn-visit-url"><i class="fa-solid fa-arrow-up-right-from-square"></i> เปิดหน้าเว็บ</a>
+                <div class="intake-personal-grid">
+                    <div class="intake-personal-left">
+                        <h3 data-i18n="intake_personal_title">พอร์ทัลรับงานส่วนตัว &amp; นามบัตร QR</h3>
+                        <p class="share-desc" data-i18n="intake_personal_desc">แชร์ลิงก์หรือ QR Code ให้ลูกค้าและทีมส่งคำขอเข้าบอร์ดของคุณ พร้อมแจ้งเตือนทันที</p>
+
+                        <div class="share-url-box">
+                            <input type="text" id="public-intake-url-input" class="input-control" readonly value="">
+                            <button type="button" id="btn-copy-intake-url" class="btn-copy-url"><i class="fa-regular fa-copy"></i> คัดลอกลิงก์</button>
+                            <a id="btn-visit-intake-url" href="/intake" target="_blank" class="btn-visit-url"><i class="fa-solid fa-arrow-up-right-from-square"></i> เปิดหน้าเว็บ</a>
+                        </div>
+
+                        <div class="intake-profile-editor">
+                            <div class="form-group">
+                                <input type="text" id="intake-profile-display-name" class="input-control" data-i18n-placeholder="intake_profile_name_ph" placeholder="ชื่อผู้รับงาน / แบรนด์ที่แสดงบนหน้าพอร์ทัล" maxlength="100">
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="intake-profile-headline" class="input-control" data-i18n-placeholder="intake_profile_headline_ph" placeholder="คำอธิบายสั้นๆ สำหรับผู้ส่งงาน..." maxlength="240">
+                            </div>
+                            <div class="intake-profile-actions">
+                                <label class="intake-accept-toggle">
+                                    <input type="checkbox" id="intake-profile-accepting" checked>
+                                    <span data-i18n="intake_profile_accepting_lbl">เปิดรับคำของานใหม่</span>
+                                </label>
+                                <button type="button" id="btn-save-intake-profile" class="btn-action-sm primary">
+                                    <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="intake_btn_save_profile">บันทึกหน้าพอร์ทัล</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="intake-features-list">
-                        <div class="feat-row"><i class="fa-solid fa-check"></i> <span>คำขอที่ส่งเข้ามาจะถูกบันทึกเป็นรายการบนกระดานงานของคุณทันที</span></div>
-                        <div class="feat-row"><i class="fa-solid fa-check"></i> <span>ระบบจะสร้างร่างงานเริ่มต้นและช่วยประเมินระดับความสำคัญให้อัตโนมัติ</span></div>
-                        <div class="feat-row"><i class="fa-solid fa-check"></i> <span>รองรับ Webhook Integration สำหรับเชื่อมต่อระบบแจ้งเตือนภายนอก</span></div>
+                    <div class="intake-qr-card">
+                        <div class="intake-qr-frame">
+                            <img id="intake-personal-qr-img" src="/api/intake/qr.svg" alt="Personal Intake QR">
+                        </div>
+                        <button type="button" id="btn-download-intake-qr" class="btn-action-sm secondary">
+                            <i class="fa-solid fa-download"></i> <span data-i18n="intake_btn_download_qr">ดาวน์โหลดนามบัตร QR</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -3281,6 +3322,17 @@
                                 </div>
                             </div>
 
+                            <!-- Payment Rail Switcher (Phase 2.4: Thai PromptPay + International Cross-Border QR / Wise) -->
+                            <div class="payment-rail-switcher">
+                                <button type="button" id="btn-rail-promptpay" class="rail-switch-btn active" data-rail="promptpay">
+                                    <i class="fa-solid fa-qrcode"></i> <span data-i18n="pay_rail_promptpay">PromptPay ไทย (0% ค่าธรรมเนียม)</span>
+                                </button>
+                                <button type="button" id="btn-rail-international" class="rail-switch-btn" data-rail="international">
+                                    <i class="fa-solid fa-earth-asia"></i> <span data-i18n="pay_rail_intl">International QR &amp; Wise / SWIFT</span>
+                                </button>
+                            </div>
+
+                            <div id="checkout-rail-promptpay-pane">
                             <!-- Clean PromptPay QR Display -->
                             <div class="promptpay-qr-wrapper">
                                 <div class="promptpay-logo-badge">
@@ -3327,6 +3379,46 @@
                                     <i class="fa-solid fa-lock"></i>
                                     <span data-i18n="bank_account_masked_hint">แสดงเลขบัญชีแบบย่อเพื่อความปลอดภัย สามารถสแกน QR หรือคัดลอกรหัส PromptPay ด้านบนได้เลยค่ะ</span>
                                 </div>
+                            </div>
+                            </div>
+
+                            <div id="checkout-rail-intl-pane" class="intl-payment-pane" style="display: none;">
+                                <div class="intl-qr-notice">
+                                    <strong><i class="fa-solid fa-globe"></i> ASEAN Cross-Border QR &amp; International Transfer</strong>
+                                    <p>Apps supporting PayNow (SG), DuitNow (MY), QRIS (ID), JPQR (JP), VietQR (VN), or Alipay+ can scan the PromptPay QR directly, or transfer in THB via Wise / SWIFT to KBANK Thailand below:</p>
+                                </div>
+                                <div class="transfer-details-box">
+                                    <div class="detail-row">
+                                        <span class="detail-label">Beneficiary</span>
+                                        <div class="detail-copy-group">
+                                            <span class="detail-val font-bold" id="intl-name-text">SIWAT ROSAWAT</span>
+                                            <button type="button" id="btn-copy-intl-name" class="btn-copy-mini"><i class="fa-regular fa-copy"></i> <span>Copy</span></button>
+                                        </div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Bank (Thailand)</span>
+                                        <span class="detail-val">KASIKORNBANK PCL (KBANK)</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">SWIFT / BIC</span>
+                                        <div class="detail-copy-group">
+                                            <span class="detail-val font-mono" id="intl-swift-text">KASITHBK</span>
+                                            <button type="button" id="btn-copy-intl-swift" class="btn-copy-mini"><i class="fa-regular fa-copy"></i> <span>Copy</span></button>
+                                        </div>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Account / PromptPay</span>
+                                        <div class="detail-copy-group">
+                                            <span class="detail-val font-mono" id="intl-acc-text">xxx-x-xx252-5 • 004999252517585</span>
+                                            <button type="button" id="btn-copy-intl-acc" class="btn-copy-mini"><i class="fa-regular fa-copy"></i> <span>Copy</span></button>
+                                        </div>
+                                    </div>
+                                    <div class="detail-row highlight-amount">
+                                        <span class="detail-label">Settlement Amount</span>
+                                        <span class="detail-val detail-amount-val font-mono" id="intl-amount-usd-text">129.00 THB (~$3.80 USD)</span>
+                                    </div>
+                                </div>
+                                <p class="intl-upload-hint"><i class="fa-solid fa-arrow-right"></i> Upload your transfer receipt screenshot on the right to verify and activate automatically.</p>
                             </div>
                         </div>
 
@@ -3986,15 +4078,15 @@
                 <div class="kira-update-badge">
                     <span class="pulse-indicator"></span>
                     <span>อัปเดตระบบ</span>
-                    <span class="kira-version-tag" id="kira-new-version-tag">v2.9.5</span>
+                    <span class="kira-version-tag" id="kira-new-version-tag">v2.9.6</span>
                 </div>
             </div>
 
             <!-- Title & Kira Dialogue -->
             <div class="kira-update-content">
-                <h3 class="kira-update-title" id="kira-update-title">อัปเดต Kira AI v2.9.5 พร้อมใช้งานแล้วค่ะ</h3>
+                <h3 class="kira-update-title" id="kira-update-title">อัปเดต Kira AI v2.9.6 พร้อมใช้งานแล้วค่ะ</h3>
                 <p class="kira-update-desc" id="kira-update-desc">
-                    เพิ่มผู้ช่วยสแกนสลิป & จดรายจ่าย, 1-Click Study Pack + นำเข้า PDF/DOCX และทางลัด PWA บนมือถือเรียบร้อยค่ะ
+                    เพิ่มพอร์ทัลรับงานส่วนตัว &amp; นามบัตร QR, ศูนย์แจ้งเตือน PWA Notification Center, ศูนย์อธิปไตยข้อมูล PDPA &amp; Local AI และช่องทางชำระเงินสากลเรียบร้อยค่ะ
                 </p>
                 <div class="kira-update-quote-box">
                     <i class="fa-solid fa-quote-left quote-icon"></i>
@@ -4435,6 +4527,146 @@
         </div>
     </div>
 
+    <!-- 🔔 Kira PWA Notification & Reminder Center Modal (Phase 2.2) -->
+    <div id="notification-center-modal" class="kira-modal-overlay" style="display: none; z-index: 1120;">
+        <div class="phase2-modal-card glass-panel">
+            <div class="phase2-modal-header">
+                <div class="phase2-title-group">
+                    <span class="phase2-icon-badge"><i class="fa-regular fa-bell"></i></span>
+                    <div>
+                        <h3 data-i18n="notif_modal_title">ศูนย์แจ้งเตือน &amp; เลขาส่วนตัว PWA</h3>
+                        <p data-i18n="notif_modal_subtitle">แจ้งเตือนนัดหมาย บิล และงานเข้าจากพอร์ทัลตรงเข้าอุปกรณ์ โดยไม่พึ่งโควตา LINE</p>
+                    </div>
+                </div>
+                <button type="button" id="btn-close-notification-center" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="phase2-status-ribbon">
+                <div class="phase2-status-text" id="notif-push-status-text">
+                    <i class="fa-solid fa-mobile-screen-button"></i> Browser Push: Standby
+                </div>
+                <div class="phase2-status-actions">
+                    <button type="button" id="btn-enable-pwa-push" class="btn-action-sm primary">
+                        <i class="fa-solid fa-bell"></i> <span data-i18n="notif_btn_enable_push">เปิดรับแจ้งเตือนบนเบราว์เซอร์</span>
+                    </button>
+                    <button type="button" id="btn-test-pwa-push" class="btn-action-sm secondary">
+                        <i class="fa-solid fa-paper-plane"></i> <span data-i18n="notif_btn_test_push">ส่งแจ้งเตือนทดสอบ</span>
+                    </button>
+                    <button type="button" id="btn-notif-read-all" class="btn-action-sm secondary">
+                        <i class="fa-solid fa-check-double"></i> <span data-i18n="notif_btn_read_all">อ่านทั้งหมดแล้ว</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="phase2-modal-grid">
+                <form id="notif-create-form" class="phase2-panel-box">
+                    <h4 data-i18n="notif_form_title">เพิ่มแจ้งเตือน / นัดหมายใหม่</h4>
+                    <div class="form-group">
+                        <label for="notif-type-select" data-i18n="notif_type_label">หมวดหมู่</label>
+                        <select id="notif-type-select" class="input-control">
+                            <option value="reminder">เตือนความจำ (Reminder)</option>
+                            <option value="appointment">นัดหมาย (Appointment)</option>
+                            <option value="bill">ชำระบิล / สัญญา (Bill)</option>
+                            <option value="system">ทั่วไป (Note)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="notif-title-input" data-i18n="notif_title_label">หัวข้อการแจ้งเตือน</label>
+                        <input type="text" id="notif-title-input" class="input-control" data-i18n-placeholder="notif_title_ph" placeholder="เช่น ประชุมสรุปงบ Q4 หรือ จ่ายบิลค่าเน็ต..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="notif-due-input" data-i18n="notif_due_label">กำหนดเวลา (ไม่บังคับ)</label>
+                        <input type="datetime-local" id="notif-due-input" class="input-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="notif-body-input" data-i18n="notif_body_label">รายละเอียดเพิ่มเติม</label>
+                        <textarea id="notif-body-input" class="input-control" rows="3" data-i18n-placeholder="notif_body_ph" placeholder="ระบุรายละเอียด ลิงก์ หรือโน้ตช่วยจำ..."></textarea>
+                    </div>
+                    <button type="submit" id="btn-create-notif" class="btn-action-sm primary full-width">
+                        <i class="fa-solid fa-plus"></i> <span data-i18n="notif_btn_create">บันทึกการแจ้งเตือน</span>
+                    </button>
+                </form>
+
+                <div class="phase2-panel-box">
+                    <div class="phase2-feed-header">
+                        <h4 data-i18n="notif_feed_title">รายการแจ้งเตือนล่าสุด</h4>
+                        <div class="notif-filter-tabs" id="notif-filter-tabs">
+                            <button type="button" class="notif-filter-btn active" data-filter="all">All</button>
+                            <button type="button" class="notif-filter-btn" data-filter="unread">Unread</button>
+                            <button type="button" class="notif-filter-btn" data-filter="intake_task">Intake</button>
+                        </div>
+                    </div>
+                    <div id="notif-list-container" class="phase2-feed-list">
+                        <div class="phase2-empty-state" data-i18n="notif_empty">ยังไม่มีการแจ้งเตือนใหม่ในขณะนี้ค่ะ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🛡️ Kira Sovereign Privacy & Local Engine Hub Modal (Phase 2.3) -->
+    <div id="sovereign-privacy-modal" class="kira-modal-overlay" style="display: none; z-index: 1122;">
+        <div class="phase2-modal-card glass-panel">
+            <div class="phase2-modal-header">
+                <div class="phase2-title-group">
+                    <span class="phase2-icon-badge"><i class="fa-solid fa-shield-halved"></i></span>
+                    <div>
+                        <h3 data-i18n="sovereign_modal_title">ศูนย์อธิปไตยข้อมูล &amp; Local AI (PDPA Hub)</h3>
+                        <p data-i18n="sovereign_modal_subtitle">ตรวจสอบความเป็นเจ้าของข้อมูลส่วนบุคคล เชื่อมต่อ Local Ollama และส่งออกข้อมูลของคุณได้ 100%</p>
+                    </div>
+                </div>
+                <button type="button" id="btn-close-sovereign-privacy" class="close-btn" title="ปิดหน้าต่าง"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="sovereign-telemetry-strip">
+                <div class="sovereign-stat-card">
+                    <span class="stat-lbl">Zero-Trust Auth</span>
+                    <strong class="stat-val">PBKDF2 600k + kst2</strong>
+                </div>
+                <div class="sovereign-stat-card">
+                    <span class="stat-lbl">Local Ollama Edge</span>
+                    <strong class="stat-val" id="sovereign-local-status-val">Checking...</strong>
+                </div>
+                <div class="sovereign-stat-card">
+                    <span class="stat-lbl">Your Records</span>
+                    <strong class="stat-val" id="sovereign-total-records-val">0</strong>
+                </div>
+            </div>
+
+            <div class="phase2-modal-grid">
+                <div class="phase2-panel-box">
+                    <h4 data-i18n="sovereign_local_title">Local AI Engine (Ollama Edge Failover)</h4>
+                    <div class="form-group">
+                        <label for="sovereign-ollama-url">Endpoint URL</label>
+                        <div class="sovereign-url-row">
+                            <input type="url" id="sovereign-ollama-url" class="input-control" value="http://localhost:11434" placeholder="http://localhost:11434">
+                            <button type="button" id="btn-sovereign-test-ollama" class="btn-action-sm primary">
+                                <i class="fa-solid fa-arrows-rotate"></i> Test
+                            </button>
+                        </div>
+                    </div>
+                    <div id="sovereign-ollama-models-box" class="sovereign-models-box">Checking Local Engine...</div>
+                    <div class="sovereign-vault-links">
+                        <button type="button" id="btn-sovereign-open-rag" class="btn-action-sm secondary">
+                            <i class="fa-solid fa-book-atlas"></i> RAG Vault
+                        </button>
+                        <button type="button" id="btn-sovereign-open-vault" class="btn-action-sm secondary">
+                            <i class="fa-solid fa-vault"></i> Offline Vault
+                        </button>
+                    </div>
+                </div>
+
+                <div class="phase2-panel-box">
+                    <h4 data-i18n="sovereign_footprint_title">สรุปข้อมูลส่วนตัวภายใต้สิทธิ์ของคุณ</h4>
+                    <div id="sovereign-footprint-grid" class="sovereign-footprint-grid"></div>
+                    <button type="button" id="btn-sovereign-export-json" class="btn-action-sm primary full-width" style="margin-top: 14px;">
+                        <i class="fa-solid fa-file-export"></i> <span data-i18n="sovereign_btn_export">ส่งออกข้อมูลส่วนตัวทั้งหมด (PDPA JSON)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 👑 Guest Trial Limit Celebration & Upgrade Modal -->
     <div id="guest-limit-modal" class="kira-modal-overlay" style="display: none;">
         <div class="guest-limit-card">
@@ -4464,6 +4696,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- Chat Script -->
-    <script src="/static/script.js?v=20261114_phase1_v295"></script>
+    <script src="/static/script.js?v=20261115_phase2_v296"></script>
 </body>
 </html>

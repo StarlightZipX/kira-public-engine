@@ -354,7 +354,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.9.5"
+KIRA_SYSTEM_VERSION = "2.9.6"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -363,41 +363,41 @@ KIRA_RELEASE_DATA = {
     "version": KIRA_SYSTEM_VERSION,
     "build_id": APP_BUILD_ID,
     "timestamp": APP_START_TIME,
-    "release_name": "Kira AI Phase 1 - Everyday PWA, 1-Click Slip Helper & Study Pack",
-    "badge_text": f"v{KIRA_SYSTEM_VERSION} อัปเดต Phase 1",
+    "release_name": "Kira AI Phase 2 - Personal Intake QR, PWA Notification Center, Sovereign Privacy & International Payment Rail",
+    "badge_text": f"v{KIRA_SYSTEM_VERSION} อัปเดต Phase 2",
     "title": f"อัปเดต Kira AI v{KIRA_SYSTEM_VERSION} พร้อมใช้งานแล้วค่ะ",
-    "description": "เพิ่มผู้ช่วยจดรายจ่าย & สแกนสลิปใน 1 คลิก, ชุดติว Study Pack + นำเข้า PDF/DOCX พร้อมแชร์ลิงก์สรุป และทางลัด PWA บนมือถือค่ะ",
-    "quote": "คิระพร้อมช่วยงานประจำวันของบอสแล้วค่ะ ทั้งสแกนสลิปลงบัญชี ส่งออก CSV และสรุปเอกสารสำคัญในคลิกเดียว",
+    "description": "เพิ่มพอร์ทัลรับงานส่วนตัวพร้อมนามบัตร QR, ศูนย์แจ้งเตือน PWA Notification & Reminders, ศูนย์อธิปไตยข้อมูล PDPA & Local AI และช่องทางชำระเงินสากลค่ะ",
+    "quote": "คิระพร้อมรับงานแทนบอส แจ้งเตือนตรงเข้ามือถือไม่พึ่งโควตา LINE และดูแลอธิปไตยข้อมูลส่วนตัวให้ครบวงจรแล้วค่ะ",
     "highlights": [
         {
-            "icon": "fa-receipt",
-            "color": "text-emerald",
-            "tag": "1-Click Slip & Ledger",
-            "text": "สแกนสลิปโอนเงินหรือพิมพ์รายรับ-รายจ่าย ให้คิระลงบัญชีอัตโนมัติ พร้อมตาราง Canvas และส่งออกไฟล์ CSV"
-        },
-        {
-            "icon": "fa-box-open",
+            "icon": "fa-qrcode",
             "color": "text-cyan",
-            "tag": "1-Click Study Pack",
-            "text": "อัปโหลด PDF / DOCX สร้างชุดสรุป-ข้อสอบ-Flashcards ครบ 5 ส่วนในคลิกเดียว พร้อมสร้างลิงก์แชร์"
+            "tag": "Personal Intake & QR",
+            "text": "ลิงก์และนามบัตร QR รับงานส่วนตัว พร้อมติดตามสถานะตั๋วงานและการร่างงานอัตโนมัติ"
         },
         {
-            "icon": "fa-mobile-screen-button",
-            "color": "text-violet",
-            "tag": "Mobile PWA Ready",
-            "text": "รองรับทางลัดจากหน้าจอมือถือ (Deep-Link Shortcuts) และรับข้อความ/ลิงก์จากแอปอื่นผ่าน Share Target"
+            "icon": "fa-bell",
+            "color": "text-emerald",
+            "tag": "PWA Notification Center",
+            "text": "ศูนย์แจ้งเตือนงานเข้า บิล และนัดหมายบนมือถือ/เดสก์ท็อป พร้อม Web Push 0฿"
         },
         {
             "icon": "fa-shield-halved",
             "color": "text-amber",
-            "tag": "Zero-Silence Guard",
-            "text": "ตรวจสอบและรายงานสถานะการทำงานอย่างตรงไปตรงมา พร้อมระบบสำรองเมื่อโมเดลหลักไม่ตอบสนอง"
+            "tag": "Sovereign Privacy & Local AI",
+            "text": "ตรวจสอบสถานะ Local Ollama, สถิติข้อมูลส่วนตัว และส่งออกข้อมูล PDPA JSON ได้ในคลิกเดียว"
         },
         {
-            "icon": "fa-code",
+            "icon": "fa-earth-asia",
             "color": "text-cyan",
-            "tag": "Live Code Canvas",
-            "text": "พรีวิวหน้าเว็บ HTML/CSS/JS และผังความคิด Living Mind Map พร้อมแชร์ลิงก์อ่านอย่างเดียว"
+            "tag": "International Rail",
+            "text": "รองรับ Cross-Border QR อาเซียน และโอนผ่าน Wise / SWIFT เข้าบัญชี KBANK โดยตรง"
+        },
+        {
+            "icon": "fa-receipt",
+            "color": "text-emerald",
+            "tag": "1-Click Slip & Ledger",
+            "text": "สแกนสลิปโอนเงินและบันทึกรายรับ-รายจ่ายอัตโนมัติ พร้อมตาราง Canvas และส่งออกไฟล์ CSV"
         },
         {
             "icon": "fa-book-atlas",
@@ -409,53 +409,53 @@ KIRA_RELEASE_DATA = {
     "i18n": {
         "en": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} Update Available",
-            "description": "Added 1-Click Slip & Expense Ledger, 1-Click Study Pack with PDF/DOCX upload, and Mobile PWA deep-links & Share Target.",
-            "quote": "Your everyday personal assistant tools are ready with slip scanning, CSV expense ledger export, and Study Pack creation.",
+            "description": "Added Personal Intake Portal & QR, PWA Notification & Reminder Center, Sovereign Privacy & Local AI Hub, and International Payment Rail.",
+            "quote": "Kira can now act as your personal intake secretary with direct PWA notifications, PDPA export, and cross-border payment options.",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} Update",
             "highlights": [
-                {"icon": "fa-receipt", "color": "text-emerald", "tag": "1-Click Slip Ledger", "text": "Scan payment slips or log expenses to your personal ledger with Canvas table and CSV export"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "Study Pack & PDF", "text": "Upload PDF/DOCX files, generate complete 5-part Study Packs, and create read-only share links"},
-                {"icon": "fa-mobile-screen-button", "color": "text-violet", "tag": "Mobile PWA", "text": "Home-screen deep-link shortcuts and Web Share Target support"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "Security", "text": "Web Cryptography API session handling and per-user data isolation"},
+                {"icon": "fa-qrcode", "color": "text-cyan", "tag": "Personal Intake QR", "text": "Shareable personal intake link, scannable QR card, and public ticket tracking"},
+                {"icon": "fa-bell", "color": "text-emerald", "tag": "PWA Notifications", "text": "In-app notification center, reminders, and browser Web Push alerts with zero third-party fees"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "Sovereign Privacy", "text": "Live Local Ollama check, personal footprint telemetry, and 1-click PDPA JSON export"},
+                {"icon": "fa-earth-asia", "color": "text-cyan", "tag": "International Rail", "text": "ASEAN Cross-Border QR and Wise/SWIFT international transfer rail alongside PromptPay"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "5 Languages", "text": "Consistent localization across TH, EN, ZH, KO, and JA interfaces"}
             ]
         },
         "zh": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} 更新已就绪",
-            "description": "新增一键账单识别与收支记账本、一键 Study Pack（支持 PDF/DOCX 导入及只读分享链接）与移动端 PWA 快捷入口。",
-            "quote": "日常个人助手功能已就绪，支持账单识别记账、CSV 导出与一键学习资料生成。",
+            "description": "新增个人任务接单入口与二维码名片、PWA 通知与提醒中心、主权隐私与本地引擎中心及国际支付渠道。",
+            "quote": "Kira 现已升级为您的专属接单与日程秘书，支持零费用 PWA 通知与 PDPA 数据自主导出。",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 更新",
             "highlights": [
-                {"icon": "fa-receipt", "color": "text-emerald", "tag": "一键记账本", "text": "扫描转账凭证或输入收支，自动入账并支持 Canvas 表格与 CSV 导出"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "一键学习包", "text": "支持上传 PDF/DOCX 提取文本，一键生成五合一学习包与分享链接"},
-                {"icon": "fa-mobile-screen-button", "color": "text-violet", "tag": "PWA 快捷方式", "text": "支持桌面直达快捷方式与系统分享目标 (Share Target)"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "会话安全", "text": "使用 Web Cryptography API 进行会话隔离保护"},
+                {"icon": "fa-qrcode", "color": "text-cyan", "tag": "个人接单二维码", "text": "支持个人专属接单链接、可扫码 SVG 二维码名片及工单状态查询"},
+                {"icon": "fa-bell", "color": "text-emerald", "tag": "PWA 通知中心", "text": "日程、账单与新任务桌面/手机直达通知提醒"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "隐私与本地引擎", "text": "实时查看 Ollama 本地模型状态、个人数据统计并一键导出 JSON"},
+                {"icon": "fa-earth-asia", "color": "text-cyan", "tag": "国际支付渠道", "text": "在 PromptPay 基础上支持跨境扫码与 Wise / SWIFT 国际汇款"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "五国语言", "text": "同步支持中文、泰语、英语、韩语与日语界面"}
             ]
         },
         "ko": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} 업데이트 안내",
-            "description": "원클릭 영수증·이체 내역 가계부, PDF/DOCX 업로드 지원 Study Pack 및 공유 링크, 모바일 PWA 바로가기 기능을 추가했습니다.",
-            "quote": "영수증 스캔 가계부와 CSV 내보내기, 원클릭 학습 팩 기능을 바로 이용하실 수 있습니다.",
+            "description": "개인 업무 접수 포털 및 QR 카드, PWA 알림 센터, 데이터 주권 및 로컬 AI 허브, 국제 결제 레일을 추가했습니다.",
+            "quote": "이제 Kira가 개인 접수 비서로서 PWA 알림, PDPA 데이터 내보내기 및 국제 결제 안내까지 지원합니다.",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 업데이트",
             "highlights": [
-                {"icon": "fa-receipt", "color": "text-emerald", "tag": "원클릭 가계부", "text": "이체 내역·영수증을 자동 분류하여 저장하고 Canvas 표 및 CSV로 내보내기"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "Study Pack", "text": "PDF/DOCX 문서 추출, 5단 구성 학습 팩 생성 및 읽기 전용 링크 공유"},
-                {"icon": "fa-mobile-screen-button", "color": "text-violet", "tag": "모바일 PWA", "text": "홈 화면 딥링크 바로가기 및 웹 Share Target 지원"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "세션 보안", "text": "Web Cryptography API 기반 사용자별 데이터 분리"},
+                {"icon": "fa-qrcode", "color": "text-cyan", "tag": "개인 접수 QR", "text": "맞춤형 업무 접수 링크, 스캔 가능한 QR 카드 및 실시간 티켓 조회"},
+                {"icon": "fa-bell", "color": "text-emerald", "tag": "PWA 알림 센터", "text": "별도 메시징 요금 없는 일정·청구서·업무 접수 알림 및 웹 푸시"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "데이터 주권 허브", "text": "로컬 Ollama 상태 확인, 데이터 현황 및 원클릭 PDPA JSON 내보내기"},
+                {"icon": "fa-earth-asia", "color": "text-cyan", "tag": "국제 결제 지원", "text": "PromptPay와 함께 아세안 크로스보더 QR 및 Wise/SWIFT 송금 안내"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "5개 국어", "text": "한국어, 태국어, 영어, 중국어, 일본어 인터페이스 지원"}
             ]
         },
         "ja": {
             "title": f"Kira AI v{KIRA_SYSTEM_VERSION} アップデートのお知らせ",
-            "description": "ワンクリック伝票・支出家計簿、PDF/DOCX 対応の Study Pack・共有リンク生成、モバイル PWA ショートカットに対応しました。",
-            "quote": "伝票スキャン家計簿や CSV 出力、ワンクリック学習パックをすぐにご利用いただけます。",
+            "description": "個人受付ポータルと QR カード、PWA 通知センター、データ主権・ローカル AI ハブ、国際決済レールを追加しました。",
+            "quote": "Kira が個人秘書として PWA 通知、PDPA データエクスポート、国際送金案内まで一括対応します。",
             "badge_text": f"v{KIRA_SYSTEM_VERSION} 更新",
             "highlights": [
-                {"icon": "fa-receipt", "color": "text-emerald", "tag": "家計簿ヘルパー", "text": "送金明細やレシートを自動仕訳して保存し、Canvas 表・CSV で書き出し"},
-                {"icon": "fa-file-lines", "color": "text-cyan", "tag": "Study Pack", "text": "PDF/DOCX 読み込み、5部構成の学習パック作成、閲覧専用リンク共有"},
-                {"icon": "fa-mobile-screen-button", "color": "text-violet", "tag": "モバイル PWA", "text": "ホーム画面ディープリンクと Web Share Target に対応"},
-                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "セキュリティ", "text": "Web Cryptography API によるセッション分離保護"},
+                {"icon": "fa-qrcode", "color": "text-cyan", "tag": "個人受付 QR", "text": "専用受付 URL、スキャン可能な QR カード、公開チケット進捗確認"},
+                {"icon": "fa-bell", "color": "text-emerald", "tag": "PWA 通知センター", "text": "予定・請求・新規依頼を直接通知するリマインダーと Web Push"},
+                {"icon": "fa-shield-halved", "color": "text-amber", "tag": "データ主権ハブ", "text": "ローカル Ollama 状態確認、保有データ可視化、PDPA JSON 書き出し"},
+                {"icon": "fa-earth-asia", "color": "text-cyan", "tag": "国際決済レール", "text": "PromptPay に加えてクロスボーダー QR・Wise / SWIFT 送金に対応"},
                 {"icon": "fa-language", "color": "text-pink", "tag": "5カ国語", "text": "日本語・タイ語・英語・中国語・韓国語 UI に対応"}
             ]
         }
@@ -2383,6 +2383,35 @@ def init_db():
                       ai_summary TEXT,
                       created_at TEXT)''')
         execute_query('''CREATE INDEX IF NOT EXISTS idx_expense_username ON user_expense_logs (username, created_at)''')
+
+        execute_query('''CREATE TABLE IF NOT EXISTS intake_profiles
+                     (username TEXT PRIMARY KEY,
+                      display_name TEXT,
+                      headline TEXT,
+                      accepting_requests INTEGER DEFAULT 1,
+                      auto_draft_enabled INTEGER DEFAULT 1,
+                      updated_at TEXT)''')
+
+        execute_query('''CREATE TABLE IF NOT EXISTS user_notifications
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      username TEXT,
+                      notif_type TEXT DEFAULT 'system',
+                      title TEXT,
+                      body TEXT,
+                      action_url TEXT DEFAULT '/',
+                      is_read INTEGER DEFAULT 0,
+                      due_at TEXT,
+                      created_at TEXT)''')
+        execute_query('''CREATE INDEX IF NOT EXISTS idx_user_notif_username ON user_notifications (username, is_read, id)''')
+
+        execute_query('''CREATE TABLE IF NOT EXISTS web_push_subscriptions
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      username TEXT,
+                      endpoint TEXT UNIQUE,
+                      p256dh TEXT,
+                      auth TEXT,
+                      user_agent TEXT,
+                      created_at TEXT)''')
         
         # Synchronize default prompts to current architecture (Auto-Upgrade legacy, Zero-Silence & Strict Kira Identity v2)
         check_p1 = execute_query("SELECT value FROM system_settings WHERE key_name='prompt_1.0'", fetch='one')
@@ -3463,6 +3492,28 @@ PROMPTPAY_ACCOUNT = os.environ.get("PROMPTPAY_ACCOUNT", "004-9-99252-5")
 PROMPTPAY_ACCOUNT_MASKED = "xxx-x-xx252-5"
 PROMPTPAY_QR_IMAGE = "/static/images/boss_promptpay_card.png"
 
+INTERNATIONAL_BANK_DETAILS = {
+    "account_holder_en": "SIWAT ROSAWAT",
+    "account_holder_th": PROMPTPAY_NAME,
+    "bank_name_en": "KASIKORNBANK PUBLIC COMPANY LIMITED (KBANK)",
+    "bank_name_th": PROMPTPAY_BANK,
+    "swift_bic": "KASITHBK",
+    "account_number_masked": PROMPTPAY_ACCOUNT_MASKED,
+    "promptpay_id": PROMPTPAY_NUMBER,
+    "country": "Thailand (TH)",
+    "currency": "THB",
+    "asean_qr_supported": [
+        "PayNow (SG)",
+        "DuitNow (MY)",
+        "QRIS (ID)",
+        "JPQR (JP)",
+        "VietQR (VN)",
+        "Alipay+ / WeChat Pay Cross-Border"
+    ],
+    "wise_supported": True,
+    "usd_approx": {"trial": 1.15, "pro": 3.80, "founder": 14.50}
+}
+
 def get_user_plan_status(uname: str) -> dict:
     clean_user = (uname or "").strip()
     if is_boss(clean_user):
@@ -3916,12 +3967,44 @@ class ExternalIntakeRequest(BaseModel):
     department: Optional[str] = ""
     urgency: Optional[str] = "normal"
     attachment_url: Optional[str] = ""
+    owner_username: Optional[str] = ""
+    target_username: Optional[str] = ""
+    contact_channel: Optional[str] = ""
+    budget_or_deadline: Optional[str] = ""
+    ui_lang: Optional[str] = "th"
+
+class IntakeProfileUpdateRequest(BaseModel):
+    username: str
+    display_name: Optional[str] = ""
+    headline: Optional[str] = ""
+    accepting_requests: Optional[bool] = True
+    auto_draft_enabled: Optional[bool] = True
+
+class NotificationCreateRequest(BaseModel):
+    username: str
+    notif_type: Optional[str] = "reminder"
+    title: str
+    body: Optional[str] = ""
+    due_at: Optional[str] = ""
+    action_url: Optional[str] = "/"
+
+class NotificationReadRequest(BaseModel):
+    username: str
+    notification_id: Optional[Union[int, str]] = "all"
+
+class WebPushSubscribeRequest(BaseModel):
+    username: str
+    endpoint: str
+    keys: Optional[dict] = None
+    user_agent: Optional[str] = ""
 
 # --- 💎 Kira Subscription & Monetization Engine Models ---
 class SubscriptionOrderCreateRequest(BaseModel):
     username: str
     plan_type: Optional[str] = None
     plan_id: Optional[str] = None
+    payment_rail: Optional[str] = "promptpay"
+    currency: Optional[str] = "THB"
 
 class SubscriptionSlipUploadRequest(BaseModel):
     order_id: str
@@ -10493,45 +10576,801 @@ async def delete_task(task_id: str):
     execute_query("DELETE FROM tasks WHERE task_id=?", (task_id,))
     return {"status": "success", "message": "ลบภารกิจสำเร็จค่ะ"}
 
+def _create_user_notification(
+    username: str,
+    notif_type: str,
+    title: str,
+    body: str = "",
+    action_url: str = "/",
+    due_at: str = "",
+) -> dict:
+    """บันทึกการแจ้งเตือนเข้าตาราง user_notifications สำหรับ PWA Notification Center"""
+    clean_user = (username or "guest").strip()[:80] or "guest"
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    safe_type = (notif_type or "system").strip().lower()
+    if safe_type not in ("reminder", "bill", "appointment", "intake_task", "system"):
+        safe_type = "system"
+    clean_title = (title or "").strip()[:160] or "แจ้งเตือนจาก Kira AI"
+    clean_body = (body or "").strip()[:400]
+    clean_action = (action_url or "/").strip()[:160] or "/"
+    clean_due = (due_at or "").strip()[:40]
+
+    execute_query(
+        """
+        INSERT INTO user_notifications (username, notif_type, title, body, action_url, is_read, due_at, created_at)
+        VALUES (?, ?, ?, ?, ?, 0, ?, ?)
+        """,
+        (clean_user, safe_type, clean_title, clean_body, clean_action, clean_due, now_str),
+    )
+    row = execute_query("SELECT MAX(id) FROM user_notifications WHERE username=?", (clean_user,), fetch="one")
+    return {
+        "id": row[0] if row else None,
+        "username": clean_user,
+        "notif_type": safe_type,
+        "title": clean_title,
+        "body": clean_body,
+        "action_url": clean_action,
+        "is_read": False,
+        "due_at": clean_due,
+        "created_at": now_str,
+    }
+
+
+def _generate_qr_matrix(text: str) -> list:
+    """Generate ISO/IEC 18004 QR Code matrix (Versions 1-8, Byte mode, ECC Level L) without external deps."""
+    raw_bytes = (text or "https://kira-public-engine.onrender.com/intake").encode("utf-8")
+    # Versions 1-8 ECC Level L specs: (size, data_cap, num_blocks, data_per_block, ecc_per_block, align_coords, remainder_bits)
+    specs = [
+        (1, 21, 19, 1, 19, 7, [], 0),
+        (2, 25, 34, 1, 34, 10, [6, 18], 7),
+        (3, 29, 55, 1, 55, 15, [6, 22], 7),
+        (4, 33, 80, 1, 80, 20, [6, 26], 7),
+        (5, 37, 108, 1, 108, 26, [6, 30], 7),
+        (6, 41, 136, 2, 68, 18, [6, 34], 7),
+        (7, 45, 156, 2, 78, 20, [6, 22, 38], 0),
+        (8, 49, 194, 2, 97, 24, [6, 24, 42], 0),
+    ]
+    chosen = None
+    for s in specs:
+        if len(raw_bytes) <= s[2] - 2:
+            chosen = s
+            break
+    if chosen is None:
+        chosen = specs[-1]
+        raw_bytes = raw_bytes[: chosen[2] - 2]
+
+    ver, size, data_cap, num_blocks, d_per_blk, ecc_per_blk, align, rem_bits = chosen
+
+    # Build data bit stream: Mode (0100), count (8 bits), data bytes, terminator
+    bits = [0, 1, 0, 0]
+    cnt = len(raw_bytes)
+    for shift in range(7, -1, -1):
+        bits.append((cnt >> shift) & 1)
+    for b in raw_bytes:
+        for shift in range(7, -1, -1):
+            bits.append((b >> shift) & 1)
+    max_bits = data_cap * 8
+    for _ in range(min(4, max_bits - len(bits))):
+        bits.append(0)
+    while len(bits) % 8 != 0:
+        bits.append(0)
+    codewords = []
+    for i in range(0, len(bits), 8):
+        val = 0
+        for bit in bits[i : i + 8]:
+            val = (val << 1) | bit
+        codewords.append(val)
+    pad_cycle = (0xEC, 0x11)
+    idx_pad = 0
+    while len(codewords) < data_cap:
+        codewords.append(pad_cycle[idx_pad % 2])
+        idx_pad += 1
+
+    # GF(256) arithmetic (primitive polynomial 0x11D)
+    gf_exp = [0] * 512
+    gf_log = [0] * 256
+    x = 1
+    for i in range(255):
+        gf_exp[i] = x
+        gf_log[x] = i
+        x <<= 1
+        if x & 0x100:
+            x ^= 0x11D
+    for i in range(255, 512):
+        gf_exp[i] = gf_exp[i - 255]
+
+    def gf_mul(a: int, b: int) -> int:
+        if a == 0 or b == 0:
+            return 0
+        return gf_exp[gf_log[a] + gf_log[b]]
+
+    # RS generator polynomial of degree ecc_per_blk
+    gen = [1]
+    for i in range(ecc_per_blk):
+        nxt = [0] * (len(gen) + 1)
+        root = gf_exp[i]
+        for j, g in enumerate(gen):
+            nxt[j] ^= g
+            nxt[j + 1] ^= gf_mul(g, root)
+        gen = nxt
+
+    def rs_remainder(data_blk: list) -> list:
+        res = list(data_blk) + [0] * ecc_per_blk
+        for i in range(len(data_blk)):
+            coef = res[i]
+            if coef != 0:
+                for j in range(len(gen)):
+                    res[i + j] ^= gf_mul(gen[j], coef)
+        return res[len(data_blk) :]
+
+    data_blocks = []
+    ecc_blocks = []
+    for b_idx in range(num_blocks):
+        blk = codewords[b_idx * d_per_blk : (b_idx + 1) * d_per_blk]
+        data_blocks.append(blk)
+        ecc_blocks.append(rs_remainder(blk))
+
+    final_cw = []
+    for i in range(d_per_blk):
+        for blk in data_blocks:
+            final_cw.append(blk[i])
+    for i in range(ecc_per_blk):
+        for eblk in ecc_blocks:
+            final_cw.append(eblk[i])
+
+    final_bits = []
+    for cw in final_cw:
+        for shift in range(7, -1, -1):
+            final_bits.append((cw >> shift) & 1)
+    final_bits.extend([0] * rem_bits)
+
+    grid = [[0] * size for _ in range(size)]
+    is_func = [[False] * size for _ in range(size)]
+
+    def set_func(r: int, c: int, val: int):
+        if 0 <= r < size and 0 <= c < size:
+            grid[r][c] = 1 if val else 0
+            is_func[r][c] = True
+
+    def place_finder(top_r: int, left_c: int):
+        for dr in range(-1, 8):
+            for dc in range(-1, 8):
+                rr, cc = top_r + dr, left_c + dc
+                if not (0 <= rr < size and 0 <= cc < size):
+                    continue
+                if dr in (-1, 7) or dc in (-1, 7):
+                    set_func(rr, cc, 0)
+                else:
+                    dark = (
+                        dr in (0, 6)
+                        or dc in (0, 6)
+                        or (2 <= dr <= 4 and 2 <= dc <= 4)
+                    )
+                    set_func(rr, cc, 1 if dark else 0)
+
+    place_finder(0, 0)
+    place_finder(0, size - 7)
+    place_finder(size - 7, 0)
+
+    for ar in align:
+        for ac in align:
+            if (ar <= 8 and ac <= 8) or (ar <= 8 and ac >= size - 9) or (ar >= size - 9 and ac <= 8):
+                continue
+            for dr in range(-2, 3):
+                for dc in range(-2, 3):
+                    dark = abs(dr) == 2 or abs(dc) == 2 or (dr == 0 and dc == 0)
+                    set_func(ar + dr, ac + dc, 1 if dark else 0)
+
+    for pos in range(8, size - 8):
+        val = 1 if (pos % 2 == 0) else 0
+        if not is_func[6][pos]:
+            set_func(6, pos, val)
+        if not is_func[pos][6]:
+            set_func(pos, 6, val)
+
+    # Dark module & reserve format info areas
+    set_func(size - 8, 8, 1)
+    for k in range(9):
+        if k != 6:
+            set_func(8, k, 0)
+            set_func(k, 8, 0)
+    for k in range(8):
+        set_func(8, size - 8 + k, 0)
+        if k < 7:
+            set_func(size - 7 + k, 8, 0)
+
+    # Version info for ver >= 7
+    if ver >= 7:
+        rem = ver << 12
+        for bit_pos in range(17, 11, -1):
+            if (rem >> bit_pos) & 1:
+                rem ^= 0x1F25 << (bit_pos - 12)
+        ver_bits = (ver << 12) | rem
+        for idx in range(18):
+            bit_v = (ver_bits >> idx) & 1
+            a = size - 11 + (idx % 3)
+            b = idx // 3
+            set_func(a, b, bit_v)
+            set_func(b, a, bit_v)
+
+    # Zigzag data placement
+    bit_i = 0
+    col = size - 1
+    upward = True
+    while col > 0:
+        if col == 6:
+            col -= 1
+        row_range = range(size - 1, -1, -1) if upward else range(size)
+        for row in row_range:
+            for dc in (0, -1):
+                cc = col + dc
+                if not is_func[row][cc]:
+                    bit_val = final_bits[bit_i] if bit_i < len(final_bits) else 0
+                    bit_i += 1
+                    grid[row][cc] = bit_val
+        col -= 2
+        upward = not upward
+
+    # Try masks 0..7 and pick lowest penalty score (standard ISO N1..N3)
+    best_grid = None
+    best_mask = 0
+    best_score = 10**9
+    for mask_id in range(8):
+        cand = [list(r) for r in grid]
+        for r in range(size):
+            for c in range(size):
+                if is_func[r][c]:
+                    continue
+                if mask_id == 0:
+                    inv = (r + c) % 2 == 0
+                elif mask_id == 1:
+                    inv = r % 2 == 0
+                elif mask_id == 2:
+                    inv = c % 3 == 0
+                elif mask_id == 3:
+                    inv = (r + c) % 3 == 0
+                elif mask_id == 4:
+                    inv = ((r // 2) + (c // 3)) % 2 == 0
+                elif mask_id == 5:
+                    inv = ((r * c) % 2) + ((r * c) % 3) == 0
+                elif mask_id == 6:
+                    inv = (((r * c) % 2) + ((r * c) % 3)) % 2 == 0
+                else:
+                    inv = (((r + c) % 2) + ((r * c) % 3)) % 2 == 0
+                if inv:
+                    cand[r][c] ^= 1
+        score = 0
+        for r in range(size):
+            run_v, run_len = cand[r][0], 1
+            for c in range(1, size):
+                if cand[r][c] == run_v:
+                    run_len += 1
+                else:
+                    if run_len >= 5:
+                        score += 3 + (run_len - 5)
+                    run_v, run_len = cand[r][c], 1
+            if run_len >= 5:
+                score += 3 + (run_len - 5)
+        for c in range(size):
+            run_v, run_len = cand[0][c], 1
+            for r in range(1, size):
+                if cand[r][c] == run_v:
+                    run_len += 1
+                else:
+                    if run_len >= 5:
+                        score += 3 + (run_len - 5)
+                    run_v, run_len = cand[r][c], 1
+            if run_len >= 5:
+                score += 3 + (run_len - 5)
+        for r in range(size - 1):
+            for c in range(size - 1):
+                if cand[r][c] == cand[r][c + 1] == cand[r + 1][c] == cand[r + 1][c + 1]:
+                    score += 3
+        if score < best_score:
+            best_score = score
+            best_mask = mask_id
+            best_grid = cand
+
+    # Format Info: ECC Level L (0b01) + best_mask, BCH(15,5) mod 0x537 XOR 0x5412
+    fmt_data = (0b01 << 3) | best_mask
+    fmt_rem = fmt_data << 10
+    for bit_pos in range(14, 9, -1):
+        if (fmt_rem >> bit_pos) & 1:
+            fmt_rem ^= 0x537 << (bit_pos - 10)
+    fmt_bits = ((fmt_data << 10) | fmt_rem) ^ 0x5412
+
+    copy1_coords = [
+        (8, 0), (8, 1), (8, 2), (8, 3), (8, 4), (8, 5), (8, 7), (8, 8),
+        (7, 8), (5, 8), (4, 8), (3, 8), (2, 8), (1, 8), (0, 8),
+    ]
+    copy2_coords = [
+        (size - 1, 8), (size - 2, 8), (size - 3, 8), (size - 4, 8), (size - 5, 8), (size - 6, 8), (size - 7, 8),
+        (8, size - 8), (8, size - 7), (8, size - 6), (8, size - 5), (8, size - 4), (8, size - 3), (8, size - 2), (8, size - 1),
+    ]
+    for idx in range(15):
+        bit_val = (fmt_bits >> (14 - idx)) & 1
+        r1, c1 = copy1_coords[idx]
+        r2, c2 = copy2_coords[idx]
+        best_grid[r1][c1] = bit_val
+        best_grid[r2][c2] = bit_val
+    best_grid[size - 8][8] = 1
+    return best_grid
+
+
 @app.post("/api/tasks/external-intake")
 async def external_task_intake(req: ExternalIntakeRequest):
-    """Public Service Intake: รับคำของานจากภายนอก (ลูกค้า, ทีมงาน, หรือ Webhook)"""
+    """Public Service Intake: รับคำของานจากภายนอก (ลูกค้า, ทีมงาน, หรือลิงก์รับงานส่วนตัว)"""
     tz = timezone(timedelta(hours=7))
     now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
     task_id = f"task_{secrets.token_hex(6)}"
-    
+
+    raw_owner = (req.owner_username or req.target_username or "").strip().lstrip("@")[:64]
+    auto_draft_flag = True
+    if raw_owner and raw_owner.lower() != "guest":
+        prof_row = execute_query(
+            "SELECT display_name, headline, accepting_requests, auto_draft_enabled FROM intake_profiles WHERE username=?",
+            (raw_owner,),
+            fetch="one",
+        )
+        if prof_row and int(prof_row[2] if prof_row[2] is not None else 1) == 0:
+            raise HTTPException(status_code=403, detail="ผู้รับปิดรับคำของานชั่วคราวค่ะ")
+        if prof_row is not None and prof_row[3] is not None:
+            auto_draft_flag = bool(int(prof_row[3]))
+        target_user = raw_owner
+    else:
+        target_user = "👑 Boss (Owner)"
+
     full_desc = f"{req.description}\n\n[ข้อมูลผู้ส่ง]: {req.requester_name} ({req.requester_email or 'ไม่มีอีเมล'})\n[หน่วยงาน]: {req.department or 'ไม่ระบุ'}\n[ระดับความด่วนที่ระบุ]: {req.urgency}"
+    if req.contact_channel:
+        full_desc += f"\n[ช่องทางติดต่อ]: {req.contact_channel.strip()}"
+    if req.budget_or_deadline:
+        full_desc += f"\n[งบประมาณ/กำหนดส่ง]: {req.budget_or_deadline.strip()}"
     if req.attachment_url:
         full_desc += f"\n[ลิงก์แนบ]: {req.attachment_url}"
-        
-    # เจน First Draft และส่งเข้าบอร์ดรูมทันที
-    deliv_res = await asyncio.to_thread(_generate_task_deliverable, req.title, full_desc)
+
+    if auto_draft_flag:
+        deliv_res = await asyncio.to_thread(_generate_task_deliverable, req.title, full_desc)
+    else:
+        deliv_res = {"deliverable": "", "deliverable_type": "document"}
     eval_res = await asyncio.to_thread(_evaluate_task_with_boardroom, req.title, full_desc)
-    
-    import json as _json
-    review_json = _json.dumps(eval_res, ensure_ascii=False)
+
+    review_json = json.dumps(eval_res, ensure_ascii=False)
     priority = eval_res.get("eisenhower_quadrant", "urgent_important" if req.urgency == "urgent" else "important_not_urgent")
     score = eval_res.get("priority_score", 80 if req.urgency == "urgent" else 65)
-    
-    # บันทึกงานโดยมอบหมายให้ Boss / Admin ของระบบเป็นผู้ดูแล
-    target_user = "👑 Boss (Owner)"
-    
+
     execute_query("""
         INSERT INTO tasks (task_id, username, title, description, source, priority, priority_score, status, boardroom_review, deliverable, deliverable_type, requester, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (task_id, target_user, req.title, full_desc, "external_intake", priority, score, "backlog", review_json, deliv_res["deliverable"], deliv_res["deliverable_type"], req.requester_name, now_str, now_str))
-    
+
+    try:
+        _create_user_notification(
+            target_user,
+            "intake_task",
+            f"งานใหม่จาก {req.requester_name}: {req.title}",
+            f"ความด่วน: {req.urgency} • รหัส {task_id}",
+            "/?open=tasks",
+        )
+    except Exception as _e_notif:
+        print("Intake notification insert notice:", _e_notif)
+
     return {
         "status": "success",
         "task_id": task_id,
         "title": req.title,
-        "message": f"Kira ได้รับคำของาน '{req.title}' เข้าสู่ระบบเรียบร้อยแล้วค่ะ! AI ได้ร่างชิ้นงานและเตรียมแผนงานให้ทีมแล้ว"
+        "owner": target_user,
+        "message": f"Kira ได้รับคำของาน '{req.title}' เข้าสู่ระบบเรียบร้อยแล้วค่ะ! AI ได้ร่างชิ้นงานและเตรียมแผนงานให้เรียบร้อยแล้ว"
     }
 
 @app.get("/intake", response_class=HTMLResponse)
 async def public_intake_page(request: Request):
     """หน้าเว็บรับงานภายนอกแบบ Standalone (Public Service Intake Portal)"""
-    return templates.TemplateResponse(request=request, name="intake.html", context={"request": request})
+    owner = (request.query_params.get("owner") or "").strip().lstrip("@")[:64]
+    return templates.TemplateResponse(request=request, name="intake.html", context={"request": request, "owner_username": owner})
+
+@app.get("/intake/{owner_username}", response_class=HTMLResponse)
+async def personal_intake_page(request: Request, owner_username: str):
+    """หน้าเว็บรับงานส่วนตัวแยกตามผู้รับงาน (/intake/{owner_username})"""
+    owner = (owner_username or "").strip().lstrip("@")[:64]
+    return templates.TemplateResponse(request=request, name="intake.html", context={"request": request, "owner_username": owner})
+
+@app.get("/api/intake/profile")
+async def get_intake_profile(owner: Optional[str] = ""):
+    """ดึงข้อมูลหน้าโปรไฟล์รับงานส่วนตัวของผู้ใช้"""
+    clean_owner = (owner or "").strip().lstrip("@")[:64]
+    prof = None
+    nick = ""
+    if clean_owner:
+        prof = execute_query(
+            "SELECT display_name, headline, accepting_requests, auto_draft_enabled, updated_at FROM intake_profiles WHERE username=?",
+            (clean_owner,),
+            fetch="one",
+        )
+        u_row = execute_query("SELECT nickname FROM users WHERE username=?", (clean_owner,), fetch="one")
+        if u_row and u_row[0]:
+            nick = str(u_row[0]).strip()
+
+    display_name = (prof[0] if prof and prof[0] else nick or clean_owner or "Kira Executive Desk")
+    headline = (prof[1] if prof and prof[1] else "ส่งรายละเอียดงาน เอกสาร หรือโจทย์ที่ต้องการ เพื่อให้ Kira AI ช่วยคัดกรองและร่างโครงงานเริ่มต้นทันที")
+    accepting = True if prof is None or prof[2] is None else bool(int(prof[2]))
+    auto_draft = True if prof is None or prof[3] is None else bool(int(prof[3]))
+    intake_url = f"/intake?owner={clean_owner}" if clean_owner and clean_owner.lower() != "guest" else "/intake"
+    return {
+        "status": "success",
+        "owner_username": clean_owner,
+        "display_name": display_name,
+        "headline": headline,
+        "accepting_requests": accepting,
+        "auto_draft_enabled": auto_draft,
+        "intake_url": intake_url,
+    }
+
+@app.post("/api/intake/profile")
+async def update_intake_profile(req: IntakeProfileUpdateRequest):
+    """อัปเดตหน้าโปรไฟล์พอร์ทัลรับงานส่วนตัว"""
+    clean_user = (req.username or "").strip().lstrip("@")[:64]
+    if not clean_user or clean_user.lower() == "guest":
+        raise HTTPException(status_code=400, detail="กรุณาเข้าสู่ระบบก่อนตั้งค่าพอร์ทัลรับงานส่วนตัวค่ะ")
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    display_name = (req.display_name or "").strip()[:120]
+    headline = (req.headline or "").strip()[:280]
+    accepting_int = 1 if req.accepting_requests is not False else 0
+    auto_draft_int = 1 if req.auto_draft_enabled is not False else 0
+
+    existing = execute_query("SELECT username FROM intake_profiles WHERE username=?", (clean_user,), fetch="one")
+    if existing:
+        execute_query(
+            "UPDATE intake_profiles SET display_name=?, headline=?, accepting_requests=?, auto_draft_enabled=?, updated_at=? WHERE username=?",
+            (display_name, headline, accepting_int, auto_draft_int, now_str, clean_user),
+        )
+    else:
+        execute_query(
+            "INSERT INTO intake_profiles (username, display_name, headline, accepting_requests, auto_draft_enabled, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (clean_user, display_name, headline, accepting_int, auto_draft_int, now_str),
+        )
+    return await get_intake_profile(clean_user)
+
+@app.get("/api/intake/track/{task_id}")
+async def track_intake_ticket(task_id: str):
+    """ติดตามสถานะตั๋วงานสำหรับผู้ส่งคำขอภายนอก"""
+    clean_id = (task_id or "").strip()[:64]
+    row = execute_query(
+        "SELECT task_id, username, title, priority, status, deliverable, requester, created_at, updated_at FROM tasks WHERE task_id=?",
+        (clean_id,),
+        fetch="one",
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="ไม่พบรหัสตั๋วงานที่ระบุค่ะ")
+    return {
+        "status": "success",
+        "ticket": {
+            "task_id": row[0],
+            "owner": row[1],
+            "title": row[2],
+            "priority": row[3],
+            "task_status": row[4],
+            "has_deliverable": bool(row[5]),
+            "deliverable_preview": (row[5] or "")[:280],
+            "requester": row[6],
+            "created_at": row[7],
+            "updated_at": row[8],
+        },
+    }
+
+@app.get("/api/intake/qr.svg")
+async def get_intake_qr_svg(request: Request, url: Optional[str] = "", owner: Optional[str] = ""):
+    """สร้างภาพ QR Code แบบ Vector SVG สำหรับพอร์ทัลรับงานส่วนตัว"""
+    target_url = (url or "").strip()
+    if not target_url:
+        base = str(request.base_url).rstrip("/")
+        clean_owner = (owner or "").strip().lstrip("@")[:64]
+        target_url = f"{base}/intake?owner={clean_owner}" if clean_owner and clean_owner.lower() != "guest" else f"{base}/intake"
+
+    matrix = _generate_qr_matrix(target_url)
+    size = len(matrix)
+    quiet = 2
+    total = size + quiet * 2
+    rects = []
+    for r in range(size):
+        for c in range(size):
+            if matrix[r][c]:
+                rects.append(f'<rect x="{c + quiet}" y="{r + quiet}" width="1" height="1"/>')
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {total} {total}" shape-rendering="crispEdges">'
+        f'<rect width="{total}" height="{total}" fill="#ffffff"/>'
+        f'<g fill="#09090b">{"".join(rects)}</g>'
+        f'</svg>'
+    )
+    return Response(content=svg, media_type="image/svg+xml", headers={"Cache-Control": "no-store"})
+
+# ====================================================================
+# 🔔 Kira PWA Notification & Reminder Center (Phase 2.2)
+# ====================================================================
+
+@app.get("/api/notifications")
+async def list_notifications(username: str = "guest", limit: int = 30):
+    """ดึงรายการแจ้งเตือน นัดหมาย บิล และงานเข้าของผู้ใช้"""
+    clean_user = (username or "guest").strip()[:80] or "guest"
+    safe_limit = max(1, min(100, int(limit or 30)))
+
+    if is_boss(clean_user):
+        rows = execute_query(
+            "SELECT id, username, notif_type, title, body, action_url, is_read, due_at, created_at FROM user_notifications WHERE username=? OR username='👑 Boss (Owner)' ORDER BY id DESC LIMIT ?",
+            (clean_user, safe_limit),
+            fetch="all",
+        )
+        unread_row = execute_query(
+            "SELECT COUNT(*) FROM user_notifications WHERE (username=? OR username='👑 Boss (Owner)') AND is_read=0",
+            (clean_user,),
+            fetch="one",
+        )
+    else:
+        rows = execute_query(
+            "SELECT id, username, notif_type, title, body, action_url, is_read, due_at, created_at FROM user_notifications WHERE username=? ORDER BY id DESC LIMIT ?",
+            (clean_user, safe_limit),
+            fetch="all",
+        )
+        unread_row = execute_query(
+            "SELECT COUNT(*) FROM user_notifications WHERE username=? AND is_read=0",
+            (clean_user,),
+            fetch="one",
+        )
+
+    sub_row = execute_query(
+        "SELECT id FROM web_push_subscriptions WHERE username=? LIMIT 1",
+        (clean_user,),
+        fetch="one",
+    )
+    items = []
+    for r in (rows or []):
+        items.append({
+            "id": r[0],
+            "username": r[1],
+            "notif_type": r[2],
+            "title": r[3],
+            "body": r[4],
+            "action_url": r[5],
+            "is_read": bool(r[6]),
+            "due_at": r[7] or "",
+            "created_at": r[8] or "",
+        })
+    return {
+        "status": "success",
+        "unread_count": int(unread_row[0]) if unread_row else 0,
+        "push_subscribed": bool(sub_row),
+        "notifications": items,
+    }
+
+@app.post("/api/notifications/create")
+async def create_notification(req: NotificationCreateRequest):
+    """สร้างการแจ้งเตือนนัดหมาย บิล หรือเตือนความจำลงในศูนย์แจ้งเตือน"""
+    if not (req.title or "").strip():
+        raise HTTPException(status_code=400, detail="กรุณาระบุหัวข้อการแจ้งเตือนค่ะ")
+    rec = _create_user_notification(
+        req.username,
+        req.notif_type or "reminder",
+        req.title,
+        req.body or "",
+        req.action_url or "/",
+        req.due_at or "",
+    )
+    clean_user = (req.username or "guest").strip() or "guest"
+    unread_row = execute_query(
+        "SELECT COUNT(*) FROM user_notifications WHERE username=? AND is_read=0",
+        (clean_user,),
+        fetch="one",
+    )
+    return {
+        "status": "success",
+        "notification": rec,
+        "unread_count": int(unread_row[0]) if unread_row else 1,
+    }
+
+@app.post("/api/notifications/read")
+async def mark_notifications_read(req: NotificationReadRequest):
+    """ทำเครื่องหมายอ่านแล้วทั้งหมดหรือเฉพาะรายการ"""
+    clean_user = (req.username or "guest").strip()[:80] or "guest"
+    target = req.notification_id
+    if target is None or str(target).strip().lower() == "all":
+        if is_boss(clean_user):
+            execute_query(
+                "UPDATE user_notifications SET is_read=1 WHERE username=? OR username='👑 Boss (Owner)'",
+                (clean_user,),
+            )
+        else:
+            execute_query("UPDATE user_notifications SET is_read=1 WHERE username=?", (clean_user,))
+    else:
+        try:
+            nid = int(target)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid notification_id")
+        if is_boss(clean_user):
+            execute_query(
+                "UPDATE user_notifications SET is_read=1 WHERE id=? AND (username=? OR username='👑 Boss (Owner)')",
+                (nid, clean_user),
+            )
+        else:
+            execute_query(
+                "UPDATE user_notifications SET is_read=1 WHERE id=? AND username=?",
+                (nid, clean_user),
+            )
+    if is_boss(clean_user):
+        unread_row = execute_query(
+            "SELECT COUNT(*) FROM user_notifications WHERE (username=? OR username='👑 Boss (Owner)') AND is_read=0",
+            (clean_user,),
+            fetch="one",
+        )
+    else:
+        unread_row = execute_query(
+            "SELECT COUNT(*) FROM user_notifications WHERE username=? AND is_read=0",
+            (clean_user,),
+            fetch="one",
+        )
+    return {"status": "success", "unread_count": int(unread_row[0]) if unread_row else 0}
+
+@app.delete("/api/notifications/{notif_id}")
+async def delete_notification(notif_id: int, username: str = "guest"):
+    """ลบการแจ้งเตือนแบบตรวจสอบสิทธิ์เจ้าของ"""
+    clean_user = (username or "guest").strip()[:80] or "guest"
+    row = execute_query("SELECT username FROM user_notifications WHERE id=?", (notif_id,), fetch="one")
+    if not row:
+        raise HTTPException(status_code=404, detail="ไม่พบการแจ้งเตือนนี้ค่ะ")
+    owner = (row[0] or "").strip()
+    if owner != clean_user and not is_boss(clean_user):
+        raise HTTPException(status_code=403, detail="ไม่มีสิทธิ์ลบการแจ้งเตือนของผู้อื่นค่ะ")
+    execute_query("DELETE FROM user_notifications WHERE id=?", (notif_id,))
+    return {"status": "success", "deleted_id": notif_id}
+
+@app.post("/api/notifications/subscribe")
+async def subscribe_web_push(req: WebPushSubscribeRequest):
+    """บันทึกการสมัครรับการแจ้งเตือน PWA Web Push บนอุปกรณ์ของผู้ใช้"""
+    clean_user = (req.username or "guest").strip()[:80] or "guest"
+    endpoint = (req.endpoint or "").strip()[:500]
+    if not endpoint:
+        raise HTTPException(status_code=400, detail="Missing push subscription endpoint")
+    keys = req.keys if isinstance(req.keys, dict) else {}
+    p256dh = str(keys.get("p256dh") or "")[:256]
+    auth_key = str(keys.get("auth") or "")[:256]
+    ua = (req.user_agent or "")[:250]
+    tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    existing = execute_query("SELECT id FROM web_push_subscriptions WHERE endpoint=?", (endpoint,), fetch="one")
+    if existing:
+        execute_query(
+            "UPDATE web_push_subscriptions SET username=?, p256dh=?, auth=?, user_agent=?, created_at=? WHERE endpoint=?",
+            (clean_user, p256dh, auth_key, ua, now_str, endpoint),
+        )
+    else:
+        execute_query(
+            "INSERT INTO web_push_subscriptions (username, endpoint, p256dh, auth, user_agent, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (clean_user, endpoint, p256dh, auth_key, ua, now_str),
+        )
+    return {"status": "success", "subscribed": True, "username": clean_user}
+
+@app.post("/api/notifications/test-push")
+async def test_push_notification(request: Request, username: Optional[str] = ""):
+    """ทดสอบส่งการแจ้งเตือนเข้าศูนย์ PWA Notification Center"""
+    clean_user = (username or "").strip()
+    if not clean_user:
+        try:
+            body_data = await request.json()
+            if isinstance(body_data, dict):
+                clean_user = str(body_data.get("username") or "").strip()
+        except Exception:
+            clean_user = ""
+    clean_user = clean_user or "guest"
+    rec = _create_user_notification(
+        clean_user,
+        "system",
+        "ทดสอบแจ้งเตือน Kira Web Push สำเร็จ",
+        "ระบบพร้อมแจ้งเตือนงานเข้า นัดหมาย และบิลบนอุปกรณ์นี้โดยไม่พึ่งโควตา LINE ค่ะ",
+        "/?open=notifications",
+    )
+    return {"status": "success", "notification": rec}
+
+# ====================================================================
+# 🛡️ Kira Sovereign Privacy & Local Engine Showcase (Phase 2.3)
+# ====================================================================
+
+@app.get("/api/privacy/sovereign-status")
+async def get_sovereign_privacy_status(username: str = "guest"):
+    """ตรวจสอบสถานะ Local AI Engine และสถิติข้อมูลส่วนตัวของผู้ใช้เพื่อความเป็นเจ้าของข้อมูล 100%"""
+    clean_user = (username or "guest").strip()[:80] or "guest"
+    ollama_status = await get_ollama_status()
+
+    def _safe_count(query_sql: str, params: tuple) -> int:
+        try:
+            row = execute_query(query_sql, params, fetch="one")
+            return int(row[0]) if row and row[0] is not None else 0
+        except Exception:
+            return 0
+
+    chat_logs = _safe_count("SELECT COUNT(*) FROM logs WHERE username=?", (clean_user,))
+    memories = _safe_count("SELECT COUNT(*) FROM user_memories WHERE username=?", (clean_user,))
+    tasks_cnt = _safe_count("SELECT COUNT(*) FROM tasks WHERE username=?", (clean_user,))
+    expenses_cnt = _safe_count("SELECT COUNT(*) FROM user_expense_logs WHERE username=?", (clean_user,))
+    rag_docs = _safe_count("SELECT COUNT(*) FROM rag_documents WHERE username=?", (clean_user,))
+    vault_items = _safe_count("SELECT COUNT(*) FROM vault_items WHERE username=?", (clean_user,))
+
+    return {
+        "status": "success",
+        "username": clean_user,
+        "local_engine": {
+            "status": ollama_status.get("status", "offline"),
+            "endpoint": OLLAMA_BASE_URL,
+            "models": ollama_status.get("models", []),
+            "count": int(ollama_status.get("count", 0) or 0),
+        },
+        "data_footprint": {
+            "chat_logs": chat_logs,
+            "memories": memories,
+            "tasks": tasks_cnt,
+            "expenses": expenses_cnt,
+            "rag_docs": rag_docs,
+            "vault_items": vault_items,
+            "total_records": chat_logs + memories + tasks_cnt + expenses_cnt + rag_docs + vault_items,
+        },
+        "sovereign_guarantees": {
+            "password_kdf": "PBKDF2-HMAC-SHA256 (600,000 iterations)",
+            "session_token": "Signed kst2 + HttpOnly Cookie",
+            "local_edge_ready": True,
+            "pdpa_export_ready": True,
+            "zero_ad_telemetry": True,
+        },
+    }
+
+@app.get("/api/privacy/export-data")
+async def export_sovereign_user_data(username: str = "guest"):
+    """ส่งออกข้อมูลส่วนตัวของผู้ใช้ตามสิทธิ์ PDPA ในรูปแบบ JSON พร้อมดาวน์โหลด"""
+    clean_user = (username or "guest").strip()[:80] or "guest"
+    safe_fname = re.sub(r"[^a-zA-Z0-9_-]", "_", clean_user) or "guest"
+
+    mem_rows = execute_query(
+        "SELECT fact, timestamp FROM user_memories WHERE username=? ORDER BY id DESC LIMIT 200",
+        (clean_user,),
+        fetch="all",
+    ) or []
+    task_rows = execute_query(
+        "SELECT task_id, title, priority, status, requester, created_at FROM tasks WHERE username=? ORDER BY id DESC LIMIT 200",
+        (clean_user,),
+        fetch="all",
+    ) or []
+    exp_rows = execute_query(
+        "SELECT id, entry_type, amount, merchant, category, tx_date, tx_time, ref_no, raw_note, created_at FROM user_expense_logs WHERE username=? ORDER BY id DESC LIMIT 200",
+        (clean_user,),
+        fetch="all",
+    ) or []
+    notif_rows = execute_query(
+        "SELECT id, notif_type, title, body, is_read, due_at, created_at FROM user_notifications WHERE username=? ORDER BY id DESC LIMIT 100",
+        (clean_user,),
+        fetch="all",
+    ) or []
+    log_rows = execute_query(
+        "SELECT timestamp, role, content, session_id FROM logs WHERE username=? ORDER BY id DESC LIMIT 100",
+        (clean_user,),
+        fetch="all",
+    ) or []
+
+    tz = timezone(timedelta(hours=7))
+    payload = {
+        "schema": "kira_pdpa_sovereign_export_v1",
+        "exported_at": datetime.now(tz).isoformat(),
+        "username": clean_user,
+        "memories": [{"fact": r[0], "timestamp": r[1]} for r in mem_rows],
+        "tasks": [{"task_id": r[0], "title": r[1], "priority": r[2], "status": r[3], "requester": r[4], "created_at": r[5]} for r in task_rows],
+        "expenses": [{"id": r[0], "entry_type": r[1], "amount": r[2], "merchant": r[3], "category": r[4], "tx_date": r[5], "tx_time": r[6], "ref_no": r[7], "raw_note": r[8], "created_at": r[9]} for r in exp_rows],
+        "notifications": [{"id": r[0], "notif_type": r[1], "title": r[2], "body": r[3], "is_read": bool(r[4]), "due_at": r[5], "created_at": r[6]} for r in notif_rows],
+        "recent_chat_logs": [{"timestamp": r[0], "role": r[1], "content": r[2], "session_id": r[3]} for r in log_rows],
+    }
+    json_bytes = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+    return Response(
+        content=json_bytes,
+        media_type="application/json; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="kira_sovereign_data_{safe_fname}.json"'},
+    )
 
 # ====================================================================
 # 💎 Kira Subscription & Monetization Engine Endpoints
@@ -10539,7 +11378,7 @@ async def public_intake_page(request: Request):
 
 @app.get("/api/subscription/plans")
 async def get_subscription_plans():
-    """ดึงรายการแพ็กเกจและข้อมูลการชำระเงินจริงของบอส"""
+    """ดึงรายการแพ็กเกจและข้อมูลการชำระเงินจริงของบอส (PromptPay + International Rail)"""
     plans = [
         SUBSCRIPTION_PLANS["trial"],
         SUBSCRIPTION_PLANS["pro"],
@@ -10560,7 +11399,8 @@ async def get_subscription_plans():
             "bank": PROMPTPAY_BANK,
             "account": PROMPTPAY_ACCOUNT_MASKED,
             "qr_url": PROMPTPAY_QR_IMAGE
-        }
+        },
+        "international": INTERNATIONAL_BANK_DETAILS,
     }
 
 @app.get("/api/subscription/status/{username}")
@@ -10594,7 +11434,7 @@ async def get_subscription_status(username: str):
 
 @app.post("/api/subscription/create-order")
 async def create_subscription_order(req: SubscriptionOrderCreateRequest):
-    """สร้างคำสั่งซื้อแพ็กเกจสมาชิกใหม่และออกรหัส Order พร้อมข้อมูล PromptPay QR จริงของบอส"""
+    """สร้างคำสั่งซื้อแพ็กเกจสมาชิกใหม่และออกรหัส Order พร้อมข้อมูล PromptPay QR จริงของบอส และช่องทางสากล"""
     clean_user = req.username.strip()
     target_key = req.plan_type or req.plan_id or "pro"
     if target_key in ("pro", "pro_monthly"):
@@ -10619,6 +11459,9 @@ async def create_subscription_order(req: SubscriptionOrderCreateRequest):
     
     # 💳 ใช้ภาพ QR PromptPay จริงของบอส (นาย ศิวัช รอสวัสดิ์)
     qr_url = PROMPTPAY_QR_IMAGE
+    rail = (req.payment_rail or "promptpay").strip().lower()
+    if rail not in ("promptpay", "international", "international_qr", "wise_swift"):
+        rail = "promptpay"
     
     return {
         "status": "success",
@@ -10627,6 +11470,8 @@ async def create_subscription_order(req: SubscriptionOrderCreateRequest):
         "plan_name": plan_info["name"],
         "days": plan_info["duration_days"],
         "amount": plan_info["price"],
+        "payment_rail": rail,
+        "currency": (req.currency or "THB").upper(),
         "promptpay_number": PROMPTPAY_NUMBER,
         "promptpay_name": PROMPTPAY_NAME,
         "promptpay_bank": PROMPTPAY_BANK,
@@ -10634,6 +11479,7 @@ async def create_subscription_order(req: SubscriptionOrderCreateRequest):
         "promptpay_account_masked": PROMPTPAY_ACCOUNT_MASKED,
         "promptpay_qr_url": qr_url,
         "qr_url": qr_url,
+        "international": INTERNATIONAL_BANK_DETAILS,
         "message": f"สร้างคำสั่งซื้อ {order_id} สำหรับแพ็กเกจ {plan_info['name']} เรียบร้อยค่ะ กรุณาสแกน QR และแนบสลิปเพื่อเริ่มใช้งานทันที"
     }
 
@@ -10666,7 +11512,7 @@ def verify_slip_data(data: dict, expected_amount: float) -> tuple:
     receiver_acc = str(data.get("receiver_account", "")).replace("-", "").replace(" ", "")
     
     # Boss Identity Checks (นาย ศิวัช รอสวัสดิ์ / KBANK 004-9-99252-5 / PromptPay 004999252517585)
-    boss_name_match = any(k in receiver_name for k in ["ศิวัช", "รอสวัสดิ์", "siwat", "rotsawat"])
+    boss_name_match = any(k in receiver_name for k in ["ศิวัช", "รอสวัสดิ์", "siwat", "rosawat", "rotsawat"])
     boss_acc_match = any(k in receiver_acc for k in ["0049992525", "992525", "004999252517585", "2525", "252-5"])
     
     if not (boss_name_match or boss_acc_match):

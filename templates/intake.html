@@ -3,122 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kira Service Intake | ระบบรับคำของานและปฏิบัติการอัจฉริยะ</title>
-    <meta name="description" content="ส่งมอบคำของานสู่ระบบ Kira AI อัจฉริยะ พร้อมวิเคราะห์ สังเคราะห์ และสร้าง First-Draft ให้ทันที">
+    <title>Kira Personal Intake Portal | พอร์ทัลส่งมอบคำของาน</title>
+    <meta name="description" content="ส่งมอบคำของานและเอกสารถึงผู้ช่วย Kira AI พร้อมร่างโครงงานเริ่มต้นและออกตั๋วติดตามสถานะทันที">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-deep: #070b14;
-            --bg-card: rgba(15, 23, 42, 0.75);
-            --border-glass: rgba(255, 255, 255, 0.1);
-            --border-glow: rgba(56, 189, 248, 0.35);
-            --primary: #38bdf8;
-            --primary-glow: rgba(56, 189, 248, 0.25);
-            --accent-purple: #c084fc;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --bg-deep: #09090b;
+            --bg-card: #101116;
+            --bg-input: #0b0c10;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.2);
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --accent-green: #34d399;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Outfit', 'Prompt', sans-serif;
+            font-family: 'Inter', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         body {
             background-color: var(--bg-deep);
-            background-image: 
-                radial-gradient(circle at 20% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
-                radial-gradient(circle at 80% 80%, rgba(192, 132, 252, 0.12) 0%, transparent 40%),
-                linear-gradient(180deg, #070b14 0%, #0f172a 100%);
             min-height: 100vh;
             color: var(--text-main);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 24px 16px;
-            position: relative;
+            padding: 28px 16px;
             overflow-x: hidden;
         }
 
         .intake-container {
             width: 100%;
-            max-width: 680px;
-            position: relative;
-            z-index: 2;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .intake-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .recipient-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 999px;
+            font-size: 0.84rem;
+            color: var(--text-main);
+        }
+
+        .recipient-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            flex-shrink: 0;
+        }
+
+        .recipient-dot.closed {
+            background: #f87171;
+        }
+
+        .lang-select {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 7px 12px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .lang-select:focus {
+            border-color: var(--border-hover);
         }
 
         .brand-header {
             text-align: center;
-            margin-bottom: 24px;
+            padding: 4px 0 6px;
         }
 
         .brand-logo-badge {
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 18px;
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid var(--border-glow);
-            border-radius: 9999px;
-            backdrop-filter: blur(12px);
-            margin-bottom: 16px;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+            padding: 7px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 999px;
+            margin-bottom: 14px;
         }
 
         .brand-logo-badge img {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: 6px;
         }
 
         .brand-logo-badge span {
-            font-weight: 700;
-            font-size: 0.95rem;
-            letter-spacing: 0.5px;
-            background: linear-gradient(135deg, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.04em;
+            color: var(--text-main);
         }
 
         .page-title {
-            font-size: 1.85rem;
-            font-weight: 800;
+            font-size: 1.65rem;
+            font-weight: 700;
             line-height: 1.3;
             margin-bottom: 8px;
-            background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #fafafa;
         }
 
         .page-subtitle {
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             color: var(--text-muted);
-            line-height: 1.5;
-            max-width: 520px;
+            line-height: 1.55;
+            max-width: 560px;
             margin: 0 auto;
         }
 
-        .glass-card {
-            background: #101116;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        .obsidian-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
             border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 20px 44px -18px rgba(0, 0, 0, 0.72);
-            transition: border-color 0.2s ease;
+            padding: 28px;
         }
 
         .feature-ribbon {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 28px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            gap: 10px;
+            margin-bottom: 24px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .feature-item {
@@ -126,27 +160,38 @@
             align-items: center;
             gap: 8px;
             font-size: 0.8rem;
-            color: #cbd5e1;
+            color: #d4d4d8;
             background: rgba(255, 255, 255, 0.025);
-            padding: 8px 10px;
+            padding: 9px 11px;
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .feature-item i {
-            color: #e2e8f0;
-            font-size: 0.9rem;
+            color: var(--accent-green);
+            font-size: 0.88rem;
+        }
+
+        .paused-banner {
+            display: none;
+            padding: 12px 14px;
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 10px;
+            color: #fca5a5;
+            font-size: 0.86rem;
+            margin-bottom: 18px;
         }
 
         .form-group {
-            margin-bottom: 18px;
+            margin-bottom: 16px;
         }
 
         .form-group label {
             display: block;
-            font-size: 0.88rem;
+            font-size: 0.86rem;
             font-weight: 500;
-            color: #e2e8f0;
+            color: #e4e4e7;
             margin-bottom: 6px;
         }
 
@@ -162,25 +207,23 @@
 
         .input-control {
             width: 100%;
-            padding: 12px 14px;
-            background: #0b0c10;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 11px 13px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
             border-radius: 10px;
-            color: #f8fafc;
-            font-size: 0.92rem;
-            transition: border-color 0.2s ease, background 0.2s ease;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            transition: border-color 0.15s ease;
             outline: none;
         }
 
         .input-control:focus {
-            border-color: rgba(255, 255, 255, 0.35);
-            box-shadow: none;
-            background: #0d0e14;
+            border-color: rgba(255, 255, 255, 0.32);
         }
 
         textarea.input-control {
             resize: vertical;
-            min-height: 100px;
+            min-height: 98px;
             line-height: 1.5;
         }
 
@@ -207,120 +250,106 @@
             justify-content: center;
             gap: 6px;
             padding: 10px 12px;
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
             border-radius: 8px;
-            font-size: 0.85rem;
+            font-size: 0.84rem;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: border-color 0.15s ease, background 0.15s ease;
         }
 
         .urgency-option input:checked + .urgency-badge {
-            background: rgba(248, 250, 252, 0.1);
-            border-color: rgba(248, 250, 252, 0.4);
-            color: #f8fafc;
-            box-shadow: none;
+            background: rgba(244, 244, 245, 0.1);
+            border-color: rgba(244, 244, 245, 0.4);
+            color: #fafafa;
         }
 
         .urgency-option.urgent input:checked + .urgency-badge {
             background: rgba(239, 68, 68, 0.14);
             border-color: rgba(248, 113, 113, 0.45);
             color: #fca5a5;
-            box-shadow: none;
         }
 
         .btn-submit {
             width: 100%;
             padding: 13px 16px;
-            background: #f8fafc;
+            background: #f4f4f5;
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 10px;
-            color: #0b0c10;
-            font-size: 0.96rem;
+            color: #09090b;
+            font-size: 0.94rem;
             font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            margin-top: 24px;
-            box-shadow: none;
-            transition: background 0.15s ease, transform 0.15s ease;
+            margin-top: 20px;
+            transition: background 0.15s ease;
         }
 
         .btn-submit:hover {
-            background: #e2e8f0;
-            transform: translateY(-1px);
-            box-shadow: none;
-        }
-
-        .btn-submit:active {
-            transform: translateY(0);
+            background: #e4e4e7;
         }
 
         .btn-submit:disabled {
-            opacity: 0.55;
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
 
-        /* Success State */
         .success-box {
             display: none;
             text-align: center;
-            padding: 30px 20px;
+            padding: 20px 10px;
         }
 
         .success-icon {
-            width: 58px;
-            height: 58px;
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid rgba(52, 211, 153, 0.4);
-            color: #34d399;
+            width: 54px;
+            height: 54px;
+            background: rgba(52, 211, 153, 0.12);
+            border: 1px solid rgba(52, 211, 153, 0.35);
+            color: var(--accent-green);
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-            box-shadow: none;
-            animation: none;
-        }
-
-        @keyframes pulseSuccess {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.06); }
-            100% { transform: scale(1); }
+            font-size: 22px;
+            margin-bottom: 16px;
         }
 
         .success-title {
-            font-size: 1.45rem;
+            font-size: 1.35rem;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .success-desc {
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             color: var(--text-muted);
-            line-height: 1.6;
-            margin-bottom: 20px;
+            line-height: 1.55;
+            margin-bottom: 18px;
         }
 
         .task-ticket {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px dashed rgba(255, 255, 255, 0.15);
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
             border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 24px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
             text-align: left;
         }
 
         .ticket-row {
             display: flex;
             justify-content: space-between;
+            gap: 10px;
             font-size: 0.85rem;
             margin-bottom: 6px;
+        }
+
+        .ticket-row:last-child {
+            margin-bottom: 0;
         }
 
         .ticket-label {
@@ -328,174 +357,486 @@
         }
 
         .ticket-val {
-            color: #38bdf8;
+            color: var(--text-main);
             font-weight: 600;
             font-family: monospace;
         }
 
         .btn-reset {
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--border-glass);
+            padding: 10px 18px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
             color: #fff;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             cursor: pointer;
-            transition: background 0.2s;
         }
 
         .btn-reset:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.12);
         }
 
-        @media (max-width: 600px) {
-            .glass-card {
-                padding: 22px 18px;
+        /* Public Ticket Status Tracker */
+        .track-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .track-header h3 {
+            font-size: 0.96rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .track-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-track {
+            padding: 11px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 0.86rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-track:hover {
+            border-color: var(--border-hover);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .track-result {
+            display: none;
+            margin-top: 14px;
+            padding: 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            line-height: 1.55;
+        }
+
+        @media (max-width: 640px) {
+            .obsidian-card {
+                padding: 20px 16px;
             }
-            .form-row {
-                grid-template-columns: 1fr;
-            }
+            .form-row,
             .feature-ribbon {
                 grid-template-columns: 1fr;
+            }
+            .track-row {
+                flex-direction: column;
             }
         }
     </style>
 </head>
-<body>
+<body data-owner-username="{{ owner_username or '' }}">
     <div class="intake-container">
+        <div class="intake-topbar">
+            <div class="recipient-pill" id="intake-recipient-badge">
+                <span class="recipient-dot" id="intake-status-dot"></span>
+                <span id="intake-recipient-text">ส่งมอบคำของานถึง: Kira Executive Desk</span>
+            </div>
+            <select id="intake-lang-select" class="lang-select" aria-label="Language">
+                <option value="th">🇹🇭 ไทย</option>
+                <option value="en">🇺🇸 English</option>
+                <option value="zh">🇨🇳 中文</option>
+                <option value="ko">🇰🇷 한국어</option>
+                <option value="ja">🇯🇵 日本語</option>
+            </select>
+        </div>
+
         <div class="brand-header">
             <div class="brand-logo-badge">
                 <img src="/static/images/kira_logo.png?v=6" alt="Kira">
-                <span>KIRA OMNI-INTAKE</span>
+                <span>KIRA PERSONAL INTAKE</span>
             </div>
-            <h1 class="page-title">ระบบรับคำของานและปฏิบัติการอัจฉริยะ</h1>
-            <p class="page-subtitle">ส่งมอบโจทย์งานสู่สมองกล Kira AI เพื่อให้ AI ช่วยร่างชิ้นงานแรก พร้อมเข้าสู่การประเมิน 4 มิติจากสภาผู้บริหารเสมือนทันที</p>
+            <h1 class="page-title" id="intake-page-title">พอร์ทัลรับคำของานและประสานงานส่วนตัว</h1>
+            <p class="page-subtitle" id="intake-page-subtitle">ส่งรายละเอียดงาน โจทย์ หรือเอกสารอ้างอิงเข้าสู่ผู้ช่วย Kira AI เพื่อร่างโครงงานเริ่มต้นและออกรหัสติดตามสถานะทันที</p>
         </div>
 
-        <div class="glass-card">
-            <!-- Feature Highlights -->
+        <div class="obsidian-card">
             <div class="feature-ribbon">
                 <div class="feature-item">
-                    <i class="fa-solid fa-bolt-lightning"></i>
-                    <span>AI ร่างชิ้นงานทันที</span>
+                    <i class="fa-solid fa-file-pen"></i>
+                    <span id="feat-1">ร่างโครงงานเริ่มต้นอัตโนมัติ</span>
                 </div>
                 <div class="feature-item">
-                    <i class="fa-solid fa-users-viewfinder"></i>
-                    <span>ประเมินโดยสภา 4 ฝ่าย</span>
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="feat-2">แจ้งเตือนผู้รับงานทันที</span>
                 </div>
                 <div class="feature-item">
-                    <i class="fa-solid fa-shield-check"></i>
-                    <span>เกราะข้อมูลระดับองค์กร</span>
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span id="feat-3">ออก Ticket ID ติดตามได้</span>
                 </div>
             </div>
 
-            <!-- Intake Form -->
+            <div class="paused-banner" id="intake-paused-banner">
+                <i class="fa-solid fa-circle-pause"></i> <span id="paused-banner-text">ผู้รับงานปิดรับคำขอใหม่ชั่วคราวค่ะ กรุณาติดต่อผู้ดูแลโดยตรง</span>
+            </div>
+
             <form id="intake-form">
                 <div class="form-group">
-                    <label for="task-title">ชื่องาน / หัวข้อคำขอ <span class="required">*</span></label>
-                    <input type="text" id="task-title" class="input-control" placeholder="เช่น ร่างข้อเสนอโครงการฝึกอบรม AI หรือ วางระบบ Dashboard" required>
+                    <label for="task-title"><span id="lbl-title">ชื่องาน / หัวข้อคำขอ</span> <span class="required">*</span></label>
+                    <input type="text" id="task-title" class="input-control" placeholder="เช่น ร่างข้อเสนอโครงการ, สรุปรายงาน หรือวางระบบ Dashboard" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="task-desc">รายละเอียด / ขอบเขตงานที่ต้องการ <span class="required">*</span></label>
-                    <textarea id="task-desc" class="input-control" placeholder="อธิบายเป้าหมาย ปัญหาที่ต้องการแก้ หรือสิ่งที่ต้องการให้ส่งมอบ..." required></textarea>
+                    <label for="task-desc"><span id="lbl-desc">รายละเอียด / ขอบเขตงานที่ต้องการ</span> <span class="required">*</span></label>
+                    <textarea id="task-desc" class="input-control" placeholder="อธิบายเป้าหมาย ปัญหา หรือผลลัพธ์ที่ต้องการส่งมอบ..." required></textarea>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="requester-name">ชื่อผู้ติดต่อ / ผู้ส่ง <span class="required">*</span></label>
+                        <label for="requester-name"><span id="lbl-req-name">ชื่อผู้ติดต่อ / ผู้ส่ง</span> <span class="required">*</span></label>
                         <input type="text" id="requester-name" class="input-control" placeholder="เช่น คุณสมชาย หรือ ดร.วิภาดา" required>
                     </div>
                     <div class="form-group">
-                        <label for="requester-email">อีเมลติดต่อกลับ</label>
+                        <label for="requester-email" id="lbl-req-email">อีเมลติดต่อกลับ</label>
                         <input type="email" id="requester-email" class="input-control" placeholder="name@company.com">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="department">หน่วยงาน / แผนก</label>
+                        <label for="contact-channel" id="lbl-contact-channel">ช่องทางติดต่อกลับ (โทร / LINE / Telegram)</label>
+                        <input type="text" id="contact-channel" class="input-control" placeholder="เช่น 08x-xxx-xxxx หรือ @handle">
+                    </div>
+                    <div class="form-group">
+                        <label for="budget-deadline" id="lbl-budget-deadline">งบประมาณ / กำหนดส่งที่ต้องการ</label>
+                        <input type="text" id="budget-deadline" class="input-control" placeholder="เช่น ภายในศุกร์นี้ / งบ 5,000 บาท">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="department" id="lbl-department">หน่วยงาน / แผนก</label>
                         <input type="text" id="department" class="input-control" placeholder="เช่น ฝ่ายบุคคล, IT, การตลาด">
                     </div>
                     <div class="form-group">
-                        <label for="attachment-url">ลิงก์เอกสารอ้างอิง (ถ้ามี)</label>
+                        <label for="attachment-url" id="lbl-attachment">ลิงก์เอกสารอ้างอิง (ถ้ามี)</label>
                         <input type="url" id="attachment-url" class="input-control" placeholder="https://drive.google.com/...">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>ระดับความเร่งด่วน</label>
+                    <label id="lbl-urgency">ระดับความเร่งด่วน</label>
                     <div class="urgency-selector">
                         <label class="urgency-option">
                             <input type="radio" name="urgency" value="low">
                             <div class="urgency-badge">
-                                <i class="fa-regular fa-clock"></i> รอได้
+                                <i class="fa-regular fa-clock"></i> <span id="urg-low">รอได้</span>
                             </div>
                         </label>
                         <label class="urgency-option">
                             <input type="radio" name="urgency" value="normal" checked>
                             <div class="urgency-badge">
-                                <i class="fa-solid fa-circle-check"></i> ปกติ
+                                <i class="fa-solid fa-circle-check"></i> <span id="urg-normal">ปกติ</span>
                             </div>
                         </label>
                         <label class="urgency-option urgent">
                             <input type="radio" name="urgency" value="urgent">
                             <div class="urgency-badge">
-                                <i class="fa-solid fa-fire"></i> ด่วนมาก
+                                <i class="fa-solid fa-fire"></i> <span id="urg-urgent">ด่วนมาก</span>
                             </div>
                         </label>
                     </div>
                 </div>
 
                 <button type="submit" class="btn-submit" id="submit-btn">
-                    <i class="fa-solid fa-paper-plane"></i> ส่งคำขอเข้าสู่ระบบ Kira
+                    <i class="fa-solid fa-paper-plane"></i> <span id="btn-submit-text">ส่งคำขอเข้าสู่ระบบ Kira</span>
                 </button>
             </form>
 
-            <!-- Success Box -->
             <div class="success-box" id="success-box">
                 <div class="success-icon">
                     <i class="fa-solid fa-check"></i>
                 </div>
-                <h3 class="success-title">ส่งคำของานสำเร็จแล้ว!</h3>
-                <p class="success-desc">Kira Autonomous Execution Engine ได้รับงานของคุณเรียบร้อยแล้ว ขณะนี้ AI กำลังสร้าง Deliverable ร่างแรก และส่งเข้าประเมินในกระดานงานของผู้ดูแลระบบค่ะ</p>
+                <h3 class="success-title" id="success-title">ส่งคำของานสำเร็จแล้วค่ะ</h3>
+                <p class="success-desc" id="success-desc">ผู้ช่วย Kira ได้บันทึกงาน พร้อมสร้างโครงร่างงานแรกและส่งแจ้งเตือนไปยังเจ้าของพอร์ทัลเรียบร้อยแล้วค่ะ</p>
                 <div class="task-ticket">
                     <div class="ticket-row">
-                        <span class="ticket-label">รหัสติดตามภารกิจ (Ticket ID):</span>
+                        <span class="ticket-label" id="lbl-ticket-id">รหัสติดตามภารกิจ (Ticket ID):</span>
                         <span class="ticket-val" id="ticket-id">-</span>
                     </div>
                     <div class="ticket-row">
-                        <span class="ticket-label">สถานะ:</span>
-                        <span class="ticket-val" style="color: #10b981;">กำลังร่างชิ้นงานแรก (Auto-Drafting)</span>
+                        <span class="ticket-label" id="lbl-ticket-status">สถานะ:</span>
+                        <span class="ticket-val" id="ticket-status-val" style="color: #34d399;">กำลังร่างชิ้นงานเริ่มต้น (Backlog)</span>
                     </div>
                 </div>
                 <button type="button" class="btn-reset" id="btn-send-another">
-                    <i class="fa-solid fa-plus"></i> ส่งคำขออื่นเพิ่มเติม
+                    <i class="fa-solid fa-plus"></i> <span id="btn-another-text">ส่งคำขออื่นเพิ่มเติม</span>
                 </button>
             </div>
+        </div>
+
+        <div class="obsidian-card" id="intake-track-card">
+            <div class="track-header">
+                <h3><i class="fa-solid fa-magnifying-glass"></i> <span id="track-title">ตรวจสอบสถานะงานด้วย Ticket ID</span></h3>
+            </div>
+            <div class="track-row">
+                <input type="text" id="track-ticket-input" class="input-control" placeholder="วางรหัส Ticket เช่น task_a1b2c3d4...">
+                <button type="button" id="btn-track-ticket" class="btn-track">
+                    <i class="fa-solid fa-search"></i> <span id="btn-track-text">เช็กสถานะ</span>
+                </button>
+            </div>
+            <div class="track-result" id="track-ticket-result"></div>
         </div>
     </div>
 
     <script>
+        const INTAKE_I18N = {
+            th: {
+                recipientPrefix: 'ส่งมอบคำของานถึง: ',
+                title: 'พอร์ทัลรับคำของานและประสานงานส่วนตัว',
+                feat1: 'ร่างโครงงานเริ่มต้นอัตโนมัติ',
+                feat2: 'แจ้งเตือนผู้รับงานทันที',
+                feat3: 'ออก Ticket ID ติดตามได้',
+                lblTitle: 'ชื่องาน / หัวข้อคำขอ',
+                lblDesc: 'รายละเอียด / ขอบเขตงานที่ต้องการ',
+                lblReqName: 'ชื่อผู้ติดต่อ / ผู้ส่ง',
+                lblReqEmail: 'อีเมลติดต่อกลับ',
+                lblChannel: 'ช่องทางติดต่อกลับ (โทร / LINE / Telegram)',
+                lblBudget: 'งบประมาณ / กำหนดส่งที่ต้องการ',
+                lblDept: 'หน่วยงาน / แผนก',
+                lblAttach: 'ลิงก์เอกสารอ้างอิง (ถ้ามี)',
+                lblUrgency: 'ระดับความเร่งด่วน',
+                urgLow: 'รอได้',
+                urgNormal: 'ปกติ',
+                urgUrgent: 'ด่วนมาก',
+                btnSubmit: 'ส่งคำขอเข้าสู่ระบบ Kira',
+                btnSending: 'กำลังส่งและประมวลผลงาน...',
+                successTitle: 'ส่งคำของานสำเร็จแล้วค่ะ',
+                successDesc: 'ผู้ช่วย Kira ได้บันทึกงาน พร้อมสร้างโครงร่างงานแรกและส่งแจ้งเตือนไปยังเจ้าของพอร์ทัลเรียบร้อยแล้วค่ะ',
+                btnAnother: 'ส่งคำขออื่นเพิ่มเติม',
+                trackTitle: 'ตรวจสอบสถานะงานด้วย Ticket ID',
+                btnTrack: 'เช็กสถานะ',
+                paused: 'ผู้รับปิดรับคำของานชั่วคราวค่ะ กรุณาติดต่อเจ้าของพอร์ทัลโดยตรง',
+                statusMap: { backlog: 'รอดำเนินการ (Backlog)', in_progress: 'กำลังดำเนินการ (In Progress)', completed: 'เสร็จสมบูรณ์ (Completed)' }
+            },
+            en: {
+                recipientPrefix: 'Delivering request to: ',
+                title: 'Personal Work Intake & Delivery Portal',
+                feat1: 'Auto-Generated First Draft',
+                feat2: 'Instant Owner Notification',
+                feat3: 'Public Ticket ID Tracking',
+                lblTitle: 'Request Title / Subject',
+                lblDesc: 'Scope & Requirements',
+                lblReqName: 'Your Name / Sender',
+                lblReqEmail: 'Reply Email',
+                lblChannel: 'Contact Channel (Phone / Telegram / Email)',
+                lblBudget: 'Budget / Target Deadline',
+                lblDept: 'Organization / Team',
+                lblAttach: 'Reference Document URL (Optional)',
+                lblUrgency: 'Urgency Level',
+                urgLow: 'Flexible',
+                urgNormal: 'Normal',
+                urgUrgent: 'Urgent',
+                btnSubmit: 'Submit Work Request to Kira',
+                btnSending: 'Submitting & Drafting...',
+                successTitle: 'Request Submitted Successfully',
+                successDesc: 'Kira has logged your request, prepared an initial draft, and notified the workspace owner.',
+                btnAnother: 'Submit Another Request',
+                trackTitle: 'Track Ticket Status by ID',
+                btnTrack: 'Check Status',
+                paused: 'The portal owner has temporarily paused new intake requests.',
+                statusMap: { backlog: 'Backlog / Queued', in_progress: 'In Progress', completed: 'Completed' }
+            },
+            zh: {
+                recipientPrefix: '提交任务至：',
+                title: '个人任务接收与协作门户',
+                feat1: 'AI 自动生成初稿',
+                feat2: '即时通知接收人',
+                feat3: '支持工单号进度追踪',
+                lblTitle: '任务标题 / 需求主题',
+                lblDesc: '详细需求与交付范围',
+                lblReqName: '联系人姓名',
+                lblReqEmail: '联系邮箱',
+                lblChannel: '联系方式（电话 / 微信 / Telegram）',
+                lblBudget: '预算 / 期望截止时间',
+                lblDept: '部门 / 团队',
+                lblAttach: '参考资料链接（选填）',
+                lblUrgency: '紧急程度',
+                urgLow: '不紧急',
+                urgNormal: '正常',
+                urgUrgent: '加急',
+                btnSubmit: '提交任务给 Kira',
+                btnSending: '正在提交并处理...',
+                successTitle: '任务提交成功',
+                successDesc: 'Kira 已登记您的需求并自动准备初稿，同时通知了负责人。',
+                btnAnother: '继续提交新需求',
+                trackTitle: '使用 Ticket ID 查询任务进度',
+                btnTrack: '查询状态',
+                paused: '接收人当前已暂停接收新任务。',
+                statusMap: { backlog: '待处理 (Backlog)', in_progress: '进行中 (In Progress)', completed: '已完成 (Completed)' }
+            },
+            ko: {
+                recipientPrefix: '요청 전달 대상: ',
+                title: '개인 업무 접수 및 협업 포털',
+                feat1: '초안 자동 생성',
+                feat2: '담당자 즉시 알림',
+                feat3: '티켓 ID 상태 추적',
+                lblTitle: '업무 제목 / 요청 주제',
+                lblDesc: '상세 요구사항 및 범위',
+                lblReqName: '요청자 이름',
+                lblReqEmail: '회신 이메일',
+                lblChannel: '연락 수단 (전화 / 메신저)',
+                lblBudget: '예산 / 희망 마감일',
+                lblDept: '소속 / 부서',
+                lblAttach: '참고 링크 (선택)',
+                lblUrgency: '긴급도',
+                urgLow: '여유 있음',
+                urgNormal: '보통',
+                urgUrgent: '긴급',
+                btnSubmit: 'Kira에 업무 요청 보내기',
+                btnSending: '전송 및 초안 생성 중...',
+                successTitle: '업무 요청이 접수되었습니다',
+                successDesc: 'Kira가 요청을 등록하고 초안을 준비했으며 담당자에게 알림을 보냈습니다.',
+                btnAnother: '추가 요청 보내기',
+                trackTitle: 'Ticket ID로 진행 상태 조회',
+                btnTrack: '상태 확인',
+                paused: '담당자가 일시적으로 신규 접수를 중단했습니다.',
+                statusMap: { backlog: '대기 중 (Backlog)', in_progress: '진행 중 (In Progress)', completed: '완료됨 (Completed)' }
+            },
+            ja: {
+                recipientPrefix: '依頼の宛先: ',
+                title: 'パーソナル依頼受付ポータル',
+                feat1: 'AI 初期ドラフト作成',
+                feat2: '担当者へ即時通知',
+                feat3: 'Ticket ID で進捗追跡',
+                lblTitle: '依頼タイトル / 件名',
+                lblDesc: '要件・作業範囲の詳細',
+                lblReqName: 'お名前 / ご担当者',
+                lblReqEmail: '連絡先メールアドレス',
+                lblChannel: '連絡チャネル (電話 / SNS 等)',
+                lblBudget: 'ご予算 / 希望納期',
+                lblDept: '所属部署・チーム',
+                lblAttach: '参考資料 URL (任意)',
+                lblUrgency: '優先度',
+                urgLow: '通常より緩やか',
+                urgNormal: '標準',
+                urgUrgent: '至急',
+                btnSubmit: 'Kira へ依頼を送信',
+                btnSending: '送信して初期整理中...',
+                successTitle: '依頼を受け付けました',
+                successDesc: 'Kira が依頼を登録し初期ドラフトを作成のうえ、担当者へ通知しました。',
+                btnAnother: '続けて別の依頼を送る',
+                trackTitle: 'Ticket ID でステータスを確認',
+                btnTrack: '状況確認',
+                paused: '現在、新規依頼の受付を一時停止しています。',
+                statusMap: { backlog: '受付済み (Backlog)', in_progress: '対応中 (In Progress)', completed: '完了 (Completed)' }
+            }
+        };
+
+        const urlParams = new URLSearchParams(window.location.search || '');
+        const bodyOwner = (document.body.getAttribute('data-owner-username') || '').trim();
+        const ownerUsername = bodyOwner || (urlParams.get('owner') || '').trim();
+        let activeProfile = { display_name: ownerUsername || 'Kira Executive Desk', headline: '', accepting_requests: true };
+        let currentLang = localStorage.getItem('kira_ui_lang') || 'th';
+        if (!INTAKE_I18N[currentLang]) currentLang = 'th';
+
+        const langSelect = document.getElementById('intake-lang-select');
         const form = document.getElementById('intake-form');
         const submitBtn = document.getElementById('submit-btn');
         const successBox = document.getElementById('success-box');
         const ticketIdEl = document.getElementById('ticket-id');
         const btnSendAnother = document.getElementById('btn-send-another');
+        const trackInput = document.getElementById('track-ticket-input');
+        const btnTrack = document.getElementById('btn-track-ticket');
+        const trackResult = document.getElementById('track-ticket-result');
+        const escHtml = (s) => String(s || '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
+        function applyIntakeLanguage(lang) {
+            currentLang = INTAKE_I18N[lang] ? lang : 'th';
+            const t = INTAKE_I18N[currentLang];
+            document.documentElement.lang = currentLang;
+            if (langSelect) langSelect.value = currentLang;
+
+            document.getElementById('intake-recipient-text').textContent = t.recipientPrefix + (activeProfile.display_name || ownerUsername || 'Kira Executive Desk');
+            document.getElementById('intake-page-title').textContent = t.title;
+            if (activeProfile.headline && currentLang === 'th') {
+                document.getElementById('intake-page-subtitle').textContent = activeProfile.headline;
+            }
+            document.getElementById('feat-1').textContent = t.feat1;
+            document.getElementById('feat-2').textContent = t.feat2;
+            document.getElementById('feat-3').textContent = t.feat3;
+            document.getElementById('lbl-title').textContent = t.lblTitle;
+            document.getElementById('lbl-desc').textContent = t.lblDesc;
+            document.getElementById('lbl-req-name').textContent = t.lblReqName;
+            document.getElementById('lbl-req-email').textContent = t.lblReqEmail;
+            document.getElementById('lbl-contact-channel').textContent = t.lblChannel;
+            document.getElementById('lbl-budget-deadline').textContent = t.lblBudget;
+            document.getElementById('lbl-department').textContent = t.lblDept;
+            document.getElementById('lbl-attachment').textContent = t.lblAttach;
+            document.getElementById('lbl-urgency').textContent = t.lblUrgency;
+            document.getElementById('urg-low').textContent = t.urgLow;
+            document.getElementById('urg-normal').textContent = t.urgNormal;
+            document.getElementById('urg-urgent').textContent = t.urgUrgent;
+            document.getElementById('btn-submit-text').textContent = t.btnSubmit;
+            document.getElementById('success-title').textContent = t.successTitle;
+            document.getElementById('success-desc').textContent = t.successDesc;
+            document.getElementById('btn-another-text').textContent = t.btnAnother;
+            document.getElementById('track-title').textContent = t.trackTitle;
+            document.getElementById('btn-track-text').textContent = t.btnTrack;
+            document.getElementById('paused-banner-text').textContent = t.paused;
+        }
+
+        async function loadRecipientProfile() {
+            try {
+                const res = await fetch('/api/intake/profile?owner=' + encodeURIComponent(ownerUsername));
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    activeProfile = data;
+                    const dot = document.getElementById('intake-status-dot');
+                    const pausedBanner = document.getElementById('intake-paused-banner');
+                    if (data.accepting_requests === false) {
+                        if (dot) dot.classList.add('closed');
+                        if (pausedBanner) pausedBanner.style.display = 'block';
+                        if (submitBtn) submitBtn.disabled = true;
+                    }
+                    if (data.headline) {
+                        document.getElementById('intake-page-subtitle').textContent = data.headline;
+                    }
+                }
+            } catch (e) { /* keep fallback */ }
+            applyIntakeLanguage(currentLang);
+        }
+
+        if (langSelect) {
+            langSelect.addEventListener('change', () => {
+                applyIntakeLanguage(langSelect.value);
+            });
+        }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const t = INTAKE_I18N[currentLang] || INTAKE_I18N.th;
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> กำลังส่งและประมวลผลงาน...';
+            submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>${t.btnSending}</span>`;
 
             const payload = {
                 title: document.getElementById('task-title').value.trim(),
                 description: document.getElementById('task-desc').value.trim(),
                 requester_name: document.getElementById('requester-name').value.trim(),
                 requester_email: document.getElementById('requester-email').value.trim(),
+                contact_channel: document.getElementById('contact-channel').value.trim(),
+                budget_or_deadline: document.getElementById('budget-deadline').value.trim(),
                 department: document.getElementById('department').value.trim(),
                 attachment_url: document.getElementById('attachment-url').value.trim(),
-                urgency: document.querySelector('input[name="urgency"]:checked')?.value || 'normal'
+                urgency: document.querySelector('input[name="urgency"]:checked')?.value || 'normal',
+                owner_username: ownerUsername,
+                ui_lang: currentLang
             };
 
             try {
@@ -507,16 +848,17 @@
                 const data = await res.json();
                 if (res.ok && data.status === 'success') {
                     ticketIdEl.textContent = data.task_id;
+                    if (trackInput) trackInput.value = data.task_id;
                     form.style.display = 'none';
                     successBox.style.display = 'block';
                 } else {
-                    alert('เกิดข้อผิดพลาด: ' + (data.detail || data.message || 'ไม่สามารถส่งงานได้'));
+                    alert((data.detail || data.message || 'Unable to submit request'));
                 }
             } catch (err) {
-                alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ' + err.message);
+                alert('Connection error: ' + err.message);
             } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ส่งคำขอเข้าสู่ระบบ Kira';
+                submitBtn.disabled = activeProfile.accepting_requests === false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span id="btn-submit-text">${t.btnSubmit}</span>`;
             }
         });
 
@@ -525,6 +867,38 @@
             form.style.display = 'block';
             successBox.style.display = 'none';
         });
+
+        if (btnTrack && trackInput && trackResult) {
+            btnTrack.addEventListener('click', async () => {
+                const tid = trackInput.value.trim();
+                if (!tid) return;
+                btnTrack.disabled = true;
+                try {
+                    const res = await fetch('/api/intake/track/' + encodeURIComponent(tid));
+                    const data = await res.json();
+                    const t = INTAKE_I18N[currentLang] || INTAKE_I18N.th;
+                    if (res.ok && data.status === 'success' && data.ticket) {
+                        const tk = data.ticket;
+                        const mappedStatus = (t.statusMap && t.statusMap[tk.task_status]) || tk.task_status;
+                        trackResult.style.display = 'block';
+                        trackResult.innerHTML =
+                            `<div><strong>${escHtml(tk.title)}</strong></div>` +
+                            `<div style="color:#a1a1aa;margin-top:4px;">Ticket: <code>${escHtml(tk.task_id)}</code> • Status: <strong style="color:#34d399;">${escHtml(mappedStatus)}</strong></div>` +
+                            `<div style="color:#a1a1aa;margin-top:4px;">Draft Ready: ${tk.has_deliverable ? 'Yes' : 'No'} • Updated: ${escHtml(tk.updated_at || '-')}</div>`;
+                    } else {
+                        trackResult.style.display = 'block';
+                        trackResult.innerHTML = `<span style="color:#f87171;">${escHtml(data.detail || 'Ticket not found')}</span>`;
+                    }
+                } catch (e) {
+                    trackResult.style.display = 'block';
+                    trackResult.innerHTML = `<span style="color:#f87171;">${escHtml(e.message)}</span>`;
+                } finally {
+                    btnTrack.disabled = false;
+                }
+            });
+        }
+
+        loadRecipientProfile();
     </script>
 </body>
 </html>
