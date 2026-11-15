@@ -1,42 +1,33 @@
 # 📝 สมุดส่งเวรสถานะงานสด (KIRA AI SYSTEM - LIVING TASK ANCHOR)
 
-> **อัปเดตล่าสุด:** Kira Web v2.9.7 — Phase 3: Action Agent & Autonomous OS Companion (**ครบทั้ง 3 ระยะหลักแล้ว**)
+> **อัปเดตล่าสุด:** Kira Web v2.9.7 — Post-Phase 3 Resilience & Header Tools Dropdown Hotfix (**แก้ปัญหาค้างหน้าจอ Resilience Shield, Key Poisoning จาก Refusal Cascade, Groq 413 TPM Prompt Bloat และแถบเครื่องมือค้างเปิดซ้ำไม่ได้**)
 
 ---
 
-### ✅ 1. งานระดับจุลภาคที่เพิ่งทำเสร็จ (Latest Completed Work - `v2.9.7`)
-* **3.1 Cloud Web Computer Use Sandbox & SSRF Citadel Guard:**
-  * เพิ่มการป้องกัน SSRF แบบ Strict IP/Hostname Validation (`_validate_safe_public_url`) ใน `app.py` ตรวจทุก Redirect Hop (สูงสุด 4 hops / 3 redirects) บล็อก `localhost`, loopback (`127.0.0.1`), private LAN และ Cloud Metadata (`169.254.169.254`) ด้วย HTTP 400
-  * เพิ่มการดึงหน้าเว็บในโหมด Sandbox (`_fetch_public_sandbox_page`), การสกัดองค์ประกอบ Interactive DOM (`_extract_dom_elements`), ตัวสร้างภาพโครงร่าง Live DOM Wireframe SVG (`_render_dom_wireframe_svg`), และตัวตรวจจับกำแพง Anti-Bot/CAPTCHA (`_detect_antibot_or_captcha_gate`) ที่หยุดทำงานอย่างสุภาพด้วยสถานะ `halted_captcha_gate` โดยไม่เจาะหรือข้ามด่าน
-  * เชื่อมต่อส่งออกรายงานจาก Sandbox เข้าสู่ **Live Split Canvas** (`openInLiveCanvas(...)`) เพื่อดูตัวอย่างรายงาน/Markdown เต็มรูปแบบ
-* **3.2 Visual & DOM Prompt Injection Shield:**
-  * เพิ่ม `_scan_visual_and_dom_prompt_injection` ล้าง HTML Comments, `<script>`, `<style>`, `<template>`, `<noscript>`, โหนดที่ซ่อนด้วย CSS (`display:none`, `visibility:hidden`, `opacity:0`, `font-size:0`), `hidden` / `aria-hidden="true"` และอักขระ Zero-Width พร้อมจำแนกระดับความเสี่ยง `SAFE` / `WARN` / `BLOCKED`
-  * เปิด Endpoint `POST /api/agent/shield-scan` และ `POST /api/agent/web-computer-use`
-* **3.3 Autonomous OS Companion Bridge (Desktop PyAutoGUI & Android ADB):**
-  * เพิ่มตาราง `agent_action_logs` (`idx_agent_logs_user`) และ `companion_pairings` ใน `init_db()`
-  * เพิ่ม REST APIs: `POST /api/agent/os-companion/plan`, `POST /api/agent/os-companion/pair` (ออก Pairing Code `KIRA-COMP-...`), `GET /api/agent/os-companion/download-bridge` (ดาวน์โหลด `kira_os_companion_bridge.py` ที่ตั้งค่า `pyautogui.FAILSAFE = True`, `PAUSE = 0.6` และด่านถามยืนยัน `[y/N]` รวมถึงคำสั่ง `adb devices` / `adb exec-out screencap`), และ `GET /api/agent/history`
-* **3.4 Quiet Luxury Obsidian UI, SW Cache & 5-Language i18n:**
-  * อัปเดต `static/sw.js` เป็น `kira-ai-cache-v2.9.7-phase3-action-agent` พร้อม Cache-Busting `?v=20261115_phase3_v297`
-  * เพิ่มปุ่ม `#btn-action-agent`, เมนู `#btn-tools-action-agent`, Deep Link `/?open=agent`, และหน้าต่าง `#action-agent-modal` (`templates/index.html`, `static/style.css`, `initActionAgentController()` ใน `static/script.js` พร้อม SVG DOMPurify-style sanitizer ผ่าน `DOMParser`)
-  * เพิ่มคำแปลครบทั้ง 28 คีย์ใหม่ใน `KIRA_I18N` ครบ 5 ภาษา (`th / en / zh / ko / ja`)
-* **หมายเหตุสถานะโมดูลและกฎสำคัญเดิม:** คงโค้ด LINE OA (`/api/line/webhook`, `/api/line/diagnostics`) ไว้ครบ, บัญชี PromptPay / KBANK จริงของบอส (`นาย ศิวัช รอสวัสดิ์` / `SIWAT ROSAWAT` / `004-9-99252-5` / `004999252517585`) และ Auth มาตรฐานเท่าเทียมคงเดิมครบถ้วน
+### ✅ 1. งานระดับจุลภาคที่เพิ่งทำเสร็จ (Latest Completed Work - `v2.9.7` Hotfix)
+* **1.1 แก้ต้นตอหน้าจอ `Resilience Shield` (`Rate Limit Cooling Down`) วนลูปข้ามทุกคำถามและทุกโมเดล (`app.py`):**
+  * ลดขนาด System Prompt (`_get_full_system_prompt`, `system_prompt`, `system_prompt_boss`) และปรับ `init_db()` ให้ auto-upgrade prompt เก่าที่เกิน 4,000 ตัวอักษร เพื่อให้ผ่าน Groq `openai/gpt-oss-120b` (`8,000 TPM`) โดยไม่ติด `HTTP 413 Request too large` (Boss `3,673` chars / Guest `5,412` chars)
+  * เพิ่ม `_compact_history_for_tpm()` ย่อประวัติแชตเมื่อเจอ `413`, แยก Per-Model Cooldown (`_MODEL_COOLDOWNS` / `_is_model_available` / `_mark_model_cooldown`) ใน `_try_all_keys_and_models`, และปรับ `UnifiedLLM.astream` ให้ไม่ทำ Key Failure/Poisoning กับ `400`/`404`/`413`/`429`/`FalseSafetyRefusalError`
+  * เพิ่ม `_is_security_or_harm_boundary_query()` และ `FalseSafetyRefusalError`: ให้ตรวจเฉพาะคำตอบสุดท้ายหลัง `[THINKING]`, ไม่จับคำตอบปฏิเสธเรื่องความปลอดภัย (เช่น ขอวิธีผ่านล็อค/bypass/แฮก) มาลองซ้ำข้ามคีย์/ข้ามโมเดล, จำกัด False-Refusal fallback เฉพาะคำถามปกติไว้ไม่เกิน `1` โมเดลสำรอง, กรองข้อความ `Resilience Shield` เก่าออกจาก `clean_history`, และไม่บันทึกแบนเนอร์ `Resilience Shield` หรือหักโควตาผู้ใช้
+* **1.2 แก้แถบเครื่องมือด้านบน (`#tools-dropdown-menu`) และเมนูปุ่ม `เครื่องมือ v` ล็อกเปิดซ้ำไม่ได้ (`static/script.js`, `templates/index.html`, `static/sw.js`):**
+  * เพิ่ม `window.closeHeaderToolsMenu = closeHeaderToolsMenu` ใน `initToolsDropdownController()` เพื่อถอดคลาส `.open`/`.show` และเรียก `style.removeProperty('display')` แทนการเขียน `style.display = 'none'` แบบ Inline ที่เคยบังทับ CSS `.tools-dropdown-wrapper.open .tools-dropdown-menu` ใน Handler ของ Language Switcher, Study Hub, Receipt Helper, Memory Hub และ Action Agent
+  * ลบ Inline `onclick` ซ้ำบน `#btn-tools-action-agent` ใน `templates/index.html`, ปรับ Toggle `.msg-tools-dropdown-menu` ให้ตรวจ `getComputedStyle(...).display`, และอัปเดต `CACHE_NAME = 'kira-ai-cache-v2.9.7-resilience-tools-fix'` พร้อม Cache-Busting `?v=20261115_fix_resilience_tools`
+* **งานหลักก่อนหน้า (`v2.9.7` Phase 3):** Web Computer Use Sandbox + SSRF Guard, Visual & DOM Prompt Injection Shield, Autonomous OS Companion Bridge (`PyAutoGUI`/`ADB`), และคงโค้ด LINE OA, บัญชี KBANK/PromptPay จริงของบอส, และ Auth มาตรฐานเท่าเทียมครบถ้วน
 
 ---
 
 ### 🌐 2. สถานะการ Deploy และผลตรวจสอบ (Verification & Production Status)
 * **Syntax Checks (ผ่านหลังแก้ไขโค้ดครั้งสุดท้าย):**
-  * `python -m py_compile app.py discord_bot.py` — ผ่าน
+  * `python -m py_compile app.py` — ผ่าน
   * `node --check static/script.js` และ `node --check static/sw.js` — ผ่าน
-* **Combined Sequential Pytest Run (`31 passed in 25.70s`):**
-  * `test_phase3_action_agent_suite.py`: 6/6 passed
-  * `test_phase2_secretary_suite.py`: 7/7 passed
-  * `test_i18n_deep_audit.py`: 6/6 passed (100% key parity across `th`/`en`/`zh`/`ko`/`ja`, 0 untranslated Thai)
-  * `test_pwa_pdf_suite.py`: 5/5 passed
-  * `test_line_webhook.py`: 7/7 passed
-* **Zero-Trust Auth Security Audit (`test_auth_suite.py`):** 14/14 passed
+* **Combined Sequential Pytest Runs (หลังแก้ไขโค้ดล่าสุด):**
+  * Resilience & Tools Hotfix + Failover + Greeting + Stabilization (`26 passed in 17.70s`): `test_resilience_and_tools_fix.py` (7), `test_fallback_resilience_suite.py` (5), `test_local_failover.py` (4), `test_pillar_1_smart_greeting.py` (4), `test_audit_stabilization_suite.py` (6)
+  * Regression & i18n/PWA/LINE Suites (`31 passed in 24.16s`): `test_phase3_action_agent_suite.py` (6), `test_phase2_secretary_suite.py` (7), `test_i18n_deep_audit.py` (6), `test_pwa_pdf_suite.py` (5), `test_line_webhook.py` (7)
+  * Thinking Sanitizer & User Modes (`4 passed in 38.76s`): `test_thinking_sanitizer.py` (1), `test_user_modes_suite.py` (3)
+* **Zero-Trust Auth Security Audit (`python test_auth_suite.py`):** 14/14 passed
 * **Local Playwright E2E & Visual Audit (Desktop `1440x900` + Mobile `390x844`):**
-  * ทดสอบ `/?open=agent`, จำลองทดสอบ Prompt Shield (`BLOCKED` + Wireframe SVG), ส่งออก Split Canvas (`#artifacts-drawer`), ปิด Drawer เข้า Guest Mode กดเปิดจาก Header `#btn-action-agent`, และสลับแท็บ OS Companion สร้างแผน PyAutoGUI/ADB Failsafe (`v297_local_*.png`)
-  * ผลลัพธ์: `Console errors: 0`, `Page errors: 0`, `HTTP 5xx: 0`, Mobile horizontal overflow `0px`
+  * ทดสอบเปิด-ปิดเครื่องมือบนแถบ `#tools-dropdown-menu` 5 ตัวต่อเนื่อง (`Study Hub`, `Receipt Helper`, `Memory Hub`, `Action Agent`, `Notification Center`) แล้วเปิดแถบซ้ำบน Desktop & Mobile, ทดสอบปุ่ม `เครื่องมือ v` ท้ายข้อความ, และทดสอบแชตคำถามเรื่องผ่านล็อค + คำถามปกติ + สลับโมเดล `2.9-reasoning` → `2.9-pro` โดยไม่เกิดหน้าจอ `Resilience Shield` (`fix_local_*.png`)
+  * ผลลัพธ์: `Console errors: 0`, `Page errors: 0`, `HTTP 5xx: 0`, Mobile horizontal overflow `<= 0px`
 * **Production Repository:** `https://github.com/StarlightZipX/kira-public-engine.git` (Branch `main` → Auto-Deploy บน Render ที่ `https://kira-public-engine.onrender.com`)
 
 ---

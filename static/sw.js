@@ -2,11 +2,11 @@
 // Kira AI Progressive Web App - Service Worker (v2.9.7)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.9.7-phase3-action-agent';
+const CACHE_NAME = 'kira-ai-cache-v2.9.7-resilience-tools-fix';
 const STATIC_ASSETS = [
     '/',
-    '/static/style.css?v=20261115_phase3_v297',
-    '/static/script.js?v=20261115_phase3_v297',
+    '/static/style.css?v=20261115_fix_resilience_tools',
+    '/static/script.js?v=20261115_fix_resilience_tools',
     '/manifest.json',
     '/static/manifest.json',
     '/static/images/kira_logo.png?v=6',

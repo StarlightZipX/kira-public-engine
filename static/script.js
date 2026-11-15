@@ -35,8 +35,7 @@ function initSwarmController() {
 
     if (btnToolsSwarm) {
         btnToolsSwarm.addEventListener('click', () => {
-            const wrapper = document.getElementById('tools-dropdown-wrapper');
-            if (wrapper) wrapper.classList.remove('open');
+            if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
             if (swarmModal) swarmModal.style.display = 'flex';
         });
     }
@@ -2056,7 +2055,8 @@ function attachDeliverablesBar(contentDiv, textContent) {
         document.querySelectorAll('.msg-tools-dropdown-menu').forEach(m => {
             if (m !== toolsMenu) m.style.display = 'none';
         });
-        toolsMenu.style.display = (toolsMenu.style.display === 'none') ? 'flex' : 'none';
+        const isHidden = window.getComputedStyle(toolsMenu).display === 'none';
+        toolsMenu.style.display = isHidden ? 'flex' : 'none';
     };
 
     toolsWrap.appendChild(toolsBtn);
@@ -2699,8 +2699,7 @@ if (btnTheme) {
 const btnExport = document.getElementById('btn-export');
 if (btnExport) {
     btnExport.addEventListener('click', () => {
-        const dropdown = document.getElementById('tools-dropdown-menu');
-        if (dropdown) dropdown.classList.remove('show');
+        if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
 
         const messages = chatBox.querySelectorAll('.message');
         if (!messages || messages.length === 0) {
@@ -4769,15 +4768,13 @@ if (btnShareCanvas) {
 }
 if (btnToolsViralShare) {
     btnToolsViralShare.addEventListener('click', () => {
-        const dropdown = document.getElementById('tools-dropdown-menu');
-        if (dropdown) dropdown.classList.remove('show');
+        if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
         openShareModal('chat');
     });
 }
 if (btnToolsOpenCanvas) {
     btnToolsOpenCanvas.addEventListener('click', () => {
-        const dropdown = document.getElementById('tools-dropdown-menu');
-        if (dropdown) dropdown.classList.remove('show');
+        if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
         if (currentArtifactCode) {
             artifactsDrawer.classList.add('open');
             updateCanvasLayout();
@@ -7925,6 +7922,17 @@ function initBoardroomController() {
 
 
 // --- 🧰 Tools Popover Dropdown Controller ---
+function closeHeaderToolsMenu() {
+    const wrapper = document.getElementById('tools-dropdown-wrapper');
+    const dropdownMenu = document.getElementById('tools-dropdown-menu');
+    if (wrapper) wrapper.classList.remove('open');
+    if (dropdownMenu) {
+        dropdownMenu.style.removeProperty('display');
+        dropdownMenu.classList.remove('show');
+    }
+}
+window.closeHeaderToolsMenu = closeHeaderToolsMenu;
+
 function initToolsDropdownController() {
     const wrapper = document.getElementById('tools-dropdown-wrapper');
     const triggerBtn = document.getElementById('btn-header-tools');
@@ -7933,7 +7941,12 @@ function initToolsDropdownController() {
     if (triggerBtn && wrapper) {
         triggerBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (dropdownMenu) {
+                // Always clear any inline display override so .tools-dropdown-wrapper.open CSS works reliably
+                dropdownMenu.style.removeProperty('display');
+            }
             wrapper.classList.toggle('open');
+            document.querySelectorAll('.msg-tools-dropdown-menu').forEach(m => m.style.display = 'none');
         });
     }
 
@@ -7941,7 +7954,7 @@ function initToolsDropdownController() {
     document.addEventListener('click', (e) => {
         if (wrapper && wrapper.classList.contains('open')) {
             if (!wrapper.contains(e.target)) {
-                wrapper.classList.remove('open');
+                closeHeaderToolsMenu();
             }
         }
         if (!e.target.closest('.msg-tools-dropdown-wrapper')) {
@@ -7954,7 +7967,7 @@ function initToolsDropdownController() {
         dropdownMenu.querySelectorAll('.tools-menu-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 if (item.id !== 'btn-autospeak') {
-                    wrapper.classList.remove('open');
+                    closeHeaderToolsMenu();
                 }
             });
         });
@@ -9858,8 +9871,7 @@ function initPWAController() {
     }
     if (btnMenuInstall) {
         btnMenuInstall.addEventListener('click', () => {
-            const dropdown = document.getElementById('tools-dropdown-menu');
-            if (dropdown) dropdown.classList.remove('show');
+            if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
             triggerPWAInstall();
         });
     }
@@ -10698,8 +10710,7 @@ function initSlideDeckStudio() {
 
     if (btnStudioMenu) {
         btnStudioMenu.addEventListener('click', () => {
-            const dropdown = document.getElementById('tools-dropdown-menu');
-            if (dropdown) dropdown.classList.remove('show');
+            if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
 
             const botMessages = chatBox ? chatBox.querySelectorAll('.message:not(.user)') : [];
             let targetText = '';
@@ -17624,8 +17635,7 @@ function initKiraI18n() {
                 menu.style.display = 'none';
             } else {
                 // Close tools menu if open
-                const toolsMenu = document.getElementById('tools-dropdown-menu');
-                if (toolsMenu) toolsMenu.style.display = 'none';
+                if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
                 wrapper.classList.add('open');
                 menu.style.display = 'flex';
             }
@@ -17846,8 +17856,7 @@ function initStudyHubController() {
     // Modal triggers
     if (btnToolsStudyHub) {
         btnToolsStudyHub.addEventListener('click', () => {
-            const toolsMenu = document.getElementById('tools-dropdown-menu');
-            if (toolsMenu) toolsMenu.style.display = 'none';
+            if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
             openStudyHub('summarize');
         });
     }
@@ -18261,8 +18270,7 @@ function initReceiptHelperController() {
     }
 
     function openReceiptHelperModal() {
-        const toolsMenu = document.getElementById('tools-dropdown-menu');
-        if (toolsMenu) toolsMenu.style.display = 'none';
+        if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
         modal.style.display = 'flex';
         loadReceiptHistory();
     }
@@ -19061,10 +19069,7 @@ function initCognitiveMemoryHub() {
 
     if (btnToolsHub) {
         btnToolsHub.addEventListener('click', () => {
-            const wrapper = document.getElementById('tools-dropdown-wrapper');
-            if (wrapper) wrapper.classList.remove('open');
-            const tm = document.getElementById('tools-dropdown-menu') || document.getElementById('tools-menu');
-            if (tm) tm.style.display = 'none';
+            if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
             window.openMemoryHub();
         });
     }
@@ -19560,8 +19565,7 @@ function initRMBGController() {
 
     if (btnTools) {
         btnTools.addEventListener('click', () => {
-            const wrapper = document.getElementById('tools-dropdown-wrapper');
-            if (wrapper) wrapper.classList.remove('open');
+            if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
             window.openRMBGModal();
         });
     }
@@ -20040,8 +20044,7 @@ function initTranscribeController() {
         modal.style.display = 'flex';
         const attachMenu = document.getElementById('attachment-menu');
         if (attachMenu) attachMenu.style.display = 'none';
-        const toolsMenu = document.getElementById('tools-dropdown-wrapper');
-        if (toolsMenu) toolsMenu.classList.remove('open');
+        if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
     };
 
     window.closeTranscribeModal = function() {
@@ -21177,10 +21180,7 @@ function initActionAgentController() {
     let activeOsScriptType = 'pyautogui';
 
     function closeToolsMenuIfOpen() {
-        const wrapper = document.getElementById('tools-dropdown-wrapper');
-        if (wrapper) wrapper.classList.remove('open');
-        const tm = document.getElementById('tools-dropdown-menu') || document.getElementById('tools-menu');
-        if (tm) tm.style.display = 'none';
+        if (typeof window.closeHeaderToolsMenu === 'function') window.closeHeaderToolsMenu();
     }
 
     function setActiveTab(tab) {
