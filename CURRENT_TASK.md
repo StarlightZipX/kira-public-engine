@@ -1,33 +1,32 @@
 # 📝 สมุดส่งเวรสถานะงานสด (KIRA AI SYSTEM - LIVING TASK ANCHOR)
 
-> **อัปเดตล่าสุด:** Kira Web v2.9.7 — Post-Phase 3 Resilience & Header Tools Dropdown Hotfix (**แก้ปัญหาค้างหน้าจอ Resilience Shield, Key Poisoning จาก Refusal Cascade, Groq 413 TPM Prompt Bloat และแถบเครื่องมือค้างเปิดซ้ำไม่ได้**)
+> **อัปเดตล่าสุด:** Kira Web v2.9.7 — Boss Flexible Co-Pilot & Partial Settings Preservation (**เพิ่มความยืดหยุ่นแบบเหมา 3 แกนหลักเฉพาะบัญชีบอส: IT / Sysadmin Practical Co-Pilot, Adaptive Response Style, ทางลัดจำ Stack/Style ในแชต และรัน `[PYTHON]` sandbox บนโมเดล 2.9 พร้อมคงกรอบความปลอดภัยและความเท่าเทียมของ UI**)
 
 ---
 
-### ✅ 1. งานระดับจุลภาคที่เพิ่งทำเสร็จ (Latest Completed Work - `v2.9.7` Hotfix)
-* **1.1 แก้ต้นตอหน้าจอ `Resilience Shield` (`Rate Limit Cooling Down`) วนลูปข้ามทุกคำถามและทุกโมเดล (`app.py`):**
-  * ลดขนาด System Prompt (`_get_full_system_prompt`, `system_prompt`, `system_prompt_boss`) และปรับ `init_db()` ให้ auto-upgrade prompt เก่าที่เกิน 4,000 ตัวอักษร เพื่อให้ผ่าน Groq `openai/gpt-oss-120b` (`8,000 TPM`) โดยไม่ติด `HTTP 413 Request too large` (Boss `3,673` chars / Guest `5,412` chars)
-  * เพิ่ม `_compact_history_for_tpm()` ย่อประวัติแชตเมื่อเจอ `413`, แยก Per-Model Cooldown (`_MODEL_COOLDOWNS` / `_is_model_available` / `_mark_model_cooldown`) ใน `_try_all_keys_and_models`, และปรับ `UnifiedLLM.astream` ให้ไม่ทำ Key Failure/Poisoning กับ `400`/`404`/`413`/`429`/`FalseSafetyRefusalError`
-  * เพิ่ม `_is_security_or_harm_boundary_query()` และ `FalseSafetyRefusalError`: ให้ตรวจเฉพาะคำตอบสุดท้ายหลัง `[THINKING]`, ไม่จับคำตอบปฏิเสธเรื่องความปลอดภัย (เช่น ขอวิธีผ่านล็อค/bypass/แฮก) มาลองซ้ำข้ามคีย์/ข้ามโมเดล, จำกัด False-Refusal fallback เฉพาะคำถามปกติไว้ไม่เกิน `1` โมเดลสำรอง, กรองข้อความ `Resilience Shield` เก่าออกจาก `clean_history`, และไม่บันทึกแบนเนอร์ `Resilience Shield` หรือหักโควตาผู้ใช้
-* **1.2 แก้แถบเครื่องมือด้านบน (`#tools-dropdown-menu`) และเมนูปุ่ม `เครื่องมือ v` ล็อกเปิดซ้ำไม่ได้ (`static/script.js`, `templates/index.html`, `static/sw.js`):**
-  * เพิ่ม `window.closeHeaderToolsMenu = closeHeaderToolsMenu` ใน `initToolsDropdownController()` เพื่อถอดคลาส `.open`/`.show` และเรียก `style.removeProperty('display')` แทนการเขียน `style.display = 'none'` แบบ Inline ที่เคยบังทับ CSS `.tools-dropdown-wrapper.open .tools-dropdown-menu` ใน Handler ของ Language Switcher, Study Hub, Receipt Helper, Memory Hub และ Action Agent
-  * ลบ Inline `onclick` ซ้ำบน `#btn-tools-action-agent` ใน `templates/index.html`, ปรับ Toggle `.msg-tools-dropdown-menu` ให้ตรวจ `getComputedStyle(...).display`, และอัปเดต `CACHE_NAME = 'kira-ai-cache-v2.9.7-resilience-tools-fix'` พร้อม Cache-Busting `?v=20261115_fix_resilience_tools`
-* **งานหลักก่อนหน้า (`v2.9.7` Phase 3):** Web Computer Use Sandbox + SSRF Guard, Visual & DOM Prompt Injection Shield, Autonomous OS Companion Bridge (`PyAutoGUI`/`ADB`), และคงโค้ด LINE OA, บัญชี KBANK/PromptPay จริงของบอส, และ Auth มาตรฐานเท่าเทียมครบถ้วน
+### ✅ 1. งานระดับจุลภาคที่เพิ่งทำเสร็จ (Latest Completed Work - `v2.9.7` Boss Flexible Co-Pilot)
+* **1.1 ความยืดหยุ่นแบบเหมา 3 แกนหลักเฉพาะบัญชีบอส (`is_boss_user` หลังยืนยันตัวตน/โลคอลใน `app.py`):**
+  * **IT / Sysadmin Practical Co-Pilot:** อัปเดต `system_prompt_boss` และ `init_db()` (`prompt_1.1` auto-upgrade สำหรับ Prompt ที่มีขนาดกะทัดรัด 4,078 ตัวอักษรสำหรับ Boss / 5,412 ตัวอักษรสำหรับ Guest) ให้วิเคราะห์ต้นตอปัญหา (Root Cause) คำสั่ง CLI/Config และแนวทาง Hardening ระบบที่บอสดูแลทันที โดย **ยังรักษาขอบเขตความปลอดภัย** (ปฏิเสธการข้ามล็อค/Paywall, การเจาะบัญชีผู้อื่น หรืออันตราย โดยข้ามการฉีด Co-Pilot directive เมื่อ `_is_security_or_harm_boundary_query` เป็นจริง)
+  * **Adaptive Response Style:** ถอดข้อความบังคับปิดท้าย `"เชิญชวนบอสกด Like/Dislike"` ออกจาก Prompt บอส และเพิ่ม `_parse_boss_turn_mode()` + `_build_boss_adaptive_directive()` ให้ปรับความยาว/รูปแบบอัตโนมัติ (ถามสั้น/แก้ error → คำสั่งหรือโค้ดพร้อมรัน; ถามวางแผน → วิเคราะห์ Scenario & ความเสี่ยงครบ) พร้อม Prefix รายเทิร์น `/สั้น`, `/fast`, `/direct` และ `/ลึก`, `/deep`
+  * **Persistent Stack/Style Shortcuts & Preference Safety:** เพิ่ม `_handle_boss_preference_command()` ใน `chat_endpoint` (`/stack`, `/จำสแต็ก`, `/style`, `/จำสไตล์`, `/reset-style`, `/รีเซ็ตสไตล์`, `/help-boss`, `/คำสั่งบอส`) พร้อมปรับ `save_user_settings()` / `_upsert_user_preferences_fields()` / `_refresh_active_user_prompts()` ให้เก็บรักษาฟิลด์ที่ไม่ได้ส่งมา (Partial Update Preservation — เปลี่ยนธีมหรือโหมดไม่ทับ `custom_instructions`/`custom_response_style`) และอนุญาต Sandbox `[PYTHON]` บนโมเดล `2.*`/`3.*` เฉพาะบัญชีบอส
+  * **ความเท่าเทียมของ UI (`GEMINI.md` Rule 4):** จำกัด Logic ไว้ที่ Backend ภายใต้ `if is_boss_user:` เท่านั้น ไม่เพิ่มปุ่มลัดหรือ Badge อภิสิทธิ์ชนใน UI
+* **1.2 งานก่อนหน้า (`v2.9.7` Hotfix Commit `2aa5345`):** แก้ `Resilience Shield` cascade / Key poisoning / Groq 413 prompt bloat (`_compact_history_for_tpm`, `_MODEL_COOLDOWNS`) และแก้ `#tools-dropdown-menu` inline `display: none` lock (`?v=20261115_fix_resilience_tools`)
+* **งานหลัก (`v2.9.7` Phase 3):** Web Computer Use Sandbox + SSRF Guard, Visual & DOM Prompt Injection Shield, Autonomous OS Companion Bridge (`PyAutoGUI`/`ADB`), คงโค้ด LINE OA, บัญชี KBANK/PromptPay จริงของบอส และ Auth มาตรฐานเท่าเทียม
 
 ---
 
 ### 🌐 2. สถานะการ Deploy และผลตรวจสอบ (Verification & Production Status)
-* **Syntax Checks (ผ่านหลังแก้ไขโค้ดครั้งสุดท้าย):**
+* **Syntax & Prompt Metrics (หลังแก้ไข `app.py` ครั้งสุดท้าย):**
   * `python -m py_compile app.py` — ผ่าน
-  * `node --check static/script.js` และ `node --check static/sw.js` — ผ่าน
-* **Combined Sequential Pytest Runs (หลังแก้ไขโค้ดล่าสุด):**
-  * Resilience & Tools Hotfix + Failover + Greeting + Stabilization (`26 passed in 17.70s`): `test_resilience_and_tools_fix.py` (7), `test_fallback_resilience_suite.py` (5), `test_local_failover.py` (4), `test_pillar_1_smart_greeting.py` (4), `test_audit_stabilization_suite.py` (6)
-  * Regression & i18n/PWA/LINE Suites (`31 passed in 24.16s`): `test_phase3_action_agent_suite.py` (6), `test_phase2_secretary_suite.py` (7), `test_i18n_deep_audit.py` (6), `test_pwa_pdf_suite.py` (5), `test_line_webhook.py` (7)
-  * Thinking Sanitizer & User Modes (`4 passed in 38.76s`): `test_thinking_sanitizer.py` (1), `test_user_modes_suite.py` (3)
-* **Zero-Trust Auth Security Audit (`python test_auth_suite.py`):** 14/14 passed
-* **Local Playwright E2E & Visual Audit (Desktop `1440x900` + Mobile `390x844`):**
-  * ทดสอบเปิด-ปิดเครื่องมือบนแถบ `#tools-dropdown-menu` 5 ตัวต่อเนื่อง (`Study Hub`, `Receipt Helper`, `Memory Hub`, `Action Agent`, `Notification Center`) แล้วเปิดแถบซ้ำบน Desktop & Mobile, ทดสอบปุ่ม `เครื่องมือ v` ท้ายข้อความ, และทดสอบแชตคำถามเรื่องผ่านล็อค + คำถามปกติ + สลับโมเดล `2.9-reasoning` → `2.9-pro` โดยไม่เกิดหน้าจอ `Resilience Shield` (`fix_local_*.png`)
-  * ผลลัพธ์: `Console errors: 0`, `Page errors: 0`, `HTTP 5xx: 0`, Mobile horizontal overflow `<= 0px`
+  * ขนาด System Prompt: `Boss: 4078` chars, `Guest: 5412` chars
+* **Sequential Automated Test Suites (หลังแก้ไข `app.py` ครั้งสุดท้าย):**
+  * Core + Boss Co-Pilot + Resilience + Failover + Greeting + Stabilization (`38 passed in 92.60s`): `test_resilience_and_tools_fix.py` (9), `test_fallback_resilience_suite.py` (5), `test_local_failover.py` (4), `test_pillar_1_smart_greeting.py` (4), `test_audit_stabilization_suite.py` (6), `test_approved_fixes.py` (10)
+  * Auth Security & Settings Preservation: `python test_auth_suite.py` (**14/14 passed**), `python test_settings_suite.py` (**6/6 passed**)
+  * Modes, Sanitizer, LINE & PWA (`16 passed in 128.48s`): `test_user_modes_suite.py` (3), `test_thinking_sanitizer.py` (1), `test_line_webhook.py` (7), `test_pwa_pdf_suite.py` (5)
+  * Deep Audit & MCP Hub: `test_i18n_deep_audit.py` (**6/6 passed**), `test_mcp_hub_suite.py` (**6/6 passed**), `test_zero_silence_protocol.py` (3/4 passed; `test_4_sw_cache_name` ยังตรวจ string เก่า `v2.7` ขณะที่ `sw.js` ใช้ `kira-ai-cache-v2.9.7-resilience-tools-fix`)
+* **Local Playwright E2E Verification (`Desktop 1440x900`):**
+  * ล็อกอินเข้าบัญชี `👑 Boss (Owner)` บนเซิร์ฟเวอร์โลคอล (`127.0.0.1:8783`), ทดสอบ `/help-boss`, `/stack Windows 11 + Docker + Nginx + FastAPI`, `/จำสไตล์ ตอบสั้น คม พร้อมคำสั่งรันทันที`, `/สั้น Nginx ขึ้น 502 Bad Gateway บน Docker เช็ก 3 คำสั่งแรกอะไรบ้าง`, และ `/reset-style` (`boss_copilot_local_desktop.png`)
+  * ผลลัพธ์: `Console errors: 0`, `Page errors: 0`, `HTTP 5xx: 0`
 * **Production Repository:** `https://github.com/StarlightZipX/kira-public-engine.git` (Branch `main` → Auto-Deploy บน Render ที่ `https://kira-public-engine.onrender.com`)
 
 ---
