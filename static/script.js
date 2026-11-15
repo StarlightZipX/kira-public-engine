@@ -1305,6 +1305,8 @@ const WELCOME_I18N = {
 };
 
 async function renderWelcomeHub() {
+    const targetSessionId = currentSessionId;
+    const targetUser = currentUser;
     const qpWrapper = document.getElementById('quick-prompts-wrapper');
     if (qpWrapper) {
         qpWrapper.classList.remove('hidden-during-chat');
@@ -1358,6 +1360,9 @@ async function renderWelcomeHub() {
     `;
 
     const briefing = await loadProactiveBriefing();
+    if (currentSessionId !== targetSessionId || currentUser !== targetUser || isGenerating || chatBox.querySelector('.message')) {
+        return;
+    }
     const isBossFallback = Boolean(currentUser && (currentUser.includes('Boss') || currentUser.toLowerCase().includes('admin')));
     const fallbackSuggestions = currentLang === 'en' ? [
         { title: "Strategy Advisor", desc: "Break down complex problems & build step-by-step action plans", prompt: "Please break down this problem into a step-by-step action plan with risk mitigation.", icon: "fa-solid fa-compass", tag: "ADVISOR", category: "advisor" },
@@ -1827,9 +1832,13 @@ async function loadHistory() {
 }
 
 async function loadSession(sessionId) {
+    const targetUser = currentUser;
     try {
         const response = await fetch(`/api/history/${currentUser}/${sessionId}`);
         const data = await response.json();
+        if (currentSessionId !== sessionId || currentUser !== targetUser || isGenerating) {
+            return;
+        }
         chatBox.innerHTML = '';
         if (data.history.length === 0) {
             renderWelcomeHub();

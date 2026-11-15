@@ -1729,6 +1729,42 @@ def _lookup_user_pwd_fingerprint(username: str, pwd_hash: Optional[str] = None) 
         pass
     return "stateless"
 
+def _get_boss_seed_salt() -> str:
+    return hmac.new(
+        SECRET_SALT.encode("utf-8"),
+        b"kira_boss_seed_salt_v2",
+        hashlib.sha256,
+    ).hexdigest()[:32]
+
+def _upsert_boss_account(username: str, pw_hash: str, nickname: str = "บอส", purpose: str = "business") -> None:
+    """Cross-DB (SQLite + PostgreSQL) idempotent upsert for the Boss owner account."""
+    clean_nick = (nickname or "").strip() or "บอส"
+    clean_purpose = (purpose or "").strip() or "business"
+    try:
+        execute_query("""
+            INSERT INTO users (username, password_hash, nickname, purpose, plan, subscription_status)
+            VALUES (?, ?, ?, ?, 'founder', 'active')
+            ON CONFLICT(username) DO UPDATE SET
+                password_hash = excluded.password_hash,
+                nickname = CASE WHEN COALESCE(users.nickname, '') = '' THEN excluded.nickname ELSE users.nickname END,
+                purpose = CASE WHEN COALESCE(users.purpose, '') = '' THEN excluded.purpose ELSE users.purpose END,
+                plan = 'founder',
+                subscription_status = 'active'
+        """, (username, pw_hash, clean_nick, clean_purpose))
+    except Exception:
+        row = execute_query("SELECT id, nickname, purpose FROM users WHERE username=?", (username,), fetch="one")
+        if row:
+            execute_query("""
+                UPDATE users
+                SET password_hash=?, nickname=?, purpose=?, plan='founder', subscription_status='active'
+                WHERE username=?
+            """, (pw_hash, row[1] or clean_nick, row[2] or clean_purpose, username))
+        else:
+            execute_query("""
+                INSERT INTO users (username, password_hash, nickname, purpose, plan, subscription_status)
+                VALUES (?, ?, ?, ?, 'founder', 'active')
+            """, (username, pw_hash, clean_nick, clean_purpose))
+
 def generate_auth_token(username: str, remember_me: bool = True, pwd_hash: Optional[str] = None) -> str:
     """สร้าง Signed Time-Bound & Password-Revocable Session Token (kst2.<payload>.<hmac_sha256>)"""
     clean_user = (username or "").strip()
@@ -2213,11 +2249,7 @@ def init_db():
         # Seed/Ensure Boss Account exists in DB with deterministic container-stable PBKDF2 salt
         # so Render container redeploys never shift Boss's pfp session fingerprint unless password changes.
         try:
-            boss_seed_salt = hmac.new(
-                SECRET_SALT.encode("utf-8"),
-                b"kira_boss_seed_salt_v2",
-                hashlib.sha256
-            ).hexdigest()[:32]
+            boss_seed_salt = _get_boss_seed_salt()
             existing_boss = execute_query(
                 "SELECT username, password_hash FROM users WHERE username IN (?, ?)",
                 ("👑 Boss (Owner)", "boss"),
@@ -2226,17 +2258,14 @@ def init_db():
             existing_map = {r[0]: (r[1] or "") for r in (existing_boss or [])}
             need_seed = (
                 len(existing_map) < 2
-                or any(f"${boss_seed_salt}$" not in h and h.startswith("pbkdf2_sha256$") for h in existing_map.values())
+                or any(f"${boss_seed_salt}$" not in h for h in existing_map.values())
             )
             if need_seed:
                 boss_pass = os.environ.get("BOSS_PASSWORD", "kira1234")
                 boss_hash = hash_password(boss_pass, salt_hex=boss_seed_salt)
                 for b_uname in ("👑 Boss (Owner)", "boss"):
                     if b_uname not in existing_map:
-                        execute_query("""
-                            INSERT OR IGNORE INTO users (username, password_hash, nickname, purpose, plan, subscription_status)
-                            VALUES (?, ?, ?, ?, ?, ?)
-                        """, (b_uname, boss_hash, "บอส", "business", "founder", "active"))
+                        _upsert_boss_account(b_uname, boss_hash, "บอส", "business")
                     elif f"${boss_seed_salt}$" not in existing_map[b_uname]:
                         ok_default, _ = verify_password_hash(boss_pass, existing_map[b_uname])
                         if ok_default:
@@ -4805,12 +4834,9 @@ async def register(req: AuthRequest, request: Request):
     # Founder account verification via constant-time master key comparison (standard form only, Rule 4)
     if is_boss_ident and hmac.compare_digest(password.encode("utf-8"), boss_password.encode("utf-8")):
         boss_user = "👑 Boss (Owner)"
-        pw_hash = hash_password(password)
+        pw_hash = hash_password(password, salt_hex=_get_boss_seed_salt())
         try:
-            execute_query("""
-                INSERT OR REPLACE INTO users (username, password_hash, nickname, purpose, plan, subscription_status)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (boss_user, pw_hash, nickname or "บอส", purpose or "business", "founder", "active"))
+            _upsert_boss_account(boss_user, pw_hash, nickname or "บอส", purpose or "business")
         except Exception:
             pass
         tok = generate_auth_token(boss_user, remember_me=remember_me, pwd_hash=pw_hash)
@@ -4923,15 +4949,19 @@ async def login(req: AuthRequest, request: Request):
         username = "👑 Boss (Owner)"
         clear_login_failures(client_ip, req.username)
         clear_login_failures(client_ip, username)
+        boss_seed_salt = _get_boss_seed_salt()
         existing_boss = execute_query("SELECT password_hash FROM users WHERE username=?", (username,), fetch="one")
-        boss_pw_hash = existing_boss[0] if (existing_boss and existing_boss[0] and str(existing_boss[0]).startswith("pbkdf2_sha256$")) else hash_password(password)
-        try:
-            execute_query("""
-                INSERT OR REPLACE INTO users (username, password_hash, nickname, purpose, plan, subscription_status)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (username, boss_pw_hash, "บอส", "business", "founder", "active"))
-        except Exception:
-            pass
+        boss_pw_hash = ""
+        if existing_boss and existing_boss[0] and f"${boss_seed_salt}$" in str(existing_boss[0]):
+            ok_curr, needs_up = verify_password_hash(password, existing_boss[0])
+            if ok_curr and not needs_up:
+                boss_pw_hash = existing_boss[0]
+        if not boss_pw_hash:
+            boss_pw_hash = hash_password(password, salt_hex=boss_seed_salt)
+            try:
+                _upsert_boss_account(username, boss_pw_hash, "บอส", "business")
+            except Exception:
+                pass
         _hydrate_recent_user_session(username)
         tok = generate_auth_token(username, remember_me=remember_me, pwd_hash=boss_pw_hash)
         resp = JSONResponse({"status": "success", "username": username, "token": tok})
