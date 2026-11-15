@@ -22014,3 +22014,352 @@ body.oled-mode #close-sidebar.mobile-only {
     border-color: #27272a !important;
     color: #e4e4e7 !important;
 }
+
+/* --- 7. Modal, Checkout, Vision Studio, Transcribe, Settings & Mind Map Responsive Polish (v2.9.8) --- */
+@media (max-width: 640px) {
+    .modal-overlay {
+        padding: 10px 8px !important;
+    }
+
+    #info-modal .modal-card,
+    .settings-card,
+    .subscription-modal-card,
+    .admin-orders-card,
+    .debate-modal-card,
+    .rmbg-modal-content,
+    .transcribe-modal-content,
+    .onboarding-card,
+    .vault-modal-card,
+    .phase2-modal-card,
+    .share-modal-container,
+    .study-hub-card,
+    .mcp-hub-card,
+    .memory-hub-content,
+    .swarm-modal-content,
+    .task-matrix-card,
+    .br-export-studio-card,
+    .boardroom-info-card,
+    .rag-vault-card,
+    .live-voice-card,
+    .slide-deck-container,
+    .canvas-templates-card {
+        width: 100% !important;
+        max-width: calc(100vw - 16px) !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Settings modal responsive footer & single-line action buttons */
+    .settings-modal-header {
+        padding: 14px 14px !important;
+        gap: 10px !important;
+    }
+    .settings-content-pane {
+        padding: 14px 14px !important;
+    }
+    .settings-modal-footer {
+        padding: 12px 14px !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .settings-footer-actions {
+        width: 100% !important;
+        justify-content: flex-end !important;
+        gap: 8px !important;
+    }
+    .settings-btn-cancel,
+    .settings-btn-save {
+        white-space: nowrap !important;
+        flex: 1 1 auto !important;
+        justify-content: center !important;
+        padding: 9px 12px !important;
+        font-size: 0.84rem !important;
+    }
+
+    /* Subscription checkout & PromptPay QR responsive stacking */
+    .subscription-header {
+        padding: 14px 14px 12px !important;
+        gap: 10px !important;
+    }
+    .subscription-views-container {
+        padding: 14px 12px !important;
+    }
+    .checkout-layout {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    .checkout-qr-column,
+    .checkout-upload-column {
+        padding: 14px 12px !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .selected-plan-summary-badge {
+        padding: 10px 12px !important;
+        gap: 10px !important;
+    }
+    .selected-plan-summary-badge .sum-price {
+        white-space: nowrap !important;
+        font-size: 1.05rem !important;
+    }
+    .payment-rail-switcher {
+        grid-template-columns: 1fr !important;
+    }
+    .rail-switch-btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    .detail-row {
+        flex-wrap: wrap !important;
+        gap: 4px 10px !important;
+    }
+    .detail-val {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        text-align: left !important;
+    }
+
+    /* Boardroom Debate modal overflow & mobile roundtable grid fix */
+    .debate-modal-card {
+        height: auto !important;
+        max-height: 92vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        border-radius: 16px !important;
+    }
+    .debate-modal-header {
+        padding: 12px 14px !important;
+        gap: 10px !important;
+        flex-shrink: 0 !important;
+    }
+    .debate-header-left {
+        min-width: 0 !important;
+    }
+    .debate-header-title {
+        font-size: 1rem !important;
+        line-height: 1.35 !important;
+        flex-wrap: wrap !important;
+    }
+    .debate-setup-bar {
+        padding: 10px 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+        flex-shrink: 0 !important;
+        gap: 8px !important;
+    }
+    .debate-input-group,
+    .debate-angle-group {
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .debate-topic-input,
+    .debate-angle-select,
+    .debate-start-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        justify-content: center !important;
+    }
+    .debate-progress-indicator {
+        padding: 8px 12px !important;
+        gap: 6px !important;
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        flex-shrink: 0 !important;
+        justify-content: flex-start !important;
+    }
+    .progress-step .p-label {
+        white-space: nowrap !important;
+        font-size: 0.72rem !important;
+    }
+    .debate-main-chamber {
+        grid-template-columns: 1fr !important;
+        flex: 0 0 auto !important;
+        overflow: visible !important;
+    }
+    .roundtable-arena-view {
+        border-right: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 12px !important;
+        overflow: visible !important;
+        flex-shrink: 0 !important;
+    }
+    .roundtable-circle-container {
+        height: auto !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        margin-bottom: 12px !important;
+    }
+    .roundtable-table-surface {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+        height: auto !important;
+        border-radius: 12px !important;
+        padding: 10px 12px !important;
+        box-shadow: none !important;
+    }
+    .table-inner-glow {
+        display: none !important;
+    }
+    .table-status-label {
+        max-width: 100% !important;
+    }
+    .chamber-seat {
+        position: static !important;
+        width: 100% !important;
+        background: rgba(15, 23, 42, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 8px 6px;
+        box-sizing: border-box;
+    }
+    .seat-boss {
+        grid-column: 1 / -1 !important;
+    }
+    .seat-name,
+    .seat-role {
+        white-space: normal !important;
+        line-height: 1.25 !important;
+    }
+    .gavel-input-row {
+        flex-direction: column !important;
+    }
+    .gavel-custom-input,
+    .gavel-strike-btn {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        justify-content: center !important;
+    }
+
+    /* Vision Studio / RMBG modal overflow fix */
+    .rmbg-modal-content {
+        padding: 14px 12px !important;
+        gap: 12px !important;
+    }
+    .rmbg-modal-header {
+        gap: 10px !important;
+    }
+    .rmbg-title-group {
+        min-width: 0 !important;
+        flex: 1 !important;
+    }
+    .rmbg-badge,
+    .rmbg-modal-title,
+    .rmbg-modal-subtitle {
+        max-width: 100% !important;
+        overflow-wrap: anywhere !important;
+    }
+    .rmbg-modal-title {
+        font-size: 1.02rem !important;
+        flex-wrap: wrap !important;
+    }
+    .vision-tab-bar {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        padding: 6px !important;
+    }
+    .vision-tab-btn {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        justify-content: flex-start !important;
+        padding: 8px 10px !important;
+        font-size: 0.8rem !important;
+    }
+    .rmbg-toolbar-actions,
+    .rmbg-btn-group {
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+
+    /* Transcribe modal overflow fix */
+    .transcribe-modal-content {
+        padding: 14px 12px !important;
+    }
+    .transcribe-modal-header {
+        gap: 10px !important;
+        margin-bottom: 12px !important;
+        padding-bottom: 12px !important;
+    }
+    .transcribe-title-group {
+        min-width: 0 !important;
+        flex: 1 !important;
+    }
+    .transcribe-badge,
+    .transcribe-modal-subtitle {
+        max-width: 100% !important;
+        overflow-wrap: anywhere !important;
+    }
+    .transcribe-modal-title {
+        font-size: 1.05rem !important;
+        flex-wrap: wrap !important;
+    }
+    .transcribe-config-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 10px 12px !important;
+        gap: 10px !important;
+    }
+    .transcribe-config-item {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        gap: 4px !important;
+    }
+    .transcribe-select {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        text-overflow: ellipsis !important;
+    }
+    .transcribe-input-modes {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .transcribe-mode-pill {
+        flex: 1 1 auto !important;
+        justify-content: center !important;
+    }
+
+    /* Admin Orders modal responsive header & stats */
+    .admin-orders-header {
+        padding: 14px 14px !important;
+        gap: 10px !important;
+    }
+    .admin-orders-stats-row {
+        padding: 10px 14px !important;
+        gap: 8px !important;
+    }
+    .btn-reload-orders {
+        margin-left: 0 !important;
+    }
+
+    /* Mind Map modal top bar on small mobile */
+    .kira-mindmap-overlay {
+        padding: 0 !important;
+    }
+    .mindmap-top-bar {
+        padding: 10px 12px !important;
+        gap: 8px !important;
+    }
+    .mindmap-title-wrap {
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+    .mindmap-title {
+        max-width: 150px !important;
+        font-size: 0.92rem !important;
+    }
+    .mindmap-actions-group {
+        flex-shrink: 0 !important;
+        gap: 6px !important;
+    }
+}

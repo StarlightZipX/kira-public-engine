@@ -1,60 +1,31 @@
-# 📝 สมุดส่งเวรสถานะงานสด (KIRA AI SYSTEM - LIVING TASK ANCHOR)
+# 🧠 KIRA AI SYSTEM - CURRENT TASK & LIVING STATE ANCHOR
 
-> **อัปเดตล่าสุด:** Kira Web v2.9.8 — Anti-Slop Decluttered Bars & True Multi-Device Responsiveness (**จัดระเบียบแถบ Header/Sidebar/Composer/Tools ให้สะอาดตาไร้ Slop และแก้ไข Responsive ให้ใช้งานลื่นครบทุกอุปกรณ์ `360px`–`1440px+` พร้อม Cache-Busting**)
+## 🚀 สถานะล่าสุด (Active Build: Kira v2.9.8 Production)
+- **Active Version:** `v2.9.8` (`KIRA_SYSTEM_VERSION = "2.9.8"`, SW Cache `kira-ai-cache-v2.9.8-polish`)
+- **Production Endpoint:** `https://kira-public-engine.onrender.com` (Auto-Deploy ผ่าน `origin/main`)
+- **กำหนดการ v3.0:** เตรียมปล่อย **Kira v3.0** ช่วง **ปีใหม่** ตามกำหนดการของบอส (คงสาย `v2.9.8` ไว้ในระหว่างนี้)
 
----
+## ✅ งานระดับจุลภาคที่เพิ่งทำเสร็จสมบูรณ์ (Item 1 & Item 2 in v2.9.8)
+1. **Version Sync & PWA Shortcuts Cleanup (Item 1):**
+   - อัปเดต `KIRA_SYSTEM_VERSION = "2.9.8"`, `KIRA_RELEASE_DATA` ครบ 5 ภาษา (`TH/EN/ZH/KO/JA`), `templates/index.html` fallback title/tag, UA `KiraSandboxInspector/2.9.8`, และ `static/sw.js` (`kira-ai-cache-v2.9.8-polish` + `?v=20261115_v298_polish`)
+   - อัปเดต `static/manifest.json` ให้มี PWA Shortcuts ครบทั้ง `Offline Vault` และ `Virtual Boardroom`
+   - อัปเดต `test_canvas_share_suite.py`, `test_zero_silence_protocol.py`, `test_subscription_suite.py` ให้ตรงสเปก `v2.9.8` ล่าสุดทั้งหมด
+2. **Multi-Device Modal & Checkout Responsive Polish (Item 1):**
+   - แก้ไข Responsive `@media (max-width: 640px)` ใน `static/style.css` ครบทุก Modals ทั้ง 19 ตัว (ยืนยัน `cardOverflowX = false` และ `docOverflowX = false` บน `360px / 768px / 1280px`)
+   - จัดระเบียบ `#boardroom-debate-modal` บนมือถือให้วาง `Roundtable Arena` เป็นกริด 2 คอลัมน์ไม่ซ้อนทับกัน และแถบ Setup Stack แนวตั้งครบช่อง
+   - แก้ไข `#settings-modal` footer ให้อยู่บรรทัดเดียวสวยงาม, `#subscription-modal` checkout ให้อยู่ครบในกรอบพร้อม `129.00 ฿` ไม่ตกบรรทัด, `#rmbg-modal` tab bar, และ `#transcribe-modal` select width
+3. **Production Ops, Payment Flow & `/admin_boss` Fixes (Item 2):**
+   - แก้ไข `upload_subscription_slip` ใน `app.py` ให้คืน `"status": "pending_review"` & `"order_status": "pending_review"` อย่างถูกต้องเมื่อ AI ส่งต่อให้แอดมินตรวจ (ไม่อ้างสิทธิ์เปิดทันทีและไม่ส่ง welcome ก่อนตรวจ)
+   - แก้ไข `static/script.js` และ `templates/admin.html` ให้นับ/แสดงผลและมีปุ่ม อนุมัติ/ปฏิเสธ สำหรับรายการ `pending_review` ครบถ้วน พร้อมเพิ่ม `startOrderStatusPolling` บนหน้าเว็บ
+   - แก้ไข Date Filter ใน `/admin_boss` (`app.py`) ให้ใช้ parameterized `SUBSTR(CAST(timestamp AS TEXT), 1, 10)` รองรับทั้ง SQLite และ PostgreSQL
+   - เพิ่ม in-page `#admin-slip-lightbox` ใน `templates/admin.html` แทน `window.open("")` เพื่อให้เปิดดูสลิปบนมือถือได้ลื่นไหล พร้อมจัด layout ฟอร์ม Dictionary บนมือถือ (`flex-col sm:flex-row`)
 
-### ✅ 1. งานระดับจุลภาคที่เพิ่งทำเสร็จ (Latest Completed Work - `v2.9.8` Clean Multi-Device UI)
-- **จัดระเบียบ Header & Consolidation (`templates/index.html`, `static/style.css`, `static/script.js`):**
-  - รวมปุ่มที่ซ้ำซ้อนบน Top Header (`#btn-share-chat`, `#btn-rag-vault`, `#btn-notification-center`, `#btn-action-agent`) เข้าสู่ศูนย์รวม `#tools-dropdown-menu` ผ่านคลาส `.header-consolidated-btn` (ยังคง DOM ID เดิมครบถ้วนเพื่อความเข้ากันได้ของ JS/Tests) พร้อมจุดแจ้งเตือน `#tools-notif-dot` / `#tools-menu-notif-badge`
-  - แก้ไขบั๊ก Layout Collision ของ `.header-center` (`position: static`), ล้าง margin เกินจาก `#toggle-sidebar.menu-btn` และ `#model-select` พร้อมคุม `.model-select-wrapper` ให้พอดีจอมือถือ `360px`/`390px` ภายในแถวเดียวสูง `54px` (`headerOverlaps: []`, `overflowX: false`)
-  - เพิ่ม `#tools-mobile-mode-section` (`User Mode` 3 โหมด + `.tools-mobile-quick-row` สำหรับ ธีม / Pro / ภาษา) พร้อมเติมคีย์แปล `mode_switcher_label` ครบทั้ง 5 ภาษา (`TH / EN / ZH / KO / JA`) ใน `KIRA_I18N`
-  - ยุบป้าย Plan ซ้ำซ้อนเมื่อเป็น `founder` / `is_boss`, แทนที่ `ui-avatars.com` ด้วย inline SVG `getInitialAvatarSvg`, และซ่อน `#study-quick-chips` อัตโนมัติระหว่างสนทนา (`.hidden-during-chat`)
-- **Responsive Sidebar, Dropdowns, Composer & Light Mode Contrast (`static/style.css`, `static/script.js`):**
-  - `<= 1024px`: แปลง `#sidebar` เป็น slide-over drawer (`z-index: 1250`) เหนือ header พร้อม `#sidebar-backdrop` กดปิด/กด `Esc`/auto-close เมื่อเลือกเมนูได้ลื่นไหล
-  - มือถือ (`<= 640px`): จัดเรียง Composer 2 แถวให้ `textarea#user-input` (`min-height: 44px`, `font-size: 16px`) อยู่ด้านบนสุดกว้างเต็มหน้าจอ และแถวปุ่ม Action อยู่ด้านล่าง พร้อมจำกัดขอบเขต `#tools-dropdown-menu` และ `#lang-dropdown-menu` ไม่ให้ล้นจอ (`clippedX: false`)
-  - แก้ Contrast ของ Welcome Hub และ Guest Banner ใน Light Theme (`body.light-theme` / `body.light-mode`) ให้อ่านง่ายชัดเจน
-- **Cache-Busting & Service Worker (`templates/index.html`, `static/sw.js`):**
-  - อัปเดต `?v=20261115_clean_responsive_bars` และ `CACHE_NAME = 'kira-ai-cache-v2.9.8-clean-responsive-bars'`
+## 🛡️ กฎหลักและบริบทระบบที่คงอยู่เสมอ
+- **บัญชีรับโอนของบอส (ห้ามเปลี่ยนแปลง):** นาย ศิวัช รอสวัสดิ์ • ธนาคารกสิกรไทย (KBANK) `004-9-99252-5` • PromptPay `004999252517585`
+- **LINE OA Code:** คงโค้ด `/api/line/webhook` และ `/api/line/diagnostics` ไว้ครบถ้วน
+- **Absolute Equality Auth:** ทุกคนล็อกอินผ่านฟอร์มมาตรฐานเดียวกัน ไม่มีปุ่ม Fast-Pass ส่วนตัว (`hasBossFastPassShortcut = false`)
+- **Admin Dashboard:** `/admin_boss` (รหัสผ่าน Master Key `kira1234`) พร้อมปุ่ม Logout
 
----
-
-### 📌 2. ประวัติงานก่อนหน้า (`v2.9.7` Boss Flexible Co-Pilot & Prod Fix)
-* **1.1 ความยืดหยุ่นแบบเหมา 3 แกนหลักเฉพาะบัญชีบอส (`is_boss_user` หลังยืนยันตัวตน/โลคอลใน `app.py`):**
-  * **IT / Sysadmin Practical Co-Pilot:** อัปเดต `system_prompt_boss` และ `init_db()` (`prompt_1.1` auto-upgrade สำหรับ Prompt ที่มีขนาดกะทัดรัด 4,078 ตัวอักษรสำหรับ Boss / 5,412 ตัวอักษรสำหรับ Guest) ให้วิเคราะห์ต้นตอปัญหา (Root Cause) คำสั่ง CLI/Config และแนวทาง Hardening ระบบที่บอสดูแลทันที โดย **ยังรักษาขอบเขตความปลอดภัย** (ปฏิเสธการข้ามล็อค/Paywall, การเจาะบัญชีผู้อื่น หรืออันตราย โดยข้ามการฉีด Co-Pilot directive เมื่อ `_is_security_or_harm_boundary_query` เป็นจริง)
-  * **Adaptive Response Style:** ถอดข้อความบังคับปิดท้าย `"เชิญชวนบอสกด Like/Dislike"` ออกจาก Prompt บอส และเพิ่ม `_parse_boss_turn_mode()` + `_build_boss_adaptive_directive()` ให้ปรับความยาว/รูปแบบอัตโนมัติ (ถามสั้น/แก้ error → คำสั่งหรือโค้ดพร้อมรัน; ถามวางแผน → วิเคราะห์ Scenario & ความเสี่ยงครบ) พร้อม Prefix รายเทิร์น `/สั้น`, `/fast`, `/direct` และ `/ลึก`, `/deep`
-  * **Persistent Stack/Style Shortcuts & Preference Safety:** เพิ่ม `_handle_boss_preference_command()` ใน `chat_endpoint` (`/stack`, `/จำสแต็ก`, `/style`, `/จำสไตล์`, `/reset-style`, `/รีเซ็ตสไตล์`, `/help-boss`, `/คำสั่งบอส`) พร้อมปรับ `save_user_settings()` / `_upsert_user_preferences_fields()` / `_refresh_active_user_prompts()` ให้เก็บรักษาฟิลด์ที่ไม่ได้ส่งมา (Partial Update Preservation — เปลี่ยนธีมหรือโหมดไม่ทับ `custom_instructions`/`custom_response_style`) และอนุญาต Sandbox `[PYTHON]` บนโมเดล `2.*`/`3.*` เฉพาะบัญชีบอส
-  * **ความเท่าเทียมของ UI (`GEMINI.md` Rule 4):** จำกัด Logic ไว้ที่ Backend ภายใต้ `if is_boss_user:` เท่านั้น ไม่เพิ่มปุ่มลัดหรือ Badge อภิสิทธิ์ชนใน UI
-* **1.2 แก้บั๊กร้ายแรงบน Production PostgreSQL & Async Chat Race (`app.py`, `static/script.js`, `templates/index.html`, `static/sw.js`):**
-  * **PostgreSQL Boss Auth Sync Fix:** แทนที่คำสั่ง SQLite-only `INSERT OR IGNORE` / `INSERT OR REPLACE` ใน `init_db()`, `/api/register` และ `/api/login` ด้วย `_get_boss_seed_salt()` + `_upsert_boss_account()` (`ON CONFLICT(username) DO UPDATE SET ...` พร้อม fallback `SELECT/UPDATE/INSERT`) เพื่อให้ Render PostgreSQL ซิงก์ `password_hash` กับ Token Fingerprint (`pfp`) ของบอสตรงกันทุกครั้ง ไม่เกิด `403` หรือหลุดสิทธิ์จาก IP ภายนอก
-  * **Frontend Async Session/Welcome Race Guard:** ปรับ `renderWelcomeHub()` และ `loadSession()` ใน `static/script.js` ให้ตรวจ `currentSessionId` / `currentUser` / `isGenerating` ก่อนเขียนทับ `#chat-box`, พร้อมอัปเดต Cache-Busting `?v=20261115_boss_copilot` และ `CACHE_NAME = 'kira-ai-cache-v2.9.7-boss-copilot'`
-* **งานหลักก่อนหน้า:** `v2.9.7` Hotfix (`2aa5345` — Resilience Shield & `#tools-dropdown-menu`) และ Phase 3 (Cloud Web Computer Use + SSRF Guard, Visual/DOM Prompt Injection Shield, OS Companion Bridge, คงโค้ด LINE OA, บัญชี KBANK/PromptPay จริงของบอส และ Auth มาตรฐานเท่าเทียม)
-
----
-
-### 🌐 2. สถานะการ Deploy และผลตรวจสอบ (Verification & Production Status)
-* **Syntax & Asset Checks (หลังแก้ไขครั้งสุดท้าย):**
-  * `python -m py_compile app.py` — ผ่าน
-  * `node --check static/script.js` และ `node --check static/sw.js` — ผ่าน
-  * ขนาด System Prompt: `Boss: 4078` chars, `Guest: 5412` chars
-* **Sequential Automated Test Suites (หลังแก้ไขครั้งสุดท้าย):**
-  * 12-Suite Combined Pytest (`67 passed in 148.53s`): `test_resilience_and_tools_fix.py` (10), `test_fallback_resilience_suite.py` (5), `test_local_failover.py` (4), `test_pillar_1_smart_greeting.py` (4), `test_audit_stabilization_suite.py` (6), `test_approved_fixes.py` (10), `test_user_modes_suite.py` (3), `test_thinking_sanitizer.py` (1), `test_line_webhook.py` (7), `test_pwa_pdf_suite.py` (5), `test_i18n_deep_audit.py` (6), `test_mcp_hub_suite.py` (6)
-  * `python test_auth_suite.py` — **14/14 passed**
-  * `python test_settings_suite.py` — **6/6 passed**
-* **Local Playwright E2E Verification (`Desktop 1440x900`):**
-  * ล็อกอินเข้าบัญชี `👑 Boss (Owner)` บนเซิร์ฟเวอร์โลคอล (`127.0.0.1:8783`), ทดสอบ `/help-boss`, `/stack Windows 11 + Docker + Nginx + FastAPI`, `/จำสไตล์ ตอบสั้น คม พร้อมคำสั่งรันทันที`, `/สั้น Nginx ขึ้น 502 Bad Gateway บน Docker เช็ก 3 คำสั่งแรกอะไรบ้าง`, และ `/reset-style` (`boss_copilot_local_desktop.png`)
-  * ผลลัพธ์: `Console errors: 0`, `Page errors: 0`, `HTTP 5xx: 0`
-* **Production Repository:** `https://github.com/StarlightZipX/kira-public-engine.git` (Branch `main` → Auto-Deploy บน Render ที่ `https://kira-public-engine.onrender.com`)
-
----
-
-### 🧭 3. แนวทางการพัฒนาหลัก (Master Development Direction — Boss Approved)
-* **จุดยืนผลิตภัณฑ์ (Core Positioning):** **ผู้ช่วยและตัวแทนส่วนตัวของคนไทย (Thai-First Core, Global-Ready 5-Language Shell: `TH / EN / ZH / KO / JA`)**
-* **นโยบายแพลตฟอร์ม (Owned Home Policy):** ยึด **Web + Mobile PWA** เป็นบ้านหลัก (`0฿` ค่าส่งข้อความ); **คงโค้ด LINE OA** (`/api/line/webhook`, `/api/line/diagnostics`) ใน `app.py` ไว้ตามคำสั่งบอสโดยไม่ขยายฟีเจอร์ AI ที่พึ่งพาโควตา Reply API ของ LINE
-
----
-
-### 🗺️ 4. แผนพัฒนา 3 ระยะ (3-Phase Master Roadmap — COMPLETE)
-* **✅ ระยะที่ 1 (`v2.9.5` — PWA & Daily Thai Utilities):** Mobile PWA Shortcuts/Share Target, 1-Click Slip & Expense Ledger, Study & Document 1-Click Pack
-* **✅ ระยะที่ 2 (`v2.9.6` — ตัวแทนรับงาน & เลขาส่วนตัว):** Personal Intake Portal + QR Card, PWA Notification Center, Sovereign Privacy / Local Engine Showcase & PDPA Export, International Payment Rail Switcher
-* **✅ ระยะที่ 3 (`v2.9.7` — Action Agent & Autonomous OS Companion):** Cloud Web Computer Use Sandbox + SSRF Guard, Live DOM Wireframe & Split Canvas, Visual & DOM Prompt Injection Shield, Desktop (`PyAutoGUI`) & Mobile (`ADB`) OS Companion Bridge
+## 📌 สิ่งที่ทำต่อในสเต็ปถัดไป
+- เฝ้าติดตามการใช้งานจริงบน `https://kira-public-engine.onrender.com` (ยอดคำสั่งซื้อ KBANK/PromptPay, `/admin_boss`, และการโต้ตอบของ AI)
+- วางแผนใหญ่สำหรับ **`Kira v3.0`** รับปีใหม่ตามกำหนดการของบอส

@@ -362,7 +362,7 @@ async def get_manifest():
     raise HTTPException(status_code=404, detail="Manifest not found")
 
 # --- Kira System Version & Live Build Status (PWA & Web Client Update Engine) ---
-KIRA_SYSTEM_VERSION = "2.9.7"
+KIRA_SYSTEM_VERSION = "2.9.8"
 APP_START_TIME = int(time.time())
 APP_BUILD_ID = f"kira-v{KIRA_SYSTEM_VERSION}_{APP_START_TIME}"
 
@@ -371,8 +371,8 @@ KIRA_RELEASE_DATA = {
     "version": KIRA_SYSTEM_VERSION,
     "build_id": APP_BUILD_ID,
     "timestamp": APP_START_TIME,
-    "release_name": "Kira AI Phase 3 - Cloud Web Computer Use, Visual Prompt Injection Shield & OS Companion Bridge",
-    "badge_text": f"v{KIRA_SYSTEM_VERSION} อัปเดต Phase 3",
+    "release_name": "Kira AI Phase 3 Polish - Responsive Multi-Device UI, Cloud Sandbox & Payment Ops",
+    "badge_text": f"v{KIRA_SYSTEM_VERSION} อัปเดตระบบล่าสุด",
     "title": f"อัปเดต Kira AI v{KIRA_SYSTEM_VERSION} พร้อมใช้งานแล้วค่ะ",
     "description": "เพิ่มศูนย์ปฏิบัติการตัวแทนอัจฉริยะ (Cloud Web Computer Use Sandbox), เกราะป้องกัน Visual & DOM Prompt Injection, การเปิดผลเข้า Live Split Canvas และตัวช่วยเชื่อม OS Companion (PyAutoGUI / ADB) ค่ะ",
     "quote": "คิระพร้อมปฏิบัติงานเว็บแทนบอสใน Sandbox พร้อมเกราะกันข้อความแฝง และสร้างแผนควบคุม Desktop/Mobile ภายใต้การยืนยันจากผู้ใช้งานค่ะ",
@@ -4733,12 +4733,17 @@ async def admin_dashboard_get(
         query += " AND username LIKE ?"
         params.append(f"%{username}%")
         
-    if date_filter == "today":
-        query += " AND date(timestamp) = date('now', 'localtime')"
-    elif date_filter == "7days":
-        query += " AND date(timestamp) >= date('now', '-7 days', 'localtime')"
-    elif date_filter == "30days":
-        query += " AND date(timestamp) >= date('now', '-30 days', 'localtime')"
+    if date_filter in ("today", "7days", "30days"):
+        tz_bkk = timezone(timedelta(hours=7))
+        now_bkk = datetime.now(tz_bkk).date()
+        if date_filter == "today":
+            query += " AND SUBSTR(CAST(timestamp AS TEXT), 1, 10) = ?"
+            params.append(now_bkk.strftime("%Y-%m-%d"))
+        else:
+            delta_days = 7 if date_filter == "7days" else 30
+            cutoff_date = (now_bkk - timedelta(days=delta_days)).strftime("%Y-%m-%d")
+            query += " AND SUBSTR(CAST(timestamp AS TEXT), 1, 10) >= ?"
+            params.append(cutoff_date)
         
     if mistakes_only == "on":
         query += " AND (content LIKE '%ขออภัย%' OR content LIKE '%ไม่สามารถ%' OR content LIKE '%ผิด%' OR content LIKE '%มั่ว%' OR content LIKE '%ไม่ใช่%')"
@@ -8929,12 +8934,6 @@ def _docx_append_markdown_block(doc, md_text: str):
 
 
 def _build_boardroom_docx_bytes(norm: Dict[str, Any]) -> bytes:
-    """สร้างไฟล์ Microsoft Word (.docx) รายงานมติสภาผู้บริหาร 4 ฝ่ายมาตรฐานองค์กร A4"""
-    from docx.shared import Pt, RGBColor, Mm
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-
-    doc = docx.Document()
-
     # ตั้งค่าหน้ากระดาษ A4 และขอบมาตรฐานผู้บริหาร
     for section in doc.sections:
         section.page_width = Mm(210)
@@ -11911,7 +11910,7 @@ def _render_dom_wireframe_svg(page_title: str, target_url: str, elements: list, 
 async def _fetch_public_sandbox_page(initial_url: str) -> tuple[str, int, str]:
     """ดึงเนื้อหาเว็บสาธารณะแบบตรวจสิทธิ์ SSRF ทุก Redirect Hop"""
     current_url = _validate_safe_public_url(initial_url)
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; KiraSandboxInspector/2.9.7; +https://kira-public-engine.onrender.com)"}
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; KiraSandboxInspector/2.9.8; +https://kira-public-engine.onrender.com)"}
     async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
         for _ in range(4):
             resp = await client.get(current_url, headers=headers)
@@ -12712,20 +12711,21 @@ async def upload_subscription_slip(req: SubscriptionSlipUploadRequest):
         badge_name = "Kira Pro"
         quota = 500
 
+    is_approved = (audit_status == "approved")
     return {
-        "status": "success",
+        "status": "success" if is_approved else "pending_review",
         "order_id": req.order_id,
-        "order_status": "approved",
+        "order_status": "approved" if is_approved else "pending_review",
         "plan": target_plan,
         "badge": badge_name,
-        "daily_quota": quota,
-        "expire_date": new_expire_str,
-        "expire_display": expire_display,
-        "welcome_message": welcome_msg,
-        "ai_verified": (audit_status == "approved"),
+        "daily_quota": quota if is_approved else None,
+        "expire_date": new_expire_str if is_approved else None,
+        "expire_display": expire_display if is_approved else None,
+        "welcome_message": welcome_msg if is_approved else "",
+        "ai_verified": is_approved,
         "message": (
             f"ตรวจสอบสลิปเรียบร้อย ยอดโอนเข้าบัญชีคุณศิวัช รอสวัสดิ์ ถูกต้อง และเปิดสิทธิ์ {badge_name} ให้เรียบร้อยแล้วค่ะ"
-            if audit_status == "approved" else
+            if is_approved else
             "บันทึกสลิปเรียบร้อยแล้วค่ะ ระบบส่งรายการให้ผู้ดูแลระบบตรวจสอบและเปิดสิทธิ์โดยเร็วค่ะ"
         )
     }

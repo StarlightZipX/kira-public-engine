@@ -53,7 +53,7 @@
         .animate-fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
-<body class="p-6 md:p-10 lg:p-14">
+<body class="p-3 sm:p-6 md:p-10 lg:p-14">
 
     {% if not is_authorized %}
     <!-- 🔒 Creator Security Gateway (PIN / Password Challenge) -->
@@ -240,10 +240,10 @@
         <div id="tab-dictionary" class="tab-content hidden">
             <div class="glass-panel rounded-2xl p-6 border border-slate-700/50">
                 <h2 class="text-xl font-semibold text-white mb-4"><i class="fa-solid fa-book"></i> Factory Dictionary</h2>
-                <div class="flex gap-2 mb-6">
-                    <input type="text" id="dict_term" placeholder="คำศัพท์ / ตัวย่อ" class="flex-1 bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-slate-200">
-                    <input type="text" id="dict_meaning" placeholder="ความหมาย" class="flex-2 bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-slate-200" style="flex: 2;">
-                    <button onclick="addDictionary()" class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-6 rounded-lg">เพิ่มคำศัพท์</button>
+                <div class="flex flex-col sm:flex-row gap-2 mb-6">
+                    <input type="text" id="dict_term" placeholder="คำศัพท์ / ตัวย่อ" class="w-full sm:flex-1 bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-slate-200">
+                    <input type="text" id="dict_meaning" placeholder="ความหมาย" class="w-full sm:flex-[2] bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-slate-200">
+                    <button onclick="addDictionary()" class="w-full sm:w-auto bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-6 rounded-lg whitespace-nowrap">เพิ่มคำศัพท์</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -472,7 +472,7 @@
 
                             <div>
                                 <label class="block text-xs text-slate-300 font-medium mb-1">เวอร์ชันเป้าหมาย (Target Version)</label>
-                                <input type="text" id="maint_version" value="2.9.4" placeholder="2.9.4" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-200 font-mono focus:border-slate-400 focus:outline-none">
+                                <input type="text" id="maint_version" value="2.9.8" placeholder="2.9.8" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-200 font-mono focus:border-slate-400 focus:outline-none">
                             </div>
 
                             <div>
@@ -493,6 +493,19 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Responsive Slip Lightbox Modal (mobile-safe replacement for window.open popup) -->
+    <div id="admin-slip-lightbox" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm p-4 items-center justify-center" onclick="if(event.target===this) closeSlipLightbox()">
+        <div class="relative max-w-2xl w-full bg-slate-900 border border-slate-700 rounded-2xl p-3 sm:p-4 shadow-2xl">
+            <div class="flex items-center justify-between gap-2 pb-2 mb-3 border-b border-slate-800">
+                <span id="admin-slip-lightbox-title" class="text-sm font-semibold text-slate-200 truncate">Slip Preview</span>
+                <button type="button" onclick="closeSlipLightbox()" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">ปิด</button>
+            </div>
+            <div class="flex items-center justify-center max-h-[75vh] overflow-auto bg-slate-950 rounded-xl p-2">
+                <img id="admin-slip-lightbox-img" src="" alt="Payment Slip Preview" class="max-w-full max-h-[70vh] object-contain rounded-lg">
             </div>
         </div>
     </div>
@@ -617,7 +630,7 @@
                 } else {
                     let html = '';
                     adminOrdersCache.forEach(o => {
-                        if(o.status === 'pending') pendingCount++;
+                        if(o.status === 'pending' || o.status === 'pending_review') pendingCount++;
                         if(o.status === 'approved') {
                             approvedCount++;
                             totalRev += (o.amount || 0);
@@ -754,8 +767,24 @@
         function zoomSlipModal(orderId) {
             const ord = adminOrdersCache.find(x => x.order_id === orderId);
             if(!ord || !ord.slip_image) return;
-            const w = window.open("");
-            w.document.write(`<title>Slip Zoom - ${orderId}</title><body style="margin:0;background:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${ord.slip_image}" style="max-width:95vw;max-height:95vh;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.8);"></body>`);
+            const modal = document.getElementById('admin-slip-lightbox');
+            const img = document.getElementById('admin-slip-lightbox-img');
+            const title = document.getElementById('admin-slip-lightbox-title');
+            if (modal && img) {
+                img.src = ord.slip_image;
+                if (title) title.textContent = `หลักฐานการโอน • ${orderId} (${ord.username || ''})`;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+        function closeSlipLightbox() {
+            const modal = document.getElementById('admin-slip-lightbox');
+            const img = document.getElementById('admin-slip-lightbox-img');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            if (img) img.src = '';
         }
 
         // Auto-check orders count on initial load

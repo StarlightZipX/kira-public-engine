@@ -124,17 +124,17 @@ def run_tests():
     assert "canvas-ai-prompt-bar" in index_html, "Missing canvas-ai-prompt-bar in index.html"
     assert "btn-tools-viral-share" in index_html, "Missing btn-tools-viral-share in index.html"
     # 7. Verify System Version & Service Worker Cache
-    print("\n[7/8] Verifying System Version (v2.5.0) and Service Worker...")
+    print("\n[7/8] Verifying System Version (v2.9.8) and Service Worker...")
     r_ver = client.get("/api/system/version")
     assert r_ver.status_code == 200
     ver_data = r_ver.json()
-    assert str(ver_data.get("version", "")).startswith("2.7"), f"Unexpected version: {ver_data}"
-    assert any(k in ver_data.get("release_name", "") for k in ["Canvas & Viral Share", "Next-Gen Neural", "Modern Architecture"])
+    assert str(ver_data.get("version", "")).startswith("2.9"), f"Unexpected version: {ver_data}"
+    assert "Kira AI" in ver_data.get("release_name", ""), f"Unexpected release_name: {ver_data}"
     print(f"  ✅ System API Version verified: {ver_data.get('version')} ({ver_data.get('release_name')})")
 
     with open("static/sw.js", "r", encoding="utf-8") as f:
         sw_content = f.read()
-    assert ("kira-ai-cache-v2.7" in sw_content), "Service Worker CACHE_NAME not updated to v2.5+"
+    assert ("kira-ai-cache-v2.9" in sw_content), "Service Worker CACHE_NAME not updated to v2.9.x"
     assert "url.pathname.startsWith('/share/')" in sw_content, "Service Worker does not bypass /share/ URLs"
     print("  ✅ Service Worker cache bumped and /share/ dynamic bypass active")
 

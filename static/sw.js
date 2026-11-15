@@ -2,11 +2,11 @@
 // Kira AI Progressive Web App - Service Worker (v2.9.7)
 // ====================================================================
 
-const CACHE_NAME = 'kira-ai-cache-v2.9.8-clean-responsive-bars';
+const CACHE_NAME = 'kira-ai-cache-v2.9.8-polish';
 const STATIC_ASSETS = [
     '/',
-    '/static/style.css?v=20261115_clean_responsive_bars',
-    '/static/script.js?v=20261115_clean_responsive_bars',
+    '/static/style.css?v=20261115_v298_polish',
+    '/static/script.js?v=20261115_v298_polish',
     '/manifest.json',
     '/static/manifest.json',
     '/static/images/kira_logo.png?v=6',

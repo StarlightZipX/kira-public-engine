@@ -9333,6 +9333,7 @@ function initSubscriptionController() {
                         subSuccessPlanInfo.innerHTML = `<span style="color:#fbbf24; font-weight:600;"><i class="fa-solid fa-clock"></i> บันทึกสลิปเรียบร้อยแล้วค่ะ</span><br><span style="font-size:12px; color:#a1a1aa;">ระบบได้รับสลิปแล้ว กำลังตรวจสอบรายการโอนและจะปรับสถานะสิทธิ์ให้อัตโนมัติค่ะ</span>`;
                     }
                     switchSubView('success');
+                    startOrderStatusPolling(orderId);
                 } else {
                     alert('การตรวจสอบสลิป: ' + (data.detail || data.message || 'ไม่สามารถตรวจสอบสลิปได้'));
                 }
@@ -9395,7 +9396,7 @@ function initSubscriptionController() {
             const res = await fetch('/api/admin/subscription/orders');
             const data = await res.json();
             if (data.status === 'success' && data.orders) {
-                const pending = data.orders.filter(o => o.status === 'pending').length;
+                const pending = data.orders.filter(o => o.status === 'pending' || o.status === 'pending_review').length;
                 if (adminOrdersBadge) {
                     adminOrdersBadge.textContent = pending;
                     adminOrdersBadge.style.display = pending > 0 ? 'inline-block' : 'none';
@@ -9426,17 +9427,20 @@ function initSubscriptionController() {
             } else {
                 let html = '';
                 cachedAdminOrders.forEach(o => {
-                    if (o.status === 'pending') pendingCount++;
+                    const isPending = (o.status === 'pending' || o.status === 'pending_review');
+                    if (isPending) pendingCount++;
                     if (o.status === 'approved') {
                         approvedCount++;
                         totalRevenue += (o.amount || 0);
                     }
 
                     let statusPill = '';
-                    if (o.status === 'pending') {
+                    if (isPending) {
                         statusPill = '<span class="status-badge-chip" style="background:rgba(245,158,11,0.2);color:#fbbf24;border-color:rgba(245,158,11,0.4);">รอตรวจสอบ</span>';
                     } else if (o.status === 'approved') {
-                        statusPill = '<span class="status-badge-chip" style="background:rgba(16,185,129,0.2);color:#34d399;border-color:rgba(16,185,129,0.4);">อนุมัติแล้ว</span>';
+                        statusPill = o.ai_verified
+                            ? '<span class="status-badge-chip" style="background:rgba(16,185,129,0.2);color:#34d399;border-color:rgba(16,185,129,0.4);">🤖 AI Verified</span>'
+                            : '<span class="status-badge-chip" style="background:rgba(16,185,129,0.2);color:#34d399;border-color:rgba(16,185,129,0.4);">อนุมัติแล้ว</span>';
                     } else {
                         statusPill = '<span class="status-badge-chip" style="background:rgba(239,68,68,0.2);color:#f87171;border-color:rgba(239,68,68,0.4);">ปฏิเสธ</span>';
                     }
@@ -9447,7 +9451,7 @@ function initSubscriptionController() {
                     }
 
                     let actions = '';
-                    if (o.status === 'pending') {
+                    if (isPending) {
                         actions = `
                             <div style="display:flex;gap:6px;">
                                 <button type="button" class="btn-action-sm primary" onclick="window.approveOrderInApp('${o.order_id}')" style="background:#059669;padding:4px 10px;font-size:0.75rem;">

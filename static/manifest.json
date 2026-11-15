@@ -57,10 +57,17 @@
       "icons": [{ "src": "/static/images/kira_logo.png?v=6", "sizes": "192x192" }]
     },
     {
-      "name": "คลังนิรภัยเอกสาร (Knowledge Vault)",
+      "name": "คลังนิรภัยเอกสาร (Offline Vault)",
       "short_name": "Vault",
-      "description": "เข้าถึงเอกสารและบันทึกส่วนตัว",
+      "description": "เข้าถึงเอกสารและบันทึกส่วนตัวแบบออฟไลน์",
       "url": "/?open=vault",
+      "icons": [{ "src": "/static/images/kira_logo.png?v=6", "sizes": "192x192" }]
+    },
+    {
+      "name": "สภาผู้บริหารเสมือน (Virtual Boardroom)",
+      "short_name": "Boardroom",
+      "description": "เปิดห้องประชุมคณะกรรมการบริหาร 4 มุมมอง",
+      "url": "/?open=boardroom",
       "icons": [{ "src": "/static/images/kira_logo.png?v=6", "sizes": "192x192" }]
     }
   ],
