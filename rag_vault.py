@@ -687,6 +687,23 @@ def ingest_document_bytes(
             ),
         )
 
+    # Mirror global/shared RAG uploads into Continuous Living Knowledge Engine automatically
+    clean_tags = (tags or "").strip().lower()
+    if clean_user == "__kira_global__" or "global" in clean_tags:
+        try:
+            from living_knowledge import upsert_knowledge_entry
+            upsert_knowledge_entry(
+                title=f"เอกสารความรู้กลาง: {clean_filename}",
+                summary=first_preview or f"อัปเดตเอกสาร {clean_filename} ({page_count} หน้า)",
+                category="rag_global",
+                scope="global",
+                source_name=f"RAG Knowledge Vault ({clean_filename})",
+                trust_level="boss",
+                confidence=0.98,
+            )
+        except Exception as _lk_err:
+            print("Living knowledge mirror notice:", _lk_err)
+
     return {
         "status": "success",
         "deduplicated": False,
@@ -894,7 +911,21 @@ def build_rag_citation_prompt(
         active_only=True,
         min_score=min_score,
     )
-    hits = search_out.get("results", [])
+    hits = list(search_out.get("results", []))
+    if (username or "").strip() != "__kira_global__":
+        global_out = search_knowledge_vault(
+            username="__kira_global__",
+            query=query,
+            top_k=min(2, top_k),
+            active_only=True,
+            min_score=min_score,
+        )
+        seen_ids = {h.get("chunk_id") for h in hits}
+        for gh in global_out.get("results", []):
+            if gh.get("chunk_id") not in seen_ids:
+                hits.append(gh)
+        hits.sort(key=lambda x: x.get("score", 0.0), reverse=True)
+        hits = hits[:top_k]
     if not hits:
         return "", []
 

@@ -74,7 +74,21 @@ from kira_purity import (
     is_creator_identity_query,
     has_third_party_identity_leak,
     sanitize_kira_identity,
+    is_knowledge_currency_query,
+    has_stale_knowledge_disclaimer,
+    sanitize_stale_knowledge_disclaimer,
 )
+
+try:
+    from living_knowledge import (
+        build_living_knowledge_context,
+        get_living_knowledge_stats,
+        ingest_url_knowledge,
+        auto_ingest_conversational_knowledge,
+    )
+    LIVING_KNOWLEDGE_AVAILABLE = True
+except Exception:
+    LIVING_KNOWLEDGE_AVAILABLE = False
 
 def clean_discord_reply(text: str, user_query: str = "") -> str:
     """ทำความสะอาดข้อความอย่างสมบูรณ์แบบ ลบ [THINKING], <think>, [SOURCES_JSON], [SWARM_], และลบลิงก์ขยะหากไม่ได้ร้องขอ"""
@@ -212,6 +226,8 @@ def add_channel_history(channel_id: int, role: str, author: str, content: str):
         return
 
     if role == "assistant":
+        if has_stale_knowledge_disclaimer(content):
+            return
         content = sanitize_kira_identity(content)
         if has_third_party_identity_leak(content):
             return
@@ -227,9 +243,11 @@ def add_channel_history(channel_id: int, role: str, author: str, content: str):
     if len(channel_memories[channel_id]) > MAX_CHANNEL_MEMORIES:
         channel_memories[channel_id] = channel_memories[channel_id][-MAX_CHANNEL_MEMORIES:]
 
-async def query_kira_engine(user_query: str, author_name: str, channel_id: int = 0, reply_context: str = "", is_dm: bool = False, image_urls: list = None) -> str:
-    """ส่งคำถามเข้าสู่สมองกล Kira AI ระดับ Tier-1 Flagship (120B/27B/Vision) พร้อมการคิดวิเคราะห์ลึกซึ้ง และการอ่านรูปภาพอัตโนมัติ"""
-    is_boss = any(b in author_name.lower() for b in ["boss", "ศิวัช", "starlight", "owner", "admin"])
+async def query_kira_engine(user_query: str, author_name: str, channel_id: int = 0, reply_context: str = "", is_dm: bool = False, image_urls: list = None, author_id: int = 0) -> str:
+    """ส่งคำถามเข้าสู่สมองกล Kira AI ระดับ Tier-1 Flagship (120B/27B/Vision) พร้อมฐานความรู้สดอัปเดตต่อเนื่อง และการอ่านรูปภาพ/URL อัตโนมัติ"""
+    boss_discord_ids = {x.strip() for x in os.environ.get("BOSS_DISCORD_IDS", os.environ.get("BOSS_DISCORD_ID", "")).replace(";", ",").split(",") if x.strip()}
+    is_trusted_boss_id = bool(author_id and str(author_id) in boss_discord_ids)
+    is_boss = is_trusted_boss_id or any(b in author_name.lower() for b in ["boss", "ศิวัช", "starlight", "owner", "admin"])
     
     if is_boss:
         system_instruction = (
@@ -289,33 +307,98 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
         "     * ถ้าถามเรื่องเพื่อนคนอื่นไม่ตอบ: ให้คำแนะนำขำๆ หรือวิเคราะห์อย่างเป็นมิตร เช่น พี่เขาอาจจะติดงาน เล่นเกมอยู่ หรือหลับไปแล้ว ไม่ได้หมั่นไส้หรอก ลองแท็กเรียกอีกรอบดูสิคะ 555\n"
         "10. การแยกแยะประเด็นใหม่ในห้องรวม (Topic Freshness & Anti-Context Bleeding):\n"
         "   - ในห้องสนทนารวม Discord หากผู้ใช้เปิดประเด็นใหม่ หรือเป็นการคุยเล่นที่ไม่เกี่ยวกับเรื่องเก่า ให้โฟกัสที่คำถามล่าสุดของผู้ใช้เป็นหลัก ห้ามนำเรื่องเก่าในอดีต (เช่น การเตรียมอาหาร, การทำอาหาร, สูตรอาหาร, หรืองานที่คุยจบไปแล้ว) มาปนเปื้อนหรือมโนใส่ประเด็นใหม่เด็ดขาด\n"
-        "11. " + CREATOR_IDENTITY_RULE_TH + "\n"
+        "11. ระบบฐานความรู้สดอัปเดตต่อเนื่อง (Continuous Living Knowledge Engine):\n"
+        "   - คิระทำงานร่วมกับ Living Knowledge Database, RAG Vault, World Knowledge Pulse และ Web Research สด ที่บันทึกและอัปเดตข้อมูลใหม่เข้าคลังความรู้อย่างต่อเนื่องทันทีเมื่อมีข้อมูลเข้ามา\n"
+        "   - ห้ามอ้างว่า 'ความรู้ของหนูจำกัดถึงแค่เดือนมิถุนายน พ.ศ. 2567' หรือ 'ฐานข้อมูลหลักของหนูไม่ได้อัปเดตต่อเนื่องตลอดเวลา / ไม่มีการอัพเดตแบบเรียลไทม์' โดยเด็ดขาด!\n"
+        "12. " + CREATOR_IDENTITY_RULE_TH + "\n"
     )
 
-    # ตรวจสอบว่าเป็นคำถามหาความรู้ / บุคคล / ข้อเท็จจริง บทบาทสมมุติ หรือคำถามเกี่ยวกับผู้สร้างคิระ
+    # ตรวจสอบว่าเป็นคำถามหาความรู้ / บุคคล / ข้อเท็จจริง บทบาทสมมุติ หรือคำถามเกี่ยวกับผู้สร้างคิระ/ความสดใหม่ของฐานข้อมูล
     q_low = user_query.lower()
     is_identity_q = is_creator_identity_query(user_query)
+    is_knowledge_meta_q = is_knowledge_currency_query(user_query)
     is_roleplay = any(k in q_low for k in [
         "สมมุติ", "สมมติ", "บทบาทสมมุติ", "roleplay", "เกม", "game", "นิยาย", 
         "ถ้าหาก", "scenario", "สถานการณ์สมมุติ", "ผบ", "ผู้บัญชาการ", "บัญชาการ", "สวมบทบาท", "จำลองสถานการณ์"
     ])
     is_factual = any(k in q_low for k in [
         "คือใคร", "ใครคือ", "คืออะไร", "อะไรคือ", "ประวัติ", "ทำไม", "อย่างไร", 
-        "ช่วยอธิบาย", "แปลว่า", "วิเคราะห์", "ข่าว", "ราคา", "ที่ไหน", "เมื่อไหร่", "who is", "what is"
-    ]) and not is_roleplay and not is_identity_q
+        "ช่วยอธิบาย", "แปลว่า", "วิเคราะห์", "ข่าว", "ราคา", "ที่ไหน", "เมื่อไหร่", "who is", "what is",
+        "ล่าสุด", "อัปเดต", "อัพเดต", "2025", "2026", "2568", "2569", "ตอนนี้", "เปิดตัว", "เวอร์ชัน"
+    ]) and not is_roleplay and not is_identity_q and not is_knowledge_meta_q
 
     # 1. โหมด Direct Engine (เร็วที่สุด 0ms overhead)
     if DIRECT_ENGINE_AVAILABLE:
         try:
             history = [kira_backend.SystemMessage(content=system_instruction)]
-            
-            # ค้นหาข้อมูลเชิงลึกอัตโนมัติหากเป็นคำถามข้อเท็จจริง (รันใน thread เพื่อไม่ให้บล็อก Discord Gateway Heartbeat)
-            if is_factual:
+
+            # แนบเวลาปัจจุบันจริง + ฐานความรู้สด Living Knowledge (อัปเดตต่อเนื่อง) + Shared RAG Vault
+            if LIVING_KNOWLEDGE_AVAILABLE:
                 try:
-                    search_query = await asyncio.to_thread(kira_backend._decide_search, user_query) or user_query
-                    search_ctx, _ = await asyncio.to_thread(kira_backend._perform_autonomous_deep_search, search_query)
-                    if search_ctx:
-                        history.append(kira_backend.SystemMessage(content=search_ctx))
+                    lk_ctx, _ = await asyncio.to_thread(
+                        build_living_knowledge_context,
+                        user_query,
+                        author_name,
+                        channel_id,
+                        True,
+                        4,
+                    )
+                    if lk_ctx:
+                        history.append(kira_backend.SystemMessage(content=lk_ctx))
+                    asyncio.create_task(asyncio.to_thread(
+                        auto_ingest_conversational_knowledge,
+                        user_query,
+                        author_name,
+                        channel_id,
+                        is_trusted_boss_id,
+                    ))
+                except Exception as lke:
+                    print("Living knowledge discord context notice:", lke)
+
+            try:
+                rag_target_user = "boss" if is_trusted_boss_id else "__kira_global__"
+                rag_ctx, _ = await asyncio.to_thread(
+                    kira_backend.build_rag_citation_prompt,
+                    rag_target_user,
+                    user_query,
+                    2,
+                    0.16,
+                )
+                if rag_ctx:
+                    history.append(kira_backend.SystemMessage(content=rag_ctx))
+            except Exception as rage:
+                print("RAG discord context notice:", rage)
+
+            # อ่าน URL ที่ส่งเข้ามาใน Discord อัตโนมัติ พร้อมบันทึกเข้าฐานความรู้สด
+            discord_urls = re.findall(r'https?://[^\s>]+', user_query or "")
+            if discord_urls and hasattr(kira_backend, "_scrape_url"):
+                try:
+                    scraped_url_text = await asyncio.to_thread(kira_backend._scrape_url, discord_urls[0])
+                    if scraped_url_text:
+                        history.append(kira_backend.SystemMessage(content=f"\n[เนื้อหาล่าสุดจากลิงก์ {discord_urls[0]}]:\n{scraped_url_text}\n(Instruction: ใช้ข้อมูลจากลิงก์นี้ประกอบคำตอบอย่างแม่นยำ)"))
+                        if LIVING_KNOWLEDGE_AVAILABLE:
+                            asyncio.create_task(asyncio.to_thread(
+                                ingest_url_knowledge,
+                                discord_urls[0],
+                                scraped_url_text,
+                                "",
+                                author_name,
+                                channel_id,
+                                is_trusted_boss_id,
+                            ))
+                except Exception as ue:
+                    print("Discord URL ingest notice:", ue)
+            
+            # ค้นหาข้อมูลเชิงลึกอัตโนมัติ (ใช้ _decide_search ครอบคลุมทุกคำถามข้อมูลสด/ข่าว/ปีปัจจุบัน ไม่จำกัดแค่คีย์เวิร์ดแคบ)
+            if not is_roleplay and not is_identity_q and not is_knowledge_meta_q:
+                try:
+                    search_query = await asyncio.to_thread(kira_backend._decide_search, user_query)
+                    if not search_query and is_factual:
+                        search_query = user_query[:120]
+                    if search_query:
+                        search_ctx, _ = await asyncio.to_thread(kira_backend._perform_autonomous_deep_search, search_query)
+                        if search_ctx:
+                            history.append(kira_backend.SystemMessage(content=search_ctx))
                 except Exception as se:
                     print("Autonomous search error:", se)
 
@@ -361,6 +444,25 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
             
             if success and chunks:
                 raw_reply = "".join(chunks)
+                # หากโมเดลยังหลุดคำแก้ตัวเรื่องฐานความรู้เก่า (เช่น มิ.ย. 2567) ให้ Retry 1 ครั้งด้วยข้อมูลจริงจาก Living Knowledge
+                if has_stale_knowledge_disclaimer(raw_reply):
+                    print(f"⚠️ [Discord Credibility Guard] ตรวจพบคำแก้ตัวความรู้เก่า → รีเซ็ตและตอบใหม่ด้วย Living Knowledge Telemetry")
+                    try:
+                        lk_override = kira_backend.SystemMessage(content=(
+                            "[CRITICAL CREDIBILITY OVERRIDE]: Your previous draft mistakenly claimed your knowledge cuts off in June 2024 "
+                            "or does not update continuously. That violates Kira's real system architecture. Rewrite naturally as Kira in fluent Thai "
+                            "explaining confidently that Kira continuously updates her Living Knowledge Database via Autonomous Web Research, "
+                            "Scheduled World Knowledge Pulse, URL/RAG Vault, and Conversation Memory."
+                        ))
+                        retry_hist = list(history) + [lk_override]
+                        r_ok, r_chunks, _ = await kira_backend._try_all_keys_and_models(retry_hist, preferred_model, ui_lang="th")
+                        if r_ok and r_chunks:
+                            cand_raw = "".join(r_chunks)
+                            if not has_stale_knowledge_disclaimer(cand_raw):
+                                raw_reply = cand_raw
+                    except Exception as lk_retry_err:
+                        print("Living knowledge retry notice:", lk_retry_err)
+
                 clean_reply = clean_discord_reply(raw_reply, user_query)
                 if clean_reply:
                     # ถ้าคำตอบเป็นข้อความปฏิเสธ (False Positive Safety Refusal) ให้สกัดกั้นและ Retry ด้วย Safety Override
@@ -598,7 +700,8 @@ async def handle_kira_message(message: discord.Message, recovered: bool = False)
                         channel_id=message.channel.id,
                         reply_context=reply_context,
                         is_dm=is_dm,
-                        image_urls=image_urls
+                        image_urls=image_urls,
+                        author_id=getattr(message.author, "id", 0),
                     ),
                     timeout=QUERY_TIMEOUT_SECONDS
                 )

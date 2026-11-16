@@ -5,6 +5,7 @@
 """
 
 import re
+from typing import Optional
 
 # พจนานุกรมแปลงคำศัพท์ต่างประเทศที่โมเดลมักทำ Token Bleeding ให้เป็นคำไทยที่สละสลวย
 FOREIGN_TOKEN_MAP = {
@@ -419,4 +420,119 @@ def sanitize_kira_identity(text: str, user_query: str = "", ui_lang: str = "th")
     # 4. ป้องกันไม่ให้หลุดคำเรียกผู้สร้างว่า 'บอส' / 'Boss' ต่อผู้ใช้ทั่วไปในประโยคอธิบายผู้สร้างคิระ
     t = _scrub_creator_nickname_leak(t, creator_context=is_creator_identity_query(user_query))
 
+    # 5. ป้องกันไม่ให้โมเดลหลุดคำแก้ตัวเรื่องฐานความรู้เก่า (เช่น จำกัดถึง มิ.ย. 2567 / ฐานข้อมูลไม่อัปเดต)
+    t = sanitize_stale_knowledge_disclaimer(t, user_query=user_query, ui_lang=ui_lang)
+
     return t
+
+
+# =========================================================================
+# 🌐 CONTINUOUS LIVING KNOWLEDGE CREDIBILITY FIREWALL (NO STALE CUTOFF LEAKS)
+# =========================================================================
+
+_KNOWLEDGE_CURRENCY_QUERY_PATTERNS = [
+    r'(?:ฐานข้อมูล|ฐานความรู้|คลังความรู้|ความจำ|ความรู้)(?:ของ)?(?:เธอ|คุณ|คิระ|หนู|ระบบ).{0,35}(?:อั[ปพ]เดต|อัพเดท|ล่าสุด|ใหม่|เก่า|ล้าหลัง|ปีไหน|เดือนไหน|เมื่อไหร่|ตลอดเวลา|เรียลไทม์|real-?time)',
+    r'(?:เธอ|คุณ|คิระ|หนู).{0,25}(?:เรียนรู้|อั[ปพ]เดต|ดึงข้อมูล)(?:ข้อมูล|ความรู้)?(?:ใหม่|ปัจจุบัน|ล่าสุด|ตลอดเวลา|real-?time|อัตโนมัติ)',
+    r'(?:ความรู้|ข้อมูล).{0,20}(?:ตัดยอด|ถึงปีไหน|ถึงเดือนไหน|2567|2024|cutoff)',
+    r'\b(?:knowledge\s+cutoff|updated?\s+in\s+real-?time|continuous(?:ly)?\s+learn|living\s+knowledge|up\s+to\s+date)\b',
+]
+
+_STALE_CUTOFF_CLAIM_PATTERNS = [
+    r'(?:ความรู้|ข้อมูล|ชุดฝึกฝน|ชุดข้อมูล|ฐานความรู้|ฐานข้อมูล|หน่วยความจำ)(?:หลัก|พื้นฐาน)?(?:ของ(?:หนู|ฉัน|ดิฉัน|คิระ|โมเดล))?[^\n]{0,90}(?:จำกัดอยู่(?:ที่|ถึง)|รวบรวม(?:มา|ไว้)?(?:จน)?ถึง|ถึง(?:แค่|เพียง)?(?:เดือน)?|สิ้นสุด(?:ที่|เมื่อ)|หยุดอยู่ที่)[^\n]{0,45}(?:256[5-8]|202[2-5]|มิถุนายน|ตุลาคม|june\s+2024|2024)',
+    r'(?:หนู|ฉัน|ดิฉัน|คิระ|ฐานข้อมูล(?:หลัก)?ของหนู|ฐานความรู้ของหนู)[^\n]{0,70}(?:ไม่มีการอั[ปพ]เดต|ไม่ได้อั[ปพ]เดต|ไม่อั[ปพ]เดต)(?:ข้อมูล)?(?:แบบเรียลไทม์|อัตโนมัติ|ต่อเนื่องตลอดเวลา|ตลอดเวลา)?',
+    r'(?:ไม่ได้ทำให้(?:ฐานความรู้|ฐานข้อมูล)ของ(?:หนู|ฉัน|คิระ)เปลี่ยนแปลงหรืออั[ปพ]เดต|ไม่มีการดึงข้อมูลใหม่เข้ามาโดยอัตโนมัติหลังจากนั้น|อ้างอิงเฉพาะความรู้ที่ฝึกฝนมาจากชุดข้อมูลเดิมเท่านั้น)',
+    r'(?:my\s+knowledge\s+(?:is\s+)?(?:limited|cut\s*off|trained)\s+(?:up\s+)?to|my\s+training\s+data\s+(?:ends|stops|goes\s+up\s+to)|does\s+not\s+update\s+in\s+real-?time|no\s+automatic\s+real-?time\s+updates?)',
+]
+
+_STALE_SENTENCE_STRIP_PATTERNS = [
+    r'(?:อย่างไรก็ตาม|ทั้งนี้|หมายเหตุ\s*:?)?\s*(?:ความรู้|ข้อมูล|ชุดฝึกฝน|ฐานความรู้|ฐานข้อมูล)(?:หลัก|พื้นฐาน)?(?:ของ(?:หนู|ฉัน|ดิฉัน|คิระ))?[^\n.!?]{0,120}(?:256[5-8]|202[2-5]|มิถุนายน\s*พ\.?ศ\.?\s*2567|june\s+2024)[^\n]*(?:ค่ะ|นะคะ|นะครับ|ครับ|\.|\n|$)',
+    r'(?:และ|หรือ)?\s*ไม่มีการอั[ปพ]เดต(?:แบบ)?เรียลไทม์[^\n]*(?:ค่ะ|นะคะ|นะครับ|ครับ|\.|\n|$)',
+]
+
+
+def is_knowledge_currency_query(user_query: str = "") -> bool:
+    """ตรวจสอบว่าผู้ใช้กำลังถามเรื่องความสดใหม่ การเรียนรู้ หรือการอัปเดตฐานข้อมูลของคิระหรือไม่"""
+    if not user_query:
+        return False
+    q = user_query.strip().lower()
+    return any(re.search(pat, q, flags=re.IGNORECASE) for pat in _KNOWLEDGE_CURRENCY_QUERY_PATTERNS)
+
+
+def has_stale_knowledge_disclaimer(text: str) -> bool:
+    """ตรวจจับข้อความแก้ตัวที่ระบุว่าความรู้คิระล้าหลังถึงแค่ มิ.ย. 2567 หรือฐานข้อมูลไม่อัปเดต"""
+    if not text:
+        return False
+    return any(re.search(pat, text, flags=re.IGNORECASE) for pat in _STALE_CUTOFF_CLAIM_PATTERNS)
+
+
+def _get_live_stats_safe(live_stats: Optional[dict] = None) -> dict:
+    if isinstance(live_stats, dict) and live_stats:
+        return live_stats
+    try:
+        from living_knowledge import get_living_knowledge_stats
+        return get_living_knowledge_stats()
+    except Exception:
+        return {}
+
+
+def _build_living_knowledge_explanation(user_query: str = "", ui_lang: str = "th", live_stats: Optional[dict] = None) -> str:
+    """สร้างคำอธิบายที่ตรงกับความจริงของสถาปัตยกรรม Kira Living Knowledge Engine อย่างมั่นใจ"""
+    stats = _get_live_stats_safe(live_stats)
+    total = stats.get("total_entries", 0)
+    date_th = stats.get("current_date_th", "")
+    latest_ts = stats.get("latest_updated_at", "")
+    has_thai = bool(re.search(r'[\u0e00-\u0e7f]', user_query or "")) or ui_lang == "th"
+
+    if not has_thai and ui_lang == "en":
+        stat_line = f" (currently tracking **{total:,}** live knowledge records, last updated `{latest_ts}`)" if total else ""
+        return (
+            f"My knowledge system does **not** stop in the past — I run on the **Kira Continuous Living Knowledge Engine**{stat_line}, "
+            "combining:\n"
+            "1. **Automatic Persistent Ingestion:** Whenever new facts arrive via Real-Time Web Research, shared URLs, uploaded documents (RAG Vault), "
+            "or verified conversations, Kira stores and indexes them permanently in the Living Knowledge Database.\n"
+            "2. **Continuous World Knowledge Pulse:** Background feeds continuously sync fresh public news and technology updates.\n"
+            "3. **Real-Time Verification:** When answering current events or newly emerging topics, Kira searches live web sources and saves verified findings so the database grows continuously."
+        )
+
+    date_note = f" (เวลาอ้างอิงปัจจุบัน: **{date_th}**" + (f" • คลังความรู้สด **{total:,}** รายการ อัปเดตล่าสุด `{latest_ts}`" if total else "") + ")" if date_th else ""
+    return (
+        f"ขอชี้แจงให้ชัดเจนเลยนะคะ **ฐานข้อมูลของคิระไม่ได้หยุดค้างอยู่ที่ปีเก่าและมีการอัปเดตข้อมูลใหม่อย่างต่อเนื่องค่ะ**{date_note}\n\n"
+        "1. **บันทึกความรู้ใหม่เข้าฐานข้อมูลถาวรอัตโนมัติ (Continuous Living Knowledge):** ทุกครั้งที่มีข้อมูลใหม่เข้ามา "
+        "ไม่ว่าจะเป็นผลการค้นคว้าเว็บแบบเรียลไทม์, ข่าวสารล่าสุด, ลิงก์/URL ที่ส่งให้อ่าน, เอกสารใน RAG Knowledge Vault หรือข้อมูลที่ป้อนสอนเข้ามา "
+        "ระบบจะสรุปและจัดเก็บลงฐานความรู้กลางพร้อมดัชนีเวกเตอร์ทันที ไม่ใช่แค่ดึงแล้วลืมเหมือนระบบรุ่นเก่าค่ะ\n"
+        "2. **ซิงค์ความเคลื่อนไหวปัจจุบันอัตโนมัติ (World Knowledge Pulse):** ระบบมีการดึงข้อมูลข่าวสารและอัปเดตเทคโนโลยีล่าสุดเข้ามาเติมในฐานข้อมูลอย่างสม่ำเสมอ\n"
+        "3. **ตรวจสอบข้อมูลสดควบคู่คลังความรู้:** หากเป็นเหตุการณ์หรือข้อมูลเฉพาะที่เพิ่งเกิดขึ้น คิระจะค้นหาและตรวจสอบจากแหล่งข้อมูลสาธารณะแบบเรียลไทม์ พร้อมอัปเดตองค์ความรู้นั้นเข้าสู่คลังทันทีค่ะ"
+    )
+
+
+def sanitize_stale_knowledge_disclaimer(
+    text: str,
+    user_query: str = "",
+    ui_lang: str = "th",
+    live_stats: Optional[dict] = None,
+) -> str:
+    """กำจัดหรือแทนที่คำแก้ตัวเรื่องฐานความรู้จำกัดถึงแค่ มิ.ย. 2567 ให้ตรงกับความจริงของ Living Knowledge Engine"""
+    if not text or not has_stale_knowledge_disclaimer(text):
+        return text
+
+    # กรณีถามเรื่องความสดใหม่/การอัปเดตฐานข้อมูลโดยตรง หรือเนื้อหาหลักเป็นการแก้ตัวเรื่อง cutoff ทั้งหมด
+    is_meta_q = is_knowledge_currency_query(user_query)
+    heavy_cutoff_lecture = (
+        len(text) < 1600
+        and sum(1 for pat in _STALE_CUTOFF_CLAIM_PATTERNS if re.search(pat, text, flags=re.IGNORECASE)) >= 1
+        and ("ฐานข้อมูลหลักของหนู" in text or "ชุดฝึกฝน" in text or "ข้อมูลพื้นฐาน" in text or "ไม่สามารถอัปเดต" in text or "ไม่ได้อัปเดต" in text)
+    )
+    if is_meta_q or heavy_cutoff_lecture:
+        return _build_living_knowledge_explanation(user_query=user_query, ui_lang=ui_lang, live_stats=live_stats)
+
+    # กรณีแนบคำแก้ตัวต่อท้ายคำตอบที่มีสาระอยู่แล้ว ให้ตัดเฉพาะประโยคแก้ตัวออก
+    cleaned = text
+    for pat in _STALE_SENTENCE_STRIP_PATTERNS:
+        cleaned = re.sub(pat, "", cleaned, flags=re.IGNORECASE)
+
+    # ลบหัวข้อ 'สรุป' ที่ว่างเปล่าหลังตัดประโยคแก้ตัว
+    cleaned = re.sub(r'(?:^|\n)#*\s*\**สรุป\**\s*(?:\n+|\Z)', "\n", cleaned).strip()
+    if not cleaned or has_stale_knowledge_disclaimer(cleaned):
+        return _build_living_knowledge_explanation(user_query=user_query, ui_lang=ui_lang, live_stats=live_stats)
+    return cleaned
+
