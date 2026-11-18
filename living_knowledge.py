@@ -698,6 +698,7 @@ def build_living_knowledge_context(
     channel_id: Optional[int] = None,
     include_telemetry: bool = True,
     top_k: int = 4,
+    concise_telemetry: bool = False,
 ) -> tuple[str, List[Dict[str, Any]]]:
     """สร้าง Context block ที่มีทั้งเวลาปัจจุบันจริง, สถานะระบบ Living Knowledge, และข้อเท็จจริงล่าสุดที่ค้นพบ"""
     stats = get_living_knowledge_stats()
@@ -710,19 +711,26 @@ def build_living_knowledge_context(
 
     parts: List[str] = []
     if include_telemetry:
-        parts.append(
-            "\n\n[Kira Continuous Living Knowledge & Real-Time Clock Anchor]:\n"
-            f"- วันและเวลาปัจจุบันจริง (Asia/Bangkok): {stats['current_date_th']} เวลา {stats['current_time_th']}\n"
-            f"- สถานะฐานความรู้สด (Living Knowledge Database): มีคลังความรู้สะสม {stats['total_entries']} รายการ "
-            f"(อัปเดตข้อมูลล่าสุดเมื่อ {stats['latest_updated_at']})\n"
-            "- สถาปัตยกรรมการอัปเดตต่อเนื่อง: ระบบของคิระรับและบันทึกข้อมูลใหม่เข้าสู่ฐานความรู้อย่างต่อเนื่องตลอดเวลา "
-            "ผ่าน 4 ช่องทางจริง ได้แก่ (1) Real-Time Autonomous Web Research & URL Scraping (ค้นพบแล้วบันทึกสะสมถาวรอัตโนมัติ), "
-            "(2) Scheduled World Knowledge Pulse ซิงค์ข่าว/เทคโนโลยีล่าสุดเข้าคลังกลาง, (3) Knowledge Graph & Channel Memory เรียนรู้จากบทสนทนา, "
-            "และ (4) Semantic Vector RAG Knowledge Vault + Boss Live Feed\n"
-            "- กฎสำคัญสูงสุดด้านความน่าเชื่อถือ: ห้ามตอบเด็ดขาดว่า 'ความรู้ของหนูจำกัดถึงแค่เดือนมิถุนายน พ.ศ. 2567' "
-            "หรือ 'ฐานข้อมูลหลักของหนูไม่ได้อัปเดตต่อเนื่องตลอดเวลา / ไม่มีการอัพเดตแบบเรียลไทม์' — "
-            "หากถูกถามเรื่องความสดใหม่ของฐานความรู้ ให้ชี้แจงตามจริงอย่างมั่นใจว่าคิระอัปเดตความรู้สะสมเข้าฐานข้อมูลอย่างต่อเนื่องทุกครั้งที่มีข้อมูลใหม่เข้ามา พร้อมผสาน Web Research และ RAG แบบเรียลไทม์ค่ะ"
-        )
+        if concise_telemetry:
+            parts.append(
+                f"\n[เวลาปัจจุบัน (Asia/Bangkok): {stats['current_date_th']} {stats['current_time_th']} | "
+                f"ฐานความรู้สด Living Knowledge: {stats['total_entries']} รายการ อัปเดต {stats['latest_updated_at']} | "
+                "ห้ามอ้าง cutoff มิ.ย. 2567]"
+            )
+        else:
+            parts.append(
+                "\n\n[Kira Continuous Living Knowledge & Real-Time Clock Anchor]:\n"
+                f"- วันและเวลาปัจจุบันจริง (Asia/Bangkok): {stats['current_date_th']} เวลา {stats['current_time_th']}\n"
+                f"- สถานะฐานความรู้สด (Living Knowledge Database): มีคลังความรู้สะสม {stats['total_entries']} รายการ "
+                f"(อัปเดตข้อมูลล่าสุดเมื่อ {stats['latest_updated_at']})\n"
+                "- สถาปัตยกรรมการอัปเดตต่อเนื่อง: ระบบของคิระรับและบันทึกข้อมูลใหม่เข้าสู่ฐานความรู้อย่างต่อเนื่องตลอดเวลา "
+                "ผ่าน 4 ช่องทางจริง ได้แก่ (1) Real-Time Autonomous Web Research & URL Scraping (ค้นพบแล้วบันทึกสะสมถาวรอัตโนมัติ), "
+                "(2) Scheduled World Knowledge Pulse ซิงค์ข่าว/เทคโนโลยีล่าสุดเข้าคลังกลาง, (3) Knowledge Graph & Channel Memory เรียนรู้จากบทสนทนา, "
+                "และ (4) Semantic Vector RAG Knowledge Vault + Boss Live Feed\n"
+                "- กฎสำคัญสูงสุดด้านความน่าเชื่อถือ: ห้ามตอบเด็ดขาดว่า 'ความรู้ของหนูจำกัดถึงแค่เดือนมิถุนายน พ.ศ. 2567' "
+                "หรือ 'ฐานข้อมูลหลักของหนูไม่ได้อัปเดตต่อเนื่องตลอดเวลา / ไม่มีการอัพเดตแบบเรียลไทม์' — "
+                "หากถูกถามเรื่องความสดใหม่ของฐานความรู้ ให้ชี้แจงตามจริงอย่างมั่นใจว่าคิระอัปเดตความรู้สะสมเข้าฐานข้อมูลอย่างต่อเนื่องทุกครั้งที่มีข้อมูลใหม่เข้ามา พร้อมผสาน Web Research และ RAG แบบเรียลไทม์ค่ะ"
+            )
 
     if hits:
         parts.append("\n[ข้อมูลล่าสุดจากฐานความรู้สด Kira Living Knowledge Vault]:")

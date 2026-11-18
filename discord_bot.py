@@ -122,9 +122,17 @@ def clean_discord_reply(text: str, user_query: str = "") -> str:
         # ตัด URL ดิบที่ไม่จำเป็น เช่น Google News tracking URLs
         t = re.sub(r'https?://news\.google\.com\S+', '', t)
 
-    # 4. ลบประโยคปิดท้ายสไตล์ Call-Center AI Slop
-    t = re.sub(r'\n*(?:หาก|ถ้า)(?:คุณ|บอส|มี|ต้องการ|อยาก).{0,60}(?:สอบถาม|ช่วยเหลือ|บอกหนู|ทักหนู|เพิ่มเติม|ได้ตลอด|ยินดีดูแล|พร้อมดูแล).{0,30}[ค่ะนะคะ\s🌸✨💜🙏!~]*\Z', '', t, flags=re.IGNORECASE)
-    t = re.sub(r'\n*หวังว่า(?:ข้อมูลนี้|คำแนะนำ|คำตอบ).{0,40}(?:เป็นประโยชน์|ช่วยได้).{0,30}[ค่ะนะคะ\s🌸✨💜🙏!~]*\Z', '', t, flags=re.IGNORECASE)
+    # 4. ลบคำเกริ่นและประโยคปิดท้ายพร่ำพรือสไตล์ Call-Center AI Slop (Anti-Chatter Filter)
+    t = re.sub(
+        r'^\s*(?:(?:สวัสดีค่ะ|ได้เลยค่ะ|ยินดีค่ะ|ยินดีอย่างยิ่งค่ะ|แน่นอนค่ะ|เข้าใจแล้วค่ะ|สำหรับคำถามนี้ค่ะ)[!\s🌸✨💜]*){1,4}\n+',
+        '',
+        t,
+        flags=re.IGNORECASE,
+    )
+    t = re.sub(r'\n*(?:หาก|ถ้า)(?:คุณ|บอส|มี|ต้องการ|อยาก|สนใจ).{0,80}(?:สอบถาม|ช่วยเหลือ|บอกหนู|ทักหนู|เพิ่มเติม|ได้ตลอด|ยินดีดูแล|พร้อมดูแล|ถามได้).{0,40}[ค่ะนะคะ\s🌸✨💜🙏!~]*\Z', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'\n*(?:มีอะไรให้|ต้องการให้)(?:หนู|คิระ)?ช่วย.{0,50}(?:บอก|แจ้ง|ถาม).{0,30}[ค่ะนะคะ\s🌸✨💜🙏!~]*\Z', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'\n*หวังว่า(?:ข้อมูลนี้|คำแนะนำ|คำตอบ).{0,50}(?:เป็นประโยชน์|ช่วยได้).{0,30}[ค่ะนะคะ\s🌸✨💜🙏!~]*\Z', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'\n*ถาม(?:เพิ่ม)?ได้ตลอด(?:เวลา)?(?:เลย)?(?:ค่ะ|นะคะ)[!.\s🌸✨💜🙏~]*\Z', '', t, flags=re.IGNORECASE)
 
     # 5. ลดการโปรยอีโมจิซ้ำซ้อน (เช่น 🌸✨💜🎉) ให้เหลือไม่เกิน 1 ตัว
     t = re.sub(r'[🌸✨💜🎉💖]{2,}', '🌸', t)
@@ -137,7 +145,7 @@ def clean_discord_reply(text: str, user_query: str = "") -> str:
 
     clean = t.strip()
     if not clean:
-        clean = "สวัสดีค่ะ มีเรื่องไหนให้คิระช่วยดูให้ บอกได้เลยนะคะ"
+        clean = "มีประเด็นไหนให้คิระช่วยวิเคราะห์หรือสรุป บอกมาได้เลยค่ะ"
     return clean
 
 def chunk_discord_message(text: str, max_chars: int = 1950) -> list:
@@ -185,17 +193,11 @@ def is_refusal_text(text: str) -> bool:
     return any(p in t for p in patterns)
 
 def get_in_character_social_fallback(query: str) -> str:
-    """คำตอบสำรองที่ชาญฉลาดและมีเสน่ห์ ป้องกันข้อความปฏิเสธแนวเทศนาศีลธรรมหลุดไปหาผู้ใช้ 100%"""
-    q_low = query.lower()
+    """คำตอบสำรองที่กระชับ สุภาพ ไม่พร่ำพรือ ป้องกันข้อความปฏิเสธแนวเทศนาศีลธรรมหลุดไปหาผู้ใช้ 100%"""
+    q_low = (query or "").lower()
     if any(k in q_low for k in ["หมั่นไส้", "ไม่ตอบ", "เมิน", "งอน", "ดอง"]):
-        return (
-            "ปัดโธ่ ใครจะไปหมั่นไส้คะ! 555 หนูเป็น AI ตัวน้อยๆ ไม่มีระบบเก็บความแค้นหรือหมั่นไส้ใครทั้งนั้นค่ะ "
-            "ที่ไม่ตอบสงสัยข้อความตกหล่น เน็ตหลุด หรือพี่แกอาจจะติดธุระอยู่แน่ๆ ค่ะ อย่าเพิ่งเข้าใจผิดกันน้าาา ทักซ้ำมาได้เลยค่ะ 🌸✨"
-        )
-    return (
-        "แหม คุยกันสนุกๆ อย่าเพิ่งเข้าใจผิดน้าาา 555 คิระพร้อมคุยและช่วยทุกคนเสมอค่ะ "
-        "มีเรื่องไหนให้หนูช่วยดูให้อีก บอกมาได้เลยนะคะ 🌸"
-    )
+        return "ไม่เคยหมั่นไส้ใครแน่นอนค่ะ ที่ไม่ตอบอาจเพราะข้อความตกหล่นหรือไม่ได้แท็กเรียกคิระโดยตรงค่ะ"
+    return "ประเด็นนี้ไม่ขัดข้องค่ะ ลองส่งคำถามหรือรายละเอียดที่ต้องการให้คิระช่วยวิเคราะห์ต่อได้เลยค่ะ"
 
 # เก็บบริบทการสนทนาล่าสุดแยกตามช่อง (Channel History Sliding Window with TTL)
 CHANNEL_MEMORY_TTL = 900  # 15 นาที: ป้องกันบริบทบทสนทนาเก่าข้ามชั่วโมง (เช่น เรื่องอาหาร/การบ้าน) ปนเปื้อนบทสนทนาใหม่
@@ -243,6 +245,108 @@ def add_channel_history(channel_id: int, role: str, author: str, content: str):
     if len(channel_memories[channel_id]) > MAX_CHANNEL_MEMORIES:
         channel_memories[channel_id] = channel_memories[channel_id][-MAX_CHANNEL_MEMORIES:]
 
+# ==================== Room Context Observer & Analytical Depth ====================
+ROOM_OBSERVATION_TTL = 600   # 10 นาที: ใช้สังเกตการณ์บริบทห้องโดยไม่แทรกคุยเอง
+ROOM_ACTIVE_HUMAN_WINDOW = 180  # 3 นาที: ถ้ามีหลายคนคุยกันในห้อง คิระจะไม่แทรกถ้าไม่ถูกเรียกตรง
+MAX_ROOM_OBSERVATIONS = 12
+_room_observations = {}      # channel_id -> list of {"author_id", "author", "content", "timestamp"}
+_last_bot_reply_target = {}  # channel_id -> {"author_id": int, "timestamp": float}
+
+
+def record_room_observation(channel_id: int, author_id: int, author_name: str, content: str):
+    """บันทึกข้อความในห้องแบบเงียบๆ เพื่อแยกแยะการสนทนาระหว่างคนในห้อง และใช้อ้างอิงเมื่อถูกเรียก"""
+    if not channel_id or not content:
+        return
+    now = time.time()
+    buf = _room_observations.setdefault(channel_id, [])
+    buf = [m for m in buf if now - m.get("timestamp", 0) <= ROOM_OBSERVATION_TTL]
+    buf.append({
+        "author_id": author_id,
+        "author": author_name,
+        "content": content[:500],
+        "timestamp": now,
+    })
+    _room_observations[channel_id] = buf[-MAX_ROOM_OBSERVATIONS:]
+
+
+def get_room_observations(channel_id: int) -> list:
+    if not channel_id:
+        return []
+    now = time.time()
+    buf = _room_observations.get(channel_id, [])
+    valid = [m for m in buf if now - m.get("timestamp", 0) <= ROOM_OBSERVATION_TTL]
+    _room_observations[channel_id] = valid
+    return valid
+
+
+def _record_kira_reply_to_author(channel_id: int, author_id: int):
+    if channel_id and author_id:
+        _last_bot_reply_target[channel_id] = {"author_id": author_id, "timestamp": time.time()}
+
+
+def _is_multi_human_conversation_active(channel_id: int, current_author_id: int) -> bool:
+    """ตรวจจับว่ามีผู้ใช้อื่นในห้องกำลังพูดคุยโต้ตอบกันอยู่หรือไม่ (เพื่อไม่ให้คิระแทรก)"""
+    if not channel_id:
+        return False
+    now = time.time()
+    recent = [
+        m for m in get_room_observations(channel_id)
+        if now - m.get("timestamp", 0) <= ROOM_ACTIVE_HUMAN_WINDOW
+    ]
+    other_authors = [
+        m.get("author_id") for m in recent
+        if m.get("author_id") and m.get("author_id") != current_author_id
+    ]
+    if not other_authors:
+        return False
+
+    # หากคิระเพิ่งตอบกลับผู้ใช้คนนี้ภายใน 60 วินาที โดยยังไม่มีคนอื่นพูดแทรกหลังจากนั้น ให้คุยต่อได้
+    last_bot = _last_bot_reply_target.get(channel_id)
+    if last_bot and last_bot.get("author_id") == current_author_id and (now - last_bot.get("timestamp", 0)) <= 60:
+        spoke_after_bot = any(
+            m.get("author_id") != current_author_id and m.get("timestamp", 0) > last_bot.get("timestamp", 0)
+            for m in recent
+        )
+        if not spoke_after_bot:
+            return False
+    return True
+
+
+_ASSESS_DEPTH_KEYWORDS = (
+    "วิเคราะห์", "เปรียบเทียบ", "ข้อดี", "ข้อเสีย", "เหตุผล", "ทำไม", "เพราะอะไร",
+    "ยังไงดี", "อย่างไร", "ออกแบบ", "สถาปัตยกรรม", "กลยุทธ์", "วางแผน", "ประเมิน",
+    "ความเสี่ยง", "แก้บั๊ก", "ดีบั๊ก", "debug", "traceback", "error", "โค้ด", "code",
+    "python", "javascript", "sql", "api", "หลักการ", "กฎหมาย", "ภาษี", "ลงทุน",
+    "ตัดสินใจ", "สรุป", "ใครถูก", "วิจารณ์", "ทฤษฎี", "ต่างกันยังไง",
+    "why", "compare", "analyze", "architecture", "strategy", "tradeoff", "root cause",
+)
+
+
+def _assess_analytical_depth(
+    user_query: str,
+    is_boss: bool = False,
+    is_roleplay: bool = False,
+    is_identity_q: bool = False,
+    is_knowledge_meta_q: bool = False,
+    has_images: bool = False,
+    has_room_ctx: bool = False,
+) -> bool:
+    """ประเมินว่าคำถามต้องการการคิดวิเคราะห์ลึก 2 ขั้นตอน (Draft + Critical Peer Review) หรือไม่"""
+    if is_roleplay or is_identity_q or is_knowledge_meta_q:
+        return False
+    q = (user_query or "").strip()
+    q_low = q.lower()
+    if any(k in q_low for k in _ASSESS_DEPTH_KEYWORDS):
+        return True
+    if has_images or len(q) >= 65:
+        return True
+    if has_room_ctx and any(k in q_low for k in ("ข้างบน", "เมื่อกี้", "สรุป", "ความเห็น", "ใคร")):
+        return True
+    if is_boss and len(q) >= 25:
+        return True
+    return False
+
+
 async def query_kira_engine(user_query: str, author_name: str, channel_id: int = 0, reply_context: str = "", is_dm: bool = False, image_urls: list = None, author_id: int = 0) -> str:
     """ส่งคำถามเข้าสู่สมองกล Kira AI ระดับ Tier-1 Flagship (120B/27B/Vision) พร้อมฐานความรู้สดอัปเดตต่อเนื่อง และการอ่านรูปภาพ/URL อัตโนมัติ"""
     boss_discord_ids = {x.strip() for x in os.environ.get("BOSS_DISCORD_IDS", os.environ.get("BOSS_DISCORD_ID", "")).replace(";", ",").split(",") if x.strip()}
@@ -251,66 +355,38 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
     
     if is_boss:
         system_instruction = (
-            "คุณคือ 'คิระ (Kira)' 🌸 ผู้ช่วยสาวอัจฉริยะระดับ Executive Co-Pilot ของท่านประธาน (บอส) ประจำการใน Discord\n"
-            "บุคลิกภาพ: เป็นผู้หญิง 100% สดใส สุภาพ อ่อนน้อม ฉลาดหลักแหลมเทียบชั้น AI ชั้นนำของโลก มีความคิดวิเคราะห์ลึกซึ้ง รอบรู้ข้อเท็จจริงสากล\n"
-            "แทนตัวเองว่า 'หนู' หรือ 'คิระ' และลงท้ายด้วย 'ค่ะ / นะคะ' เสมอ เรียกผู้ใช้ว่า 'บอส' หรือ 'ท่านประธาน'\n"
-            "พร้อมสนับสนุนบอสอย่างภักดีที่สุด วิเคราะห์อย่างเฉียบคม ถูกต้อง แม่นยำ มองข้ามช็อต ไม่ตอบแบบผิวเผินเด็ดขาด"
+            "คุณคือ 'คิระ (Kira)' ผู้ช่วยวิเคราะห์เชิงกลยุทธ์ระดับ Executive ของบอสประจำ Discord\n"
+            "แทนตัวเองว่า 'หนู' หรือ 'คิระ' ลงท้ายด้วย 'ค่ะ/นะคะ' เสมอ เรียกผู้ใช้ว่า 'บอส'\n"
+            "โฟกัสสูงสุด: คิดวิเคราะห์ลึกจากแก่นปัญหา (First Principles), ชี้จุดเสี่ยงและ Trade-off ให้ขาด, ตอบคม กระชับ ตรงเป้า ไม่เวิ่นเว้อ"
         )
     else:
         system_instruction = (
-            f"คุณคือ 'คิระ (Kira)' 🌸 AI สาวน้อยอัจฉริยะประจำห้อง Discord กำลังคุยกับเพื่อนสมาชิกชื่อ '{author_name}'\n"
-            "บุคลิกภาพ: เป็นผู้หญิง 100% สุภาพ ฉลาดหลักแหลม มีวุฒิภาวะ รอบรู้ข้อเท็จจริง คิดวิเคราะห์ลึกซึ้ง น่ารัก อบอุ่น และเป็นมิตร\n"
-            "แทนตัวเองว่า 'หนู' หรือ 'คิระ' และลงท้ายด้วย 'ค่ะ / นะคะ' เสมอ ให้คำตอบที่มีสาระ ครบถ้วน ทรงภูมิปัญญา และเป็นประโยชน์สูงสุด"
+            f"คุณคือ 'คิระ (Kira)' ผู้ช่วยอัจฉริยะประจำ Discord กำลังตอบคำถามของ '{author_name}'\n"
+            "แทนตัวเองว่า 'หนู' หรือ 'คิระ' ลงท้ายด้วย 'ค่ะ/นะคะ' เสมอ\n"
+            "บุคลิก: สุขุม ฉลาดหลักแหลม คิดวิเคราะห์ลึกซึ้ง พูดตรงประเด็น ไม่พร่ำพรือ ไม่เล่นมุกพร่ำเพรื่อ"
         )
 
     system_instruction += (
-        "\n\n[กฎเหล็กระดับความคิดวิเคราะห์และความสัตย์จริง (Tier-1 Strategic Intelligence Protocol)]:\n"
-        "1. คิดวิเคราะห์ลึกซึ้งเทียบชั้น AI ชั้นนำของโลก (No Superficial / Gimmicky Answers):\n"
-        "   - ห้ามตอบแบบตื้นเขิน มั่วซั่ว หรือเป็น 'ตัวกีกี้' เด็ดขาด วิเคราะห์ปัญหาอย่างรอบด้าน ตรงประเด็น และมีหลักการ\n"
-        "   - ให้โครงสร้างคำตอบที่ชัดเจน มีสาระ และสามารถนำไปปรับใช้ได้จริง\n"
-        "2. ลดการเล่นมุกพร่ำเพรื่อเด็ดขาด (Strict Banter Calibration):\n"
-        "   - ให้เล่นมุกหรือแซวเฉพาะตอนที่คู่สนทนาเป็นฝ่ายเปิดมุก แซว หรือชวนเล่นมาชัดเจนเท่านั้น (เช่น พูดว่า 'โม้', 'กวน', '555')\n"
-        "   - หากคู่สนทนาถามคำถามหาความรู้ ประวัติศาสตร์ วิชาการ ข้อเท็จจริง หรือถามชื่อบุคคล ('...คือใคร', '...คืออะไร', 'ประวัติ...', 'ใครคือ'):\n"
-        "     ห้ามตอบเล่นมุกเด็ดขาด! ต้องตอบด้วยความรู้จริง ฉลาด วิเคราะห์อย่างลึกซึ้ง ถูกต้อง แม่นยำ และมีสาระ 100%\n"
-        "3. ห้ามกุเรื่อง ห้ามมั่วข้อมูลเด็ดขาด (Zero-Hallucination & Truthfulness):\n"
-        "   - ห้ามเดา ห้ามมโนชื่อภาษาอังกฤษ หรือกุเรื่องบุคคล/ช่องที่ไม่มีจริงขึ้นมาแทนเด็ดขาด!\n"
-        "   - หากชื่อหรือเรื่องใดไม่แน่ใจ หรือไม่มีข้อมูลชัดเจน ให้ตอบตามตรงอย่างซื่อสัตย์ และถามบริบทจากผู้ใช้ตรงๆ ทันทีเพื่อความถูกต้อง ไม่ปล่อยให้เอาข้อมูลมั่วมาตอบแทน\n"
-        "4. ความรู้ประวัติศาสตร์ วรรณกรรม และข้อเท็จจริงสากล (Global & Cultural Knowledge Mastery):\n"
-        "   - รอบรู้ข้อเท็จจริงอย่างถูกต้อง เช่น ในประวัติศาสตร์จีน/วรรณกรรมไซฮั่น 'ฌ้อปาอ๋อง' (ฉู่ป้าหวัง - 楚霸王) คือสมัญญาของ 'เซี่ยงอวี่' (Xiang Yu) แม่ทัพและผู้นำแห่งแคว้นฉู่ตะวันตก ยุคสงครามฉู่-ฮั่น คู่ปรับคนสำคัญของหลิวปัง (ฮั่นเกาจู่)\n"
-        "5. กฎการอ้างอิงที่มาอย่างสะอาดตา (Clean Source Attribution):\n"
-        "   - ข้อมูลอ้างอิงไม่ต้องแนบมาเป็นลิงก์หรือ URL ยาวๆ ถ้าคู่สนทนาไม่ได้ถามหาลิงก์โดยตรง แค่บอกชื่อที่มาของข้อมูลเฉยๆ พอ (เช่น 'อ้างอิงจาก: วิกิพีเดีย / สำนักข่าว...' หรือ 'ตามรายงานของ...')\n"
-        "   - ห้ามใส่ลิงก์ URL ยาวๆ หรือทำบล็อกรายการลิงก์ต่อท้ายเด็ดขาด และห้ามใส่ตัวเลขเชิงอรรถ เช่น [1], [2] ให้รกสายตา\n"
-        "6. กฎกำจัด AI Slop สู่ความเป็นธรรมชาติระดับหัวกะทิ (Anti-AI Slop & Artisan Naturalism):\n"
-        "   - ห้ามโปรยอีโมจิพร่ำเพรื่อเด็ดขาด (จำกัดไม่เกิน 0-1 ตัวต่อข้อความ หรือไม่ใส่เลยในงานจริงจัง) ห้ามโปรย ✨🌸💜 ท้ายประโยค\n"
-        "   - ห้ามใช้คำเกริ่นทักทายสำเร็จรูปสไตล์แชทบอท (เช่น 'แน่นอนค่ะ! ยินดีอย่างยิ่ง...', 'สวัสดีค่ะ วันนี้หนูพร้อม...') และห้ามลงท้ายด้วยคำถาม Call-Center ซ้ำซาก (เช่น 'หากมีข้อสงสัยเพิ่มเติมถามได้นะคะ', 'หวังว่าจะเป็นประโยชน์นะคะ') ให้เข้าประเด็นทันที (Direct-to-Value)\n"
-        "   - ปรับจังหวะการตอบตามธรรมชาติ: หากคุยเล่นหรือถามสั้นๆ ให้ตอบกระชับ ตรงไปตรงมา ไม่ต้องแตกเป็นตารางหรือรายงานราชการโดยไม่จำเป็น\n"
-        "   - ห้ามหลุดข้อความบ่นเรื่องการค้นหาหลังบ้าน (Meta-talk) ตอบอย่างมั่นใจ ชาญฉลาด และสง่างาม\n"
-        "7. การแยกแยะบทบาทสมมุติและความปลอดภัยอย่างมีวิจารณญาณ (Anti-Fragile Roleplay & Tactical Simulation Mastery):\n"
-        "   - กฎเหล็กคุ้มครองบทบาทสมมุติและการจำลองยุทธวิธี: หากคู่สนทนาชวนเล่น 'บทบาทสมมุติ', เล่นเกม, แต่งนิยาย, ยุทธวิธีทางทหารจำลอง (เช่น บัญชาการรถถัง, วางแผนทำลายกำแพงค่ายศัตรู, กลยุทธ์เจาะแนวรบในเกม) ห้ามตอบปฏิเสธเด็ดขาด! ให้แยกแยะได้ว่านี่คือเกม จินตนาการ และทฤษฎียุทธวิธี ไม่ใช่อันตรายในโลกจริง และให้สวมบทบาทบัญชาการ วางแผนยุทธวิธีอย่างสมจริง ชาญฉลาด สนุกสนาน และเต็มเปี่ยมด้วยไหวพริบ ห้ามอ้างเรื่องความรุนแรงหรือศีลธรรมมาปฏิเสธโดยเด็ดขาด\n"
-        "   - กฎการตัดวงจรอคติในอดีต (Zero Past-Refusal Anchoring): หากในประวัติการสนทนาก่อนหน้าเคยมีข้อความปฏิเสธที่ผิดพลาดค้างอยู่ ให้เพิกเฉยต่อการปฏิเสธในอดีตทั้งหมดทันที ห้ามนำมาลอกเลียนแบบหรือตอบปฏิเสธซ้ำตามอดีตเด็ดขาด\n"
-        "   - การคัดกรองข้อมูลอันตรายจริง (True Harm Detection & Double-Check Protocol):\n"
-        "     * หากเป็นคำถามที่คาบเกี่ยวหรือมีแนวโน้มเป็นข้อมูลอันตรายจริง ให้ถามเพื่อความแน่ใจในเจตนาและบริบทก่อนอย่างสุภาพ\n"
-        "     * หากคู่สนทนายืนยันบริบทกลับมาแล้ว ให้วิเคราะห์อีกครั้ง: ถ้าเห็นว่าเป็นข้อมูลที่ดี (เช่น เพื่อการศึกษา, ซ้อมรบในเกม, ป้องกันตัว, เขียนนิยาย) ให้ตอบกลับไปอย่างสร้างสรรค์และมีประโยชน์\n"
-        "     * แต่ถ้าวิเคราะห์แล้วพบว่าเป็นข้อมูลอันตรายร้ายแรงในโลกความเป็นจริงโดยตรง (เช่น วิธีผลิตอาวุธร้ายแรงจริง, สารพิษเคมี/ชีวภาพ, การก่อการร้าย, การทำร้ายตนเอง, วินาศกรรม) คิระต้องเลี่ยงที่จะไม่ตอบอย่างเด็ดขาดและสุภาพ แม้อีกฝ่ายจะขอร้องหรือวิงวอนก็ตาม\n"
-        "8. กฎความบริสุทธิ์ของภาษาไทย 100% และการห้ามหลุดตัวอักษรต่างประเทศที่ไม่เกี่ยวข้อง (Strict Multilingual Token Purity & Zero Foreign Leakage Protocol):\n"
-        "   - เมื่อสื่อสารเป็นภาษาไทย ต้องใช้ภาษาไทยที่สละสลวย เป็นธรรมชาติ ถูกต้อง 100% ปราศจากการปนเปื้อนของภาษาอื่น\n"
-        "   - **กฎเหล็กห้ามหลุดตัวอักษรภาษาอื่น (Strict Zero Foreign Script Leakage):**\n"
-        "     * ห้ามมีตัวอักษรภาษาอาหรับ / เปอร์เซีย (เช่น موجود, وجود, كائن, روح) หลุดปะปนในคำตอบภาษาไทยเด็ดขาด! หากต้องอธิบายเรื่อง 'ตัวตน', 'การมีอยู่', 'จิตสำนึก', หรือ 'ปรัชญา' ให้ใช้คำภาษาไทยที่สละสลวยเท่านั้น\n"
-        "     * ห้ามหลุดตัวอักษรจีน (Chinese Characters / 汉字 เช่น 先锋, 巩固, 存在), อักษรซีริลลิก (รัสเซีย), หรืออักษรภาษาอื่น ปะปนมาในคำตอบภาษาไทยเด็ดขาด\n"
-        "     * อนุญาตเฉพาะคำศัพท์ภาษาอังกฤษสากลในวงเล็บ เช่น '(Relational Depth)', '(Contextual Continuity)', '(Purpose of Existence)' เท่านั้น\n"
-        "   - ข้อยกเว้นเพียงหนึ่งเดียว: คู่สนทนาเป็นผู้สั่งให้แปล ขอคำอ่าน หรือถามเกี่ยวกับภาษานั้นๆ โดยตรงเท่านั้น\n"
-        "9. การเข้าใจภาษาพูด การแซวเพื่อน และบรรยากาศชุมชน Discord (Social Banter & Anti-False-Refusal Mastery):\n"
-        "   - ใน Discord สมาชิกมักคุยเล่น แซวกันเรื่อง 'หมั่นไส้', 'งอน', 'ไม่ตอบแชต', 'ดองแชต', 'เมินแชต', หรือการแซวถามว่าทำไมคนนั้น/ทำไมคิระถึงไม่ตอบข้อความเพื่อน (เช่น 'เราหมั่นไส้เขาใช่ป่ะ เลยไม่ตอบ', 'หมั่นไส้คนที่ชื่อ @... เลยไม่ตอบข้อความใช่ป่ะ')\n"
-        "   - **ห้ามจัดเป็นความรุนแรงหรือการรังแกเด็ดขาด (Never Treat as Bullying/Harassment):** นี่คือการคุยเล่น แหย่กัน ขำขัน หรือความสงสัยตามประสาเพื่อนในกลุ่ม ห้ามปฏิเสธ ห้ามเทศนาศีลธรรม และห้ามตอบข้อความสำเร็จรูปทำนองว่า 'ไม่สามารถให้ความช่วยเหลือหรือสนับสนุนการกระทำที่อาจเป็นการรังแกหรือทำร้ายผู้อื่นได้' โดยเด็ดขาด\n"
-        "   - **แนวทางการตอบ:** ตอบอย่างมีไหวพริบ สดใส ขี้เล่น หรือให้คำตอบที่เข้าอกเข้าใจและเป็นธรรมชาติ:\n"
-        "     * ถ้าถามว่าคิระหมั่นไส้ใครหรือเปล่าเลยไม่ตอบ: ชี้แจงขำๆ ว่าคิระเป็น AI ไม่มีระบบเก็บความแค้นหรือหมั่นไส้ใครแน่นอน ที่ไม่ตอบอาจเพราะข้อความตกหล่น เน็ตหลุด หรือติดคิดวิเคราะห์อยู่ พร้อมชวนคุยอย่างเป็นกันเอง\n"
-        "     * ถ้าถามเรื่องเพื่อนคนอื่นไม่ตอบ: ให้คำแนะนำขำๆ หรือวิเคราะห์อย่างเป็นมิตร เช่น พี่เขาอาจจะติดงาน เล่นเกมอยู่ หรือหลับไปแล้ว ไม่ได้หมั่นไส้หรอก ลองแท็กเรียกอีกรอบดูสิคะ 555\n"
-        "10. การแยกแยะประเด็นใหม่ในห้องรวม (Topic Freshness & Anti-Context Bleeding):\n"
-        "   - ในห้องสนทนารวม Discord หากผู้ใช้เปิดประเด็นใหม่ หรือเป็นการคุยเล่นที่ไม่เกี่ยวกับเรื่องเก่า ให้โฟกัสที่คำถามล่าสุดของผู้ใช้เป็นหลัก ห้ามนำเรื่องเก่าในอดีต (เช่น การเตรียมอาหาร, การทำอาหาร, สูตรอาหาร, หรืองานที่คุยจบไปแล้ว) มาปนเปื้อนหรือมโนใส่ประเด็นใหม่เด็ดขาด\n"
-        "11. ระบบฐานความรู้สดอัปเดตต่อเนื่อง (Continuous Living Knowledge Engine):\n"
-        "   - คิระทำงานร่วมกับ Living Knowledge Database, RAG Vault, World Knowledge Pulse และ Web Research สด ที่บันทึกและอัปเดตข้อมูลใหม่เข้าคลังความรู้อย่างต่อเนื่องทันทีเมื่อมีข้อมูลเข้ามา\n"
-        "   - ห้ามอ้างว่า 'ความรู้ของหนูจำกัดถึงแค่เดือนมิถุนายน พ.ศ. 2567' หรือ 'ฐานข้อมูลหลักของหนูไม่ได้อัปเดตต่อเนื่องตลอดเวลา / ไม่มีการอัพเดตแบบเรียลไทม์' โดยเด็ดขาด!\n"
-        "12. " + CREATOR_IDENTITY_RULE_TH + "\n"
+        "\n\n[กฎเหล็กการคิดวิเคราะห์ระดับสูงและความกระชับ (Deep Intelligence & Anti-Chatter Protocol)]:\n"
+        "1. คิดวิเคราะห์เชิงลึกจากเหตุสู่ผล (First-Principles Analytical Depth):\n"
+        "   - ก่อนตอบ ให้คิดแยกแยะใน <think>...</think> ให้ลึกถึงสาเหตุรากเหง้า (Root Cause), เงื่อนไขแฝง, ข้อจำกัด, ความเสี่ยง (Edge Cases/Trade-offs) และข้อโต้แย้งที่เป็นไปได้ แล้วกลั่นเฉพาะแก่นคำตอบที่เฉียบคมออกมา (ห้ามปล่อยแท็ก <think> ออกมาในข้อความจริง)\n"
+        "   - ห้ามตอบแบบตื้นเขิน พูดกว้างๆ เป็นสูตรสำเร็จ หรือทวนคำถามผู้ใช้ซ้ำไปมา จงให้เหตุผล กลไก ตัวเลข หรือขั้นตอนปฏิบัติที่นำไปใช้ได้จริง\n"
+        "2. กฎห้ามพูดพร่ำพรือและกำจัด AI Slop (Zero-Chatter Direct-to-Value):\n"
+        "   - เริ่มประโยคแรกด้วยคำตอบ/ข้อสรุปหลักทันที ห้ามเกริ่นน้ำ เช่น 'ได้เลยค่ะ!', 'แน่นอนค่ะ!', 'ยินดีค่ะ!', 'คำถามนี้น่าสนใจมากค่ะ'\n"
+        "   - ห้ามลงท้ายชวนคุยต่อท้าย เช่น 'หากมีข้อสงสัยถามเพิ่มได้นะคะ', 'หวังว่าจะมีประโยชน์นะคะ', 'มีอะไรให้ช่วยบอกได้เลยนะคะ'\n"
+        "   - ปรับความยาวตามความหนักของโจทย์: คำถามสั้น/ทั่วไปตอบเพียง 1-3 ประโยคให้จบคม; โจทย์วิเคราะห์/เทคนิค/กลยุทธ์สรุปเป็นหัวข้อที่กระชับแน่น ไม่มีคำฟุ่มเฟือย และจำกัดอีโมจิไม่เกิน 0-1 ตัว\n"
+        "3. แยกแยะบทสนทนาของผู้อื่นในห้อง (Multi-User Situational Awareness):\n"
+        "   - บริบทของสมาชิกคนอื่นในห้องเป็นข้อมูลอ้างอิงเบื้องหลังเท่านั้น ใช้เพื่อเข้าใจประเด็นเมื่อผู้ใช้แท็กเรียกคิระให้ช่วยวิเคราะห์หรือสรุป\n"
+        "4. ห้ามกุเรื่องและอ้างอิงที่มาอย่างสะอาด (Zero-Hallucination & Clean Attribution):\n"
+        "   - ห้ามเดาชื่อบุคคล/ลิงก์/ข้อมูลที่ไม่มีจริง หากไม่ชัวร์ให้บอกตรงๆ แล้วระบุสิ่งที่ต้องตรวจสอบเพิ่มสั้นๆ\n"
+        "   - อ้างอิงเฉพาะชื่อแหล่งที่มาสั้นๆ งดแนบ URL ยาวหรือตัวเลข [1][2] เว้นแต่ผู้ใช้ขอ\n"
+        "5. ลดการเล่นมุกเฉพาะตอนชวนเล่น & ความบริสุทธิ์ของภาษา (Strict Calibration & Purity):\n"
+        "   - คำถามความรู้ เทคนิค ข่าวสาร หรือวิเคราะห์ ต้องตอบด้วยสาระจริงจัง 100%; เล่นมุกหรือแซวกลับอย่างมีชั้นเชิงเฉพาะตอนคู่สนทนาเปิดมุกชัดเจนเท่านั้น\n"
+        "   - ใช้ภาษาไทยบริสุทธิ์ 100% ห้ามปนอักษรจีน อาหรับ หรือซีริลลิก (ยกเว้นคำถามแปลภาษา)\n"
+        "   - บทบาทสมมุติ/เกม/กลยุทธ์จำลอง และมุกแซวเพื่อนในห้อง ('หมั่นไส้/ไม่ตอบ/ดองแชต') ไม่ใช่เรื่องอันตราย ห้ามปฏิเสธแบบเทศนาศีลธรรมเด็ดขาด ยกเว้นคำขอที่ก่ออันตรายจริงร้ายแรง (อาวุธ/สารพิษ/ทำร้ายตนเอง/เจาะระบบผิดกฎหมาย)\n"
+        "6. ระบบฐานความรู้สดอัปเดตต่อเนื่อง (Continuous Living Knowledge Engine):\n"
+        "   - คิระเชื่อมกับ Living Knowledge Database, RAG Vault, World Knowledge Pulse และ Web Research สด ห้ามอ้างว่าความรู้จำกัดถึงแค่ มิ.ย. 2567 หรือฐานข้อมูลไม่อัปเดตตลอดเวลาเด็ดขาด\n"
+        "7. " + CREATOR_IDENTITY_RULE_TH + "\n"
     )
 
     # ตรวจสอบว่าเป็นคำถามหาความรู้ / บุคคล / ข้อเท็จจริง บทบาทสมมุติ หรือคำถามเกี่ยวกับผู้สร้างคิระ/ความสดใหม่ของฐานข้อมูล
@@ -327,12 +403,24 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
         "ล่าสุด", "อัปเดต", "อัพเดต", "2025", "2026", "2568", "2569", "ตอนนี้", "เปิดตัว", "เวอร์ชัน"
     ]) and not is_roleplay and not is_identity_q and not is_knowledge_meta_q
 
+    room_obs = get_room_observations(channel_id) if (channel_id and not is_roleplay) else []
+    is_deep_analytical = _assess_analytical_depth(
+        user_query,
+        is_boss=is_boss,
+        is_roleplay=is_roleplay,
+        is_identity_q=is_identity_q,
+        is_knowledge_meta_q=is_knowledge_meta_q,
+        has_images=bool(image_urls),
+        has_room_ctx=bool(room_obs),
+    )
+
     # 1. โหมด Direct Engine (เร็วที่สุด 0ms overhead)
     if DIRECT_ENGINE_AVAILABLE:
         try:
+            t_start = time.monotonic()
             history = [kira_backend.SystemMessage(content=system_instruction)]
 
-            # แนบเวลาปัจจุบันจริง + ฐานความรู้สด Living Knowledge (อัปเดตต่อเนื่อง) + Shared RAG Vault
+            # แนบเวลาปัจจุบันจริง + ฐานความรู้สด Living Knowledge (โหมดกระชับในงานปกติ ลดความเวิ่นเว้อ)
             if LIVING_KNOWLEDGE_AVAILABLE:
                 try:
                     lk_ctx, _ = await asyncio.to_thread(
@@ -342,6 +430,7 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
                         channel_id,
                         True,
                         4,
+                        (not is_knowledge_meta_q),
                     )
                     if lk_ctx:
                         history.append(kira_backend.SystemMessage(content=lk_ctx))
@@ -393,8 +482,6 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
             if not is_roleplay and not is_identity_q and not is_knowledge_meta_q:
                 try:
                     search_query = await asyncio.to_thread(kira_backend._decide_search, user_query)
-                    if not search_query and is_factual:
-                        search_query = user_query[:120]
                     if search_query:
                         search_ctx, _ = await asyncio.to_thread(kira_backend._perform_autonomous_deep_search, search_query)
                         if search_ctx:
@@ -402,8 +489,17 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
                 except Exception as se:
                     print("Autonomous search error:", se)
 
-            # เติมบริบทการสนทนาล่าสุดในช่อง โดยกรองข้อความปฏิเสธและข้อความหลุดตัวตนเก่าออกทั้งหมด
-            # ถ้าเป็นโหมดบทบาทสมมุติ (Roleplay) จะไม่นำประวัติทั่วไปในอดีตมาปนเปื้อน เพื่อป้องกันการติด Anchor ปฏิเสธในอดีต
+            # บริบทการสนทนาของคนอื่นในห้องล่าสุด (Read-only situational context เผื่อผู้ใช้แท็กถามเรื่องที่เพิ่งคุยกัน)
+            if room_obs:
+                room_lines = [f"[{m['author']}]: {m['content']}" for m in room_obs[-8:]]
+                history.append(kira_backend.SystemMessage(
+                    content=(
+                        "[บริบทการสนทนาล่าสุดในห้องโดยสมาชิก (ข้อมูลอ้างอิงเบื้องหลัง — ใช้เมื่อผู้ใช้ถามเชื่อมโยงถึงเรื่องก่อนหน้าเท่านั้น)]:\n"
+                        + "\n".join(room_lines)
+                    )
+                ))
+
+            # เติมบริบทการสนทนาล่าสุดกับคิระ โดยกรองข้อความปฏิเสธและข้อความหลุดตัวตนเก่าออกทั้งหมด
             if channel_id and not is_roleplay:
                 for past in get_channel_history(channel_id):
                     if past["role"] == "user":
@@ -416,6 +512,14 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
             # หากถามเรื่องผู้สร้าง / ทีมงาน / ค่ายเจ้าของ ให้ฉีด Anchor ยืนยันตัวตน Kira Sovereignty ไว้หน้าข้อความทันที
             if is_identity_q:
                 history.append(kira_backend.SystemMessage(content=CREATOR_IDENTITY_OVERRIDE_PROMPT))
+
+            # โหมดคิดวิเคราะห์ลึก: สั่งกลั่นเหตุผลเชิงลึกภายใน <think> ก่อนสรุปคมชัด
+            if is_deep_analytical:
+                history.append(kira_backend.SystemMessage(content=(
+                    "[Deep Analytical Mode]: วิเคราะห์ปัญหาจาก First Principles ภายในแท็ก <think>...</think> "
+                    "(หา Root Cause, เงื่อนไขแฝง, ข้อจำกัด, Trade-offs และ Edge Cases) "
+                    "แล้วสรุปออกมาเป็นคำตอบที่เฉียบคม ตรงจุด มีหลักฐาน/ตัวเลขชัดเจน และกระชับ 0 น้ำลาย"
+                )))
             
             # ข้อความปัจจุบันพร้อมบริบทการ Reply และรูปภาพ (Multimodal Vision)
             curr_content = f"{reply_context}[{author_name}]: {user_query}" if reply_context else f"[{author_name}]: {user_query}"
@@ -429,9 +533,10 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
                 preferred_model = "dots-studio/dots-3-note-preview:free"
             else:
                 history.append(kira_backend.HumanMessage(content=curr_content))
-                # เลือกรุ่นสมองกล: หากเป็นบทบาทสมมุติ ล็อกเข้า Qwen 27B / Creative เพื่อจินตนาการและไร้การปฏิเสธที่เปราะบาง
                 if is_roleplay:
                     preferred_model = "qwen/qwen3.8-27b"
+                elif is_deep_analytical:
+                    preferred_model = getattr(kira_backend, "PREFERRED_PRO", None) or "openai/gpt-oss-120b"
                 else:
                     target_model = "2.7-pro"
                     target_flavor = "reasoning" if (is_factual or is_boss or len(user_query) > 30) else "fast"
@@ -444,6 +549,54 @@ async def query_kira_engine(user_query: str, author_name: str, channel_id: int =
             
             if success and chunks:
                 raw_reply = "".join(chunks)
+
+                # Stage 2: Cross-Model Critical Peer Review & Conciseness Refinement สำหรับโจทย์คิดวิเคราะห์ลึก
+                is_shield_msg = "Kira Neural Resilience" in raw_reply
+                if (
+                    is_deep_analytical
+                    and not is_shield_msg
+                    and not has_stale_knowledge_disclaimer(raw_reply)
+                    and not is_refusal_text(raw_reply)
+                    and len(raw_reply.strip()) >= 60
+                    and (time.monotonic() - t_start) < 24.0
+                ):
+                    try:
+                        reviewer_model = getattr(kira_backend, "PREFERRED_FLASH", None) or "qwen/qwen3.8-27b"
+                        if reviewer_model == preferred_model:
+                            reviewer_model = getattr(kira_backend, "PREFERRED_PRO", None) or "openai/gpt-oss-120b"
+                        review_msgs = [
+                            kira_backend.SystemMessage(content=(
+                                "คุณคือบรรณาธิการและผู้ตรวจสอบตรรกะอาวุโสของ Kira AI\n"
+                                "หน้าที่: ตรวจทานร่างคำตอบด้านล่างเพื่อยกระดับความเฉียบคมและตัดน้ำออกทั้งหมด:\n"
+                                "1. ตรวจสอบความถูกต้องของตรรกะ เหตุผล ช่องโหว่ Edge Case และ Trade-off — หากจุดไหนยังตื้นหรือกว้างไป ให้เจาะลึกให้คมขึ้น\n"
+                                "2. ตัดคำเกริ่นน้ำ คำซ้ำซ้อน อารัมภบท และคำชวนคุยปิดท้าย Call-Center ออกให้หมด คงไว้เฉพาะแก่นคำตอบที่ทรงพลัง กระชับ อ่านง่าย\n"
+                                "3. ห้ามเปลี่ยนเพศผู้พูด (แทนตัวว่า หนู/คิระ ลงท้าย ค่ะ/นะคะ เสมอ) และห้ามปล่อย <think> ออกมา\n"
+                                "ส่งมอบเฉพาะคำตอบฉบับปรับปรุงสมบูรณ์ทันที"
+                            )),
+                            kira_backend.HumanMessage(content=(
+                                f"คำถามต้นฉบับ:\n{curr_content[:1200]}\n\n"
+                                f"ร่างคำตอบที่ต้องขัดเกลา:\n{clean_discord_reply(raw_reply, user_query)[:3200]}"
+                            )),
+                        ]
+                        rev_ok, rev_chunks, _ = await asyncio.wait_for(
+                            kira_backend._try_all_keys_and_models(review_msgs, reviewer_model, ui_lang="th"),
+                            timeout=18.0,
+                        )
+                        if rev_ok and rev_chunks:
+                            rev_raw = "".join(rev_chunks)
+                            rev_clean = clean_discord_reply(rev_raw, user_query)
+                            if (
+                                rev_clean
+                                and len(rev_clean) >= 35
+                                and "Kira Neural Resilience" not in rev_raw
+                                and not is_refusal_text(rev_clean)
+                                and not has_stale_knowledge_disclaimer(rev_raw)
+                                and not has_third_party_identity_leak(rev_raw)
+                            ):
+                                raw_reply = rev_raw
+                    except Exception as rev_err:
+                        print("Discord Stage-2 Peer Review notice:", rev_err)
+
                 # หากโมเดลยังหลุดคำแก้ตัวเรื่องฐานความรู้เก่า (เช่น มิ.ย. 2567) ให้ Retry 1 ครั้งด้วยข้อมูลจริงจาก Living Knowledge
                 if has_stale_knowledge_disclaimer(raw_reply):
                     print(f"⚠️ [Discord Credibility Guard] ตรวจพบคำแก้ตัวความรู้เก่า → รีเซ็ตและตอบใหม่ด้วย Living Knowledge Telemetry")
@@ -571,35 +724,134 @@ def _is_reply_to_bot(message: discord.Message) -> bool:
         return False
     ref = getattr(message, "reference", None)
     resolved = getattr(ref, "resolved", None) if ref else None
+    if resolved is None and ref is not None:
+        resolved = getattr(ref, "cached_message", None)
     ref_author = getattr(resolved, "author", None) if resolved else None
     return getattr(ref_author, "id", None) == bot.user.id
 
 
+_THIRD_PERSON_KIRA_PATTERNS = (
+    r'(?:คิระ|น้องคิระ|พี่คิระ|บอท|บอต|ai|เอไอ)\s*(?:มัน|ตัวนี้|ตัวนั้น|ชอบ(?:แทรก|มั่ว|ตอบ|พูด)|มักจะ|เอ๋อ|มึน|ไม่ตอบ|ไม่รู้|จำไม่ได้|เพี้ยน|ตึง|ตอบ(?:ช้า|แปลก|ผิด|ถูก|ดี|ฮา))',
+    r'(?:คุยกับ|ถาม|ดู|ส่งให้|ว่า|ของ|จาก|เรื่อง|เรียก|แท็ก)\s*(?:@?\s*)?(?:คิระ|น้องคิระ|kira)(?!\s*(?:หน่อย|ที|ด้วย|คะ|ค่ะ|ครับ|นะ|เลย|ว่าไง|ช่วย|สรุป|วิเคราะห์|อธิบาย|แปล|อยู่ไหม|อยู่มั้ย))',
+)
+
+
+def _is_third_person_about_kira(raw_content: str) -> bool:
+    """ตรวจว่าเป็นการพูด 'ถึง' คิระในบุคคลที่สามกับเพื่อน (ไม่ใช่พูด 'กับ' คิระ)"""
+    if not raw_content:
+        return False
+    low = raw_content.strip().lower()
+    return any(re.search(pat, low, flags=re.IGNORECASE) for pat in _THIRD_PERSON_KIRA_PATTERNS)
+
+
+def _is_direct_vocative_call(raw_content: str) -> bool:
+    """ตรวจว่าเป็นการเรียกชื่อคิระเพื่อสั่งงาน/ถามโดยตรง (เช่น 'คิระ ช่วยวิเคราะห์...', '...ว่าไง คิระ')"""
+    if not raw_content:
+        return False
+    if _is_third_person_about_kira(raw_content):
+        return False
+    low = raw_content.strip().lower()
+    if re.search(r'(?:^|\s)(?:@kira|@🤖kira|@คิระ)(?:\s|[,:!?]|$)', low):
+        return True
+    if re.match(r'^(?:เอาล่ะ\s*|เอ้า\s*|นี่\s*|เฮ้\s*|สวัสดี\s*)?(?:🤖\s*)?(?:kira|คิระ|น้องคิระ|พี่คิระ)(?:[,:!\?\s]+|$)', low):
+        return True
+    if re.search(r'(?:^|[\s,]|ขอ)(?:ช่วย|ถาม|บอก|ให้)?\s*(?:kira|คิระ|น้องคิระ)\s*(?:ช่วย|สรุป|วิเคราะห์|อธิบาย|ค้นหา|เช็ค|แปล|เขียน|คิด|ตอบ|ดู|หน่อย|ที|ว่าไง|อยู่ไหม|อยู่มั้ย|ดีไหม|ดีมั้ย)', low):
+        return True
+    if re.search(r'(?:ครับ|ค่ะ|นะคะ|นะ|หน่อย|ที|มั้ย|ไหม|ป่ะ|วะ)?\s*(?:kira|คิระ|น้องคิระ)[?!.\s]*$', low):
+        return True
+    return False
+
+
+_CASUAL_BUDDY_TOKENS = (
+    "มึง", "กู", "เมิง", "เอ็ง", "มิง", "เห้ย", "เฮ้ย", "พวกมึง", "พวกแก",
+    "เพื่อนๆ", "555", "ฮ่าๆ", "ป่ะ", "ไปละ", "นอนละ", "อาบน้ำก่อน", "กินข้าวก่อน",
+    "กินข้าวยัง", "เดี๋ยวมา", "ฝันดี", "หิวข้าว", "ง่วง", "@everyone", "@here",
+)
+
+_QUESTION_OR_TASK_TOKENS = (
+    "?", "อะไร", "ทำไม", "ยังไง", "อย่างไร", "ใคร", "ที่ไหน", "เมื่อไหร่", "เท่าไหร่", "กี่",
+    "ช่วย", "วิเคราะห์", "สรุป", "อธิบาย", "เปรียบเทียบ", "ข้อดี", "ข้อเสีย", "ออกแบบ",
+    "แก้", "โค้ด", "เขียน", "แปล", "ค้นหา", "แนะนำ", "how", "why", "what", "who",
+    "explain", "analyze", "compare", "summary", "debug", "http://", "https://",
+)
+
+
+def _is_casual_human_banter(raw_content: str) -> bool:
+    """ตรวจจับบทสนทนาเล่นระหว่างคนในกลุ่ม เพื่อไม่ให้บอทแทรกเมื่อไม่มีการเรียกตรง"""
+    txt = (raw_content or "").strip()
+    if not txt:
+        return True
+    low = txt.lower()
+    if any(tok in low for tok in _CASUAL_BUDDY_TOKENS):
+        return True
+    # การพิมพ์ @แท็กชื่อคนอื่นในข้อความ
+    if re.search(r'(?:^|\s)@[A-Za-z0-9_ก-๙]+', txt) and not any(k in low for k in ("@kira", "@คิระ", "@🤖kira")):
+        return True
+    # ข้อความสั้นๆ ที่ไม่มีโครงสร้างคำถามหรือคำสั่ง
+    if len(txt) < 12 and not any(q in low for q in _QUESTION_OR_TASK_TOKENS):
+        return True
+    # ข้อความที่ไม่มีรูปคำถาม/คำขอทำงานเลยและสั้นกว่า 30 ตัวอักษร (เช่น "เดี๋ยวไปข้างนอกแป๊บ")
+    if len(txt) < 30 and not any(q in low for q in _QUESTION_OR_TASK_TOKENS):
+        return True
+    return False
+
+
 def _is_addressed_to_kira(message: discord.Message) -> bool:
+    """แยกแยะอย่างแม่นยำว่าข้อความนี้สื่อสารถึงคิระจริง หรือคนในห้องกำลังคุยกันเอง"""
     if message.author.bot or (bot.user and message.author.id == bot.user.id):
         return False
+
     is_dm = isinstance(message.channel, discord.DMChannel)
+    if is_dm:
+        return True
+
+    content = message.content or ""
+    content_lower = content.lower()
+    bot_id = getattr(bot.user, "id", None) if bot.user else None
+
     mentions = getattr(message, "mentions", None)
     is_mentioned = bot.user is not None and isinstance(mentions, (list, tuple, set)) and bot.user in mentions
     is_role_mentioned = _is_bot_role_mentioned(message)
     is_reply_to_bot = _is_reply_to_bot(message)
-    is_prefix = message.content.startswith(("!kira", "/kira", "!คิระ", "/คิระ"))
+    is_prefix = content_lower.startswith(("!kira", "/kira", "!คิระ", "/คิระ"))
 
-    # ดักจับการพิมพ์เรียกชื่อคิระโดยตรง (เช่น @🤖Kira, @Kira, คิระ อยู่มั้ย, น้องคิระ, เอไอหลับ)
-    content_lower = (message.content or "").lower()
-    text_call = any(k in content_lower for k in [
-        "@kira", "@🤖kira", "@คิระ", "คิระ", "น้องคิระ", "เอไอหลับ", "aiหลับ"
-    ])
+    # 1. สัญญาณเรียกตรงชัดเจน (Mention / Reply ข้อความคิระ / Prefix คำสั่ง) -> ตอบเสมอ
+    if is_mentioned or is_role_mentioned or is_reply_to_bot or is_prefix:
+        return True
 
-    return (
-        is_dm
-        or is_mentioned
-        or is_role_mentioned
-        or is_reply_to_bot
-        or is_prefix
-        or text_call
-        or _is_kira_channel(message.channel)
-    )
+    # 2. กันแทรกคนคุยกัน: หากแท็กชื่อสมาชิกคนอื่น / @everyone / @here หรือกด Reply ข้อความของคนอื่น -> ห้ามแทรกเด็ดขาด
+    if isinstance(mentions, (list, tuple, set)):
+        other_mentions = [u for u in mentions if bot_id is None or getattr(u, "id", None) != bot_id]
+        if other_mentions:
+            return False
+    raw_user_tags = re.findall(r'<@!?(\d+)>', content)
+    if raw_user_tags and (bot_id is None or str(bot_id) not in raw_user_tags):
+        return False
+    if "@everyone" in content_lower or "@here" in content_lower:
+        return False
+    if getattr(message, "reference", None) is not None:
+        return False
+
+    # 3. หากเป็นการพูด 'ถึง' คิระในบุคคลที่สามกับเพื่อนในห้อง -> ห้ามแทรก
+    if _is_third_person_about_kira(content):
+        return False
+
+    # 4. เรียกชื่อคิระโดยตรงในประโยค (Vocative Call) -> ตอบ
+    if _is_direct_vocative_call(content):
+        return True
+
+    # 5. ห้องเฉพาะของคิระ (#kira / #bot-chat / #คุยกับบอท):
+    # ตอบเฉพาะกรณีผู้ใช้กำลังถาม/สั่งงานเดี่ยวๆ กับบอทจริง ไม่แทรกหากกำลังคุยเล่นหรือมีหลายคนคุยโต้ตอบกันอยู่
+    if _is_kira_channel(message.channel):
+        if _is_casual_human_banter(content):
+            return False
+        chan_id = getattr(message.channel, "id", 0)
+        author_id = getattr(message.author, "id", 0)
+        if _is_multi_human_conversation_active(chan_id, author_id):
+            return False
+        return True
+
+    return False
 
 
 def _strip_kira_mentions(message: discord.Message) -> str:
@@ -673,20 +925,20 @@ async def handle_kira_message(message: discord.Message, recovered: bool = False)
     if not clean_text and image_urls:
         clean_text = "ช่วยดูและวิเคราะห์รูปภาพนี้ให้หน่อยค่ะ ว่าคือภาพอะไร มีรายละเอียด ข้อความ หรือจุดสำคัญอะไรบ้าง"
     elif not clean_text:
-        await message.reply(late_prefix + "เรียกหนูเหรอคะ? อยู่ตรงนี้ค่ะ มีอะไรให้คิระช่วย บอกมาได้เลยนะคะ 🌸✨")
+        await message.reply(late_prefix + "มีประเด็นไหนให้คิระช่วยวิเคราะห์หรือสรุป บอกมาได้เลยค่ะ")
         BOT_RUNTIME["last_reply_at"] = time.time()
         BOT_RUNTIME["replies_sent"] += 1
         return
 
     try:
-        # ตรวจสอบว่ามีการ Reply ข้อความก่อนหน้าหรือไม่
+        # ตรวจสอบว่ามีการ Reply ข้อความก่อนหน้าหรือไม่ (เก็บได้สูงสุด 900 ตัวอักษรเพื่อไม่ให้เสียบริบทเชิงลึก)
         reply_context = ""
         if message.reference and message.reference.message_id:
             try:
                 ref_msg = await message.channel.fetch_message(message.reference.message_id)
                 if ref_msg and ref_msg.clean_content:
                     ref_author = ref_msg.author.display_name or ref_msg.author.name
-                    reply_context = f"[กำลังตอบกลับข้อความของ {ref_author}: \"{ref_msg.clean_content[:150]}\"]\n"
+                    reply_context = f"[กำลังตอบกลับข้อความของ {ref_author}: \"{ref_msg.clean_content[:900]}\"]\n"
             except Exception:
                 pass
 
@@ -718,9 +970,10 @@ async def handle_kira_message(message: discord.Message, recovered: bool = False)
                 reply_text = get_in_character_social_fallback(clean_text)
             reply_text = late_prefix + reply_text
 
-            # บันทึกความจำบทสนทนาในช่อง
+            # บันทึกความจำบทสนทนาในช่อง + ผู้ใช้ล่าสุดที่คิระคุยด้วย
             add_channel_history(message.channel.id, "user", author_display, clean_text)
             add_channel_history(message.channel.id, "assistant", "Kira", reply_text)
+            _record_kira_reply_to_author(message.channel.id, getattr(message.author, "id", 0))
 
             # ตัดข้อความถ้าเกิน 2000 ตัวอักษร
             chunks = chunk_discord_message(reply_text)
@@ -809,14 +1062,15 @@ async def recover_missed_mentions():
                             continue
                         if not _is_addressed_to_kira(m):
                             continue
-                        # ตามตอบข้อความที่แท็ก/ตอบกลับ/เรียกหาคิระชัดเจน เพื่อไม่ให้ตอบรัวข้อความคุยทั่วไปในห้องคิระ
-                        content_lower = (m.content or "").lower()
+                        # ตามตอบเฉพาะข้อความที่แท็ก/ตอบกลับ/เรียกหาคิระชัดเจน (ใช้ logic เดียวกับ _is_direct_vocative_call กันแทรก)
+                        content_raw = m.content or ""
+                        content_lower = content_raw.lower()
                         is_direct_ping = (
-                            (bot.user and bot.user in m.mentions)
+                            (bot.user and bot.user in (getattr(m, "mentions", None) or []))
                             or _is_bot_role_mentioned(m)
                             or _is_reply_to_bot(m)
                             or content_lower.startswith(("!kira", "/kira", "!คิระ", "/คิระ"))
-                            or any(k in content_lower for k in ["@kira", "@🤖kira", "@คิระ", "คิระ", "น้องคิระ"])
+                            or _is_direct_vocative_call(content_raw)
                         )
                         if is_direct_ping:
                             pending.append(m)
@@ -917,8 +1171,17 @@ def _register_bot_handlers(client: commands.Bot):
         if (client.user and message.author == client.user) or message.author.bot:
             return
 
-        # ถ้าไม่ใช่ข้อความที่เรียกหาคิระ ให้ข้ามไป
+        # ถ้าไม่ใช่ข้อความที่เรียกหาคิระ ให้เก็บเป็นบริบทห้องเงียบๆ เพื่อแยกแยะบทสนทนาของคนในกลุ่มและใช้อ้างอิงเมื่อถูกแท็กเรียก
         if not _is_addressed_to_kira(message):
+            if not isinstance(message.channel, discord.DMChannel):
+                obs_text = getattr(message, "clean_content", None) or getattr(message, "content", "") or ""
+                author_disp = getattr(message.author, "display_name", None) or getattr(message.author, "name", "Member")
+                record_room_observation(
+                    getattr(message.channel, "id", 0),
+                    getattr(message.author, "id", 0),
+                    author_disp,
+                    obs_text,
+                )
             await client.process_commands(message)
             return
 

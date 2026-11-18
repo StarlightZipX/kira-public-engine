@@ -5,7 +5,13 @@
 - **Production Endpoint:** `https://kira-public-engine.onrender.com` (Auto-Deploy ผ่าน `origin/main`)
 - **กำหนดการ v3.0:** เตรียมปล่อย **Kira v3.0** ช่วง **ปีใหม่** ตามกำหนดการของบอส (คงสาย `v2.9.8` ไว้ในระหว่างนี้)
 
-## ✅ งานระดับจุลภาคที่เพิ่งทำเสร็จสมบูรณ์ (Continuous Living Knowledge Engine in v2.9.8)
+## ✅ งานระดับจุลภาคที่เพิ่งทำเสร็จสมบูรณ์ (Discord Intelligence, Anti-Chatter & Anti-Interruption in v2.9.8)
+5. **Discord Bot Social Awareness, Zero-Chatter & 2-Stage Critical Peer Review (`discord_bot.py`, `living_knowledge.py`, `test_discord_intelligence_suite.py`):**
+   - **แก้ปัญหาคิระแทรกคนคุยกัน (`_is_addressed_to_kira` & `_room_observations`):** ไม่แทรกข้อความที่ `@mention` คนอื่น, กด Reply หาคนอื่น, พูดถึงคิระในบุคคลที่สาม (`"คิระมัน..."`, `"คุยกับคิระอยู่"`), ข้อความคุยเล่นระหว่างเพื่อน, หรือห้องที่หลายคนกำลังคุยโต้ตอบกันอยู่ แม้ในห้อง `#kira` / `#คุยกับบอท` พร้อมเก็บ `_room_observations` แบบเงียบ 10 นาทีเพื่อให้เข้าใจบริบทห้องเมื่อถูกแท็กเรียกจริง
+   - **ลดความพร่ำพรือ (`Anti-Chatter Filter`):** ปรับ System Prompt ฝั่ง Discord ให้ตอบตรงประเด็นตั้งแต่ประโยคแรก ไม่มีคำเกริ่นน้ำ/คำปิด Call-Center, เพิ่ม regex กรอง opener/closer AI Slop ใน `clean_discord_reply`, และเพิ่ม `concise_telemetry=True` ใน `living_knowledge.build_living_knowledge_context`
+   - **ยกระดับการคิดวิเคราะห์ (`2-Stage Critical Peer Review`):** สำหรับโจทย์วิเคราะห์/เปรียบเทียบ/โค้ด/ออกแบบ (`_assess_analytical_depth`) ใช้ 120B (`PREFERRED_PRO`) ร่างเชิงลึกจาก First Principles ใน `<think>` แล้วส่งต่อให้ Reviewer (`PREFERRED_FLASH` 27B) ตรวจตรรกะ ช่องโหว่ Edge Case และขัดเกลาให้เฉียบคม พร้อมขยาย `reply_context` จาก 150 → 900 ตัวอักษร
+
+## ✅ งานก่อนหน้าในสาย v2.9.8 (Living Knowledge & Item 1–2)
 4. **ระบบฐานความรู้สดอัปเดตต่อเนื่อง & Credibility Firewall (`living_knowledge.py`, `kira_purity.py`, `discord_bot.py`, `rag_vault.py`, `app.py`, `templates/admin.html`):**
    - สร้าง `living_knowledge.py` (`living_knowledge_entries` รองรับทั้ง SQLite และ PostgreSQL พร้อมดัชนี 1024D Vector + Multilingual N-gram Hybrid Search)
    - อัปเดตข้อมูลเข้าฐานความรู้อัตโนมัติทันทีจาก 4 ช่องทาง: (1) ผลการค้นคว้าเว็บสด (`_perform_autonomous_deep_search` -> `ingest_web_research_findings`), (2) URL ที่ส่งให้อ่าน (`ingest_url_knowledge`), (3) Knowledge Pulse ซิงค์ข่าว/เทคโนโลยีอัตโนมัติทุก 30 นาทีบนเซิร์ฟเวอร์ (`sync_public_world_knowledge_pulse`), และ (4) การป้อนสอน/อัปเดตข้อเท็จจริงในแชตและหน้า Admin โดยแยก Trust Level (`boss`, `web_verified`, `world_pulse`, `user_note`) พร้อม Anti-Poisoning/Injection Guard
